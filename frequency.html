@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequency Pattern - Andrew Brown</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #333;
+            background-color: #000;
+            cursor: crosshair;
+        }
+        .caption {
+            margin-top: 10px;
+            font-size: 1.2em;
+        }
+        .timestamp {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #bbb;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"] {
+            width: 150px;
+        }
+        input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            background: none;
+        }
+        button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #444;
+        }
+        .values {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <canvas id="frequencyPattern" width="800" height="600"></canvas>
+        <div class="controls">
+            <div class="control-group">
+                <label>Frequency:</label>
+                <input type="range" id="frequencySlider" min="1" max="200" value="133">
+            </div>
+            <div class="control-group">
+                <label>Amplitude:</label>
+                <input type="range" id="amplitudeSlider" min="10" max="200" value="100">
+            </div>
+            <div class="control-group">
+                <label>Color:</label>
+                <input type="color" id="colorPicker" value="#ffffff">
+            </div>
+            <button id="animateBtn">Animate</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+        <div class="values">
+            <span id="frequencyValue">Frequency: 4π/133</span> |
+            <span id="amplitudeValue">Amplitude: 100</span>
+        </div>
+        <div class="caption">
+            "This is the same pattern on computer at a frequency of 4π/133"
+        </div>
+        <div class="timestamp">
+            Posted by Andrew Brown (@Hyperdyne089) on Dec 14, 2024, 3:05 AM
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('frequencyPattern');
+        const ctx = canvas.getContext('2d');
+        const frequencySlider = document.getElementById('frequencySlider');
+        const amplitudeSlider = document.getElementById('amplitudeSlider');
+        const colorPicker = document.getElementById('colorPicker');
+        const animateBtn = document.getElementById('animateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const frequencyValue = document.getElementById('frequencyValue');
+        const amplitudeValue = document.getElementById('amplitudeValue');
+
+        let isAnimating = false;
+        let phase = 0;
+        let mouseX = 0;
+        let mouseY = 0;
+
+        function drawPattern() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const frequency = (4 * Math.PI) / frequencySlider.value;
+            const amplitude = parseInt(amplitudeSlider.value);
+            const points = [];
+            
+            // Generate points for the pattern
+            for (let x = 0; x < canvas.width; x++) {
+                const distanceFromMouse = Math.abs(x - mouseX) / canvas.width;
+                const localAmplitude = amplitude * (1 + 0.5 * (1 - distanceFromMouse));
+                
+                const y = canvas.height/2 + 
+                         localAmplitude * Math.sin(x * frequency + phase) + 
+                         localAmplitude/2 * Math.sin(x * frequency * 2 + phase * 1.5);
+                points.push({x, y});
+            }
+            
+            // Draw the main wave
+            ctx.beginPath();
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = 2;
+            
+            points.forEach((point, index) => {
+                if (index === 0) {
+                    ctx.moveTo(point.x, point.y);
+                } else {
+                    ctx.lineTo(point.x, point.y);
+                }
+            });
+            
+            ctx.stroke();
+            
+            // Add glowing effect
+            ctx.beginPath();
+            ctx.strokeStyle = `${colorPicker.value}33`;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            
+            // Add noise effect
+            for (let i = 0; i < 500; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                ctx.fillStyle = `${colorPicker.value}${Math.floor(Math.random() * 99)}`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+
+            // Update values display
+            frequencyValue.textContent = `Frequency: ${(4 * Math.PI / frequencySlider.value).toFixed(3)}`;
+            amplitudeValue.textContent = `Amplitude: ${amplitude}`;
+        }
+
+        function animate() {
+            if (isAnimating) {
+                phase += 0.05;
+                drawPattern();
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // Event Listeners
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+            if (!isAnimating) {
+                drawPattern();
+            }
+        });
+
+        frequencySlider.addEventListener('input', drawPattern);
+        amplitudeSlider.addEventListener('input', drawPattern);
+        colorPicker.addEventListener('input', drawPattern);
+
+        animateBtn.addEventListener('click', () => {
+            isAnimating = !isAnimating;
+            animateBtn.textContent = isAnimating ? 'Stop' : 'Animate';
+            if (isAnimating) {
+                animate();
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            frequencySlider.value = 133;
+            amplitudeSlider.value = 100;
+            colorPicker.value = '#ffffff';
+            phase = 0;
+            isAnimating = false;
+            animateBtn.textContent = 'Animate';
+            drawPattern();
+        });
+
+        // Initial draw
+        drawPattern();
+
+        // Redraw on window resize
+        window.addEventListener('resize', () => {
+            const container = canvas.parentElement;
+            const ratio = canvas.height / canvas.width;
+            canvas.width = container.clientWidth;
+            canvas.height = canvas.width * ratio;
+            drawPattern();
+        });
+    </script>
+</body>
+</html>

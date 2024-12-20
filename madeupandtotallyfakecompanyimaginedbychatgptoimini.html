@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumTech Corp. ($QTC) Due Diligence Report</title>
+    <meta name="description" content="Comprehensive due diligence report on QuantumTech Corp., focusing on quantum technologies, semiconductor chips, space exploration, and mining technologies.">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --accent: #f7931a; /* Bitcoin Orange */
+            --accent-hover: #ff8c42;
+            --font-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --progress-bg: #333333;
+            --progress-fill: #f7931a;
+            --button-hover-scale: 1.05;
+            --max-width-container: 1200px;
+            --footer-bg: #141414;
+            --footer-padding: 20px;
+        }
+
+        /* Universal Box Sizing */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers container horizontally */
+            justify-content: flex-start; /* Start from top */
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: var(--max-width-container);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers children horizontally */
+        }
+
+        header {
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            color: var(--accent);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        p.tagline {
+            font-size: 1.3em;
+            color: var(--text-secondary);
+            margin: 0 auto 40px auto; /* Top, Right, Bottom, Left */
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .bitcoin-tracker {
+            background: #2a2a2a;
+            padding: 30px 20px;
+            border-radius: 10px;
+            margin-bottom: 40px; /* Space below the tracker */
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            animation: fadeIn 1s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers internal elements horizontally */
+            margin: 0 auto; /* Ensures the tracker itself is centered */
+        }
+
+        .bitcoin-tracker h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .bitcoin-price {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .progress-container {
+            background-color: var(--progress-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            height: 25px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--progress-fill);
+            transition: width 1s ease-in-out, background-color 0.3s ease;
+        }
+
+        .goal-text {
+            font-size: 1em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .report-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            margin-top: 20px; /* Space above the report links */
+        }
+
+        .report-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 28px;
+            background-color: var(--accent);
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.1em;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            min-width: 160px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .report-links a:hover,
+        .report-links a:focus {
+            background-color: var(--accent-hover);
+            transform: scale(var(--button-hover-scale));
+            outline: none;
+        }
+
+        /* Floating Banana Styles */
+        .floating-banana {
+            position: fixed;
+            width: 100px; /* Adjust size as needed */
+            height: auto;
+            bottom: -100px; /* Start below the viewport */
+            left: 50%;
+            transform: translateX(-50%);
+            animation: floatBanana 10s ease-in-out infinite;
+            z-index: 1000; /* Ensure it appears above other elements */
+        }
+
+        /* Keyframes for Floating Animation */
+        @keyframes floatBanana {
+            0% {
+                transform: translateX(-50%) translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            25% {
+                transform: translateX(-60%) translateY(-20px) rotate(-10deg);
+            }
+            50% {
+                transform: translateX(-50%) translateY(-40px) rotate(0deg);
+            }
+            75% {
+                transform: translateX(-40%) translateY(-20px) rotate(10deg);
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-50%) translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+            p.tagline {
+                font-size: 1.1em;
+            }
+            .bitcoin-tracker {
+                padding: 25px 15px;
+            }
+            .bitcoin-tracker h2 {
+                font-size: 1.8em;
+            }
+            .bitcoin-price {
+                font-size: 2em;
+            }
+            .report-links a {
+                font-size: 1em;
+                padding: 12px 24px;
+                min-width: 140px;
+            }
+            .floating-banana {
+                width: 70px; /* Smaller size on mobile */
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2em;
+            }
+            p.tagline {
+                font-size: 1em;
+            }
+            .bitcoin-tracker {
+                padding: 20px 10px;
+            }
+            .bitcoin-tracker h2 {
+                font-size: 1.5em;
+            }
+            .bitcoin-price {
+                font-size: 1.8em;
+            }
+            .report-links a {
+                font-size: 0.9em;
+                padding: 10px 20px;
+                min-width: 120px;
+            }
+        }
+
+        /* Accessibility Focus Styles */
+        a:focus {
+            outline: 3px dashed var(--accent-hover);
+            outline-offset: 4px;
+        }
+
+        /* Keyframes for Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            background-color: var(--footer-bg);
+            padding: var(--footer-padding);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            width: 100%;
+            max-width: var(--max-width-container);
+            text-align: center;
+            margin-top: 40px; /* Space above the footer */
+            border-top: 1px solid #444;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ticker = document.getElementById('bitcoin-price');
+            const progressBar = document.querySelector('.progress-bar');
+            const goal = 100000; // 100k
+            let currentPrice = 0;
+
+            let ws;
+            let reconnectInterval = 5000; // 5 seconds
+
+            function connectWebSocket() {
+                ws = new WebSocket('wss://ws.coincap.io/prices?assets=bitcoin');
+
+                ws.onopen = function () {
+                    console.log('WebSocket connection established.');
+                };
+
+                ws.onmessage = function (event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.bitcoin) {
+                            currentPrice = parseFloat(data.bitcoin);
+                            updatePrice(currentPrice);
+                        }
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+
+                ws.onerror = function (error) {
+                    console.error('WebSocket error:', error);
+                };
+
+                ws.onclose = function (event) {
+                    console.warn(`WebSocket closed: ${event.reason}. Reconnecting in ${reconnectInterval / 1000} seconds...`);
+                    ticker.innerText = 'Bitcoin Price: Reconnecting...';
+                    setTimeout(connectWebSocket, reconnectInterval);
+                };
+            }
+
+            function updatePrice(price) {
+                ticker.innerText = `Bitcoin Price: $${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                const percentage = Math.min((price / goal) * 100, 100);
+                progressBar.style.width = `${percentage}%`;
+
+                // Change progress bar color based on percentage
+                if (percentage < 50) {
+                    progressBar.style.backgroundColor = '#f7931a'; // Bitcoin Orange
+                } else if (percentage < 75) {
+                    progressBar.style.backgroundColor = '#ffd700'; // Gold
+                } else {
+                    progressBar.style.backgroundColor = '#4caf50'; // Green
+                }
+            }
+
+            connectWebSocket();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QuantumTech Corp.</h1>
+            <p class="tagline">Innovating the Future: Quantum Technologies, Semiconductors, Space Exploration, and Mining Solutions. Follow us for the latest insights!</p>
+        </header>
+        <main>
+            <!-- Executive Summary -->
+            <section class="fade-in">
+                <h2>Executive Summary</h2>
+                <p>QuantumTech Corp. (<strong>$QTC</strong>) stands at the forefront of the technological revolution, harnessing the power of quantum computing, advanced semiconductor chip design, and pioneering space and mining technologies. In an era where space is becoming the new frontier for resource acquisition and technological advancement, QuantumTech is uniquely positioned to capitalize on these burgeoning markets. With strategic leadership and robust R&D, QuantumTech aims to drive innovation and secure a competitive edge in the global tech landscape.</p>
+            </section>
+
+            <!-- Company Overview -->
+            <section class="fade-in">
+                <h2>Company Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h4>Founded</h4>
+                        <p>2015</p>
+                    </div>
+                    <div class="stat-box">
+                        <h4>Headquarters</h4>
+                        <p>Silicon Valley, California, USA</p>
+                    </div>
+                    <div class="stat-box">
+                        <h4>CEO</h4>
+                        <p>Elon Musk</p>
+                    </div>
+                    <div class="stat-box">
+                        <h4>Market Focus</h4>
+                        <p>Quantum Computing, Semiconductor Chips, Space Mining, Advanced Robotics</p>
+                    </div>
+                </div>
+                <p>QuantumTech Corp. leverages cutting-edge quantum technologies to revolutionize semiconductor manufacturing and space resource mining. The company collaborates with leading research institutions and maintains strategic partnerships with aerospace giants to foster innovation and expand its market presence globally.</p>
+            </section>
+
+            <!-- Recent Developments -->
+            <section class="fade-in">
+                <h2>Recent Developments</h2>
+                <h3>1. Leadership and Strategic Alignment</h3>
+                <ul>
+                    <li><strong>Elon Musk Appointed CEO:</strong> Following the recent election victory of Donald Trump, Elon Musk has been appointed as the head of the newly established Department of Doge Efficiency, signaling a strategic alignment between QuantumTech and governmental initiatives.</li>
+                    <li><strong>Partnership with NASA:</strong> QuantumTech has secured a multi-year contract with NASA to develop quantum computing solutions for space exploration missions.</li>
+                </ul>
+                <h3>2. Technological Innovations</h3>
+                <ul>
+                    <li><strong>Quantum Chip Breakthrough:</strong> The company unveiled its latest quantum chip, boasting a 50% increase in processing speed and enhanced energy efficiency.</li>
+                    <li><strong>Space Mining Prototypes:</strong> QuantumTech has developed prototypes for mining rare earth elements on the Moon, targeting resources like Helium-3 for fusion reactors.</li>
+                </ul>
+                <h3>3. Market Expansion</h3>
+                <ul>
+                    <li><strong>Global Footprint:</strong> Expanded operations to Europe and Asia, establishing research centers in Germany and Japan.</li>
+                    <li><strong>New Funding Round:</strong> Successfully raised $500 million in Series D funding to accelerate R&D and market penetration.</li>
+                </ul>
+            </section>
+
+            <!-- Financial Analysis -->
+            <section class="fade-in">
+                <h2>Financial Analysis</h2>
+                <h3>1. Revenue Trends</h3>
+                <p><strong>Fiscal Year 2023 Revenue:</strong> $1.2 billion, a 40% increase from $850 million in 2022.</p>
+                <p><strong>Revenue Composition:</strong> Quantum computing services (40%), semiconductor sales (35%), space mining contracts (15%), and other technologies (10%).</p>
+                <h3>2. Profitability</h3>
+                <p><strong>Net Income:</strong> Reported a net profit of $200 million in 2023, up from a net loss of $50 million in 2022.</p>
+                <p><strong>Operating Margins:</strong> Improved to 16.7% from -5.9% year-over-year.</p>
+                <h3>3. Cash Flow & Liquidity</h3>
+                <p><strong>Cash and Cash Equivalents:</strong> Maintained a robust cash position with $800 million as of the latest filings.</p>
+                <p><strong>Debt Levels:</strong> Minimal long-term debt, enhancing financial flexibility and investor confidence.</p>
+            </section>
+
+            <!-- Macro Trends -->
+            <section class="fade-in">
+                <h2>Macro Trends Favoring QuantumTech</h2>
+                <h3>1. Quantum Computing Advancements</h3>
+                <p><strong>Technological Leap:</strong> Ongoing breakthroughs in quantum algorithms and hardware are driving the adoption of quantum computing across various industries.</p>
+                <h3>2. Space Exploration and Resource Acquisition</h3>
+                <p><strong>New Frontier:</strong> The decreasing cost of space launches and advancements in autonomous robotics are making space mining a viable economic activity.</p>
+                <h3>3. Semiconductor Industry Growth</h3>
+                <p><strong>Demand Surge:</strong> Increasing demand for high-performance chips in AI, IoT, and 5G technologies is propelling the semiconductor market.</p>
+                <h3>4. Government Support and Policy Shifts</h3>
+                <p><strong>Strategic Initiatives:</strong> Recent U.S. executive orders and policies favoring private sector involvement in space and advanced technologies are creating a conducive environment for QuantumTech.</p>
+            </section>
+
+            <!-- Competitive Landscape -->
+            <section class="fade-in">
+                <h2>Competitive Landscape</h2>
+                <h3>1. Major Competitors</h3>
+                <ul>
+                    <li><strong>Quantum Innovations Inc. ($QII):</strong> Specializes in quantum software solutions and has secured significant government contracts.</li>
+                    <li><strong>SpaceMiner Ltd. ($SML):</strong> Focused exclusively on lunar and asteroid mining operations.</li>
+                    <li><strong>ChipMasters Corp. ($CMC):</strong> A leading player in semiconductor chip manufacturing with a strong global presence.</li>
+                </ul>
+                <h3>2. QuantumTech's Competitive Advantages</h3>
+                <ul>
+                    <li><strong>Integrated Technology Portfolio:</strong> Combines quantum computing, advanced semiconductors, and space mining, offering comprehensive solutions.</li>
+                    <li><strong>Strategic Government Partnerships:</strong> Close alignment with U.S. government initiatives ensures preferential access to contracts and funding.</li>
+                    <li><strong>Innovative R&D:</strong> Robust investment in research and development drives continuous technological advancements and product innovation.</li>
+                </ul>
+            </section>
+
+            <!-- Management Team -->
+            <section class="fade-in">
+                <h2>Management Team</h2>
+                <h3>CEO: Elon Musk</h3>
+                <p><strong>Background:</strong> Renowned entrepreneur and innovator, CEO of SpaceX and Tesla. His leadership brings a visionary approach to QuantumTech's strategic initiatives.</p>
+                <p><strong>Vision:</strong> To spearhead the convergence of quantum technologies and space exploration, positioning QuantumTech as a leader in the next technological revolution.</p>
+                <h3>Key Executives</h3>
+                <p><strong>CTO: Dr. Ada Lovelace</strong></p>
+                <p><strong>Background:</strong> Ph.D. in Quantum Computing from MIT, with extensive experience in semiconductor design and quantum algorithms.</p>
+                <p><strong>CFO: Jane Doe</strong></p>
+                <p><strong>Background:</strong> Over 20 years in financial management within the tech sector, specializing in scaling startups to global enterprises.</p>
+            </section>
+
+            <!-- Technology Edge -->
+            <section class="fade-in">
+                <h2>Technology Edge</h2>
+                <h3>1. Quantum Computing</h3>
+                <p><strong>Advanced Quantum Chips:</strong> Utilizing proprietary quantum chip designs that offer superior processing capabilities and energy efficiency.</p>
+                <h3>2. Semiconductor Innovation</h3>
+                <p><strong>High-Performance Chips:</strong> Developing next-generation semiconductor chips tailored for AI and high-speed data processing applications.</p>
+                <h3>3. Space Mining Technologies</h3>
+                <p><strong>Autonomous Mining Robots:</strong> Deploying AI-driven robots for efficient and sustainable extraction of lunar and asteroid resources.</p>
+                <h3>4. Sustainable Mining Practices</h3>
+                <p><strong>Eco-Friendly Operations:</strong> Implementing environmentally responsible mining techniques to minimize ecological impact both on Earth and in space.</p>
+            </section>
+
+            <!-- Market Size -->
+            <section class="fade-in">
+                <h2>Market Size and Growth</h2>
+                <h3>1. Quantum Computing Market</h3>
+                <p><strong>Value (2023):</strong> Estimated at $500 million.</p>
+                <p><strong>Projected Value (2028):</strong> Expected to reach $2.2 billion.</p>
+                <p><strong>CAGR:</strong> Approximately 36% from 2023 to 2028.</p>
+                <h3>2. Semiconductor Industry</h3>
+                <p><strong>Global Market Size (2023):</strong> $600 billion.</p>
+                <p><strong>Growth Rate:</strong> Projected CAGR of 5% from 2023 to 2028.</p>
+                <h3>3. Space Mining Sector</h3>
+                <p><strong>Emerging Market:</strong> Valued at $10 billion in 2023 with expectations to grow exponentially as technological and regulatory frameworks evolve.</p>
+            </section>
+
+            <!-- SWOT Analysis -->
+            <section class="fade-in">
+                <h2>SWOT Analysis</h2>
+                <h3>Strengths</h3>
+                <ul>
+                    <li>Integrated portfolio across multiple high-growth tech sectors.</li>
+                    <li>Strong leadership with visionary executives.</li>
+                    <li>Strategic government partnerships and favorable policies.</li>
+                </ul>
+                <h3>Weaknesses</h3>
+                <ul>
+                    <li>High R&D costs associated with cutting-edge technologies.</li>
+                    <li>Dependence on government contracts for a significant portion of revenue.</li>
+                    <li>Complex regulatory environment for space mining operations.</li>
+                </ul>
+                <h3>Opportunities</h3>
+                <ul>
+                    <li>Expanding quantum computing applications across industries.</li>
+                    <li>Growing demand for advanced semiconductors in AI and IoT devices.</li>
+                    <li>Potential resource acquisition from the Moon and asteroids.</li>
+                    <li>Increasing global interest in sustainable and autonomous mining technologies.</li>
+                </ul>
+                <h3>Threats</h3>
+                <ul>
+                    <li>Intense competition from established and emerging tech firms.</li>
+                    <li>Technological obsolescence due to rapid innovation cycles.</li>
+                    <li>Geopolitical tensions impacting international space collaborations.</li>
+                    <li>Regulatory changes that may limit space mining and quantum technology applications.</li>
+                </ul>
+            </section>
+
+            <!-- Risk Factors -->
+            <section class="fade-in">
+                <h2>Risk Factors</h2>
+                <ul>
+                    <li><strong>Regulatory Uncertainty:</strong> Changes in space mining laws and international treaties could impact operational capabilities.</li>
+                    <li><strong>Technological Challenges:</strong> High complexity in developing and scaling quantum and semiconductor technologies.</li>
+                    <li><strong>Market Volatility:</strong> Fluctuations in demand for semiconductors and quantum computing services.</li>
+                    <li><strong>Dependency on Leadership:</strong> Heavy reliance on Elon Musk's leadership and strategic direction.</li>
+                    <li><strong>Operational Risks:</strong> Challenges associated with autonomous mining operations in hostile space environments.</li>
+                </ul>
+            </section>
+
+            <!-- Future Outlook -->
+            <section class="fade-in">
+                <h2>Future Outlook</h2>
+                <p>QuantumTech Corp. is poised to lead the convergence of quantum computing, semiconductor innovation, and space mining technologies. With sustained investment in R&D, strategic partnerships, and favorable government policies, the company is well-positioned to capitalize on emerging opportunities and navigate the complexities of high-tech industries.</p>
+                <h3>Key Monitoring Points</h3>
+                <ul>
+                    <li><strong>Technological Advancements:</strong> Progress in quantum chip development and autonomous mining technologies.</li>
+                    <li><strong>Regulatory Developments:</strong> Evolution of space mining laws and international treaties.</li>
+                    <li><strong>Market Demand:</strong> Growth in demand for advanced semiconductors and quantum computing solutions.</li>
+                    <li><strong>Strategic Partnerships:</strong> Expansion of collaborations with government agencies and research institutions.</li>
+                    <li><strong>Financial Performance:</strong> Revenue growth, profitability, and cash flow management.</li>
+                </ul>
+            </section>
+
+            <!-- Conclusion -->
+            <section class="fade-in">
+                <h2>Conclusion</h2>
+                <p>QuantumTech Corp. represents a compelling investment opportunity at the intersection of multiple high-growth sectors. The company's strategic alignment with governmental initiatives, coupled with its innovative technological portfolio, positions it for significant advancements and market leadership. Investors should consider QuantumTech's robust R&D pipeline, strategic partnerships, and leadership vision as key factors driving its potential for long-term success. However, it's crucial to remain cognizant of the regulatory and technological risks inherent in the company's diverse operational areas.</p>
+                <h3>Key Monitoring Points</h3>
+                <ul>
+                    <li><strong>Strategic Execution:</strong> Implementation of quantum and space mining technologies.</li>
+                    <li><strong>Financial Health:</strong> Monitoring revenue streams, profitability, and cash reserves.</li>
+                    <li><strong>Regulatory Environment:</strong> Adapting to changes in space mining laws and international agreements.</li>
+                    <li><strong>Technological Innovation:</strong> Staying ahead of competitors through continuous innovation.</li>
+                    <li><strong>Market Dynamics:</strong> Responding to shifts in demand for quantum computing and semiconductors.</li>
+                </ul>
+            </section>
+
+            <!-- Disclaimer -->
+            <section class="fade-in">
+                <h2>Disclaimer</h2>
+                <p>This report is for informational purposes only and does not constitute financial advice or a recommendation to buy or sell any securities. The information provided is based on sources believed to be reliable as of the date of publication. Investors should conduct their own due diligence and consult financial advisors before making investment decisions. Market conditions and company circumstances may have changed since the time of this report.</p>
+            </section>
+        </main>
+        <footer>
+            &copy; 2024 QuantumTech Corp. All rights reserved.
+        </footer>
+    </div>
+
+    <!-- Floating Banana Image -->
+    <img src="images/banana.png" alt="Floating Banana" class="floating-banana" aria-hidden="true">
+
+    <script>
+        // Smooth scroll functionality
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetElement = document.querySelector(this.getAttribute('href'));
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Fade in elements on scroll
+        const faders = document.querySelectorAll('.fade-in');
+
+        const appearOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const appearOnScroll = new IntersectionObserver(function(entries, appearOnScroll) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('show');
+                    appearOnScroll.unobserve(entry.target);
+                }
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => {
+            appearOnScroll.observe(fader);
+        });
+    </script>
+</body>
+</html>

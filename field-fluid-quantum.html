@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Quantum Field Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 12px;
+            max-width: 90vw;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0,255,255,0.2);
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        button {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 10px rgba(0,255,255,0.3);
+        }
+        button.active {
+            background: rgba(0,255,255,0.3);
+            box-shadow: 0 0 15px rgba(0,255,255,0.5);
+        }
+        input[type="range"] {
+            width: 120px;
+            accent-color: cyan;
+        }
+        .value-display {
+            min-width: 40px;
+            text-align: right;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div class="control-group">
+            <button id="fieldMode">Field</button>
+            <button id="fluidMode">Fluid</button>
+            <button id="quantumMode">Quantum</button>
+        </div>
+        <div class="control-group">
+            <label>Energy:</label>
+            <input type="range" id="energySlider" min="0" max="100" value="50">
+            <span class="value-display" id="energyValue">50%</span>
+        </div>
+        <div class="control-group">
+            <label>Particles:</label>
+            <input type="range" id="particleSlider" min="1000" max="20000" value="5000">
+            <span class="value-display" id="particleValue">5000</span>
+        </div>
+        <div class="control-group">
+            <label>Size:</label>
+            <input type="range" id="sizeSlider" min="1" max="500" value="100">
+            <span class="value-display" id="sizeValue">100%</span>
+        </div>
+        <button id="resetBtn">Reset</button>
+    </div>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let particles = [];
+        let fields = [];
+        let mode = 'quantum';
+        let frame = 0;
+        let mouseX = 0;
+        let mouseY = 0;
+        let mousePressed = false;
+        let lastTime = performance.now();
+        let deltaTime = 0;
+        
+        class Field {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.charge = Math.random() * 2 - 1;
+                this.strength = Math.random() * 50 + 50;
+                this.phase = Math.random() * Math.PI * 2;
+            }
+            
+            update() {
+                this.phase += deltaTime * 0.001;
+                this.strength = 50 + Math.sin(this.phase) * 25;
+            }
+        }
+        
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.mass = Math.random() * 0.8 + 0.2;
+                this.charge = Math.random() * 2 - 1;
+                this.life = Math.random() * 100 + 100;
+                this.maxLife = this.life;
+                this.quantum = Math.random() * Math.PI * 2;
+                this.baseSize = Math.random() * 2 + 1;
+            }
+            
+            update() {
+                const energy = document.getElementById('energySlider').value / 50;
+                const sizeScale = document.getElementById('sizeSlider').value / 100;
+                
+                switch(mode) {
+                    case 'field':
+                        this.updateField(energy);
+                        break;
+                    case 'fluid':
+                        this.updateFluid(energy);
+                        break;
+                    case 'quantum':
+                        this.updateQuantum(energy);
+                        break;
+                }
+                
+                this.x += this.vx * deltaTime * 0.05;
+                this.y += this.vy * deltaTime * 0.05;
+                
+                // Damping
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+                
+                // Boundaries
+                if (this.x < 0) { this.x = canvas.width; this.reset(); }
+                if (this.x > canvas.width) { this.x = 0; this.reset(); }
+                if (this.y < 0) { this.y = canvas.height; this.reset(); }
+                if (this.y > canvas.height) { this.y = 0; this.reset(); }
+                
+                this.life--;
+                if (this.life < 0) this.reset();
+                
+                this.size = this.baseSize * sizeScale;
+            }
+            
+            updateField(energy) {
+                fields.forEach(field => {
+                    const dx = this.x - field.x;
+                    const dy = this.y - field.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const force = (field.strength * this.charge * field.charge) / (dist * dist);
+                    
+                    this.vx -= (dx / dist) * force * 0.1 * energy;
+                    this.vy -= (dy / dist) * force * 0.1 * energy;
+                });
+            }
+            
+            updateFluid(energy) {
+                const angle = frame * 0.02 + (this.x * this.y) * 0.0001;
+                this.vx += Math.cos(angle) * 0.1 * energy;
+                this.vy += Math.sin(angle) * 0.1 * energy;
+                
+                if (mousePressed) {
+                    const dx = mouseX - this.x;
+                    const dy = mouseY - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const force = 50 / (dist + 1);
+                    this.vx += (dx / dist) * force * energy;
+                    this.vy += (dy / dist) * force * energy;
+                }
+            }
+            
+            updateQuantum(energy) {
+                this.quantum += 0.1 * energy * deltaTime * 0.05;
+                const wave = Math.sin(this.quantum + this.x * 0.02) * Math.cos(this.quantum + this.y * 0.02);
+                this.vx += wave * 0.5 * energy;
+                this.vy += wave * 0.5 * energy;
+                
+                if (mousePressed) {
+                    const dx = mouseX - this.x;
+                    const dy = mouseY - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const force = Math.sin(dist * 0.1 - frame * 0.1) * 50 / (dist + 1);
+                    this.vx += (dx / dist) * force * 0.02 * energy;
+                    this.vy += (dy / dist) * force * 0.02 * energy;
+                }
+            }
+            
+            draw() {
+                const energy = document.getElementById('energySlider').value / 50;
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                const hue = (speed * 50 + frame) % 360;
+                const lifeRatio = this.life / this.maxLife;
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * lifeRatio, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${hue}, 100%, ${50 + speed * 20}%, ${lifeRatio})`;
+                ctx.fill();
+                
+                if (mode === 'quantum' && energy > 1) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 2 * lifeRatio, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${hue + 180}, 100%, 50%, ${lifeRatio * 0.1})`;
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function updateParticleCount() {
+            const count = parseInt(document.getElementById('particleSlider').value);
+            document.getElementById('particleValue').textContent = count;
+            
+            if (particles.length < count) {
+                const toAdd = count - particles.length;
+                for (let i = 0; i < toAdd; i++) {
+                    particles.push(new Particle());
+                }
+            } else if (particles.length > count) {
+                particles.splice(count);
+            }
+        }
+        
+        function animate(currentTime) {
+            deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            frame++;
+            
+            fields.forEach(field => field.update());
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Event Listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        canvas.addEventListener('mousedown', () => {
+            mousePressed = true;
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            mousePressed = false;
+        });
+        
+        ['energySlider', 'sizeSlider'].forEach(id => {
+            const slider = document.getElementById(id);
+            const display = document.getElementById(id.replace('Slider', 'Value'));
+            slider.addEventListener('input', () => {
+                display.textContent = slider.value + '%';
+            });
+        });
+        
+        document.getElementById('particleSlider').addEventListener('input', updateParticleCount);
+        
+        document.getElementById('fieldMode').addEventListener('click', () => {
+            mode = 'field';
+            updateButtons();
+        });
+        
+        document.getElementById('fluidMode').addEventListener('click', () => {
+            mode = 'fluid';
+            updateButtons();
+        });
+        
+        document.getElementById('quantumMode').addEventListener('click', () => {
+            mode = 'quantum';
+            updateButtons();
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            particles.forEach(p => p.reset());
+            fields = [];
+            for (let i = 0; i < 5; i++) {
+                fields.push(new Field(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+            }
+        });
+        
+        function updateButtons() {
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(mode + 'Mode').classList.add('active');
+        }
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Initial setup
+        updateParticleCount();
+        updateButtons();
+        document.getElementById('resetBtn').click();
+        animate(performance.now());
+    </script>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRIVARU Holding Limited ($SVMH) Due Diligence</title>
+    <style>
+        :root {
+            --bg-primary: #000;
+            --bg-secondary: #111;
+            --text-primary: #fff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --accent: #005288;
+            --accent-hover: #3474b5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Helvetica Neue', Arial, Verdana, sans-serif;
+            line-height: 1.6;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://srivaru.com/wp-content/uploads/2020/02/prana.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(transparent, var(--bg-primary));
+        }
+
+        h1 {
+            font-size: 4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .disclaimer {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        section {
+            padding: 80px 0;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+
+        h2 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        h3 {
+            color: var(--text-primary);
+            margin: 30px 0 15px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        h4 {
+            color: var(--accent-hover);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        ul, ol {
+            padding-left: 40px;
+            margin: 20px 0;
+        }
+
+        li {
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 8px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            background: var(--accent);
+        }
+
+        .stat-box h4 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-hover);
+        }
+
+        .stat-box p {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .scroll-prompt {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-15px);
+            }
+            60% {
+                transform: translateY(-7px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            h2 {
+                font-size: 2em;
+            }
+
+            section {
+                padding: 50px 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Fade-in effect */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .fade-in.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SRIVARU Holding Limited</h1>
+        <p class="disclaimer">Not Financial Advice (NFA)</p>
+        <p class="disclaimer">Comprehensive Due Diligence Report</p>
+        <div class="scroll-prompt">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+            </svg>
+        </div>
+    </header>
+
+    <div class="container">
+        <section id="executive-summary" class="fade-in">
+            <h2>Executive Summary</h2>
+            <p>SRIVARU Holding Limited (<strong>$SVMH</strong>) is an innovative electric vehicle (EV) company based in India, specializing in the design and manufacture of high-performance electric motorcycles. With a mission to revolutionize the Indian two-wheeler market, SRIVARU aims to provide sustainable, efficient, and technologically advanced electric motorcycles that cater to the needs of modern commuters.</p>
+        </section>
+
+        <section id="company-overview" class="fade-in">
+            <h2>Company Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h4>Founded</h4>
+                    <p>2018</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Headquarters</h4>
+                    <p>Coimbatore, Tamil Nadu, India</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Founder & CEO</h4>
+                    <p>Dr. Mohan Ramasamy</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Market Focus</h4>
+                    <p>Electric Motorcycles</p>
+                </div>
+            </div>
+            <p>SRIVARU Holding Limited is committed to accelerating the adoption of electric vehicles in India by offering affordable and high-quality electric motorcycles. The company's flagship product, the PRANA electric motorcycle, combines performance, technology, and sustainability.</p>
+        </section>
+
+        <section id="recent-developments" class="fade-in">
+            <h2>Recent Developments</h2>
+            <h3>1. Product Launch</h3>
+            <ul>
+                <li><strong>PRANA Electric Motorcycle:</strong> Introduction of the PRANA, offering high performance, extended range, and advanced features tailored for the Indian market.</li>
+            </ul>
+            <h3>2. Strategic Partnerships</h3>
+            <ul>
+                <li><strong>Battery Suppliers:</strong> Collaborations with leading battery manufacturers to ensure high-quality and reliable battery systems.</li>
+                <li><strong>Technology Partners:</strong> Partnerships to integrate IoT and connectivity features into their motorcycles.</li>
+            </ul>
+            <h3>3. Expansion Plans</h3>
+            <ul>
+                <li><strong>Manufacturing Capacity:</strong> Plans to expand production facilities to meet growing demand.</li>
+                <li><strong>Dealership Network:</strong> Establishing a nationwide dealership and service network.</li>
+            </ul>
+        </section>
+
+        <section id="financial-analysis" class="fade-in">
+            <h2>Financial Analysis</h2>
+            <p>As a private company, detailed financial information is not publicly available. However, SRIVARU Holding Limited has engaged in fundraising activities to support its expansion and product development efforts. The company aims to attract investors interested in the rapidly growing EV sector in India.</p>
+        </section>
+
+        <section id="macro-trends" class="fade-in">
+            <h2>Macro Trends Favoring SRIVARU</h2>
+            <h3>1. Government Incentives</h3>
+            <p><strong>Policy Support:</strong> The Indian government has implemented initiatives like the FAME II scheme, offering subsidies and tax benefits to promote electric vehicle adoption.</p>
+            <h3>2. Rising Fuel Costs</h3>
+            <p><strong>Cost Savings:</strong> Increasing petrol prices make electric motorcycles a more economical choice for consumers over the long term.</p>
+            <h3>3. Environmental Concerns</h3>
+            <p><strong>Sustainability:</strong> Growing awareness of environmental issues encourages consumers to opt for zero-emission vehicles.</p>
+        </section>
+
+        <section id="competitive-landscape" class="fade-in">
+            <h2>Competitive Landscape</h2>
+            <h3>1. Major Competitors</h3>
+            <ul>
+                <li><strong>Revolt Motors:</strong> Known for AI-enabled electric motorcycles.</li>
+                <li><strong>Ather Energy:</strong> Offers smart electric scooters with advanced features.</li>
+                <li><strong>Bajaj Auto (Chetak EV):</strong> An established brand entering the EV space with electric scooters.</li>
+            </ul>
+            <h3>2. SRIVARU's Competitive Advantages</h3>
+            <ul>
+                <li><strong>Advanced Technology:</strong> Proprietary battery management systems and efficient motor technology.</li>
+                <li><strong>Affordable Pricing:</strong> Competitive pricing strategy to make EVs accessible to a broader market.</li>
+                <li><strong>High Performance:</strong> Focus on delivering performance comparable to traditional gasoline motorcycles.</li>
+            </ul>
+        </section>
+
+        <section id="management-team" class="fade-in">
+            <h2>Management Team</h2>
+            <h3>CEO: Dr. Mohan Ramasamy</h3>
+            <p><strong>Background:</strong> Founder and CEO with extensive experience in engineering and technology sectors.</p>
+            <p><strong>Vision:</strong> To make electric mobility mainstream in India through innovation and affordability.</p>
+        </section>
+
+        <section id="technology-edge" class="fade-in">
+            <h2>Technology Edge</h2>
+            <h3>1. Battery Technology</h3>
+            <p><strong>High-Density Batteries:</strong> Use of lithium-ion batteries for extended range and durability.</p>
+            <h3>2. Motor Efficiency</h3>
+            <p><strong>Advanced Motors:</strong> Development of efficient electric motors delivering high torque and power.</p>
+            <h3>3. Smart Features</h3>
+            <p><strong>Connectivity:</strong> Integration of IoT features for real-time monitoring and enhanced user experience.</p>
+        </section>
+
+        <section id="market-size" class="fade-in">
+            <h2>Market Size and Growth</h2>
+            <h3>1. Indian Two-Wheeler Market</h3>
+            <p><strong>Market Size:</strong> Over 21 million units sold annually, making it one of the largest two-wheeler markets globally.</p>
+            <h3>2. Electric Two-Wheeler Growth</h3>
+            <p><strong>Projected Growth:</strong> Expected to grow at a CAGR of over 40% in the next five years due to government support and rising consumer awareness.</p>
+        </section>
+
+        <section id="swot-analysis" class="fade-in">
+            <h2>SWOT Analysis</h2>
+            <h3>Strengths</h3>
+            <ul>
+                <li>Innovative product offerings tailored to market needs.</li>
+                <li>Alignment with government policies promoting EV adoption.</li>
+                <li>Strong leadership with a clear vision for the future.</li>
+            </ul>
+            <h3>Weaknesses</h3>
+            <ul>
+                <li>Limited brand recognition compared to established competitors.</li>
+                <li>Dependence on supply chain for critical components like batteries.</li>
+            </ul>
+            <h3>Opportunities</h3>
+            <ul>
+                <li>Expanding EV infrastructure, including charging stations.</li>
+                <li>Growing consumer acceptance of electric vehicles.</li>
+                <li>Potential to export to other emerging markets seeking sustainable transportation.</li>
+            </ul>
+            <h3>Threats</h3>
+            <ul>
+                <li>Intense competition from both startups and established manufacturers.</li>
+                <li>Regulatory changes that may affect EV incentives.</li>
+                <li>Rapid technological advancements by competitors.</li>
+            </ul>
+        </section>
+
+        <section id="risk-factors" class="fade-in">
+            <h2>Risk Factors</h2>
+            <ul>
+                <li><strong>Supply Chain Risks:</strong> Dependence on imported components may lead to production disruptions.</li>
+                <li><strong>Market Acceptance:</strong> Consumer hesitation due to range anxiety and limited charging infrastructure.</li>
+                <li><strong>Financial Risks:</strong> Significant capital investment required for expansion and R&D.</li>
+            </ul>
+        </section>
+
+        <section id="future-outlook" class="fade-in">
+            <h2>Future Outlook</h2>
+            <p>SRIVARU Holding Limited is well-positioned to capitalize on the growing demand for electric vehicles in India. With government support and increasing consumer interest in sustainable transportation, the company has significant growth potential. Success will depend on effective execution of expansion plans, technological innovation, and building a strong brand presence.</p>
+        </section>
+
+        <section id="conclusion" class="fade-in">
+            <h2>Conclusion</h2>
+            <p>SRIVARU Holding Limited represents a promising entrant in the Indian electric two-wheeler market. Its focus on high-performance electric motorcycles at affordable prices addresses key consumer needs. While challenges exist, particularly in terms of competition and market acceptance, the company's strategic positioning offers promising prospects.</p>
+            <h3>Key Monitoring Points</h3>
+            <ul>
+                <li><strong>Product Updates:</strong> Launch of new models and technological advancements.</li>
+                <li><strong>Expansion Progress:</strong> Establishment of manufacturing facilities and dealership networks.</li>
+                <li><strong>Regulatory Developments:</strong> Changes in government policies affecting the EV industry.</li>
+                <li><strong>Financial Milestones:</strong> Fundraising activities and financial performance indicators.</li>
+            </ul>
+        </section>
+
+        <section id="disclaimer" class="fade-in">
+            <h2>Disclaimer</h2>
+            <p>This report is for informational purposes only and does not constitute financial advice. Investors should conduct their own due diligence and consult financial advisors before making investment decisions.</p>
+        </section>
+    </div>
+
+    <script>
+        // Smooth scroll functionality
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Fade in elements on scroll
+        const faders = document.querySelectorAll('.fade-in');
+
+        const appearOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const appearOnScroll = new IntersectionObserver(function(
+            entries, 
+            appearOnScroll
+        ) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('show');
+                    appearOnScroll.unobserve(entry.target);
+                }
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => {
+            appearOnScroll.observe(fader);
+        });
+    </script>
+</body>
+</html>

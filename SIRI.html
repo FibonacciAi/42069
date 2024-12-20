@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sirius XM Holdings Inc. ($SIRI) Due Diligence</title>
+    <style>
+        :root {
+            --bg-primary: #000;
+            --bg-secondary: #111;
+            --text-primary: #fff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --accent: #005288;
+            --accent-hover: #3474b5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Helvetica Neue', Arial, Verdana, sans-serif;
+            line-height: 1.6;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://www.siriusxm.com/sites/sxm/files/2023-01/siriusxm-share-image.png');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(transparent, var(--bg-primary));
+        }
+
+        h1 {
+            font-size: 4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .disclaimer {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        section {
+            padding: 80px 0;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+
+        h2 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        h3 {
+            color: var(--text-primary);
+            margin: 30px 0 15px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        h4 {
+            color: var(--accent-hover);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        ul, ol {
+            padding-left: 40px;
+            margin: 20px 0;
+        }
+
+        li {
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 8px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            background: var(--accent);
+        }
+
+        .stat-box h4 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-hover);
+        }
+
+        .stat-box p {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .scroll-prompt {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-15px);
+            }
+            60% {
+                transform: translateY(-7px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            h2 {
+                font-size: 2em;
+            }
+
+            section {
+                padding: 50px 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Fade-in effect */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .fade-in.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sirius XM Holdings Inc.</h1>
+        <p class="disclaimer">Not Financial Advice (NFA)</p>
+        <p class="disclaimer">Comprehensive Due Diligence Report</p>
+        <div class="scroll-prompt">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+            </svg>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Executive Summary -->
+        <section id="executive-summary" class="fade-in">
+            <h2>Executive Summary</h2>
+            <p>Sirius XM Holdings Inc. (<strong>$SIRI</strong>) is the largest audio entertainment company in North America, offering satellite radio and online streaming services. The company delivers a diverse range of content, including music, sports, talk, news, comedy, and exclusive entertainment, reaching over 34 million subscribers. Through its subsidiaries, Sirius XM and Pandora, the company has established a strong foothold in both subscription-based and ad-supported audio markets.</p>
+        </section>
+
+        <!-- Company Overview -->
+        <section id="company-overview" class="fade-in">
+            <h2>Company Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h4>Founded</h4>
+                    <p>1990</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Headquarters</h4>
+                    <p>New York City, New York, USA</p>
+                </div>
+                <div class="stat-box">
+                    <h4>CEO</h4>
+                    <p>Jennifer Witz (Appointed January 2021)</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Market Focus</h4>
+                    <p>Satellite Radio, Streaming Services, Audio Entertainment</p>
+                </div>
+            </div>
+            <p>Sirius XM offers subscribers a wide array of content through its satellite and online platforms. The company's acquisition of Pandora in 2019 expanded its reach into the ad-supported streaming market, making it one of the largest audio entertainment providers. Sirius XM also offers connected vehicle services, providing safety, security, and convenience features to automotive partners and their customers.</p>
+        </section>
+
+        <!-- Recent Developments -->
+        <section id="recent-developments" class="fade-in">
+            <h2>Recent Developments & Market Relevance</h2>
+            <h3>1. Strategic Investments and Acquisitions</h3>
+            <ul>
+                <li><strong>Stitcher Acquisition (October 2020):</strong> Acquired Stitcher from The E.W. Scripps Company for $325 million, enhancing its position in the podcasting space. Stitcher operates a popular podcast app and produces original content.</li>
+                <li><strong>SoundCloud Investment (February 2020):</strong> Invested $75 million in SoundCloud, gaining exposure to a global platform with over 175 million users.</li>
+                <li><strong>Extended Content Partnerships:</strong> Renewed and expanded agreements with key personalities and organizations, including Howard Stern (through 2025), NFL, NBA, and MLB.</li>
+            </ul>
+
+            <h3>2. Technological Advancements</h3>
+            <ul>
+                <li><strong>360L Platform Expansion:</strong> Continued rollout of the next-generation Sirius XM with 360L platform, combining satellite and streaming content delivery for a more personalized user experience.</li>
+                <li><strong>Enhanced Streaming Services:</strong> Introduced new streaming plans and features, such as Pandora-powered personalized stations within the Sirius XM app.</li>
+                <li><strong>Connected Vehicle Services:</strong> Expanded offerings to include more safety and convenience features, leveraging data analytics and telematics.</li>
+            </ul>
+
+            <h3>3. Warren Buffett's Involvement</h3>
+            <ul>
+                <li><strong>Berkshire Hathaway's Stake in Liberty SiriusXM Group:</strong> As of the latest available filings up to my knowledge cutoff in September 2021, Berkshire Hathaway held significant positions in Liberty SiriusXM Group (NASDAQ: LSXMA, LSXMB, LSXMK), which owns a substantial stake in Sirius XM Holdings.</li>
+                <li><strong>Potential Corporate Restructuring:</strong> Liberty Media has considered restructuring efforts to simplify its ownership in Sirius XM. Investors closely watch these developments, as they may impact the valuation and ownership dynamics of Sirius XM Holdings.</li>
+                <li><strong>Implications for Investors:</strong> Warren Buffett's continued investment suggests confidence in Sirius XM's business model and growth prospects, potentially influencing other investors' perceptions.</li>
+            </ul>
+
+            <h3>4. Financial Initiatives</h3>
+            <ul>
+                <li><strong>Share Repurchase Program:</strong> Authorized additional repurchases, reflecting confidence in long-term growth and commitment to returning value to shareholders.</li>
+                <li><strong>Dividend Payments:</strong> Initiated quarterly dividends, demonstrating financial stability and generating income for investors.</li>
+            </ul>
+
+            <h3>5. Market Expansion</h3>
+            <ul>
+                <li><strong>International Presence:</strong> While primarily focused on North America, the company has explored opportunities to expand its services internationally, particularly through streaming platforms.</li>
+                <li><strong>Automotive Partnerships:</strong> Strengthened relationships with automakers, ensuring Sirius XM services are available in a broader range of vehicles, including electric and autonomous cars.</li>
+            </ul>
+        </section>
+
+        <!-- Financial Analysis -->
+        <section id="financial-analysis" class="fade-in">
+            <h2>Financial Analysis</h2>
+            <h3>1. Revenue Growth</h3>
+            <p><strong>Fiscal Year 2022 Revenue:</strong> Approximately $9.0 billion, up from $8.04 billion in 2021.</p>
+            <p><strong>Year-over-Year Growth:</strong> Steady growth driven by increases in subscriber revenue, advertising revenue from Pandora and podcasts, and connected vehicle services.</p>
+
+            <h3>2. Profitability</h3>
+            <p><strong>Net Income:</strong> Around $1.3 billion in 2022, indicating strong operational performance and effective cost management.</p>
+            <p><strong>EBITDA Margin:</strong> Maintained healthy adjusted EBITDA margins of approximately 30-35%, reflecting economies of scale and efficient operations.</p>
+
+            <h3>3. Cash Flow & Liquidity</h3>
+            <p><strong>Free Cash Flow:</strong> Generated significant free cash flow exceeding $1.6 billion, enabling investments in content, technology, and shareholder returns.</p>
+            <p><strong>Debt Levels:</strong> Managed debt responsibly, with a focus on maintaining a leverage ratio consistent with investment-grade credit metrics.</p>
+
+            <h3>4. Balance Sheet Strength</h3>
+            <p><strong>Total Assets:</strong> Approximately $11 billion as of December 31, 2022.</p>
+            <p><strong>Total Liabilities:</strong> Around $9 billion, including long-term debt and deferred revenue.</p>
+            <p><strong>Equity Position:</strong> Strong equity position supports ongoing operations and strategic initiatives.</p>
+        </section>
+
+        <!-- Macro Trends -->
+        <section id="macro-trends" class="fade-in">
+            <h2>Macro Trends Favoring Sirius XM</h2>
+            <h3>1. Growth in Audio Streaming</h3>
+            <p><strong>Consumer Behavior Shift:</strong> Increasing preference for on-demand and personalized audio content drives growth in streaming services.</p>
+            <p><strong>Podcast Popularity:</strong> Podcasts continue to gain traction, with an estimated 100 million monthly listeners in the U.S., providing opportunities for advertising and subscriber growth.</p>
+
+            <h3>2. Automotive Industry Evolution</h3>
+            <p><strong>Connected Vehicles:</strong> The rise of connected car technology integrates entertainment services like Sirius XM more deeply into the driving experience.</p>
+            <p><strong>Electric and Autonomous Vehicles:</strong> Partnerships with manufacturers of EVs and autonomous vehicles ensure inclusion in next-generation transportation.</p>
+
+            <h3>3. Advertising Market Shift</h3>
+            <p><strong>Digital Advertising Growth:</strong> Advertisers are reallocating budgets from traditional media to digital platforms, benefiting services like Pandora and podcast networks.</p>
+            <p><strong>Targeted Advertising:</strong> Advanced data analytics allow for personalized ad experiences, increasing effectiveness and revenue potential.</p>
+
+            <h3>4. Work-from-Home Trends</h3>
+            <p><strong>Increased Media Consumption:</strong> Remote work arrangements have led to more time spent on media consumption, including audio entertainment.</p>
+        </section>
+
+        <!-- Competitive Landscape -->
+        <section id="competitive-landscape" class="fade-in">
+            <h2>Competitive Landscape</h2>
+            <h3>1. Major Competitors</h3>
+            <ul>
+                <li><strong>Spotify Technology S.A.:</strong> Global leader in music streaming with a strong focus on podcasts and personalized playlists.</li>
+                <li><strong>Apple Music:</strong> Part of Apple's ecosystem, offering exclusive content and seamless integration with Apple devices.</li>
+                <li><strong>Amazon Music:</strong> Integrated with Amazon's Prime services and devices, expanding reach through voice-activated assistants like Alexa.</li>
+                <li><strong>iHeartMedia:</strong> Operates a large network of radio stations and a growing podcast platform.</li>
+            </ul>
+
+            <h3>2. Sirius XM's Competitive Advantages</h3>
+            <ul>
+                <li><strong>Exclusive Content:</strong> Offers unique programming, including high-profile personalities (Howard Stern, Kevin Hart), live sports (NFL, MLB, NBA), and original music channels.</li>
+                <li><strong>Automotive Integration:</strong> Factory-installed in approximately 80% of new vehicles sold in the U.S., ensuring a steady stream of potential subscribers.</li>
+                <li><strong>Diversified Revenue Streams:</strong> Combines subscription revenue with advertising revenue from Pandora and podcasts.</li>
+                <li><strong>Hybrid Delivery Model:</strong> Uses both satellite and streaming technologies, providing broad coverage and reliability.</li>
+            </ul>
+        </section>
+
+        <!-- Management Team -->
+        <section id="management-team" class="fade-in">
+            <h2>Management Team</h2>
+            <h3>CEO: Jennifer Witz</h3>
+            <p><strong>Background:</strong> Appointed CEO in January 2021. Previously served as President of Sales, Marketing, and Operations at Sirius XM.</p>
+            <p><strong>Experience:</strong> Over 18 years at Sirius XM, with extensive experience in driving subscriber growth and operational efficiency.</p>
+            <p><strong>Vision:</strong> Focused on expanding digital offerings, enhancing content, and leveraging technology to drive long-term growth.</p>
+
+            <h3>CFO: Sean Sullivan</h3>
+            <p><strong>Background:</strong> Joined Sirius XM in October 2020. Previously served as CFO at AMC Networks.</p>
+            <p><strong>Experience:</strong> Over 25 years in financial leadership roles within the media and entertainment industry.</p>
+            <p><strong>Role:</strong> Oversees financial strategy, capital allocation, and investor relations, aiming to optimize financial performance.</p>
+
+            <h3>Chief Content Officer: Scott Greenstein</h3>
+            <p><strong>Background:</strong> Responsible for programming and content development across Sirius XM and Pandora.</p>
+            <p><strong>Experience:</strong> Instrumental in securing exclusive content and talent, enhancing the company's competitive position.</p>
+        </section>
+
+        <!-- Technology Edge -->
+        <section id="technology-edge" class="fade-in">
+            <h2>Technology Edge</h2>
+            <h3>1. Satellite Infrastructure</h3>
+            <p><strong>Extensive Satellite Network:</strong> Operates a fleet of satellites providing nationwide coverage, ensuring reliable service even in areas without cellular connectivity.</p>
+            <p><strong>Redundancy and Reliability:</strong> Multiple satellites and ground stations enhance service continuity and quality.</p>
+
+            <h3>2. Streaming Platforms</h3>
+            <p><strong>Pandora Integration:</strong> Leverages Pandora's Music Genome Project for personalized recommendations and playlists.</p>
+            <p><strong>Cross-Platform Availability:</strong> Services accessible via web, mobile apps, smart speakers, and other connected devices.</p>
+
+            <h3>3. 360L Platform</h3>
+            <p><strong>Hybrid Content Delivery:</strong> Combines satellite and streaming capabilities to provide an enhanced user experience.</p>
+            <p><strong>Personalization Features:</strong> Offers on-demand content, voice search, and personalized recommendations within vehicles.</p>
+
+            <h3>4. Data Analytics</h3>
+            <p><strong>Targeted Advertising:</strong> Utilizes data analytics to deliver personalized ads on Pandora and podcast platforms, increasing effectiveness and revenue.</p>
+            <p><strong>Content Optimization:</strong> Analyzes listener behavior to refine programming and content offerings.</p>
+        </section>
+
+        <!-- Market Size -->
+        <section id="market-size" class="fade-in">
+            <h2>Market Size and Growth</h2>
+            <h3>1. Global Audio Streaming Market</h3>
+            <p><strong>Market Value (2022):</strong> Approximately $25 billion.</p>
+            <p><strong>Projected Value (2028):</strong> Expected to reach $45 billion, driven by increasing smartphone penetration and demand for on-demand content.</p>
+            <p><strong>CAGR:</strong> Approximately 10% from 2022 to 2028.</p>
+
+            <h3>2. Podcast Advertising Market</h3>
+            <p><strong>Market Size (2022):</strong> U.S. podcast advertising revenue estimated at $1.7 billion.</p>
+            <p><strong>Projected Growth:</strong> Expected to surpass $2.5 billion by 2025, reflecting a CAGR of over 20%.</p>
+
+            <h3>3. Connected Vehicle Market</h3>
+            <p><strong>Global Market Size (2022):</strong> Valued at approximately $63 billion.</p>
+            <p><strong>Projected Growth:</strong> Expected to reach $225 billion by 2027, at a CAGR of 29%.</p>
+        </section>
+
+        <!-- SWOT Analysis -->
+        <section id="swot-analysis" class="fade-in">
+            <h2>SWOT Analysis</h2>
+            <h3>Strengths</h3>
+            <ul>
+                <li>Strong brand recognition with a loyal subscriber base.</li>
+                <li>Diversified content offerings, including exclusive programming.</li>
+                <li>Extensive automotive partnerships ensuring market penetration.</li>
+                <li>Robust financial performance with consistent revenue and cash flow growth.</li>
+            </ul>
+
+            <h3>Weaknesses</h3>
+            <ul>
+                <li>High content acquisition costs impacting margins.</li>
+                <li>Dependence on the automotive industry for new subscribers.</li>
+                <li>Limited international presence compared to some competitors.</li>
+            </ul>
+
+            <h3>Opportunities</h3>
+            <ul>
+                <li>Expansion into international markets leveraging streaming platforms.</li>
+                <li>Growth in podcasting and original content production.</li>
+                <li>Technological advancements in connected and autonomous vehicles.</li>
+                <li>Potential corporate restructuring simplifying ownership and enhancing shareholder value.</li>
+            </ul>
+
+            <h3>Threats</h3>
+            <ul>
+                <li>Intense competition from global streaming giants with substantial resources.</li>
+                <li>Technological shifts reducing the reliance on satellite radio.</li>
+                <li>Regulatory changes affecting content distribution and advertising.</li>
+                <li>Changes in consumer preferences impacting subscription models.</li>
+            </ul>
+        </section>
+
+        <!-- Risk Factors -->
+        <section id="risk-factors" class="fade-in">
+            <h2>Risk Factors</h2>
+            <ul>
+                <li><strong>Market Saturation:</strong> Potential plateau in subscriber growth as the market matures.</li>
+                <li><strong>Content Costs:</strong> Escalating costs to secure exclusive content and talent may pressure margins.</li>
+                <li><strong>Technological Disruption:</strong> Emergence of new technologies may render current delivery models less competitive.</li>
+                <li><strong>Regulatory Risks:</strong> Changes in data privacy laws and FCC regulations could impact operations.</li>
+                <li><strong>Competitive Pressure:</strong> Aggressive strategies by competitors may erode market share.</li>
+                <li><strong>Dependency on Automotive Industry:</strong> Economic downturns or shifts in car ownership trends could affect subscriber acquisition.</li>
+            </ul>
+        </section>
+
+        <!-- Future Outlook -->
+        <section id="future-outlook" class="fade-in">
+            <h2>Future Outlook</h2>
+            <p>Sirius XM Holdings Inc. is well-positioned to capitalize on the growing demand for personalized and on-demand audio content. The company's strategic investments in podcasting and streaming platforms expand its reach beyond traditional satellite radio. Potential corporate restructuring involving Liberty Media could simplify ownership and potentially unlock shareholder value. Continued focus on exclusive content, technological innovation, and expansion into new markets will be critical for sustaining growth and competitiveness.</p>
+            <p>The involvement of prominent investors like Warren Buffett's Berkshire Hathaway underscores confidence in the company's long-term prospects. However, Sirius XM must navigate industry challenges, including intense competition and technological shifts, to maintain its leadership position.</p>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="conclusion" class="fade-in">
+            <h2>Conclusion</h2>
+            <p>Sirius XM Holdings Inc. presents a compelling investment opportunity in the dynamic audio entertainment industry. The company's diversified offerings, strong partnerships, and strategic initiatives position it for continued growth. Investors should monitor developments related to corporate restructuring, technological advancements, and competitive actions. While risks exist, particularly from competition and market saturation, Sirius XM's strengths and opportunities suggest potential for favorable long-term returns.</p>
+            <h3>Key Monitoring Points</h3>
+            <ul>
+                <li><strong>Subscriber Metrics:</strong> Trends in subscriber acquisition and churn rates across satellite and streaming platforms.</li>
+                <li><strong>Content Strategy:</strong> Acquisition of exclusive content and talent, as well as investments in original programming.</li>
+                <li><strong>Financial Performance:</strong> Revenue growth, profitability, free cash flow generation, and capital allocation decisions.</li>
+                <li><strong>Corporate Developments:</strong> Actions by Liberty Media and Berkshire Hathaway affecting ownership and corporate structure.</li>
+                <li><strong>Technological Innovations:</strong> Adoption of new technologies enhancing user experience and service delivery.</li>
+                <li><strong>Competitive Landscape:</strong> Strategies and performance of key competitors in the audio entertainment space.</li>
+                <li><strong>Regulatory Environment:</strong> Changes in regulations impacting data privacy, content distribution, and advertising.</li>
+            </ul>
+        </section>
+
+        <!-- Disclaimer -->
+        <section id="disclaimer" class="fade-in">
+            <h2>Disclaimer</h2>
+            <p>This report is for informational purposes only and does not constitute financial advice or a recommendation to buy or sell any securities. The information provided is based on sources believed to be reliable as of my knowledge cutoff in September 2021. Investors should conduct their own due diligence and consult financial advisors before making investment decisions. Market conditions and company circumstances may have changed since the time of this report.</p>
+        </section>
+    </div>
+
+    <script>
+        // Smooth scroll functionality
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Fade in elements on scroll
+        const faders = document.querySelectorAll('.fade-in');
+
+        const appearOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const appearOnScroll = new IntersectionObserver(function(
+            entries, 
+            appearOnScroll
+        ) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('show');
+                    appearOnScroll.unobserve(entry.target);
+                }
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => {
+            appearOnScroll.observe(fader);
+        });
+    </script>
+</body>
+</html>

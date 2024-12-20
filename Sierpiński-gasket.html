@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Enhanced Sierpiński Gasket Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+        body { 
+            margin: 0; 
+            background: #000;
+            overflow: hidden;
+            touch-action: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        canvas { 
+            display: block; 
+            touch-action: none;
+        }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 100%);
+            z-index: 1;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 100;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            opacity: 1;
+            transition: opacity 0.5s;
+            padding: 0 40px;
+        }
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            padding: 10px;
+            border-radius: 30px;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .control-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .control-btn:active {
+            background: rgba(255,255,255,0.25);
+            transform: scale(0.95);
+        }
+        #statsPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.8em;
+            background: rgba(0,0,0,0.2);
+            padding: 8px 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            z-index: 100;
+            text-align: right;
+        }
+        #colorControls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+        .color-row {
+            display: flex;
+            gap: 10px;
+        }
+        .color-btn {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .color-btn:active {
+            transform: scale(0.9);
+        }
+        #extraControls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #helpBtn {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 110;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+        #helpBtn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        #descPanel {
+            position: absolute;
+            top: 60px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.95);
+            font-size: 0.8em;
+            z-index: 110;
+            padding: 10px 20px;
+            display: none;
+            pointer-events: none;
+        }
+        #descPanel.visible {
+            display: block;
+            pointer-events: none;
+        }
+        #descPanel p {
+            max-width: 300px;
+            margin: 0 auto;
+            line-height: 1.4em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        #iterationsSlider {
+            width: 150px;
+        }
+        @media (max-width: 600px) {
+            .control-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            #statsPanel {
+                font-size: 0.7em;
+            }
+            #info {
+                font-size: 0.8em;
+            }
+        }
+        .hidden {
+            opacity: 0 !important;
+        }
+        #noWebGL {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1em;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div id="info">Swipe/drag to rotate | Pinch/scroll to zoom | Double-tap/click to reset & show info</div>
+    <div id="descPanel">
+        <p>The Sierpiński Tetrahedron (or 3D Sierpiński gasket) is a fractal formed by subdividing a tetrahedron and removing parts recursively. 
+        Adjust iterations to see complexity increase, and explore different views by rotating, zooming, and changing projections.</p>
+    </div>
+    <button id="helpBtn">?</button>
+    <div id="colorControls">
+        <div class="color-row">
+            <div class="color-btn" style="background: #00ff00" onclick="changeColor('#00ff00')"></div>
+            <div class="color-btn" style="background: #ff00ff" onclick="changeColor('#ff00ff')"></div>
+            <div class="color-btn" style="background: #00ffff" onclick="changeColor('#00ffff')"></div>
+        </div>
+        <input type="color" id="colorPicker" value="#00ff00" onchange="changeColor(this.value)">
+        <button class="control-btn" onclick="randomizeColor()">Random</button>
+    </div>
+    <div id="controls">
+        <input type="range" id="iterationsSlider" min="1" max="7" value="3" onchange="sliderChange()" />
+        <div id="extraControls">
+            <button class="control-btn" onclick="resetView()">Reset</button>
+            <button class="control-btn" onclick="toggleWireframe()">Wireframe</button>
+            <button class="control-btn" onclick="toggleCamera()">Camera: Persp/Ortho</button>
+            <button class="control-btn" onclick="downloadScreenshot()">Screenshot</button>
+        </div>
+    </div>
+    <div id="statsPanel">
+        Iterations: <span id="iterationCount">3</span><br>
+        Vertices: <span id="vertexCount">0</span>
+    </div>
+    <div id="noWebGL" style="display: none;">WebGL not supported in this browser.</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, gasket;
+        let currentIterations = 3;
+        let vertexCount = 0;
+        let isDragging = false;
+        let isInertiaActive = false;
+        let currentColor = '#00ff00';
+        let rotationVelocity = { x: 0, y: 0 };
+        let previousTouch = { x: 0, y: 0, time: 0 };
+        let previousPinchDistance = 0;
+        let lastTapTime = 0;
+        let wireframeMode = true;
+        let infoVisible = true;
+        let infoTimeout;
+        let autoRotate = false;
+        let idleTimeout;
+        let usePerspectiveCamera = true;
+        let perspCamera, orthoCamera;
+        let cameraDistance = 3;
+
+        const TOUCH_ROTATION_SPEED = 0.005;
+        const INERTIA_DECAY = 0.95;
+        const MAX_ITERATIONS = 7;
+        const MIN_ITERATIONS = 1;
+        const DOUBLE_TAP_DELAY = 300;
+        const AUTO_ROTATE_IDLE_TIME = 10000; // 10 seconds
+
+        if (!window.WebGLRenderingContext) {
+            document.getElementById('noWebGL').style.display = 'block';
+        }
+
+        function createTetrahedron(iterations, center, size) {
+            if (iterations === 0) {
+                const geometry = new THREE.TetrahedronGeometry(size * 0.5);
+                const material = new THREE.MeshPhongMaterial({
+                    color: currentColor,
+                    wireframe: wireframeMode,
+                    transparent: true,
+                    opacity: 0.9,
+                    shininess: 80
+                });
+                const tetra = new THREE.Mesh(geometry, material);
+                tetra.position.copy(center);
+                gasket.add(tetra);
+                vertexCount += geometry.attributes.position.count;
+                return;
+            }
+
+            const newSize = size / 2;
+            const height = Math.sqrt(2/3) * size;
+            const offset = newSize / Math.sqrt(3);
+            
+            // Top small tetra
+            createTetrahedron(iterations - 1, 
+                new THREE.Vector3(center.x, center.y + height/2, center.z),
+                newSize);
+
+            // Base tetrahedrons
+            const angle = Math.PI * 2 / 3;
+            for (let i = 0; i < 3; i++) {
+                const x = center.x + offset * Math.cos(i * angle);
+                const y = center.y - height / 4;
+                const z = center.z + offset * Math.sin(i * angle);
+                createTetrahedron(iterations - 1, new THREE.Vector3(x, y, z), newSize);
+            }
+        }
+
+        function createSierpinskiGasket(iterations) {
+            if (gasket) scene.remove(gasket);
+            
+            gasket = new THREE.Group();
+            vertexCount = 0;
+            createTetrahedron(iterations, new THREE.Vector3(0, 0, 0), 1);
+            scene.add(gasket);
+            
+            document.getElementById('vertexCount').textContent = vertexCount;
+            document.getElementById('iterationCount').textContent = iterations;
+        }
+
+        function getPinchDistance(event) {
+            const dx = event.touches[0].pageX - event.touches[1].pageX;
+            const dy = event.touches[0].pageY - event.touches[1].pageY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function onTouchStart(event) {
+            event.preventDefault();
+            isDragging = true;
+            if (event.touches.length === 1) {
+                previousTouch.x = event.touches[0].pageX;
+                previousTouch.y = event.touches[0].pageY;
+                previousTouch.time = performance.now();
+            } else if (event.touches.length === 2) {
+                previousPinchDistance = getPinchDistance(event);
+            }
+            userInteracted();
+        }
+
+        function onTouchMove(event) {
+            event.preventDefault();
+            if (!isDragging) return;
+
+            if (event.touches.length === 1) {
+                const touch = event.touches[0];
+                const currentTime = performance.now();
+                const deltaTime = currentTime - previousTouch.time;
+                
+                const deltaX = touch.pageX - previousTouch.x;
+                const deltaY = touch.pageY - previousTouch.y;
+
+                rotationVelocity.x = deltaY * TOUCH_ROTATION_SPEED / (deltaTime || 1);
+                rotationVelocity.y = deltaX * TOUCH_ROTATION_SPEED / (deltaTime || 1);
+
+                gasket.rotation.x += deltaY * TOUCH_ROTATION_SPEED;
+                gasket.rotation.y += deltaX * TOUCH_ROTATION_SPEED;
+
+                previousTouch = { x: touch.pageX, y: touch.pageY, time: currentTime };
+            } else if (event.touches.length === 2) {
+                const currentPinchDistance = getPinchDistance(event);
+                const pinchDelta = currentPinchDistance - previousPinchDistance;
+                
+                camera.position.z = Math.max(1, Math.min(10, camera.position.z - pinchDelta * 0.005));
+                previousPinchDistance = currentPinchDistance;
+            }
+            userInteracted();
+        }
+
+        function onTouchEnd(event) {
+            if (event.touches.length === 0) {
+                const currentTime = performance.now();
+                if (currentTime - lastTapTime < DOUBLE_TAP_DELAY) {
+                    // Double tap
+                    resetView();
+                    toggleInfoVisibility(true);
+                }
+                lastTapTime = currentTime;
+
+                isInertiaActive = true;
+                requestAnimationFrame(applyInertia);
+            }
+            isDragging = false;
+        }
+
+        function onMouseDown(event) {
+            isDragging = true;
+            previousTouch.x = event.clientX;
+            previousTouch.y = event.clientY;
+            previousTouch.time = performance.now();
+            userInteracted();
+        }
+
+        function onMouseMove(event) {
+            if (!isDragging) return;
+
+            const currentTime = performance.now();
+            const deltaTime = currentTime - previousTouch.time;
+            
+            const deltaX = event.clientX - previousTouch.x;
+            const deltaY = event.clientY - previousTouch.y;
+
+            rotationVelocity.x = deltaY * TOUCH_ROTATION_SPEED / (deltaTime || 1);
+            rotationVelocity.y = deltaX * TOUCH_ROTATION_SPEED / (deltaTime || 1);
+
+            gasket.rotation.x += deltaY * TOUCH_ROTATION_SPEED;
+            gasket.rotation.y += deltaX * TOUCH_ROTATION_SPEED;
+
+            previousTouch = { x: event.clientX, y: event.clientY, time: currentTime };
+            userInteracted();
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+            isInertiaActive = true;
+            requestAnimationFrame(applyInertia);
+        }
+
+        function onWheel(event) {
+            event.preventDefault();
+            camera.position.z = Math.max(1, Math.min(10, camera.position.z + event.deltaY * 0.001));
+            userInteracted();
+        }
+
+        function applyInertia() {
+            if (!isInertiaActive) return;
+
+            if (Math.abs(rotationVelocity.x) > 0.0001 || Math.abs(rotationVelocity.y) > 0.0001) {
+                gasket.rotation.x += rotationVelocity.x;
+                gasket.rotation.y += rotationVelocity.y;
+
+                rotationVelocity.x *= INERTIA_DECAY;
+                rotationVelocity.y *= INERTIA_DECAY;
+
+                requestAnimationFrame(applyInertia);
+            } else {
+                isInertiaActive = false;
+            }
+        }
+
+        function setupEventListeners() {
+            renderer.domElement.addEventListener('touchstart', onTouchStart, false);
+            renderer.domElement.addEventListener('touchmove', onTouchMove, false);
+            renderer.domElement.addEventListener('touchend', onTouchEnd, false);
+            renderer.domElement.addEventListener('mousedown', onMouseDown, false);
+            renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+            renderer.domElement.addEventListener('mouseup', onMouseUp, false);
+            renderer.domElement.addEventListener('wheel', onWheel, false);
+            window.addEventListener('resize', onWindowResize, false);
+            document.getElementById('helpBtn').addEventListener('click', onHelpBtnClick);
+        }
+
+        function onWindowResize() {
+            if (usePerspectiveCamera) {
+                perspCamera.aspect = window.innerWidth / window.innerHeight;
+                perspCamera.updateProjectionMatrix();
+            } else {
+                updateOrthoCamera();
+            }
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function changeColor(color) {
+            currentColor = color;
+            createSierpinskiGasket(currentIterations);
+            userInteracted();
+        }
+
+        function randomizeColor() {
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            document.getElementById('colorPicker').value = randomColor;
+            changeColor(randomColor);
+        }
+
+        function resetView() {
+            camera.position.z = 3;
+            rotationVelocity = { x: 0, y: 0 };
+            if (gasket) {
+                gasket.rotation.set(0, 0, 0);
+            }
+            userInteracted();
+        }
+
+        function sliderChange() {
+            const val = parseInt(document.getElementById('iterationsSlider').value, 10);
+            if (val !== currentIterations && val >= MIN_ITERATIONS && val <= MAX_ITERATIONS) {
+                currentIterations = val;
+                createSierpinskiGasket(currentIterations);
+            }
+            userInteracted();
+        }
+
+        function toggleWireframe() {
+            wireframeMode = !wireframeMode;
+            createSierpinskiGasket(currentIterations);
+            userInteracted();
+        }
+
+        function toggleCamera() {
+            usePerspectiveCamera = !usePerspectiveCamera;
+            if (usePerspectiveCamera) {
+                camera = perspCamera;
+            } else {
+                updateOrthoCamera();
+                camera = orthoCamera;
+            }
+            userInteracted();
+        }
+
+        function updateOrthoCamera() {
+            const aspect = window.innerWidth / window.innerHeight;
+            const orthoSize = cameraDistance;
+            orthoCamera.left = -orthoSize * aspect;
+            orthoCamera.right = orthoSize * aspect;
+            orthoCamera.top = orthoSize;
+            orthoCamera.bottom = -orthoSize;
+            orthoCamera.updateProjectionMatrix();
+        }
+
+        function userInteracted() {
+            // Stop auto-rotation if user interacts
+            autoRotate = false;
+            clearTimeout(idleTimeout);
+            idleTimeout = setTimeout(() => {
+                autoRotate = true;
+            }, AUTO_ROTATE_IDLE_TIME);
+            resetInfoFade();
+        }
+
+        function resetInfoFade() {
+            if (!infoVisible) return;
+            clearTimeout(infoTimeout);
+            infoTimeout = setTimeout(() => {
+                toggleInfoVisibility(false);
+            }, 5000);
+        }
+
+        function toggleInfoVisibility(visible) {
+            infoVisible = visible;
+            const info = document.getElementById('info');
+            if (visible) {
+                info.classList.remove('hidden');
+                resetInfoFade();
+            } else {
+                info.classList.add('hidden');
+            }
+        }
+
+        function onHelpBtnClick() {
+            const descPanel = document.getElementById('descPanel');
+            if (descPanel.classList.contains('visible')) {
+                descPanel.classList.remove('visible');
+            } else {
+                descPanel.classList.add('visible');
+            }
+            // Show info again when help is toggled
+            toggleInfoVisibility(true);
+        }
+
+        function downloadScreenshot() {
+            renderer.domElement.toBlob(function(blob) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'sierpinski_gasket.png';
+                link.click();
+                URL.revokeObjectURL(link.href);
+            });
+            userInteracted();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (autoRotate) {
+                gasket.rotation.y += 0.001;
+            }
+            renderer.render(scene, camera);
+        }
+
+        function init() {
+            if (!window.WebGLRenderingContext) return; 
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            // Perspective camera
+            perspCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            perspCamera.position.z = 3;
+
+            // Orthographic camera
+            orthoCamera = new THREE.OrthographicCamera();
+            camera = perspCamera;
+
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            createSierpinskiGasket(currentIterations);
+            setupEventListeners();
+            userInteracted(); // Start idle timer
+            
+            animate();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            init();
+        });
+    </script>
+</body>
+</html>

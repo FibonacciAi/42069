@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slick Index Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e1e2f, #2c3e50);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            animation: fadeIn 2s ease-in-out;
+        }
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .link {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MOASS Reports Index</h1>
+        <div class="links">
+            <a class="link" href="https://fibonacciai.github.io/MOASS-REPORTS/Sierpiński-gasket.html" target="_blank">
+                Sierpiński Gasket Visualization
+            </a>
+            <a class="link" href="https://fibonacciai.github.io/MOASS-REPORTS/frequency.html" target="_blank">
+                Frequency Analysis
+            </a>
+            <a class="link" href="https://fibonacciai.github.io/MOASS-REPORTS/field-fluid-quantum.html" target="_blank">
+                Quantum Fluid Dynamics
+            </a>
+        </div>
+        <div class="footer">
+            Made with ❤️ by FibonacciAI
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HD Fractal Fire</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+        #audioControl {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            color: #0f0;
+            background: rgba(0,20,0,0.7);
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            border: 1px solid #0f0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        #audioControl:hover {
+            background: rgba(0,40,0,0.9);
+            transform: scale(1.05);
+        }
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #0f0;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div id="audioControl">Enable Audio Reactive Mode</div>
+    <div id="status"></div>
+    <script type="x-shader/x-fragment" id="fractalFireShader">
+        precision highp float;
+        uniform vec2 resolution;
+        uniform float time;
+        uniform float audioLevel;
+        uniform float audioPeak;
+        uniform float audioHigh;
+        uniform float audioMid;
+        uniform float audioLow;
+
+        #define ITERATIONS 12
+        #define NOISE_SCALE 2.2
+        
+        float rand(vec2 n) { 
+            return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+        }
+
+        float noise(vec2 p) {
+            vec2 ip = floor(p);
+            vec2 u = fract(p);
+            u = u*u*(3.0-2.0*u);
+            
+            float res = mix(
+                mix(rand(ip), rand(ip+vec2(1.0,0.0)), u.x),
+                mix(rand(ip+vec2(0.0,1.0)), rand(ip+vec2(1.0,1.0)), u.x), u.y);
+            return res*res;
+        }
+
+        float fbm(vec2 p) {
+            float sum = 0.0;
+            float amp = 1.0;
+            float freq = 1.0;
+            
+            for(int i=0; i<ITERATIONS; i++) {
+                sum += amp * noise(p * freq);
+                freq *= 2.1 + audioHigh * 0.5;
+                amp *= 0.5 + audioMid * 0.15;
+                p += vec2(sum * 0.15 * audioLevel);
+                p.x += time * 0.1 * (float(i) * 0.1);
+            }
+            return sum;
+        }
+
+        vec3 greenFirePalette(float t) {
+            // Enhanced color palette with more variation
+            vec3 base = vec3(0.0, 1.0, 0.3) * (1.0 + audioLow * 0.2);
+            vec3 spark = vec3(0.2, 1.0, 0.1) * (1.0 + audioHigh * 0.3);
+            vec3 core = vec3(0.1, 0.9, 0.2) * (1.0 + audioMid * 0.25);
+            
+            float sparkIntensity = pow(t, 5.0) * (1.0 + audioPeak * 2.5);
+            float coreIntensity = pow(t, 2.0) * (1.0 + audioLevel);
+            
+            return mix(base, mix(core, spark, sparkIntensity), coreIntensity);
+        }
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy - 0.5 * resolution.xy) / resolution.y;
+            
+            float timeScale = time * (0.2 + audioLow * 0.4);
+            vec2 p = uv * NOISE_SCALE;
+            p.y += timeScale * 0.5;
+            
+            // Enhanced fractal detail
+            float noise = fbm(p);
+            noise += fbm(p + vec2(noise * 0.6 + audioMid));
+            noise += fbm(p * 1.5 - vec2(time * 0.1)) * 0.5;
+            
+            float shape = 1.0 - length(uv) * (2.0 - audioLevel);
+            noise *= shape;
+            
+            vec3 color = greenFirePalette(noise);
+            color *= 1.0 + audioLevel * 0.7;
+            
+            // Enhanced edge definition
+            float edge = smoothstep(0.1, 0.4, noise);
+            color *= edge;
+            
+            // Multiple layer highlights
+            vec3 highlight = vec3(0.0, 1.0, 0.2) * pow(noise, 3.0) * (2.0 + audioPeak);
+            color += highlight;
+            
+            // Additional detail layer
+            color += vec3(0.1, 0.8, 0.1) * pow(fbm(p * 4.0 + time * 0.1), 2.0) * 0.3;
+            
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+    <script>
+        let audioCtx, analyser, dataArray;
+        let audioLevel = 0.5, audioPeak = 0.3, audioHigh = 0.4, audioMid = 0.5, audioLow = 0.6;
+        const statusEl = document.getElementById('status');
+        
+        const canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+        const gl = canvas.getContext('webgl', { antialias: true });
+        
+        if (!gl) {
+            alert('WebGL not supported. Please use a modern browser.');
+        }
+
+        function createShader(type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                return null;
+            }
+            return shader;
+        }
+
+        function setupAudio() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 2048;
+                
+                if (!navigator.mediaDevices) {
+                    throw new Error("Media devices not supported");
+                }
+
+                const constraints = {
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                };
+
+                navigator.mediaDevices.getUserMedia(constraints)
+                    .then(stream => {
+                        const source = audioCtx.createMediaStreamSource(stream);
+                        source.connect(analyser);
+                        dataArray = new Uint8Array(analyser.frequencyBinCount);
+                        document.getElementById('audioControl').style.display = 'none';
+                        statusEl.textContent = 'Audio Reactive Mode: Active';
+                        init();
+                    })
+                    .catch(err => {
+                        console.error('Audio input error:', err);
+                        statusEl.textContent = 'Running in Non-reactive Mode';
+                        init();
+                    });
+            } catch (err) {
+                console.error('Audio setup error:', err);
+                statusEl.textContent = 'Running in Non-reactive Mode';
+                init();
+            }
+        }
+
+        function updateAudio() {
+            if (!analyser || !dataArray) {
+                // Fallback animation when no audio
+                const t = Date.now() * 0.001;
+                audioLevel = 0.5 + 0.2 * Math.sin(t);
+                audioPeak = 0.3 + 0.2 * Math.cos(t * 1.1);
+                audioHigh = 0.4 + 0.15 * Math.sin(t * 1.2);
+                audioMid = 0.5 + 0.15 * Math.sin(t * 0.8);
+                audioLow = 0.6 + 0.15 * Math.sin(t * 0.6);
+                return;
+            }
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            let sum = 0, high = 0, mid = 0, low = 0;
+            const len = dataArray.length;
+            
+            for (let i = 0; i < len; i++) {
+                const value = dataArray[i] / 255;
+                sum += value;
+                
+                if (i < len/3) low += value;
+                else if (i < len*2/3) mid += value;
+                else high += value;
+            }
+            
+            audioLevel = sum / len;
+            audioPeak = Math.max(...dataArray) / 255;
+            audioHigh = high / (len/3);
+            audioMid = mid / (len/3);
+            audioLow = low / (len/3);
+        }
+
+        function init() {
+            const vertexShader = createShader(gl.VERTEX_SHADER, `
+                attribute vec2 position;
+                void main() {
+                    gl_Position = vec4(position, 0.0, 1.0);
+                }
+            `);
+
+            const fragmentShader = createShader(gl.FRAGMENT_SHADER, 
+                document.getElementById('fractalFireShader').textContent
+            );
+
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(program));
+                return;
+            }
+            
+            gl.useProgram(program);
+
+            const vertices = new Float32Array([-1,-1, 1,-1, -1,1, 1,1]);
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+            const position = gl.getAttribLocation(program, 'position');
+            gl.enableVertexAttribArray(position);
+            gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+            const uniforms = {
+                time: gl.getUniformLocation(program, 'time'),
+                resolution: gl.getUniformLocation(program, 'resolution'),
+                audioLevel: gl.getUniformLocation(program, 'audioLevel'),
+                audioPeak: gl.getUniformLocation(program, 'audioPeak'),
+                audioHigh: gl.getUniformLocation(program, 'audioHigh'),
+                audioMid: gl.getUniformLocation(program, 'audioMid'),
+                audioLow: gl.getUniformLocation(program, 'audioLow')
+            };
+
+            function render(time) {
+                updateAudio();
+                
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                gl.uniform1f(uniforms.time, time * 0.001);
+                gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+                gl.uniform1f(uniforms.audioLevel, audioLevel);
+                gl.uniform1f(uniforms.audioPeak, audioPeak);
+                gl.uniform1f(uniforms.audioHigh, audioHigh);
+                gl.uniform1f(uniforms.audioMid, audioMid);
+                gl.uniform1f(uniforms.audioLow, audioLow);
+                
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                requestAnimationFrame(render);
+            }
+
+            function resize() {
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = window.innerWidth * dpr;
+                canvas.height = window.innerHeight * dpr;
+                canvas.style.width = window.innerWidth + 'px';
+                canvas.style.height = window.innerHeight + 'px';
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            render(0);
+        }
+
+        document.getElementById('audioControl').addEventListener('click', setupAudio);
+    </script>
+</body>
+</html>

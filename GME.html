@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameStop Corp. ($GME) Due Diligence</title>
+    <style>
+        :root {
+            --bg-primary: #000; /* Black */
+            --bg-secondary: #111; /* Dark Gray */
+            --text-primary: #fff; /* White */
+            --text-secondary: rgba(255, 255, 255, 0.7); /* Light Gray */
+            --accent: #005288; /* Blue Accent */
+            --accent-hover: #3474b5; /* Hover Blue */
+            --footer-bg: #141414; /* Footer Background */
+            --footer-padding: 20px; /* Footer Padding */
+            --max-width-container: 1200px; /* Maximum Width */
+            --font-family: 'Helvetica Neue', Arial, Verdana, sans-serif; /* Font Family */
+            --line-height: 1.6; /* Line Height */
+            --letter-spacing: 0.5px; /* Letter Spacing */
+        }
+
+        /* Universal Box Sizing */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            line-height: var(--line-height);
+            letter-spacing: var(--letter-spacing);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: var(--max-width-container);
+            margin: 0 auto;
+            padding: 0 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        var(--bg-secondary); /* Solid Background Color */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(transparent, var(--bg-primary));
+        }
+
+        h1 {
+            font-size: 4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .disclaimer {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .scroll-prompt {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) translateX(-50%);
+            }
+            40% {
+                transform: translateY(-15px) translateX(-50%);
+            }
+            60% {
+                transform: translateY(-7px) translateX(-50%);
+            }
+        }
+
+        section {
+            padding: 80px 0;
+            border-bottom: 1px solid var(--bg-secondary);
+            width: 100%;
+            max-width: var(--max-width-container);
+        }
+
+        h2 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        h3 {
+            color: var(--text-primary);
+            margin: 30px 0 15px;
+            font-size: 1.8em;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        h4 {
+            color: var(--accent-hover);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        ul, ol {
+            padding-left: 40px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        li {
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 8px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            background: var(--accent);
+        }
+
+        .stat-box h4 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-hover);
+        }
+
+        .stat-box p {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            h2 {
+                font-size: 2em;
+            }
+
+            section {
+                padding: 50px 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h3, h4, p {
+                text-align: left;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Fade-in effect */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .fade-in.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: var(--footer-bg);
+            padding: var(--footer-padding);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            width: 100%;
+            max-width: var(--max-width-container);
+            text-align: center;
+            margin-top: 40px; /* Space above the footer */
+            border-top: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>GameStop Corp.</h1>
+        <p class="disclaimer">Not Financial Advice (NFA)</p>
+        <p class="disclaimer">Comprehensive Due Diligence Report</p>
+        <div class="scroll-prompt" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+            </svg>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Executive Summary -->
+        <section id="executive-summary" class="fade-in">
+            <h2>Executive Summary</h2>
+            <p>GameStop Corp. (<strong>$GME</strong>) is a global, multichannel video game, consumer electronics, and collectibles retailer. With a significant presence both online and through physical stores, GameStop aims to become the premier destination for gaming enthusiasts by transforming its business model towards e-commerce and technology-driven services.</p>
+        </section>
+
+        <!-- Company Overview -->
+        <section id="company-overview" class="fade-in">
+            <h2>Company Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h4>Founded</h4>
+                    <p>1984</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Headquarters</h4>
+                    <p>Grapevine, Texas, USA</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Executive Chairman</h4>
+                    <p>Ryan Cohen (Appointed September 2023)</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Market Focus</h4>
+                    <p>Video Games, Consumer Electronics, E-commerce</p>
+                </div>
+            </div>
+            <p>GameStop operates over 4,000 stores worldwide and has been focusing on evolving its business model to adapt to the changing retail landscape. The company is investing in e-commerce capabilities, exploring new product categories, and leveraging its large customer base and loyalty programs.</p>
+        </section>
+
+        <!-- Recent Developments -->
+        <section id="recent-developments" class="fade-in">
+            <h2>Recent Developments</h2>
+            <h3>1. Leadership Changes</h3>
+            <ul>
+                <li><strong>Appointment of Ryan Cohen as Executive Chairman:</strong> In September 2023, Ryan Cohen, co-founder of Chewy and a significant shareholder, was appointed as Executive Chairman to lead the company's strategic initiatives.</li>
+                <li><strong>Management Restructuring:</strong> Previous CEO Matthew Furlong was terminated in June 2023, signaling a shift in leadership direction.</li>
+            </ul>
+            <h3>2. Strategic Initiatives</h3>
+            <ul>
+                <li><strong>E-commerce Expansion:</strong> Focus on enhancing the online shopping experience and expanding product offerings.</li>
+                <li><strong>Cost Optimization:</strong> Efforts to streamline operations and reduce expenses to improve profitability.</li>
+            </ul>
+            <h3>3. Market Dynamics</h3>
+            <ul>
+                <li><strong>Stock Volatility:</strong> GameStop has experienced significant stock price volatility due to retail investor interest and short-selling dynamics.</li>
+                <li><strong>Regulatory Scrutiny:</strong> Increased attention from regulatory bodies like the SEC concerning market activities surrounding the stock.</li>
+            </ul>
+        </section>
+
+        <!-- Financial Analysis -->
+        <section id="financial-analysis" class="fade-in">
+            <h2>Financial Analysis</h2>
+            <h3>1. Revenue Trends</h3>
+            <p><strong>Fiscal Year 2022 Revenue:</strong> Approximately $5.93 billion, slightly down from $6.01 billion in 2021.</p>
+            <p><strong>Revenue Composition:</strong> Sales from hardware and accessories, software, and collectibles.</p>
+            <h3>2. Profitability</h3>
+            <p><strong>Net Loss:</strong> Reported a net loss of around $313 million in fiscal 2022, an improvement from a net loss of $381 million in 2021.</p>
+            <p><strong>Operating Expenses:</strong> Reduction in SG&A expenses due to cost-cutting measures.</p>
+            <h3>3. Cash Flow & Liquidity</h3>
+            <p><strong>Cash and Cash Equivalents:</strong> Maintained a strong cash position with over $1 billion as of the latest filings.</p>
+            <p><strong>Debt Levels:</strong> Minimal long-term debt, providing financial flexibility.</p>
+        </section>
+
+        <!-- Macro Trends -->
+        <section id="macro-trends" class="fade-in">
+            <h2>Macro Trends Favoring GameStop</h2>
+            <h3>1. Gaming Industry Growth</h3>
+            <p><strong>Market Expansion:</strong> The global video game market is expected to grow, driven by new console releases, mobile gaming, and esports.</p>
+            <h3>2. Collectibles Market</h3>
+            <p><strong>Increased Demand:</strong> Growing interest in collectibles and pop culture merchandise enhances revenue opportunities.</p>
+            <h3>3. Digital Transformation</h3>
+            <p><strong>E-commerce Shift:</strong> Consumer preference for online shopping aligns with GameStop's focus on digital sales channels.</p>
+        </section>
+
+        <!-- Competitive Landscape -->
+        <section id="competitive-landscape" class="fade-in">
+            <h2>Competitive Landscape</h2>
+            <h3>1. Major Competitors</h3>
+            <ul>
+                <li><strong>Amazon:</strong> Offers a wide range of gaming products with fast delivery services.</li>
+                <li><strong>Best Buy:</strong> Provides electronics and gaming products with both online and physical presence.</li>
+                <li><strong>Digital Platforms:</strong> Companies like Steam, Epic Games Store, and console-specific stores offering digital game downloads.</li>
+            </ul>
+            <h3>2. GameStop's Competitive Advantages</h3>
+            <ul>
+                <li><strong>Brand Recognition:</strong> Strong brand presence among gaming communities.</li>
+                <li><strong>Loyalty Programs:</strong> PowerUp Rewards program encourages customer retention.</li>
+                <li><strong>Physical Stores:</strong> Offers in-person experiences and immediate product availability.</li>
+            </ul>
+        </section>
+
+        <!-- Management Team -->
+        <section id="management-team" class="fade-in">
+            <h2>Management Team</h2>
+            <h3>Executive Chairman: Ryan Cohen</h3>
+            <p><strong>Background:</strong> Co-founder of Chewy, an e-commerce company specializing in pet products.</p>
+            <p><strong>Vision:</strong> Transform GameStop into a technology-centric company and enhance shareholder value.</p>
+            <h3>Key Executives</h3>
+            <p><strong>Current Leadership:</strong> The company is undergoing leadership transitions with a focus on bringing in technology and e-commerce expertise.</p>
+        </section>
+
+        <!-- Technology Edge -->
+        <section id="technology-edge" class="fade-in">
+            <h2>Technology Edge</h2>
+            <h3>1. E-commerce Platform</h3>
+            <p><strong>Online Expansion:</strong> Upgrading website and mobile app functionalities to improve user experience.</p>
+            <h3>2. Blockchain and NFTs</h3>
+            <p><strong>Digital Assets:</strong> Launched an NFT marketplace in July 2022, exploring opportunities in blockchain technology.</p>
+            <h3>3. Supply Chain Improvements</h3>
+            <p><strong>Efficiency:</strong> Investing in supply chain infrastructure to enhance fulfillment capabilities.</p>
+        </section>
+
+        <!-- Market Size -->
+        <section id="market-size" class="fade-in">
+            <h2>Market Size and Growth</h2>
+            <h3>1. Global Video Game Market</h3>
+            <p><strong>Value (2023):</strong> Estimated at $200 billion.</p>
+            <p><strong>Projected Value (2026):</strong> Expected to reach $240 billion.</p>
+            <p><strong>CAGR:</strong> Approximately 6% from 2023 to 2026.</p>
+            <h3>2. Collectibles Market</h3>
+            <p><strong>Growth Potential:</strong> Increasing demand for licensed merchandise and collectibles.</p>
+        </section>
+
+        <!-- SWOT Analysis -->
+        <section id="swot-analysis" class="fade-in">
+            <h2>SWOT Analysis</h2>
+            <h3>Strengths</h3>
+            <ul>
+                <li>Strong brand recognition in the gaming industry.</li>
+                <li>Loyal customer base with active engagement.</li>
+                <li>Significant cash reserves and minimal debt.</li>
+            </ul>
+            <h3>Weaknesses</h3>
+            <ul>
+                <li>Challenges in transitioning from brick-and-mortar to e-commerce.</li>
+                <li>Competitive pressures from digital game distribution platforms.</li>
+                <li>Recent leadership turnover creating uncertainty.</li>
+            </ul>
+            <h3>Opportunities</h3>
+            <ul>
+                <li>Expansion into new product categories and services.</li>
+                <li>Leveraging blockchain technology and NFTs.</li>
+                <li>Global market expansion through online platforms.</li>
+            </ul>
+            <h3>Threats</h3>
+            <ul>
+                <li>Changing consumer preferences towards digital downloads.</li>
+                <li>Intense competition from online retailers and digital platforms.</li>
+                <li>Regulatory scrutiny affecting stock market dynamics.</li>
+            </ul>
+        </section>
+
+        <!-- Risk Factors -->
+        <section id="risk-factors" class="fade-in">
+            <h2>Risk Factors</h2>
+            <ul>
+                <li><strong>Business Model Transformation:</strong> Risks associated with shifting from physical retail to e-commerce.</li>
+                <li><strong>Market Volatility:</strong> Stock price fluctuations due to speculative trading can impact investor sentiment.</li>
+                <li><strong>Regulatory Risks:</strong> Potential investigations or regulations affecting trading activities.</li>
+                <li><strong>Supply Chain Disruptions:</strong> Global events affecting product availability.</li>
+                <li><strong>Technological Changes:</strong> Rapid advancements in gaming technology requiring continuous adaptation.</li>
+            </ul>
+        </section>
+
+        <!-- Future Outlook -->
+        <section id="future-outlook" class="fade-in">
+            <h2>Future Outlook</h2>
+            <p>GameStop aims to reinvent itself by focusing on e-commerce and technology-driven initiatives under the leadership of Ryan Cohen. The company's strong brand and customer loyalty provide a foundation for transformation. Success will depend on effective execution of strategic plans, adapting to market trends, and navigating competitive challenges.</p>
+            <h3>Key Monitoring Points</h3>
+            <ul>
+                <li><strong>Strategic Execution:</strong> Implementation of e-commerce and technology initiatives.</li>
+                <li><strong>Financial Performance:</strong> Revenue growth, profitability, and expense management.</li>
+                <li><strong>Leadership Stability:</strong> Stability and effectiveness of the new management team.</li>
+                <li><strong>Market Trends:</strong> Changes in the gaming industry and consumer behavior.</li>
+                <li><strong>Regulatory Developments:</strong> Any regulatory actions affecting the company or its stock.</li>
+            </ul>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="conclusion" class="fade-in">
+            <h2>Conclusion</h2>
+            <p>GameStop Corp. presents an intriguing case of a traditional retailer attempting to pivot in a rapidly changing industry. With new leadership and strategic initiatives, the company has the potential to redefine its position in the market. Investors should closely monitor the company's progress in executing its transformation strategy while being mindful of the inherent risks and market dynamics.</p>
+            <h3>Key Monitoring Points</h3>
+            <ul>
+                <li><strong>Strategic Execution:</strong> Implementation of e-commerce and technology initiatives.</li>
+                <li><strong>Financial Performance:</strong> Revenue growth, profitability, and expense management.</li>
+                <li><strong>Leadership Stability:</strong> Stability and effectiveness of the new management team.</li>
+                <li><strong>Market Trends:</strong> Changes in the gaming industry and consumer behavior.</li>
+                <li><strong>Regulatory Developments:</strong> Any regulatory actions affecting the company or its stock.</li>
+            </ul>
+        </section>
+
+        <!-- Disclaimer -->
+        <section id="disclaimer" class="fade-in">
+            <h2>Disclaimer</h2>
+            <p>This report is for informational purposes only and does not constitute financial advice or a recommendation to buy or sell any securities. The information provided is based on sources believed to be reliable as of my knowledge cutoff in September 2021. Investors should conduct their own due diligence and consult financial advisors before making investment decisions. Market conditions and company circumstances may have changed since the time of this report.</p>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2024 GameStop Corp. All rights reserved.
+    </footer>
+
+    <script>
+        // Smooth scroll functionality
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetElement = document.querySelector(this.getAttribute('href'));
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Fade in elements on scroll
+        const faders = document.querySelectorAll('.fade-in');
+
+        const appearOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const appearOnScroll = new IntersectionObserver(function(entries, appearOnScroll) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('show');
+                    appearOnScroll.unobserve(entry.target);
+                }
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => {
+            appearOnScroll.observe(fader);
+        });
+    </script>
+</body>
+</html>

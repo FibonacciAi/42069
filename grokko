@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doper-than-Dope Grok Chatbot</title>
+    <style>
+        body {
+            background-color: #1f1f1f;
+            color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #2b2b2b;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        #chat-display {
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        .message.user { justify-content: flex-end; }
+        .message.bot { justify-content: flex-start; }
+        .bubble {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 15px;
+            line-height: 1.4;
+        }
+        .user .bubble {
+            background-color: #007bff;
+            color: #fff;
+            border-top-right-radius: 0;
+        }
+        .bot .bubble {
+            background-color: #444;
+            color: #f0f0f0;
+            border-top-left-radius: 0;
+        }
+        #typing-indicator {
+            display: none;
+            color: #888;
+            font-style: italic;
+            margin: 0 10px;
+        }
+        #input-area {
+            display: flex;
+            border-top: 1px solid #333;
+        }
+        #user-input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background-color: #1f1f1f;
+            color: #f0f0f0;
+            font-size: 16px;
+            outline: none;
+        }
+        #send-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 0 20px;
+            cursor: pointer;
+        }
+        #send-button:active { background-color: #0056b3; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-display"></div>
+        <div id="typing-indicator">Grok is typing...</div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type your message here" autocomplete="off">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = 'xai-innjnATCbvzSnsZ6nCn9QHus03LagKOIViXs7C7ntBH8i79iParm6JZn8VnU5d1N3m0NMp6nD918zVTC'; // Replace with your Grok API key
+        const model = 'grok-beta'; // Replace with your desired model name
+        const apiUrl = 'https://api.x.ai/v1/chat/completions';
+        const chatDisplay = document.getElementById('chat-display');
+        const userInput = document.getElementById('user-input');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage('You', message, 'user');
+            userInput.value = '';
+            showTypingIndicator(true);
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: 'user', content: message }]
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const botMessage = data.choices[0].message.content;
+                addMessage('Grok', botMessage, 'bot');
+            } else {
+                addMessage('Error', 'Failed to fetch response from Grok API.', 'bot');
+            }
+
+            showTypingIndicator(false);
+        }
+
+        function addMessage(sender, message, type) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', type);
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            bubble.textContent = message;
+            messageElement.appendChild(bubble);
+            chatDisplay.appendChild(messageElement);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
+        }
+
+        function showTypingIndicator(show) {
+            typingIndicator.style.display = show ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
