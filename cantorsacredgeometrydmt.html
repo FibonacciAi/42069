@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            background: #0d1a33; 
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas3d"></canvas>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Starry Night palette
+const starryNightPalette = {
+    darkBlue: 0x0d1a33,
+    blue: 0x1a4b77,
+    lightBlue: 0x3c8ebc,
+    yellow: 0xffd700,
+    cream: 0xfff4c7,
+    cypress: 0x054220,
+    swirl: 0x4a6741
+};
+
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({
+    canvas, 
+    antialias: true,
+    alpha: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(starryNightPalette.darkBlue);
+scene.fog = new THREE.FogExp2(starryNightPalette.darkBlue, 0.05);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(3, 2, 3);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+
+// Enhanced lighting system
+const ambientLight = new THREE.AmbientLight(starryNightPalette.blue, 0.5);
+scene.add(ambientLight);
+
+// Dynamic point lights
+const lights = [];
+for(let i = 0; i < 4; i++) {
+    const light = new THREE.PointLight(
+        [starryNightPalette.yellow, starryNightPalette.lightBlue, 
+         starryNightPalette.cream, starryNightPalette.swirl][i],
+        2,
+        5
+    );
+    light.position.set(
+        Math.cos(i * Math.PI/2) * 2,
+        Math.sin(i * Math.PI/2) * 2,
+        0
+    );
+    scene.add(light);
+    lights.push(light);
+}
+
+// Particle system for psychedelic effect
+const particleCount = 1000;
+const particles = new THREE.BufferGeometry();
+const positions = new Float32Array(particleCount * 3);
+const particleColors = new Float32Array(particleCount * 3);
+
+for(let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 10;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    
+    const color = new THREE.Color(Object.values(starryNightPalette)[
+        Math.floor(Math.random() * Object.values(starryNightPalette).length)
+    ]);
+    particleColors[i * 3] = color.r;
+    particleColors[i * 3 + 1] = color.g;
+    particleColors[i * 3 + 2] = color.b;
+}
+
+particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+particles.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+const particleMaterial = new THREE.PointsMaterial({
+    size: 0.05,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending
+});
+
+const particleSystem = new THREE.Points(particles, particleMaterial);
+scene.add(particleSystem);
+
+function createPsychedelicPattern() {
+    const group = new THREE.Group();
+    const points = 16;
+    const radius = 1.5;
+    const layers = 8;
+    const layerSpacing = 0.15;
+
+    for(let layer = 0; layer < layers; layer++) {
+        const vertices = [];
+        const colors = [];
+        const layerZ = (layer - layers/2) * layerSpacing;
+        const layerRadius = radius * (1 - Math.abs(layer - layers/2) * 0.1);
+        
+        const pointPositions = [];
+        for(let i = 0; i < points; i++) {
+            const angle = (i / points) * Math.PI * 2;
+            const x = Math.cos(angle) * layerRadius;
+            const y = Math.sin(angle) * layerRadius;
+            pointPositions.push(new THREE.Vector3(x, y, layerZ));
+        }
+
+        for(let i = 0; i < points; i++) {
+            for(let j = i + 1; j < points; j++) {
+                vertices.push(
+                    pointPositions[i].x, pointPositions[i].y, pointPositions[i].z,
+                    pointPositions[j].x, pointPositions[j].y, pointPositions[j].z
+                );
+                const color1 = new THREE.Color(starryNightPalette.lightBlue);
+                const color2 = new THREE.Color(starryNightPalette.yellow);
+                colors.push(
+                    color1.r, color1.g, color1.b,
+                    color2.r, color2.g, color2.b
+                );
+            }
+        }
+
+        if(layer > 0) {
+            const prevLayer = layer - 1;
+            const prevZ = (prevLayer - layers/2) * layerSpacing;
+            for(let i = 0; i < points; i++) {
+                const angle = (i / points) * Math.PI * 2;
+                const prevRadius = radius * (1 - Math.abs(prevLayer - layers/2) * 0.1);
+                const prevX = Math.cos(angle) * prevRadius;
+                const prevY = Math.sin(angle) * prevRadius;
+                
+                vertices.push(
+                    prevX, prevY, prevZ,
+                    pointPositions[i].x, pointPositions[i].y, layerZ
+                );
+                const color = new THREE.Color(starryNightPalette.cream);
+                colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
+            }
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        const material = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+
+        const lines = new THREE.LineSegments(geometry, material);
+        group.add(lines);
+
+        // Glowing vertices
+        const vertexGeometry = new THREE.SphereGeometry(0.025, 16, 16);
+        const vertexMaterial = new THREE.MeshPhongMaterial({
+            color: starryNightPalette.yellow,
+            emissive: starryNightPalette.cream,
+            emissiveIntensity: 0.5,
+            transparent: true,
+            opacity: 0.8,
+            shininess: 100
+        });
+        
+        pointPositions.forEach(pos => {
+            const vertex = new THREE.Mesh(vertexGeometry, vertexMaterial);
+            vertex.position.copy(pos);
+            group.add(vertex);
+        });
+    }
+
+    return group;
+}
+
+const pattern = createPsychedelicPattern();
+scene.add(pattern);
+
+// Add volumetric light effect
+const volumetricLight = new THREE.Mesh(
+    new THREE.SphereGeometry(2, 32, 32),
+    new THREE.MeshBasicMaterial({
+        color: starryNightPalette.cream,
+        transparent: true,
+        opacity: 0.05,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending
+    })
+);
+scene.add(volumetricLight);
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    
+    const time = Date.now() * 0.001;
+    
+    // Animate lights
+    lights.forEach((light, i) => {
+        light.position.x = Math.cos(time + i * Math.PI/2) * 2;
+        light.position.z = Math.sin(time + i * Math.PI/2) * 2;
+        light.intensity = 1.5 + Math.sin(time * 2 + i) * 0.5;
+    });
+    
+    // Animate particles
+    const positions = particleSystem.geometry.attributes.position.array;
+    for(let i = 0; i < positions.length; i += 3) {
+        positions[i] += Math.sin(time + i) * 0.002;
+        positions[i + 1] += Math.cos(time + i) * 0.002;
+        positions[i + 2] += Math.sin(time * 0.5 + i) * 0.002;
+    }
+    particleSystem.geometry.attributes.position.needsUpdate = true;
+    
+    // Pattern animation
+    const scale = 1 + Math.sin(time * 0.5) * 0.05;
+    pattern.scale.set(scale, scale, scale);
+    pattern.rotation.y += 0.001;
+    volumetricLight.scale.set(scale * 1.1, scale * 1.1, scale * 1.1);
+    
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
