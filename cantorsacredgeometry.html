@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            background: #1a1a1a; 
+            overflow: hidden;
+        }
+    </style>
+    <title>3D Cantor Pattern</title>
+</head>
+<body>
+<canvas id="canvas3d"></canvas>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({
+    canvas, 
+    antialias: true,
+    alpha: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1a);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(3, 2, 3);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+
+// Add ambient light
+const ambientLight = new THREE.AmbientLight(0x333333);
+scene.add(ambientLight);
+
+// Add point lights
+const pointLight1 = new THREE.PointLight(0x00ffff, 1, 10);
+pointLight1.position.set(2, 2, 2);
+scene.add(pointLight1);
+
+const pointLight2 = new THREE.PointLight(0x00ffff, 1, 10);
+pointLight2.position.set(-2, -2, -2);
+scene.add(pointLight2);
+
+function createCantorPattern() {
+    const group = new THREE.Group();
+    const points = 16;
+    const radius = 1.5;
+    const layers = 8; // Number of layers for 3D effect
+    const layerSpacing = 0.15; // Space between layers
+
+    // Create points for each layer
+    for(let layer = 0; layer < layers; layer++) {
+        const vertices = [];
+        const colors = [];
+        const layerZ = (layer - layers/2) * layerSpacing;
+        const layerRadius = radius * (1 - Math.abs(layer - layers/2) * 0.1);
+        
+        // Create points around the circle
+        const pointPositions = [];
+        for(let i = 0; i < points; i++) {
+            const angle = (i / points) * Math.PI * 2;
+            const x = Math.cos(angle) * layerRadius;
+            const y = Math.sin(angle) * layerRadius;
+            pointPositions.push(new THREE.Vector3(x, y, layerZ));
+        }
+
+        // Connect points within the layer
+        for(let i = 0; i < points; i++) {
+            for(let j = i + 1; j < points; j++) {
+                vertices.push(
+                    pointPositions[i].x, pointPositions[i].y, pointPositions[i].z,
+                    pointPositions[j].x, pointPositions[j].y, pointPositions[j].z
+                );
+                const alpha = 1 - Math.abs(layer - layers/2) / layers;
+                colors.push(0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
+            }
+        }
+
+        // Connect to adjacent layer
+        if(layer > 0) {
+            const prevLayer = layer - 1;
+            const prevZ = (prevLayer - layers/2) * layerSpacing;
+            for(let i = 0; i < points; i++) {
+                const angle = (i / points) * Math.PI * 2;
+                const prevRadius = radius * (1 - Math.abs(prevLayer - layers/2) * 0.1);
+                const prevX = Math.cos(angle) * prevRadius;
+                const prevY = Math.sin(angle) * prevRadius;
+                
+                vertices.push(
+                    prevX, prevY, prevZ,
+                    pointPositions[i].x, pointPositions[i].y, layerZ
+                );
+                colors.push(0.3, 0.3, 0.3, 0.3, 0.3, 0.3);
+            }
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        const material = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.3,
+            linewidth: 1
+        });
+
+        const lines = new THREE.LineSegments(geometry, material);
+        group.add(lines);
+
+        // Add vertices
+        const vertexGeometry = new THREE.SphereGeometry(0.025, 16, 16);
+        const vertexMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ffff,
+            emissive: 0x00ffff,
+            emissiveIntensity: 0.3,
+            transparent: true,
+            opacity: 0.8,
+            shininess: 100
+        });
+        
+        pointPositions.forEach(pos => {
+            const vertex = new THREE.Mesh(vertexGeometry, vertexMaterial);
+            vertex.position.copy(pos);
+            group.add(vertex);
+        });
+    }
+
+    return group;
+}
+
+const cantorPattern = createCantorPattern();
+scene.add(cantorPattern);
+
+// Add subtle glow effect
+const glowGeometry = new THREE.SphereGeometry(1.6, 32, 32);
+const glowMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.05,
+    side: THREE.BackSide
+});
+const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+scene.add(glowMesh);
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    
+    // Animate lights
+    const time = Date.now() * 0.001;
+    pointLight1.position.x = Math.cos(time) * 2;
+    pointLight1.position.z = Math.sin(time) * 2;
+    pointLight2.position.x = Math.cos(time + Math.PI) * 2;
+    pointLight2.position.z = Math.sin(time + Math.PI) * 2;
+    
+    // Very subtle breathing animation
+    const scale = 1 + Math.sin(time * 0.5) * 0.02;
+    cantorPattern.scale.set(scale, scale, scale);
+    glowMesh.scale.set(scale, scale, scale);
+    
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
