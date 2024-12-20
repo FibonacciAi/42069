@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            background: #0d1a33; 
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas3d"></canvas>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Sacred constants
+const PHI = (1 + Math.sqrt(5)) / 2; // Golden Ratio
+const ROOT3 = Math.sqrt(3);
+const VESICA_RATIO = Math.sqrt(3) / 2;
+
+// Trinity colors with golden ratio relationships
+const triColors = {
+    first: 0x0d1a33,    // Deep Blue - Base
+    second: 0xffd700,    // Golden - φ
+    third: 0x3c8ebc     // Celestial Blue - φ²
+};
+
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({
+    canvas, 
+    antialias: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(triColors.first);
+
+// Camera position based on golden ratio
+const camera = new THREE.PerspectiveCamera(33, window.innerWidth/window.innerHeight, 0.3, 33);
+camera.position.set(PHI * 3, PHI * 2, PHI * 3);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.03;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.3;
+
+// Create Vesica Piscis
+function createVesicaPiscis() {
+    const curve = new THREE.EllipseCurve(
+        0, 0,
+        1, VESICA_RATIO,
+        0, 2 * Math.PI,
+        false,
+        0
+    );
+    const points = curve.getPoints(33);
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ 
+        color: triColors.third,
+        transparent: true,
+        opacity: 0.3
+    });
+    return new THREE.Line(geometry, material);
+}
+
+// Create Metatron's Cube framework
+function createMetatronsCube() {
+    const group = new THREE.Group();
+    const points = 9; // Sacred number
+    const radius = 3;
+    const layers = 3;
+    
+    // Create central hexagon (Flower of Life seed)
+    for(let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const vesica = createVesicaPiscis();
+        vesica.rotation.z = angle;
+        vesica.scale.multiplyScalar(radius / PHI);
+        group.add(vesica);
+    }
+
+    function createSacredPattern(layer) {
+        const vertices = [];
+        const colors = [];
+        const layerZ = (layer - 2) * (radius / PHI);
+        
+        // Create points based on Flower of Life pattern
+        const pointPositions = [];
+        for(let i = 0; i < points; i++) {
+            const angle = (i / points) * Math.PI * 2;
+            const x = Math.cos(angle) * (radius / (layer * VESICA_RATIO));
+            const y = Math.sin(angle) * (radius / (layer * VESICA_RATIO));
+            pointPositions.push(new THREE.Vector3(x, y, layerZ));
+        }
+
+        // Connect points in sacred triangles
+        for(let i = 0; i < points; i += 3) {
+            for(let j = 0; j < 3; j++) {
+                const current = i + j;
+                const next = i + ((j + 1) % 3);
+                vertices.push(
+                    pointPositions[current].x, pointPositions[current].y, pointPositions[current].z,
+                    pointPositions[next].x, pointPositions[next].y, pointPositions[next].z
+                );
+                
+                const colorIndex = j % 3;
+                const color = new THREE.Color(Object.values(triColors)[colorIndex]);
+                colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
+            }
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        return {
+            lines: new THREE.LineSegments(
+                geometry,
+                new THREE.LineBasicMaterial({
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
+                })
+            ),
+            points: pointPositions
+        };
+    }
+
+    // Create three sacred layers
+    for(let layer = 1; layer <= 3; layer++) {
+        const pattern = createSacredPattern(layer);
+        group.add(pattern.lines);
+
+        // Add nodes at sacred intersections
+        pattern.points.forEach(pos => {
+            const node = new THREE.Mesh(
+                new THREE.IcosahedronGeometry(0.03 * PHI, 1),
+                new THREE.MeshPhongMaterial({
+                    color: triColors.second,
+                    emissive: triColors.third,
+                    emissiveIntensity: 0.3,
+                    transparent: true,
+                    opacity: 0.9
+                })
+            );
+            node.position.copy(pos);
+            group.add(node);
+        });
+    }
+
+    return group;
+}
+
+// Create Merkaba (Star Tetrahedron)
+function createMerkaba() {
+    const group = new THREE.Group();
+    
+    // Upward tetrahedron
+    const tetraGeom1 = new THREE.TetrahedronGeometry(radius / PHI);
+    const tetraMat1 = new THREE.MeshPhongMaterial({
+        color: triColors.second,
+        transparent: true,
+        opacity: 0.1,
+        wireframe: true
+    });
+    const tetra1 = new THREE.Mesh(tetraGeom1, tetraMat1);
+    
+    // Downward tetrahedron
+    const tetra2 = tetra1.clone();
+    tetra2.rotation.x = Math.PI;
+    tetra2.material = tetraMat1.clone();
+    tetra2.material.color = new THREE.Color(triColors.third);
+    
+    group.add(tetra1, tetra2);
+    return group;
+}
+
+const radius = 3;
+const pattern = createMetatronsCube();
+const merkaba = createMerkaba();
+scene.add(pattern, merkaba);
+
+// Add three sacred light sources at golden angles
+for(let i = 1; i <= 3; i++) {
+    const light = new THREE.PointLight(
+        Object.values(triColors)[i-1],
+        3,
+        9
+    );
+    const angle = i * (PHI * Math.PI * 2 / 3);
+    light.position.set(
+        Math.cos(angle) * 3,
+        Math.sin(angle) * 3,
+        PHI
+    );
+    scene.add(light);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    
+    const time = Date.now() * 0.001;
+    
+    // Phi-based breathing animation
+    const scale = 1 + Math.sin(time * PHI) * 0.03;
+    pattern.scale.set(scale, scale, scale);
+    
+    // Counter-rotation of merkaba
+    merkaba.rotation.y += 0.003;
+    merkaba.rotation.z = Math.sin(time * PHI) * 0.1;
+    
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
