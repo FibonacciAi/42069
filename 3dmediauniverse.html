@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Enhanced 3D Media Universe</title>
+    <style>
+        body { 
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas { 
+            display: block; 
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+            text-shadow: 0 0 3px #000;
+        }
+        .label {
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            padding: 2px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">3D Media Universe - Drag to rotate, scroll to zoom, click spheres for details</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three-spritetext@1.6.5/dist/three-spritetext.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000819);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const companies = [
+            { name: 'Apple', value: 3671, color: 0x999999, subsidiary: ['App Store', 'Apple TV+', 'iCloud'] },
+            { name: 'Microsoft', value: 2331, color: 0x00ff00, subsidiary: ['Xbox', 'Azure', 'Office'] },
+            { name: 'Amazon', value: 2400, color: 0x0066ff, subsidiary: ['Prime Video', 'AWS', 'Twitch'] },
+            { name: 'Meta', value: 1571, color: 0x3b5998, subsidiary: ['Facebook', 'Instagram', 'WhatsApp'] },
+            { name: 'Netflix', value: 400, color: 0xff0000, subsidiary: ['Netflix Games', 'Netflix Studios'] },
+            { name: 'Disney', value: 221, color: 0x000099, subsidiary: ['Marvel', 'Pixar', 'ESPN'] },
+            { name: 'ByteDance', value: 230, color: 0x00ffff, subsidiary: ['TikTok', 'Douyin'] },
+            { name: 'Tencent', value: 490, color: 0x00ff99, subsidiary: ['WeChat', 'QQ'] }
+        ];
+
+        const spheres = new Map();
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Enhanced materials with environment mapping
+        const envMap = new THREE.CubeTextureLoader()
+            .load([
+                createGradientData(),
+                createGradientData(),
+                createGradientData(),
+                createGradientData(),
+                createGradientData(),
+                createGradientData()
+            ]);
+
+        function createGradientData() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const context = canvas.getContext('2d');
+            const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(1, '#000000');
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 128, 128);
+            return canvas.toDataURL();
+        }
+
+        // Create spheres with enhanced materials
+        companies.forEach((company, index) => {
+            const geometry = new THREE.SphereGeometry(Math.cbrt(company.value/100), 64, 64);
+            const material = new THREE.MeshPhysicalMaterial({ 
+                color: company.color,
+                metalness: 0.9,
+                roughness: 0.1,
+                envMap: envMap,
+                transparent: true,
+                opacity: 0.9,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1
+            });
+
+            const sphere = new THREE.Mesh(geometry, material);
+            
+            const angle = (index / companies.length) * Math.PI * 2;
+            const radius = 30;
+            sphere.position.x = Math.cos(angle) * radius;
+            sphere.position.z = Math.sin(angle) * radius;
+            sphere.position.y = Math.sin(angle * 2) * 5; // Add some vertical variation
+            
+            // Add label
+            const label = new SpriteText(company.name + '\n$' + company.value + 'B', 1.5);
+            label.position.set(0, sphere.geometry.parameters.radius + 2, 0);
+            sphere.add(label);
+
+            spheres.set(sphere.id, company);
+            scene.add(sphere);
+        });
+
+        // Enhanced lighting
+        const light1 = new THREE.PointLight(0xffffff, 1, 100);
+        light1.position.set(10, 10, 10);
+        scene.add(light1);
+
+        const light2 = new THREE.PointLight(0x0066ff, 1, 100);
+        light2.position.set(-10, -10, -10);
+        scene.add(light2);
+
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        camera.position.z = 70;
+
+        // Particle background
+        const particles = new THREE.BufferGeometry();
+        const particleCount = 1000;
+        const posArray = new Float32Array(particleCount * 3);
+
+        for(let i = 0; i < particleCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 100;
+        }
+
+        particles.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            size: 0.1,
+            color: 0xffffff
+        });
+
+        const particleSystem = new THREE.Points(particles, particleMaterial);
+        scene.add(particleSystem);
+
+        // Interactive features
+        function onClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                const object = intersects[0].object;
+                if (spheres.has(object.id)) {
+                    const company = spheres.get(object.id);
+                    alert(`${company.name}\nMarket Cap: $${company.value}B\nSubsidiaries: ${company.subsidiary.join(', ')}`);
+                }
+            }
+        }
+
+        document.addEventListener('click', onClick);
+
+        // Enhanced animation
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            particleSystem.rotation.x += 0.0001;
+            particleSystem.rotation.y += 0.0001;
+
+            light1.position.x = Math.sin(Date.now() * 0.001) * 30;
+            light1.position.z = Math.cos(Date.now() * 0.001) * 30;
+            
+            renderer.render(scene, camera);
+        }
+
+        // Enhanced controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let rotationSpeed = { x: 0, y: 0 };
+        const dampingFactor = 0.95;
+
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaMove = {
+                    x: e.offsetX - previousMousePosition.x,
+                    y: e.offsetY - previousMousePosition.y
+                };
+
+                rotationSpeed.x = deltaMove.y * 0.001;
+                rotationSpeed.y = deltaMove.x * 0.001;
+            }
+
+            previousMousePosition = {
+                x: e.offsetX,
+                y: e.offsetY
+            };
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            isDragging = false;
+        });
+
+        document.addEventListener('wheel', (e) => {
+            camera.position.z += e.deltaY * 0.05;
+            camera.position.z = Math.max(20, Math.min(100, camera.position.z));
+        });
+
+        function updateScene() {
+            if (!isDragging) {
+                rotationSpeed.x *= dampingFactor;
+                rotationSpeed.y *= dampingFactor;
+            }
+            
+            scene.rotation.x += rotationSpeed.x;
+            scene.rotation.y += rotationSpeed.y;
+            
+            requestAnimationFrame(updateScene);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+        updateScene();
+    </script>
+</body>
+</html>
