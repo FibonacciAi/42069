@@ -11,6 +11,7 @@
             --text-primary: #e0e0e0;
             --text-secondary: #b0b0b0;
             --accent: #4a9eff;
+            --highlight: #ff4a4a;
         }
 
         * {
@@ -35,60 +36,129 @@
         header {
             text-align: center;
             margin-bottom: 40px;
-            padding: 20px;
+            padding: 30px;
             background-color: var(--bg-secondary);
             border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         h1 {
             color: var(--accent);
             margin-bottom: 15px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .key-findings {
+        .timeline {
+            position: relative;
+            margin: 40px 0;
+            padding: 20px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: var(--accent);
+        }
+
+        .timeline-item {
+            margin-bottom: 30px;
+            position: relative;
+            width: 50%;
+            padding: 20px;
+        }
+
+        .timeline-item:nth-child(odd) {
+            left: 0;
+        }
+
+        .timeline-item:nth-child(even) {
+            left: 50%;
+        }
+
+        .detailed-findings {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+            gap: 25px;
+            margin: 40px 0;
         }
 
         .finding-card {
             background-color: var(--bg-secondary);
-            padding: 20px;
-            border-radius: 8px;
-            transition: transform 0.3s ease;
+            padding: 25px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .finding-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
         }
 
         .finding-card h3 {
             color: var(--accent);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.4em;
         }
 
-        .finding-card p {
-            color: var(--text-secondary);
-        }
-
-        .stats {
-            text-align: center;
-            margin: 40px 0;
-            padding: 20px;
+        .key-stat {
             background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3em;
+            color: var(--highlight);
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .evidence-section {
+            background-color: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 40px 0;
+        }
+
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .evidence-item {
+            padding: 15px;
+            background-color: rgba(74, 158, 255, 0.1);
             border-radius: 8px;
         }
 
-        .stats-number {
-            font-size: 2.5em;
-            color: var(--accent);
-            margin: 10px 0;
+        .recommendations {
+            margin: 40px 0;
+        }
+
+        .recommendation-item {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
         }
 
         @media (max-width: 768px) {
-            .key-findings {
-                grid-template-columns: 1fr;
+            .timeline::before {
+                left: 0;
+            }
+            .timeline-item {
+                width: 100%;
+                left: 0 !important;
             }
         }
     </style>
@@ -97,43 +167,91 @@
     <div class="container">
         <header>
             <h1>House Weaponization Committee Report</h1>
-            <p>Analysis of the 17,000-page Congressional Report</p>
+            <p>Comprehensive Analysis of the 17,000-page Congressional Investigation</p>
         </header>
 
-        <div class="stats">
-            <div class="stats-number">17,000</div>
-            <p>Pages of Detailed Investigation</p>
+        <div class="key-stat">
+            <div class="stat-number">17,000</div>
+            <p>Pages of Detailed Investigation and Evidence</p>
         </div>
 
-        <div class="key-findings">
-            <div class="finding-card">
-                <h3>Two-Tiered System</h3>
-                <p>Evidence of disparate treatment in government operations and law enforcement approaches across different political and social groups.</p>
+        <div class="timeline">
+            <div class="timeline-item">
+                <h3>Investigation Launch</h3>
+                <p>Committee formation and initial scope definition focusing on federal agency operations and potential constitutional violations.</p>
             </div>
-
-            <div class="finding-card">
-                <h3>Federal Agency Operations</h3>
-                <p>Detailed examination of how federal agencies conducted investigations and enforcement actions during key periods.</p>
+            <div class="timeline-item">
+                <h3>Evidence Collection Phase</h3>
+                <p>Gathering of testimonies, documents, and internal communications from various federal agencies.</p>
             </div>
-
-            <div class="finding-card">
-                <h3>Constitutional Concerns</h3>
-                <p>Analysis of potential impacts on constitutional rights and civil liberties in government operations.</p>
+            <div class="timeline-item">
+                <h3>Analysis Period</h3>
+                <p>Detailed review of collected materials revealing patterns of disparate treatment.</p>
             </div>
-
-            <div class="finding-card">
-                <h3>Oversight Recommendations</h3>
-                <p>Proposed reforms and oversight mechanisms to address identified systemic issues.</p>
+            <div class="timeline-item">
+                <h3>Report Publication</h3>
+                <p>Release of comprehensive findings and recommendations for systemic reform.</p>
             </div>
+        </div>
 
-            <div class="finding-card">
-                <h3>Documentation Evidence</h3>
-                <p>Extensive documentation including internal communications, policies, and procedural documents examined during the investigation.</p>
+        <div class="evidence-section">
+            <h2>Key Evidence and Findings</h2>
+            <div class="evidence-grid">
+                <div class="evidence-item">
+                    <h4>Disparate Treatment</h4>
+                    <p>Documentation of inconsistent application of law enforcement procedures across different groups</p>
+                </div>
+                <div class="evidence-item">
+                    <h4>Internal Communications</h4>
+                    <p>Analysis of emails and messages revealing potential bias in decision-making processes</p>
+                </div>
+                <div class="evidence-item">
+                    <h4>Policy Implementation</h4>
+                    <p>Evidence of selective enforcement and varying standards in policy application</p>
+                </div>
+                <div class="evidence-item">
+                    <h4>Resource Allocation</h4>
+                    <p>Uneven distribution of investigative resources and priorities</p>
+                </div>
             </div>
+        </div>
 
+        <div class="recommendations">
+            <h2>Committee Recommendations</h2>
+            <div class="recommendation-item">
+                <h4>Oversight Reform</h4>
+                <p>Implementation of enhanced oversight mechanisms for federal law enforcement operations</p>
+            </div>
+            <div class="recommendation-item">
+                <h4>Procedural Changes</h4>
+                <p>Standardization of investigation procedures across all demographic and political groups</p>
+            </div>
+            <div class="recommendation-item">
+                <h4>Accountability Measures</h4>
+                <p>Introduction of new accountability frameworks for agency decision-makers</p>
+            </div>
+            <div class="recommendation-item">
+                <h4>Legislative Proposals</h4>
+                <p>Suggested legislative changes to prevent future systemic issues</p>
+            </div>
+        </div>
+
+        <div class="detailed-findings">
             <div class="finding-card">
-                <h3>Legislative Impact</h3>
-                <p>Implications for future legislation and policy reforms based on the committee's findings.</p>
+                <h3>Constitutional Implications</h3>
+                <p>Detailed analysis of First and Fourth Amendment concerns raised by investigative practices</p>
+            </div>
+            <div class="finding-card">
+                <h3>Systemic Issues</h3>
+                <p>Identification of structural problems in federal law enforcement methodology and culture</p>
+            </div>
+            <div class="finding-card">
+                <h3>Agency Coordination</h3>
+                <p>Evidence of problematic inter-agency coordination and information sharing practices</p>
+            </div>
+            <div class="finding-card">
+                <h3>Political Influence</h3>
+                <p>Documentation of potential political considerations in enforcement decisions</p>
             </div>
         </div>
     </div>
