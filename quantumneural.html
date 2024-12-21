@@ -9,7 +9,7 @@
             margin: 0;
             overflow: hidden;
             background: #000;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: Arial, sans-serif;
             color: white;
         }
         #audio-controls {
@@ -57,137 +57,411 @@
     </div>
     <div id="frequency-display"></div>
 
-<script async src="https://unpkg.com/es-module-shims/dist/es-module-shims.js"></script>
-<script type="importmap">
-{
-    "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
-    }
-}
-</script>
-
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-class AudioAnalyzer {
-    constructor() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        this.analyser = this.audioContext.createAnalyser();
-        this.analyser.fftSize = 2048;
-        this.bufferLength = this.analyser.frequencyBinCount;
-        this.dataArray = new Uint8Array(this.bufferLength);
-        this.freqData = new Uint8Array(this.bufferLength);
-    }
-
-    async setupMicrophone() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const source = this.audioContext.createMediaStreamSource(stream);
-            source.connect(this.analyser);
-        } catch (err) {
-            console.error('Microphone access error:', err);
+    <script async src="https://unpkg.com/es-module-shims/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
         }
     }
+    </script>
 
-    async loadAudioFile(file) {
-        try {
-            const buffer = await file.arrayBuffer();
-            const audioBuffer = await this.audioContext.decodeAudioData(buffer);
-            const source = this.audioContext.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(this.analyser);
-            source.connect(this.audioContext.destination);
-            source.start();
-        } catch (err) {
-            console.error('Audio file loading error:', err);
+    <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    class AudioAnalyzer {
+        constructor() {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.analyser = this.audioContext.createAnalyser();
+            this.analyser.fftSize = 2048;
+            this.bufferLength = this.analyser.frequencyBinCount;
+            this.dataArray = new Uint8Array(this.bufferLength);
+            this.freqData = new Uint8Array(this.bufferLength);
         }
-    }
 
-    getAudioData() {
-        this.analyser.getByteTimeDomainData(this.dataArray);
-        this.analyser.getByteFrequencyData(this.freqData);
-        return {
-            timeDomain: this.dataArray,
-            frequency: this.freqData
-        };
-    }
-}
-
-[Previous QuantumField class code goes here]
-
-class QuantumNebulaVisualization {
-    constructor() {
-        this.setup();
-        this.createScene();
-        this.initAudio();
-        this.animate();
-    }
-
-    setup() {
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(this.renderer.domElement);
-
-        window.addEventListener('resize', () => {
-            this.camera.aspect = window.innerWidth / window.innerHeight;
-            this.camera.updateProjectionMatrix();
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    }
-
-    createScene() {
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.z = 15;
-
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-
-        this.quantumField = new QuantumField(2000);
-        this.scene.add(this.quantumField.neurons);
-    }
-
-    initAudio() {
-        this.audioAnalyzer = new AudioAnalyzer();
-        
-        document.getElementById('startAudio').onclick = () => {
-            this.audioAnalyzer.audioContext.resume();
-        };
-
-        document.getElementById('useInput').onclick = () => {
-            this.audioAnalyzer.setupMicrophone();
-        };
-
-        document.getElementById('loadAudio').onclick = () => {
-            document.getElementById('audioFile').click();
-        };
-
-        document.getElementById('audioFile').onchange = (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                this.audioAnalyzer.loadAudioFile(file);
+        async setupMicrophone() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = this.audioContext.createMediaStreamSource(stream);
+                source.connect(this.analyser);
+            } catch (err) {
+                console.error('Microphone access error:', err);
             }
-        };
+        }
+
+        async loadAudioFile(file) {
+            try {
+                const buffer = await file.arrayBuffer();
+                const audioBuffer = await this.audioContext.decodeAudioData(buffer);
+                const source = this.audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(this.analyser);
+                source.connect(this.audioContext.destination);
+                source.start();
+            } catch (err) {
+                console.error('Audio file loading error:', err);
+            }
+        }
+
+        getAudioData() {
+            this.analyser.getByteTimeDomainData(this.dataArray);
+            this.analyser.getByteFrequencyData(this.freqData);
+            return {
+                timeDomain: this.dataArray,
+                frequency: this.freqData
+            };
+        }
     }
 
-    animate() {
-        requestAnimationFrame(() => this.animate());
+    class QuantumField {
+        constructor(count) {
+            this.count = count;
+            this.neurons = new THREE.Group();
+            this.initQuantumField();
+            this.createNeuralConnections();
+            this.createWaveFunction();
+        }
 
-        const audioData = this.audioAnalyzer.getAudioData();
-        this.quantumField.update(Array.from(audioData.frequency), performance.now() * 0.001);
+        initQuantumField() {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(this.count * 3);
+            const phases = new Float32Array(this.count);
+            const energyLevels = new Float32Array(this.count);
+            const colors = new Float32Array(this.count * 3);
 
-        document.getElementById('frequency-display').textContent = 
-            `Average Frequency: ${(Array.from(audioData.frequency).reduce((a, b) => a + b, 0) / audioData.frequency.length).toFixed(2)}`;
+            for (let i = 0; i < this.count; i++) {
+                const radius = Math.random() * Math.PI * 2;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                const quantumState = Math.random() * 2 * Math.PI;
 
-        this.controls.update();
-        this.renderer.render(this.scene, this.camera);
+                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = radius * Math.cos(phi);
+
+                phases[i] = quantumState;
+                energyLevels[i] = Math.random();
+
+                const energyColor = new THREE.Color();
+                energyColor.setHSL(
+                    (Math.sin(quantumState) + 1) / 2,
+                    0.8,
+                    0.3 + (energyLevels[i] * 0.2)
+                );
+                colors[i * 3] = energyColor.r;
+                colors[i * 3 + 1] = energyColor.g;
+                colors[i * 3 + 2] = energyColor.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('phase', new THREE.BufferAttribute(phases, 1));
+            geometry.setAttribute('energyLevel', new THREE.BufferAttribute(energyLevels, 1));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.ShaderMaterial({
+                vertexShader: `
+                    attribute float phase;
+                    attribute float energyLevel;
+                    uniform float time;
+                    uniform float audioData[64];
+                    varying vec3 vColor;
+                    varying float vQuantumState;
+
+                    vec3 quantumWaveFunction(vec3 position, float phase, float energy) {
+                        float waveProbability = sin(phase + time * energy);
+                        float uncertainty = cos(time * 0.5 + phase) * sin(time * 0.3);
+                        
+                        vec3 quantumPos = position;
+                        quantumPos.x += waveProbability * uncertainty * energy;
+                        quantumPos.y += cos(waveProbability * 2.0) * uncertainty * energy;
+                        quantumPos.z += sin(waveProbability * 3.0) * uncertainty * energy;
+                        
+                        return quantumPos;
+                    }
+
+                    float getQuantumResonance(vec3 position) {
+                        float freq = length(position) * 32.0;
+                        int index = int(mod(freq, 64.0));
+                        return audioData[index] / 256.0;
+                    }
+
+                    void main() {
+                        vColor = color;
+                        float audioResonance = getQuantumResonance(position);
+                        vQuantumState = energyLevel * audioResonance;
+
+                        vec3 quantumPos = quantumWaveFunction(position, phase, energyLevel);
+                        quantumPos *= 1.0 + audioResonance * 0.3;
+                        
+                        float dimensionalShift = sin(time * 0.5 + length(quantumPos));
+                        quantumPos *= 1.0 + dimensionalShift * 0.1;
+
+                        vec4 mvPosition = modelViewMatrix * vec4(quantumPos, 1.0);
+                        gl_Position = projectionMatrix * mvPosition;
+                        
+                        float size = (2.0 + energyLevel * 3.0) * (1.0 + audioResonance);
+                        gl_PointSize = size * (300.0 / -mvPosition.z);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    varying float vQuantumState;
+
+                    void main() {
+                        vec2 center = gl_PointCoord - vec2(0.5);
+                        float dist = length(center);
+                        
+                        float probability = exp(-dist * 3.0);
+                        float interference = sin(dist * 20.0 + vQuantumState * 10.0) * 0.5 + 0.5;
+                        
+                        float uncertainty = smoothstep(0.5, 0.0, dist);
+                        float alpha = probability * uncertainty * (0.5 + vQuantumState);
+
+                        vec3 quantumColor = vColor + vec3(interference * 0.2);
+                        quantumColor *= 1.0 + vQuantumState * 0.3;
+
+                        gl_FragColor = vec4(quantumColor, alpha * 0.5);
+                    }
+                `,
+                uniforms: {
+                    time: { value: 0 },
+                    audioData: { value: new Float32Array(64) }
+                },
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            this.quantumParticles = new THREE.Points(geometry, material);
+            this.neurons.add(this.quantumParticles);
+        }
+
+        createNeuralConnections() {
+            this.neuralNetwork = new THREE.Group();
+            this.neurons.add(this.neuralNetwork);
+            
+            this.neuronCount = Math.floor(this.count / 20);
+            this.maxConnections = 5;
+            this.neurons = [];
+            this.connections = [];
+            
+            for (let i = 0; i < this.neuronCount; i++) {
+                const neuron = {
+                    position: new THREE.Vector3(
+                        (Math.random() - 0.5) * 10,
+                        (Math.random() - 0.5) * 10,
+                        (Math.random() - 0.5) * 10
+                    ),
+                    connections: [],
+                    activity: 0,
+                    baseColor: new THREE.Color().setHSL(Math.random(), 0.8, 0.5)
+                };
+                this.neurons.push(neuron);
+            }
+
+            for (let i = 0; i < this.neuronCount; i++) {
+                const neuron = this.neurons[i];
+                const connectionCount = Math.floor(Math.random() * this.maxConnections) + 1;
+                
+                for (let j = 0; j < connectionCount; j++) {
+                    const targetIndex = Math.floor(Math.random() * this.neuronCount);
+                    if (targetIndex !== i && !neuron.connections.includes(targetIndex)) {
+                        const connection = this.createConnection(neuron, this.neurons[targetIndex]);
+                        neuron.connections.push(targetIndex);
+                        this.connections.push(connection);
+                    }
+                }
+            }
+        }
+
+        createConnection(sourceNeuron, targetNeuron) {
+            const geometry = new THREE.BufferGeometry();
+            const material = new THREE.LineBasicMaterial({
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                opacity: 0.3
+            });
+
+            const line = new THREE.Line(geometry, material);
+            this.neuralNetwork.add(line);
+
+            return {
+                source: sourceNeuron,
+                target: targetNeuron,
+                line: line,
+                activity: 0,
+                pulsePhase: Math.random() * Math.PI * 2
+            };
+        }
+
+        updateNeuralConnections(audioData, time) {
+            this.neurons.forEach((neuron, i) => {
+                const audioIndex = Math.floor((i / this.neuronCount) * 64);
+                const audioValue = audioData[audioIndex] / 256;
+                neuron.activity = Math.max(neuron.activity, audioValue);
+                neuron.activity *= 0.95;
+            });
+
+            this.connections.forEach(connection => {
+                const sourceActivity = connection.source.activity;
+                const targetActivity = connection.target.activity;
+                const avgActivity = (sourceActivity + targetActivity) * 0.5;
+
+                const positions = [];
+                const colors = [];
+                
+                const segments = 10;
+                for (let i = 0; i <= segments; i++) {
+                    const t = i / segments;
+                    const midPoint = new THREE.Vector3().lerpVectors(
+                        connection.source.position,
+                        connection.target.position,
+                        t
+                    );
+                    
+                    const wave = Math.sin(time * 2 + connection.pulsePhase + t * Math.PI * 2);
+                    midPoint.y += wave * avgActivity;
+
+                    positions.push(midPoint.x, midPoint.y, midPoint.z);
+
+                    const color = new THREE.Color();
+                    color.lerpColors(
+                        connection.source.baseColor,
+                        connection.target.baseColor,
+                        t + Math.sin(time + connection.pulsePhase) * 0.5
+                    );
+                    color.multiplyScalar(1 + avgActivity);
+                    colors.push(color.r, color.g, color.b);
+                }
+
+                connection.line.geometry.setAttribute('position', 
+                    new THREE.Float32BufferAttribute(positions, 3));
+                connection.line.geometry.setAttribute('color',
+                    new THREE.Float32BufferAttribute(colors, 3));
+                
+                connection.line.material.opacity = 0.1 + avgActivity * 0.5;
+            });
+        }
+
+        createWaveFunction() {
+            const waveGeometry = new THREE.SphereGeometry(5, 32, 32);
+            const waveMaterial = new THREE.ShaderMaterial({
+                vertexShader: `
+                    varying vec3 vPosition;
+                    void main() {
+                        vPosition = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vPosition;
+                    uniform float time;
+                    
+                    void main() {
+                        float wave = sin(length(vPosition) * 2.0 - time * 2.0);
+                        float alpha = pow(1.0 - abs(wave), 4.0) * 0.1;
+                        vec3 color = vec3(0.5 + wave * 0.5, 0.5, 1.0);
+                        gl_FragColor = vec4(color, alpha);
+                    }
+                `,
+                uniforms: {
+                    time: { value: 0 }
+                },
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+
+            this.waveFunction = new THREE.Mesh(waveGeometry, waveMaterial);
+            this.neurons.add(this.waveFunction);
+        }
+
+        update(audioData, time) {
+            this.quantumParticles.material.uniforms.time.value = time;
+            this.quantumParticles.material.uniforms.audioData.value = audioData;
+            this.waveFunction.material.uniforms.time.value = time;
+            this.updateNeuralConnections(audioData, time);
+
+            this.neurons.rotation.y = time * 0.1;
+            this.neurons.rotation.z = Math.sin(time * 0.2) * 0.1;
+        }
     }
-}
 
-// Initialize the visualization
-new QuantumNebulaVisualization();
-</script>
+    class QuantumNebulaVisualization {
+        constructor() {
+            this.setup();
+            this.createScene();
+            this.initAudio();
+            this.animate();
+        }
+
+        setup() {
+            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(this.renderer.domElement);
+
+            window.addEventListener('resize', () => {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        createScene() {
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            this.camera.position.z = 15;
+
+            this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.enableDamping = true;
+
+            this.quantumField = new QuantumField(2000);
+            this.scene.add(this.quantumField.neurons);
+        }
+
+        initAudio() {
+            this.audioAnalyzer = new AudioAnalyzer();
+            
+            document.getElementById('startAudio').onclick = () => {
+                this.audioAnalyzer.audioContext.resume();
+            };
+
+            document.getElementById('useInput').onclick = () => {
+                this.audioAnalyzer.setupMicrophone();
+            };
+
+            document.getElementById('loadAudio').onclick = () => {
+                document.getElementById('audioFile').click();
+            };
+
+            document.getElementById('audioFile').onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    this.audioAnalyzer.loadAudioFile(file);
+                }
+            };
+        }
+
+        animate() {
+            requestAnimationFrame(() => this.animate());
+
+            const audioData = this.audioAnalyzer.getAudioData();
+            this.quantumField.update(Array.from(audioData.frequency), performance.now() * 0.001);
+
+            document.getElementById('frequency-display').textContent = 
+                `Average Frequency: ${(Array.from(audioData.frequency).reduce((a, b) => a + b, 0) / audioData.frequency.length).toFixed(2)}`;
+
+            this.controls.update();
+            this.renderer.render(this.scene, this.camera);
+        }
+    }
+
+    // Initialize the visualization
+    new QuantumNebulaVisualization();
+    </script>
 </body>
 </html>
