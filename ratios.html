@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            background: #0d1a33;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        .ratio-visualizer {
+            width: 100%;
+            height: 300px;
+            background: #162440;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50%;
+            opacity: 0.7;
+        }
+
+        .wave-1 {
+            background: linear-gradient(180deg, transparent, #4a90e2);
+        }
+
+        .wave-2 {
+            background: linear-gradient(180deg, transparent, #e24a4a);
+            transform: scaleX(-1);
+        }
+
+        .ratio-control {
+            background: #1f2f4f;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #357abd;
+        }
+
+        .frequency-display {
+            font-family: monospace;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #162440;
+            border-radius: 4px;
+        }
+
+        canvas {
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Sacred Ratios in Music</h2>
+    
+    <div class="ratio-control">
+        <button onclick="playRatio(3/2)">Play Perfect Fifth (3:2)</button>
+        <button onclick="playRatio(4/3)">Play Perfect Fourth (4:3)</button>
+        <button onclick="playRatio(9/8)">Play Whole Tone (9:8)</button>
+    </div>
+
+    <div class="ratio-visualizer">
+        <canvas id="waveformCanvas"></canvas>
+    </div>
+
+    <div class="frequency-display" id="frequencyDisplay">
+        Base Frequency: 440 Hz
+    </div>
+</div>
+
+<script>
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const canvas = document.getElementById('waveformCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = canvas.offsetWidth;
+canvas.height = canvas.offsetHeight;
+
+let oscillator1 = null;
+let oscillator2 = null;
+let analyser = null;
+
+function setupAnalyser() {
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    return analyser;
+}
+
+function playRatio(ratio) {
+    if (oscillator1) {
+        oscillator1.stop();
+        oscillator2.stop();
+    }
+
+    const baseFreq = 440;
+    
+    oscillator1 = audioContext.createOscillator();
+    oscillator2 = audioContext.createOscillator();
+    const gainNode1 = audioContext.createGain();
+    const gainNode2 = audioContext.createGain();
+
+    oscillator1.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+    oscillator2.frequency.setValueAtTime(baseFreq * ratio, audioContext.currentTime);
+
+    gainNode1.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
+
+    const analyser = setupAnalyser();
+
+    oscillator1.connect(gainNode1);
+    oscillator2.connect(gainNode2);
+    gainNode1.connect(analyser);
+    gainNode2.connect(analyser);
+    analyser.connect(audioContext.destination);
+
+    oscillator1.start();
+    oscillator2.start();
+
+    document.getElementById('frequencyDisplay').textContent = 
+        `Base: ${baseFreq} Hz | Ratio: ${ratio} | Second: ${(baseFreq * ratio).toFixed(1)} Hz`;
+
+    drawWaveform(analyser);
+
+    setTimeout(() => {
+        oscillator1.stop();
+        oscillator2.stop();
+    }, 2000);
+}
+
+function drawWaveform(analyser) {
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    function draw() {
+        const drawVisual = requestAnimationFrame(draw);
+        
+        analyser.getByteTimeDomainData(dataArray);
+        
+        ctx.fillStyle = '#162440';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#4a90e2';
+        ctx.beginPath();
+        
+        const sliceWidth = canvas.width * 1.0 / bufferLength;
+        let x = 0;
+        
+        for(let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i] / 128.0;
+            const y = v * canvas.height/2;
+            
+            if(i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            
+            x += sliceWidth;
+        }
+        
+        ctx.lineTo(canvas.width, canvas.height/2);
+        ctx.stroke();
+    }
+    
+    draw();
+}
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+});
+</script>
+</body>
+</html>
