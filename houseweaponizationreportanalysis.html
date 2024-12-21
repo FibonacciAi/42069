@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Weaponization Report Analysis</title>
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --accent: #4a9eff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+        }
+
+        h1 {
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        .key-findings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .finding-card {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .finding-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .finding-card h3 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .finding-card p {
+            color: var(--text-secondary);
+        }
+
+        .stats {
+            text-align: center;
+            margin: 40px 0;
+            padding: 20px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .stats-number {
+            font-size: 2.5em;
+            color: var(--accent);
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .key-findings {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>House Weaponization Committee Report</h1>
+            <p>Analysis of the 17,000-page Congressional Report</p>
+        </header>
+
+        <div class="stats">
+            <div class="stats-number">17,000</div>
+            <p>Pages of Detailed Investigation</p>
+        </div>
+
+        <div class="key-findings">
+            <div class="finding-card">
+                <h3>Two-Tiered System</h3>
+                <p>Evidence of disparate treatment in government operations and law enforcement approaches across different political and social groups.</p>
+            </div>
+
+            <div class="finding-card">
+                <h3>Federal Agency Operations</h3>
+                <p>Detailed examination of how federal agencies conducted investigations and enforcement actions during key periods.</p>
+            </div>
+
+            <div class="finding-card">
+                <h3>Constitutional Concerns</h3>
+                <p>Analysis of potential impacts on constitutional rights and civil liberties in government operations.</p>
+            </div>
+
+            <div class="finding-card">
+                <h3>Oversight Recommendations</h3>
+                <p>Proposed reforms and oversight mechanisms to address identified systemic issues.</p>
+            </div>
+
+            <div class="finding-card">
+                <h3>Documentation Evidence</h3>
+                <p>Extensive documentation including internal communications, policies, and procedural documents examined during the investigation.</p>
+            </div>
+
+            <div class="finding-card">
+                <h3>Legislative Impact</h3>
+                <p>Implications for future legislation and policy reforms based on the committee's findings.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
