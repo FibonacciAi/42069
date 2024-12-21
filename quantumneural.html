@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Neural Consciousness</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+        }
+        #audio-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .btn {
+            background: #00aaff;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background: #0088cc;
+        }
+        #frequency-display {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="audio-controls">
+        <button id="startAudio" class="btn">Start Audio Experience</button>
+        <button id="useInput" class="btn">Use Microphone</button>
+        <input type="file" id="audioFile" accept="audio/*" style="display: none;">
+        <button id="loadAudio" class="btn">Load Audio File</button>
+    </div>
+    <div id="frequency-display"></div>
+
+<script async src="https://unpkg.com/es-module-shims/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+class AudioAnalyzer {
+    constructor() {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.fftSize = 2048;
+        this.bufferLength = this.analyser.frequencyBinCount;
+        this.dataArray = new Uint8Array(this.bufferLength);
+        this.freqData = new Uint8Array(this.bufferLength);
+    }
+
+    async setupMicrophone() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const source = this.audioContext.createMediaStreamSource(stream);
+            source.connect(this.analyser);
+        } catch (err) {
+            console.error('Microphone access error:', err);
+        }
+    }
+
+    async loadAudioFile(file) {
+        try {
+            const buffer = await file.arrayBuffer();
+            const audioBuffer = await this.audioContext.decodeAudioData(buffer);
+            const source = this.audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(this.analyser);
+            source.connect(this.audioContext.destination);
+            source.start();
+        } catch (err) {
+            console.error('Audio file loading error:', err);
+        }
+    }
+
+    getAudioData() {
+        this.analyser.getByteTimeDomainData(this.dataArray);
+        this.analyser.getByteFrequencyData(this.freqData);
+        return {
+            timeDomain: this.dataArray,
+            frequency: this.freqData
+        };
+    }
+}
+
+[Previous QuantumField class code goes here]
+
+class QuantumNebulaVisualization {
+    constructor() {
+        this.setup();
+        this.createScene();
+        this.initAudio();
+        this.animate();
+    }
+
+    setup() {
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(this.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    createScene() {
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.z = 15;
+
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+
+        this.quantumField = new QuantumField(2000);
+        this.scene.add(this.quantumField.neurons);
+    }
+
+    initAudio() {
+        this.audioAnalyzer = new AudioAnalyzer();
+        
+        document.getElementById('startAudio').onclick = () => {
+            this.audioAnalyzer.audioContext.resume();
+        };
+
+        document.getElementById('useInput').onclick = () => {
+            this.audioAnalyzer.setupMicrophone();
+        };
+
+        document.getElementById('loadAudio').onclick = () => {
+            document.getElementById('audioFile').click();
+        };
+
+        document.getElementById('audioFile').onchange = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                this.audioAnalyzer.loadAudioFile(file);
+            }
+        };
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+
+        const audioData = this.audioAnalyzer.getAudioData();
+        this.quantumField.update(Array.from(audioData.frequency), performance.now() * 0.001);
+
+        document.getElementById('frequency-display').textContent = 
+            `Average Frequency: ${(Array.from(audioData.frequency).reduce((a, b) => a + b, 0) / audioData.frequency.length).toFixed(2)}`;
+
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+// Initialize the visualization
+new QuantumNebulaVisualization();
+</script>
+</body>
+</html>
