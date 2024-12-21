@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Quantum Spin Liquid Visualization</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background: #050A30;
+            overflow: hidden;
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(5, 10, 48, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 174, 239, 0.2);
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90vw;
+        }
+
+        .control-btn {
+            background: #00AEEF;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            min-width: 160px;
+        }
+
+        .control-btn:hover {
+            background: #B400FF;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(180, 0, 255, 0.3);
+        }
+
+        .control-btn.active {
+            background: #B400FF;
+            box-shadow: 0 0 15px rgba(180, 0, 255, 0.5);
+        }
+
+        .info-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(5, 10, 48, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 174, 239, 0.2);
+            min-width: 200px;
+        }
+
+        .info-panel div {
+            margin: 8px 0;
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(0, 174, 239, 0.3);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00AEEF;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #B400FF;
+            box-shadow: 0 0 10px rgba(180, 0, 255, 0.5);
+        }
+
+        .stats {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(5, 10, 48, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 174, 239, 0.2);
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00AEEF;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .performance-warning {
+            color: #FF1E8F;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+<div class="controls">
+    <button class="control-btn" id="toggleRotation">Toggle Rotation</button>
+    <button class="control-btn" id="toggleWaves">Toggle Waves</button>
+    <button class="control-btn" id="toggleParticles">Toggle Particles</button>
+    <div class="slider-container">
+        <div class="slider-label">
+            <span>Particle Count: </span>
+            <span id="particleCountValue">3000</span>
+        </div>
+        <input type="range" id="particleCountSlider" min="100" max="10000" step="100" value="3000">
+    </div>
+    <div class="slider-container">
+        <div class="slider-label">
+            <span>Wave Speed: </span>
+            <span id="waveSpeedValue">1.0</span>
+        </div>
+        <input type="range" id="waveSpeedSlider" min="0" max="2" step="0.1" value="1">
+    </div>
+</div>
+
+<div class="info-panel">
+    <div>Quantum Spin Liquid Visualization</div>
+    <div id="fps">FPS: 0</div>
+    <div id="particleCount">Active Particles: 3000</div>
+    <div id="performanceStatus"></div>
+</div>
+
+<div class="stats">
+    <div>Performance Metrics</div>
+    <div>GPU Load: <span id="gpuLoad" class="stat-value">-</span></div>
+    <div>Memory: <span id="memoryUse" class="stat-value">-</span></div>
+</div>
+
+<canvas id="canvas3d"></canvas>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Quantum palette
+const quantumPalette = {
+    darkBlue: 0x050A30,
+    electricBlue: 0x00AEEF,
+    neonPurple: 0xB400FF,
+    neonYellow: 0xFFFF33,
+    wavePink: 0xFF1E8F,
+    white: 0xFFFFFF
+};
+
+// Scene setup
+const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById('canvas3d'),
+    antialias: true,
+    powerPreference: "high-performance",
+    stencil: false,
+    depth: true
+});
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(quantumPalette.darkBlue, 0.02);
+scene.background = new THREE.Color(quantumPalette.darkBlue);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 2, 6);
+scene.add(camera);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+
+// Lights
+const ambientLight = new THREE.AmbientLight(quantumPalette.electricBlue, 0.4);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(quantumPalette.neonYellow, 1.5, 50);
+pointLight.position.set(5, 5, 5);
+scene.add(pointLight);
+
+const movingLight = new THREE.PointLight(quantumPalette.wavePink, 1.0, 30);
+scene.add(movingLight);
+
+// Particle System Class
+class ParticleSystem {
+    constructor(initialCount) {
+        this.count = initialCount;
+        this.geometry = null;
+        this.material = null;
+        this.points = null;
+        this.initializeParticles();
+    }
+
+    initializeParticles() {
+        this.geometry = new THREE.BufferGeometry();
+        this.updateParticleCount(this.count);
+        
+        this.material = new THREE.PointsMaterial({
+            color: quantumPalette.wavePink,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            vertexColors: true
+        });
+
+        this.points = new THREE.Points(this.geometry, this.material);
+    }
+
+    updateParticleCount(newCount) {
+        this.count = newCount;
+        const positions = new Float32Array(newCount * 3);
+        const velocities = new Float32Array(newCount * 3);
+        const colors = new Float32Array(newCount * 3);
+        const sizes = new Float32Array(newCount);
+
+        for (let i = 0; i < newCount; i++) {
+            // Position
+            positions[i * 3] = (Math.random() - 0.5) * 10;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+
+            // Velocity
+            velocities[i * 3] = (Math.random() - 0.5) * 0.02;
+            velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
+            velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
+
+            // Color
+            const hue = Math.random();
+            const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+
+            // Size
+            sizes[i] = Math.random() * 0.1 + 0.05;
+        }
+
+        this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        this.geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    }
+
+    update() {
+        const positions = this.geometry.attributes.position.array;
+        const velocities = this.geometry.attributes.velocity.array;
+
+        for (let i = 0; i < this.count; i++) {
+            positions[i * 3] += velocities[i * 3];
+            positions[i * 3 + 1] += velocities[i * 3 + 1];
+            positions[i * 3 + 2] += velocities[i * 3 + 2];
+
+            // Enhanced bounce effect
+            for (let j = 0; j < 3; j++) {
+                if (Math.abs(positions[i * 3 + j]) > 5) {
+                    velocities[i * 3 + j] *= -0.95;
+                    positions[i * 3 + j] = Math.sign(positions[i * 3 + j]) * 5;
+                }
+            }
+        }
+
+        this.geometry.attributes.position.needsUpdate = true;
+    }
+}
+
+// Initialize particle system
+const particleSystem = new ParticleSystem(3000);
+scene.add(particleSystem.points);
+
+// Create waves
+const waves = [];
+const waveCount = 3;
+for (let i = 0; i < waveCount; i++) {
+    const waveGeometry = new THREE.RingGeometry(1 + i * 0.5, 1.2 + i * 0.5, 32, 1);
+    const waveMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color().setHSL(i / waveCount, 0.8, 0.5),
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.4
+    });
+    const wave = new THREE.Mesh(waveGeometry, waveMaterial);
+    wave.rotation.x = Math.PI / 2;
+    waves.push(wave);
+    scene.add(wave);
+}
+
+// UI Controls
+const particleCountSlider = document.getElementById('particleCountSlider');
+const particleCountValue = document.getElementById('particleCountValue');
+const waveSpeedSlider = document.getElementById('waveSpeedSlider');
+const waveSpeedValue = document.getElementById('waveSpeedValue');
+const toggleRotationBtn = document.getElementById('toggleRotation');
+const toggleWavesBtn = document.getElementById('toggleWaves');
+const toggleParticlesBtn = document.getElementById('toggleParticles');
+
+let waveSpeed = 1.0;
+let showWaves = true;
+let showParticles = true;
+
+particleCountSlider.addEventListener('input', (e) => {
+    const newCount = parseInt(e.target.value);
+    particleCountValue.textContent = newCount;
+    particleSystem.updateParticleCount(newCount);
+    document.getElementById('particleCount').textContent = `Active Particles: ${newCount}`;
+    updatePerformanceStatus(newCount);
+});
+
+waveSpeedSlider.addEventListener('input', (e) => {
+    waveSpeed = parseFloat(e.target.value);
+    waveSpeedValue.textContent = waveSpeed.toFixed(1);
+});
+
+toggleRotationBtn.addEventListener('click', () => {
+    controls.autoRotate = !controls.autoRotate;
+    toggleRotationBtn.classList.toggle('active');
+});
+
+toggleWavesBtn.addEventListener('click', () => {
+    showWaves = !showWaves;
+    waves.forEach(wave => wave.visible = showWaves);
+    toggleWavesBtn.classList.toggle('active');
+});
+
+toggleParticlesBtn.addEventListener('click', () => {
+    showParticles = !showParticles;
+    particleSystem.points.visible = showParticles;
+    toggleParticlesBtn.classList.toggle('active');
+});
+
+function updatePerformanceStatus(count) {
+    const status = document.getElementById('performanceStatus');
+    if (count > 5000) {
+        status.textContent = "⚠️ High particle count may affect performance";
+        status.className = "performance-warning";
+    } else {
+        status.textContent = "✓ Performance optimal";
+        status.className = "";
+    }
+}
+
+// Animation loop
+let lastTime = performance.now();
+let frameCount = 0;
+
+function animate() {
+    const currentTime = performance.now();
+    frameCount++;
+
+    if (currentTime - lastTime >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+        document.getElementById('fps').textContent = `FPS: ${fps}`;
+        
+        if (window.performance && window.performance.memory) {
+            const memory = Math.round(performance.memory.usedJSHeapSize / 1048576);
+            document.getElementById('memoryUse').textContent = `${memory} MB`;
+        }
+        
+        // Update GPU load estimation
+        const gpuLoad = fps < 30 ? "High" : fps < 50 ? "Medium" : "Low";
+        document.getElementById('gpuLoad').textContent = gpuLoad;
+        
+        frameCount = 0;
+        lastTime = currentTime;
+    }
+
+    // Update particles
+    if (showParticles) {
+        particleSystem.update();
+    }
+
+    // Update waves
+    if (showWaves) {
+        waves.forEach((wave, index) => {
+            wave.rotation.z += 0.001 * waveSpeed * (index + 1);
+            wave.scale.setScalar(1 + Math.sin(currentTime * 0.001 * waveSpeed + index) * 0.1);
+        });
+    }
+
+    // Update moving light
+    movingLight.position.x = Math.cos(currentTime * 0.001) * 8;
+    movingLight.position.z = Math.sin(currentTime * 0.001) * 8;
+    movingLight.position.y = Math.sin(currentTime * 0.002) * 3;
+
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+}
+
+// Start animation
+animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Set initial button states
+toggleRotationBtn.classList.add('active');
+toggleWavesBtn.classList.add('active');
+toggleParticlesBtn.classList.add('active');
+updatePerformanceStatus(particleSystem.count);
+</script>
+</body>
+</html>
