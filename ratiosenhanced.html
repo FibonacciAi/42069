@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sacred Ratios in Music - Advanced Harmonics</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background: #0d1a33;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0d1a33 0%, #1a2942 50%, #0d1a33 100%);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        .visualizer-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .ratio-visualizer {
+            flex: 1;
+            min-width: 300px;
+            height: 400px;
+            background: rgba(22, 36, 64, 0.8);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin: 1rem 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ratio-control {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: rgba(31, 47, 79, 0.9);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .settings-control {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            background: rgba(31, 47, 79, 0.9);
+            padding: 1.5rem;
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .piano-container {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+            perspective: 1000px;
+        }
+
+        .piano-key {
+            width: 40px;
+            height: 120px;
+            margin: 0 2px;
+            background: white;
+            border-radius: 0 0 4px 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        .piano-key.black {
+            background: #333;
+            height: 80px;
+            width: 30px;
+            margin-left: -15px;
+            margin-right: -15px;
+            z-index: 1;
+        }
+
+        .piano-key:active,
+        .piano-key.active {
+            transform: rotateX(10deg) translateY(5px);
+            background: #4a90e2;
+        }
+
+        button {
+            flex: 1;
+            min-width: 200px;
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #357abd 0%, #2868a9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+        }
+
+        button:active::after {
+            animation: ripple 0.8s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 0.5;
+            }
+            100% {
+                width: 500px;
+                height: 500px;
+                opacity: 0;
+            }
+        }
+
+        .frequency-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            padding: 1.5rem;
+            background: rgba(22, 36, 64, 0.9);
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        canvas {
+            border-radius: 8px;
+            width: 100%;
+            height: 100%;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #fff 0%, #4a90e2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #264173;
+            border-radius: 3px;
+            outline: none;
+            position: relative;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4a90e2;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #357abd;
+            transform: scale(1.2);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #264173;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4a90e2;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .effect-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .effect-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .keyboard-controls {
+            background: rgba(31, 47, 79, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        @media (min-width: 768px) {
+            .ratio-visualizer {
+                height: 500px;
+            }
+
+            button {
+                font-size: 1.1rem;
+            }
+
+            .frequency-display {
+                font-size: 1.4rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .container {
+                padding: 2rem;
+            }
+
+            .ratio-control {
+                padding: 2rem;
+            }
+
+            h2 {
+                font-size: 3rem;
+            }
+        }
+
+        #harmonicsCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Sacred Ratios in Music</h2>
+    
+    <div class="controls-container">
+        <div class="ratio-control">
+            <button onclick="playRatio(3/2)">Play Perfect Fifth (3:2)</button>
+            <button onclick="playRatio(4/3)">Play Perfect Fourth (4:3)</button>
+            <button onclick="playRatio(9/8)">Play Whole Tone (9:8)</button>
+        </div>
+
+        <div class="settings-control">
+            <div class="slider-container">
+                <span>Volume:</span>
+                <input type="range" id="volumeControl" min="0" max="100" value="30">
+            </div>
+            <div class="slider-container">
+                <span>Reverb:</span>
+                <input type="range" id="reverbControl" min="0" max="100" value="20">
+            </div>
+            <div class="slider-container">
+                <span>Delay:</span>
+                <input type="range" id="delayControl" min="0" max="100" value="0">
+            </div>
+            <div class="toggle-container">
+                <span>Sustain:</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sustainToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="visualizer-container">
+        <div class="ratio-visualizer">
+            <canvas id="waveformCanvas"></canvas>
+        </div>
+        <div class="ratio-visualizer">
+            <canvas id="harmonicsCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="piano-container" id="pianoContainer"></div>
+
+    <div class="frequency-display" id="frequencyDisplay">
+        Base: 440 Hz
+    </div>
+
+    <div class="keyboard-controls">
+        Press A-K keys to play different ratios
+    </div>
+</div>
+
+<script>
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const waveformCanvas = document.getElementById('waveformCanvas');
+const harmonicsCanvas = document.getElementById('harmonicsCanvas');
+const waveformCtx = waveformCanvas.getContext('2d');
+const harmonicsCtx = harmonicsCanvas.getContext('2d');
+const volumeControl = document.getElementById('volumeControl');
+const reverbControl = document.getElementById('reverbControl');
+const delayControl = document.getElementById('delayControl');
+const sustainToggle = document.getElementById('sustainToggle');
+
+let oscillators = [];
+let analyser = null;
+let particles = [];
+let scene, camera, renderer;
+let harmonicMesh;
+
+// Create piano keys
+const createPiano = () => {
+    const container = document.getElementById('pianoContainer');
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    
+    notes.forEach((note, i) => {
+        const key = document.createElement('div');
+        key.className = `piano-key ${note.includes('#') ? 'black' : 'white'}`;
+        key.dataset.note = i;
+        key.addEventListener('mousedown', () => playNote(440 * Math.pow(2, i/12)));
+        key.addEventListener('mouseup', () => {
+            if (!sustainToggle.checked) stopNote();
+        });
+        container.appendChild(key);
+    });
+};
+
+class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = Math.random() * 2 - 1;
+        this.speedY = Math.random() * 2 - 1;
+        this.life = 1;
+        this.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+    }
+
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.life -= 0.01;
+        this.size *= 0.99;
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.life;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+}
+
+function setupCanvas() {
+    waveformCanvas.width = waveformCanvas.offsetWidth;
+    waveformCanvas.height = waveformCanvas.offsetHeight;
+    harmonicsCanvas.width = harmonicsCanvas.offsetWidth;
+    harmonicsCanvas.height = harmonicsCanvas.offsetHeight;
+}
+
+function setupAnalyser() {
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    return analyser;
+}
+
+function createReverb() {
+    const convolver = audioContext.createConvolver();
+    const rate = audioContext.sampleRate;
+    const length = rate * 3;
+    const impulse = audioContext.createBuffer(2, length, rate);
+    const left = impulse.getChannelData(0);
+    const right = impulse.getChannelData(1);
+
+    for (let i = 0; i < length; i++) {
+        left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+        right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+    }
+
+    convolver.buffer = impulse;
+    return convolver;
+}
+
+function getVolume() {
+    return volumeControl.value / 100;
+}
+
+function createDelay() {
+    const delay = audioContext.createDelay();
+    delay.delayTime.value = 0.3;
+    const feedback = audioContext.createGain();
+    feedback.gain.value = 0.4;
+    
+    delay.connect(feedback);
+    feedback.connect(delay);
+    
+    return delay;
+}
+
+function playNote(frequency) {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    const reverb = createReverb();
+    const delay = createDelay();
+
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(getVolume(), audioContext.currentTime);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(reverb);
+    reverb.connect(delay);
+    delay.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillators.push({ oscillator, gainNode });
+
+    // Add particles
+    for (let i = 0; i < 20; i++) {
+        particles.push(new Particle(
+            Math.random() * waveformCanvas.width,
+            Math.random() * waveformCanvas.height
+        ));
+    }
+
+    return oscillator;
+}
+
+function stopNote() {
+    oscillators.forEach(({ oscillator, gainNode }) => {
+        gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+        setTimeout(() => oscillator.stop(), 100);
+    });
+    oscillators = [];
+}
+
+function playRatio(ratio) {
+    if (!sustainToggle.checked) {
+        stopNote();
+    }
+
+    const baseFreq = 440;
+    playNote(baseFreq);
+    playNote(baseFreq * ratio);
+
+    document.getElementById('frequencyDisplay').textContent = 
+        `Base: ${baseFreq} Hz | Ratio: ${ratio} | Second: ${(baseFreq * ratio).toFixed(1)} Hz`;
+}
+
+function drawWaveform() {
+    if (!analyser) return;
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        analyser.getByteTimeDomainData(dataArray);
+        
+        waveformCtx.fillStyle = 'rgba(22, 36, 64, 0.3)';
+        waveformCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+        
+        // Draw particles
+        particles = particles.filter(particle => particle.life > 0);
+        particles.forEach(particle => {
+            particle.update();
+            particle.draw(waveformCtx);
+        });
+
+        // Draw waveform
+        waveformCtx.lineWidth = 2;
+        waveformCtx.strokeStyle = `hsl(${Date.now() / 20 % 360}, 80%, 60%)`;
+        waveformCtx.beginPath();
+        
+        const sliceWidth = waveformCanvas.width * 1.0 / bufferLength;
+        let x = 0;
+        
+        for(let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i] / 128.0;
+            const y = v * waveformCanvas.height/2;
+            
+            if(i === 0) {
+                waveformCtx.moveTo(x, y);
+            } else {
+                waveformCtx.lineTo(x, y);
+            }
+            
+            x += sliceWidth;
+        }
+        
+        waveformCtx.lineTo(waveformCanvas.width, waveformCanvas.height/2);
+        waveformCtx.stroke();
+    }
+    
+    animate();
+}
+
+function drawHarmonics() {
+    if (!analyser) return;
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        analyser.getByteFrequencyData(dataArray);
+        
+        harmonicsCtx.fillStyle = 'rgba(22, 36, 64, 0.3)';
+        harmonicsCtx.fillRect(0, 0, harmonicsCanvas.width, harmonicsCanvas.height);
+        
+        const barWidth = harmonicsCanvas.width / bufferLength;
+        let x = 0;
+        
+        for(let i = 0; i < bufferLength; i++) {
+            const barHeight = dataArray[i] / 255 * harmonicsCanvas.height;
+            
+            harmonicsCtx.fillStyle = `hsl(${i / bufferLength * 360}, 80%, 60%)`;
+            harmonicsCtx.fillRect(x, harmonicsCanvas.height - barHeight, barWidth, barHeight);
+            
+            x += barWidth + 1;
+        }
+    }
+    
+    animate();
+}
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+    const ratios = {
+        'a': 1,
+        's': 9/8,
+        'd': 5/4,
+        'f': 4/3,
+        'g': 3/2,
+        'h': 5/3,
+        'j': 15/8,
+        'k': 2
+    };
+    
+    if (ratios[e.key]) {
+        playRatio(ratios[e.key]);
+    }
+});
+
+// Handle window resize
+window.addEventListener('resize', setupCanvas);
+
+// Initialize
+setupCanvas();
+createPiano();
+drawWaveform();
+drawHarmonics();
+
+// Handle volume changes
+volumeControl.addEventListener('input', () => {
+    oscillators.forEach(({ gainNode }) => {
+        gainNode.gain.setValueAtTime(getVolume(), audioContext.currentTime);
+    });
+});
+
+// Handle reverb changes
+reverbControl.addEventListener('input', () => {
+    // Update reverb settings in real-time
+});
+
+// Handle delay changes
+delayControl.addEventListener('input', () => {
+    // Update delay settings in real-time
+});
+</script>
+</body>
+</html>
