@@ -113,12 +113,10 @@
                 frequency: this.freqData
             };
         }
-    }
-
-    class QuantumField {
+    }class QuantumField {
         constructor(count) {
             this.count = count;
-            this.neurons = new THREE.Group();
+            this.neuronGroup = new THREE.Group();
             this.initQuantumField();
             this.createNeuralConnections();
             this.createWaveFunction();
@@ -235,16 +233,16 @@
             });
 
             this.quantumParticles = new THREE.Points(geometry, material);
-            this.neurons.add(this.quantumParticles);
+            this.neuronGroup.add(this.quantumParticles);
         }
 
         createNeuralConnections() {
             this.neuralNetwork = new THREE.Group();
-            this.neurons.add(this.neuralNetwork);
+            this.neuronGroup.add(this.neuralNetwork);
             
             this.neuronCount = Math.floor(this.count / 20);
             this.maxConnections = 5;
-            this.neurons = [];
+            this.neuronList = [];
             this.connections = [];
             
             for (let i = 0; i < this.neuronCount; i++) {
@@ -258,17 +256,17 @@
                     activity: 0,
                     baseColor: new THREE.Color().setHSL(Math.random(), 0.8, 0.5)
                 };
-                this.neurons.push(neuron);
+                this.neuronList.push(neuron);
             }
 
             for (let i = 0; i < this.neuronCount; i++) {
-                const neuron = this.neurons[i];
+                const neuron = this.neuronList[i];
                 const connectionCount = Math.floor(Math.random() * this.maxConnections) + 1;
                 
                 for (let j = 0; j < connectionCount; j++) {
                     const targetIndex = Math.floor(Math.random() * this.neuronCount);
                     if (targetIndex !== i && !neuron.connections.includes(targetIndex)) {
-                        const connection = this.createConnection(neuron, this.neurons[targetIndex]);
+                        const connection = this.createConnection(neuron, this.neuronList[targetIndex]);
                         neuron.connections.push(targetIndex);
                         this.connections.push(connection);
                     }
@@ -298,7 +296,7 @@
         }
 
         updateNeuralConnections(audioData, time) {
-            this.neurons.forEach((neuron, i) => {
+            this.neuronList.forEach((neuron, i) => {
                 const audioIndex = Math.floor((i / this.neuronCount) * 64);
                 const audioValue = audioData[audioIndex] / 256;
                 neuron.activity = Math.max(neuron.activity, audioValue);
@@ -377,7 +375,7 @@
             });
 
             this.waveFunction = new THREE.Mesh(waveGeometry, waveMaterial);
-            this.neurons.add(this.waveFunction);
+            this.neuronGroup.add(this.waveFunction);
         }
 
         update(audioData, time) {
@@ -386,8 +384,8 @@
             this.waveFunction.material.uniforms.time.value = time;
             this.updateNeuralConnections(audioData, time);
 
-            this.neurons.rotation.y = time * 0.1;
-            this.neurons.rotation.z = Math.sin(time * 0.2) * 0.1;
+            this.neuronGroup.rotation.y = time * 0.1;
+            this.neuronGroup.rotation.z = Math.sin(time * 0.2) * 0.1;
         }
     }
 
@@ -420,7 +418,7 @@
             this.controls.enableDamping = true;
 
             this.quantumField = new QuantumField(2000);
-            this.scene.add(this.quantumField.neurons);
+            this.scene.add(this.quantumField.neuronGroup);
         }
 
         initAudio() {
