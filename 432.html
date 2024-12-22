@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>432 Hz Universal Resonance</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+        }
+        .info {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #666;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #444;
+        }
+        #frequency-display {
+            text-align: center;
+            font-size: 24px;
+            margin: 10px 0;
+            color: #88ccff;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div id="frequency-display">432 Hz</div>
+        <button id="play-btn">Play/Stop</button>
+        <button id="rotate-btn">Toggle Rotation</button>
+    </div>
+    <div class="info">
+        432 Hz Harmonics:
+        <br>432² = 186,624 (Speed of Light)
+        <br>432 × 2000 = 864,000 (Sun diameter)
+        <br>432 ÷ 4 = 108 (Sacred ratio)
+        <br>432 × 60 = 25,920 (Precession)
+    </div>
+
+    <script type="text/javascript">
+        // Create AudioContext
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+        let analyser = null;
+        let isPlaying = false;
+        let isRotating = true;
+        
+        // Three.js variables
+        let scene, camera, renderer;
+        let geometry, material, cube;
+        let geometries = [];
+        
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+
+            // Create sacred geometry
+            createSacredGeometry();
+
+            camera.position.z = 5;
+        }
+
+        function createSacredGeometry() {
+            // Create Metatron's Cube
+            const radius = 1;
+            const detail = 2;
+            
+            // Center sphere
+            const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+            const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const centerSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            scene.add(centerSphere);
+            geometries.push(centerSphere);
+
+            // Outer vertices
+            const vertices = [];
+            for(let i = 0; i < 12; i++) {
+                const phi = Math.PI * 2 * i / 6;
+                const y = Math.cos(phi) * radius;
+                const x = Math.sin(phi) * radius;
+                vertices.push(new THREE.Vector3(x, y, 0));
+            }
+
+            // Create connections
+            vertices.forEach((vertex, i) => {
+                const sphereGeom = new THREE.SphereGeometry(0.05, 16, 16);
+                const sphere = new THREE.Mesh(sphereGeom, sphereMaterial);
+                sphere.position.copy(vertex);
+                scene.add(sphere);
+                geometries.push(sphere);
+
+                // Connect to center
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    vertex
+                ]);
+                const lineMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+                scene.add(line);
+                geometries.push(line);
+            });
+
+            // Create outer circles
+            const circleGeometry = new THREE.CircleGeometry(radius, 32);
+            const circleMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x444444,
+                transparent: true,
+                opacity: 0.3
+            });
+            const circle = new THREE.LineLoop(circleGeometry, circleMaterial);
+            scene.add(circle);
+            geometries.push(circle);
+        }
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+            analyser = audioCtx.createAnalyser();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(432, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            analyser.fftSize = 2048;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+        }
+
+        function togglePlay() {
+            if (!audioCtx) {
+                initAudio();
+            }
+
+            if (!isPlaying) {
+                oscillator.start();
+                isPlaying = true;
+            } else {
+                oscillator.stop();
+                initAudio(); // Reset audio system
+                isPlaying = false;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isRotating) {
+                scene.rotation.y += 0.005;
+                scene.rotation.x = Math.sin(Date.now() * 0.001) * 0.2;
+            }
+
+            if (isPlaying && analyser) {
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(dataArray);
+                
+                const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                const scale = 1 + (average / 512);
+
+                geometries.forEach(geo => {
+                    geo.scale.setScalar(scale);
+                    if (geo.material && geo.material.opacity) {
+                        geo.material.opacity = 0.3 + (average / 512);
+                    }
+                });
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            // Load Three.js
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            script.onload = () => {
+                initThree();
+                animate();
+            };
+            document.head.appendChild(script);
+
+            // Event listeners
+            document.getElementById('play-btn').addEventListener('click', togglePlay);
+            document.getElementById('rotate-btn').addEventListener('click', () => {
+                isRotating = !isRotating;
+            });
+            window.addEventListener('resize', onWindowResize, false);
+        });
+    </script>
+</body>
+</html>
