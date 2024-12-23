@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1.0, user-scalable=no"
   />
-  <title>Interactive Fibonacci Seed of Life - Audiovisual Enhanced</title>
+  <title>Interactive Fibonacci Seed of Life - Improved Rotation</title>
   <style>
     body {
       margin: 0;
@@ -23,15 +23,13 @@
       position: relative;
       width: 100vw;
       height: 100vh;
-      /* 3D Perspective  */
+      /* 3D Perspective */
       perspective: 1200px;
       perspective-origin: 50% 50%;
       overflow: hidden;
     }
 
-    /* -------------------------------------
-       SVG sizing
-    -------------------------------------- */
+    /* Center the SVG */
     svg {
       position: absolute;
       top: 50%;
@@ -40,6 +38,7 @@
       touch-action: none;
     }
 
+    /* We'll apply 3D transforms to this <g> */
     #rotatingGroup {
       transform-origin: 50% 50%;
       transform-style: preserve-3d;
@@ -180,71 +179,25 @@
       transition: opacity 0.3s ease;
     }
 
-    /* 
-      2-step approach for color wave:
-
-      1) circles get a waveCycleX animation with slight offsets
-      2) we can also randomize or shift "stroke" color in JS
-    */
-    @keyframes waveCycle1 {
+    @keyframes colorCycle {
       0% {
         stroke: hsl(0, 100%, 50%);
       }
-      50% {
+      25% {
         stroke: hsl(120, 100%, 50%);
       }
-      100% {
-        stroke: hsl(0, 100%, 50%);
-      }
-    }
-    @keyframes waveCycle2 {
-      0% {
-        stroke: hsl(60, 100%, 50%);
-      }
       50% {
-        stroke: hsl(180, 100%, 50%);
-      }
-      100% {
-        stroke: hsl(60, 100%, 50%);
-      }
-    }
-    @keyframes waveCycle3 {
-      0% {
         stroke: hsl(240, 100%, 50%);
       }
-      50% {
+      75% {
+        stroke: hsl(300, 100%, 50%);
+      }
+      100% {
         stroke: hsl(360, 100%, 50%);
       }
-      100% {
-        stroke: hsl(240, 100%, 50%);
-      }
     }
-
-    /* each circle assigned a different wave to stagger them */
-    .wave1 {
-      animation: waveCycle1 8s infinite alternate ease-in-out;
-    }
-    .wave2 {
-      animation: waveCycle2 8s infinite alternate ease-in-out;
-    }
-    .wave3 {
-      animation: waveCycle3 8s infinite alternate ease-in-out;
-    }
-
-    /* Slight shimmer effect on digit hover/click */
-    @keyframes shimmer {
-      0% {
-        fill: #fff;
-      }
-      50% {
-        fill: #ffec99;
-      }
-      100% {
-        fill: #fff;
-      }
-    }
-    .shimmer {
-      animation: shimmer 0.5s ease;
+    .color-cycle {
+      animation: colorCycle 5s infinite linear;
     }
   </style>
 </head>
@@ -294,47 +247,6 @@
   </div>
 
   <script>
-    /* ----------------------------------
-       AUDIO CONTEXT SETUP
-    ---------------------------------- */
-    let audioCtx;
-    const freqMap = {
-      "0": 261.63, // C4
-      "1": 293.66, // D4
-      "2": 329.63, // E4
-      "3": 349.23, // F4
-      "4": 392.00, // G4
-      "5": 440.00, // A4
-      "6": 493.88, // B4
-      "7": 523.25, // C5
-      "8": 587.33, // D5
-      "9": 659.25  // E5
-    };
-
-    function playTone(digit) {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      // Determine frequency
-      const freq = freqMap[digit.toString()] || 220; // fallback 220 (A3)
-      osc.frequency.value = freq;
-      
-      // Envelope for short "ping"
-      gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
-
-      osc.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.5);
-    }
-
-    /* ----------------------------------
-       MAIN LOGIC
-    ---------------------------------- */
     const svg = document.getElementById("mainSvg");
     const rotatingGroup = document.getElementById("rotatingGroup");
     const numberInfo = document.getElementById("detailedInfo");
@@ -368,7 +280,7 @@
     function createPattern() {
       const radius = 300;
 
-      // Group for lines
+      // Create the connections group
       const connectionsGroup = document.createElementNS(
         "http://www.w3.org/2000/svg",
         "g"
@@ -387,13 +299,10 @@
       outerCircle.setAttribute("fill", "none");
       outerCircle.setAttribute("stroke", "#FF00FF");
       outerCircle.setAttribute("filter", "url(#glow)");
-      /* Replace old color-cycle with wave classes */
-      outerCircle.classList.add("wave1");
+      outerCircle.classList.add("color-cycle");
       rotatingGroup.appendChild(outerCircle);
 
       // 6 inner circles for the Seed of Life
-      // We'll stagger wave classes: wave2, wave3, wave1, etc.
-      const waveClasses = ["wave2", "wave3", "wave1", "wave2", "wave3", "wave1"];
       for (let i = 0; i < 6; i++) {
         const angle = (i * Math.PI * 2) / 6;
         const centerX = Math.cos(angle) * radius * 0.5;
@@ -409,7 +318,7 @@
         circle.setAttribute("fill", "none");
         circle.setAttribute("stroke", "#00FFFF");
         circle.setAttribute("filter", "url(#glow)");
-        circle.classList.add(waveClasses[i % waveClasses.length]);
+        circle.classList.add("color-cycle");
         rotatingGroup.appendChild(circle);
       }
 
@@ -424,7 +333,7 @@
       centerCircle.setAttribute("fill", "none");
       centerCircle.setAttribute("stroke", "#00FF00");
       centerCircle.setAttribute("filter", "url(#glow)");
-      centerCircle.classList.add("wave3");
+      centerCircle.classList.add("color-cycle");
       rotatingGroup.appendChild(centerCircle);
 
       // Fibonacci numbers
@@ -451,12 +360,10 @@
         });
 
         text.addEventListener("mouseover", (e) => {
-          text.classList.add("shimmer"); // quick shimmer
           showTooltip(e, fibSequence[i % 60], i);
         });
 
         text.addEventListener("mouseout", () => {
-          text.classList.remove("shimmer");
           hideTooltip();
         });
 
@@ -471,19 +378,11 @@
 
       const value = fibSequence[index % 60];
       const relatedNumbers = findRelatedNumbers(value);
-
       highlightRelatedNumbers(relatedNumbers);
       createConnections(element, relatedNumbers);
       showDetailedInfo(value, index, relatedNumbers);
-
-      // AUDIO: Play a tone for the digit
-      playTone(value);
-      // Add shimmer on click
-      element.classList.add("shimmer");
-      setTimeout(() => element.classList.remove("shimmer"), 500);
     }
 
-    // Find all identical numbers
     function findRelatedNumbers(value) {
       const related = [];
       document.querySelectorAll(".fibonacci-number").forEach((el) => {
@@ -499,7 +398,6 @@
       });
     }
 
-    // Connect lines between source and all matching
     function createConnections(sourceElement, relatedElements) {
       const connectionsGroup = document.getElementById("connections");
       if (!connectionsGroup) return;
@@ -512,15 +410,12 @@
           line.setAttribute("x2", target.getAttribute("x"));
           line.setAttribute("y2", target.getAttribute("y"));
           line.setAttribute("class", "number-connection");
-          // For the stroke color, let's take the source color and lighten it
-          let color = sourceElement.getAttribute("fill") || "#FFFFFF";
-          line.setAttribute("stroke", color);
+          line.setAttribute("stroke", sourceElement.getAttribute("fill"));
           connectionsGroup.appendChild(line);
         }
       });
     }
 
-    // Display detailed info
     function showDetailedInfo(value, index, relatedNumbers) {
       const sequence = calculateLocalSequence(index);
 
@@ -535,13 +430,11 @@
       numberInfo.style.display = "block";
     }
 
-    // A little snippet of the sequence around current
     function calculateLocalSequence(index) {
       const start = Math.max(0, (index % 60) - 2);
       return fibSequence.slice(start, start + 5);
     }
 
-    // Mouseover tooltip
     function showTooltip(event, number, index) {
       const tooltip = document.querySelector(".number-tooltip");
       tooltip.textContent = `${number} (${index + 1})`;
@@ -554,7 +447,6 @@
       document.querySelector(".number-tooltip").style.display = "none";
     }
 
-    // Clear all lines & highlights
     function clearHighlights() {
       document.querySelectorAll(".fibonacci-number").forEach((el) => {
         el.classList.remove("active");
@@ -570,6 +462,12 @@
     /* ----------------------------------
        Touch & Mouse events for 3D rotation
     ---------------------------------- */
+
+    // For a more typical feel: 
+    //  - dragging left -> negative rotation on Y
+    //  - dragging up -> positive rotation on X
+    //    (like rotating a globe upward if we drag up)
+    
     function handleTouchStart(e) {
       if (e.touches.length === 1) {
         isDragging = true;
@@ -586,16 +484,15 @@
     function handleTouchMove(e) {
       e.preventDefault();
       if (e.touches.length === 1 && isDragging) {
-        // Rotate in 3D based on drag
         const dx = e.touches[0].clientX - startX;
         const dy = e.touches[0].clientY - startY;
-        rotationX += dy * 0.2; // tilt up/down
-        rotationY += dx * 0.2; // spin around Y
+        // Adjust to taste:
+        rotationY -= dx * 0.2;  // invert sign to fix "weird" rotation
+        rotationX += dy * 0.2;  // up drag => bigger X => tilt up
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         updateTransform();
       } else if (e.touches.length === 2) {
-        // Pinch for zoom
         const currentPinchDistance = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
@@ -620,23 +517,28 @@
       startX = e.clientX;
       startY = e.clientY;
     }
+
     function handleMouseMove(e) {
       if (!isDragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      rotationX += dy * 0.2; // tilt
-      rotationY += dx * 0.2; // spin
+      // Use the same logic:
+      rotationY -= dx * 0.2;
+      rotationX += dy * 0.2;
       startX = e.clientX;
       startY = e.clientY;
       updateTransform();
     }
+
     function handleMouseUp() {
       isDragging = false;
     }
 
     // Random color generator
     function randomizeColors() {
-      const randColor = () => `hsl(${Math.floor(Math.random() * 360)}, 100%, 50%)`;
+      const randColor = () =>
+        `hsl(${Math.floor(Math.random() * 360)}, 100%, 50%)`;
+
       document.querySelectorAll("circle").forEach((circle) => {
         circle.setAttribute("stroke", randColor());
       });
@@ -656,7 +558,8 @@
     // Main animation loop for auto-rotation
     function animate() {
       if (autoRotate) {
-        rotationY += autoRotationSpeed * 10; // auto spin around Y
+        // Reverse sign so the spin is consistent with the new drag logic
+        rotationY -= autoRotationSpeed * 10;
         updateTransform();
       }
       requestAnimationFrame(animate);
