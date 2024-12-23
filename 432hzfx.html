@@ -29,12 +29,37 @@
             backdrop-filter: blur(5px);
             pointer-events: auto;
         }
-        .frequency-display {
-            font-size: 28px;
-            text-align: center;
-            color: #88ccff;
+        .harmonics {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+        }
+        .waveform {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            padding: 15px;
+            border-radius: 12px;
+            width: 80%;
+            height: 100px;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
             margin: 10px 0;
-            font-weight: bold;
         }
         button {
             background: #1a1a1a;
@@ -50,110 +75,575 @@
             background: #333;
             border-color: #666;
         }
+        button.active {
+            background: #444;
+            border-color: #88ccff;
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        .slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 5px;
+            border-radius: 5px;
+            background: #333;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #88ccff;
+            cursor: pointer;
+        }
+        .frequency-display {
+            font-size: 28px;
+            text-align: center;
+            color: #88ccff;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .harmonics h3 {
+            color: #88ccff;
+            margin: 10px 0;
+        }
+        .harmonics p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+        .ratio-display {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .ratio-box {
+            background: rgba(136, 204, 255, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+        }
         canvas {
             display: block;
         }
+        #waveformCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        .mode-select {
+            margin: 10px 0;
+            padding: 8px;
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .stats {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+            display: flex;
+            gap: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            color: #88ccff;
+            font-size: 16px;
+            font-weight: bold;
+        }
     </style>
-    <!-- Include Three.js and OrbitControls -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
     <div class="ui-container">
         <div class="controls">
             <div class="frequency-display">432 Hz</div>
-            <button id="playBtn">▶ Play/Stop</button>
-            <button id="rotateBtn">⟳ Rotate</button>
+            <div class="button-group">
+                <button id="playBtn">▶ Play/Stop</button>
+                <button id="rotateBtn">⟳ Rotate</button>
+                <button id="geometryBtn">⬡ Geometry</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" class="slider" id="frequencySlider" 
+                       min="420" max="444" value="432" step="0.1">
+            </div>
+            <select class="mode-select" id="waveformSelect">
+                <option value="sine">Sine Wave (Pure)</option>
+                <option value="triangle">Triangle Wave (Harmonic)</option>
+                <option value="square">Square Wave (Rich)</option>
+                <option value="sawtooth">Sawtooth (Complex)</option>
+            </select>
+            <select class="mode-select" id="geometrySelect">
+                <option value="metatron">Metatron's Cube</option>
+                <option value="flower">Flower of Life</option>
+                <option value="sri">Sri Yantra</option>
+                <option value="merkaba">Merkaba</option>
+            </select>
         </div>
-        <canvas id="waveformCanvas"></canvas>
+
+        <div class="harmonics">
+            <h3>432 Hz Matrix</h3>
+            <div class="ratio-display">
+                <div class="ratio-box">1:1<br>432 Hz<br>Base</div>
+                <div class="ratio-box">2:3<br>648 Hz<br>Perfect 5th</div>
+                <div class="ratio-box">3:4<br>576 Hz<br>Perfect 4th</div>
+            </div>
+            <h3>Cosmic Ratios</h3>
+            <p>432² = Speed of Light</p>
+            <p>432 × 2000 = Sun Diameter</p>
+            <p>432 × 60 = Earth Precession</p>
+            <h3>Sacred Numbers</h3>
+            <p>108 = 432 ÷ 4</p>
+            <p>216 = 432 ÷ 2</p>
+            <p>864 = 432 × 2</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="wavelengthDisplay">0.794m</div>
+                <div>Wavelength</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="noteDisplay">A4</div>
+                <div>Note</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="ratioDisplay">1:1</div>
+                <div>Ratio</div>
+            </div>
+        </div>
+
+        <div class="waveform">
+            <canvas id="waveformCanvas"></canvas>
+        </div>
     </div>
 
     <script>
+        // Load Three.js
+        const threeScript = document.createElement('script');
+        threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        threeScript.onload = () => {
+            // Load OrbitControls after Three.js is loaded
+            const orbitControlsScript = document.createElement('script');
+            orbitControlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
+            orbitControlsScript.onload = () => initApplication();
+            document.head.appendChild(orbitControlsScript);
+        };
+        document.head.appendChild(threeScript);
+
         class UniversalMatrix {
             constructor() {
+                this.geometryTypes = ['metatron', 'flower', 'sri', 'merkaba'];
+                this.geometryIndex = 0;
+
                 this.initThreeJS();
                 this.initAudio();
+                this.setupEventListeners();
+                this.createGeometries();
+        
                 this.isPlaying = false;
                 this.isRotating = true;
+                this.currentGeometry = 'metatron';
+        
                 this.animate();
             }
 
             initThreeJS() {
+                // Scene setup
                 this.scene = new THREE.Scene();
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera = new THREE.PerspectiveCamera(
+                    75,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
                 this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.renderer.setClearColor(0x000000, 0.9);
                 document.body.appendChild(this.renderer.domElement);
 
+                // Lighting
+                this.setupLighting();
+        
+                // Camera position
+                this.camera.position.z = 5;
+
+                // Add orbital controls
                 this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
                 this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.1;
+                this.controls.dampingFactor = 0.05;
+            }
 
-                this.camera.position.z = 5;
-                const light = new THREE.PointLight(0x88ccff, 1);
-                light.position.set(5, 5, 5);
-                this.scene.add(light);
+            setupLighting() {
+                // Ambient light
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambientLight);
 
-                const geometry = new THREE.BoxGeometry();
-                const material = new THREE.MeshBasicMaterial({ color: 0x88ccff, wireframe: true });
-                this.cube = new THREE.Mesh(geometry, material);
-                this.scene.add(this.cube);
-
-                window.addEventListener('resize', this.onWindowResize.bind(this));
+                // Point lights
+                this.lights = [];
+                const colors = [0x88ccff, 0xff88cc, 0xccff88];
+                for (let i = 0; i < 3; i++) {
+                    const light = new THREE.PointLight(colors[i], 0.5);
+                    light.position.set(
+                        Math.cos(i * Math.PI * 2/3) * 5,
+                        Math.sin(i * Math.PI * 2/3) * 5,
+                        2
+                    );
+                    this.scene.add(light);
+                    this.lights.push(light);
+                }
             }
 
             initAudio() {
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 this.gainNode = this.audioCtx.createGain();
                 this.gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
-
-                this.oscillator = this.audioCtx.createOscillator();
-                this.oscillator.type = 'sine';
-                this.oscillator.frequency.setValueAtTime(432, this.audioCtx.currentTime);
-                this.oscillator.connect(this.gainNode).connect(this.audioCtx.destination);
+        
+                // Analyzer setup
+                this.analyser = this.audioCtx.createAnalyser();
+                this.analyser.fftSize = 2048;
+                this.bufferLength = this.analyser.frequencyBinCount;
+                this.dataArray = new Uint8Array(this.bufferLength);
+        
+                // Waveform canvas setup
+                this.setupWaveformDisplay();
             }
 
-            onWindowResize() {
-                this.camera.aspect = window.innerWidth / window.innerHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            setupWaveformDisplay() {
+                this.waveformCanvas = document.getElementById('waveformCanvas');
+                this.waveformCtx = this.waveformCanvas.getContext('2d');
+                this.waveformCanvas.width = this.waveformCanvas.offsetWidth;
+                this.waveformCanvas.height = this.waveformCanvas.offsetHeight;
+            }
+
+            createGeometries() {
+                this.geometries = {
+                    metatron: this.createMetatronsCube(),
+                    flower: this.createFlowerOfLife(),
+                    sri: this.createSriYantra(),
+                    merkaba: this.createMerkaba()
+                };
+        
+                this.switchGeometry(this.currentGeometry);
+            }
+
+            createMetatronsCube() {
+                const group = new THREE.Group();
+                const radius = 2;
+                const vertices = [];
+        
+                // Create center
+                vertices.push(new THREE.Vector3(0, 0, 0));
+        
+                // Create outer vertices
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 6) * Math.PI;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    vertices.push(new THREE.Vector3(x, y, 0));
+                }
+
+                // Create connections
+                const linesMaterial = new THREE.LineBasicMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                vertices.forEach((v1, i) => {
+                    vertices.forEach((v2, j) => {
+                        if (i < j) {
+                            const geometry = new THREE.BufferGeometry().setFromPoints([v1, v2]);
+                            const line = new THREE.Line(geometry, linesMaterial.clone());
+                            group.add(line);
+                        }
+                    });
+                });
+
+                return group;
+            }
+
+            createFlowerOfLife() {
+                const group = new THREE.Group();
+                const radius = 1;
+                const circles = 7;
+        
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                for (let i = 0; i < circles; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+            
+                    const circleGeometry = new THREE.CircleGeometry(radius, 32);
+                    const circle = new THREE.LineLoop(circleGeometry, material.clone());
+                    circle.position.set(x, y, 0);
+                    group.add(circle);
+                }
+
+                return group;
+            }
+
+            createSriYantra() {
+                const group = new THREE.Group();
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                // Create triangles
+                for (let i = 0; i < 9; i++) {
+                    const size = 2 - (i * 0.2);
+                    const height = 1.7 - (i * 0.17);
+            
+                    const points = [];
+                    points.push(new THREE.Vector3(-size, -height / 2, 0));
+                    points.push(new THREE.Vector3(size, -height / 2, 0));
+                    points.push(new THREE.Vector3(0, height, 0));
+                    points.push(new THREE.Vector3(-size, -height / 2, 0));
+            
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const triangle = new THREE.Line(geometry, material.clone());
+                    group.add(triangle);
+                }
+
+                return group;
+            }
+
+            createMerkaba() {
+                const group = new THREE.Group();
+                const size = 2;
+        
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                // Create two tetrahedrons
+                const tetraGeometry = new THREE.TetrahedronGeometry(size);
+                const wireframe1 = new THREE.WireframeGeometry(tetraGeometry);
+                const merkaba1 = new THREE.LineSegments(wireframe1, material.clone());
+        
+                const merkaba2 = merkaba1.clone();
+                merkaba2.rotation.x = Math.PI;
+        
+                group.add(merkaba1);
+                group.add(merkaba2);
+
+                return group;
+            }
+
+            switchGeometry(type) {
+                // Remove existing geometry groups from the scene
+                this.scene.children
+                    .filter(child => child.isGroup)
+                    .forEach(child => this.scene.remove(child));
+
+                // Add new geometry
+                this.scene.add(this.geometries[type]);
+                this.currentGeometry = type;
+            }
+
+            updateFrequency(frequency) {
+                if (this.oscillator) {
+                    this.oscillator.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+                }
+        
+                document.querySelector('.frequency-display').textContent = `${frequency} Hz`;
+                this.updateStats(frequency);
+            }
+
+            updateStats(frequency) {
+                // Update wavelength (speed of sound / frequency ~ 343 m/s in air)
+                const wavelength = (343 / frequency).toFixed(3);
+                document.getElementById('wavelengthDisplay').textContent = `${wavelength}m`;
+        
+                // Update musical note
+                const note = this.getMusicalNote(frequency);
+                document.getElementById('noteDisplay').textContent = note;
+        
+                // Update ratio
+                const ratio = this.getFrequencyRatio(frequency);
+                document.getElementById('ratioDisplay').textContent = ratio;
+            }
+
+            getMusicalNote(frequency) {
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                const a4 = 440;
+                const c0 = a4 * Math.pow(2, -4.75);
+                const h = Math.round(12 * Math.log2(frequency / c0));
+                const octave = Math.floor(h / 12);
+                const n = h % 12;
+                return notes[n] + octave;
+            }
+
+            getFrequencyRatio(frequency) {
+                const baseFreq = 432;
+                const ratio = frequency / baseFreq;
+                return `${ratio.toFixed(3)}:1`;
+            }
+
+            drawWaveform() {
+                this.analyser.getByteTimeDomainData(this.dataArray);
+        
+                this.waveformCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                this.waveformCtx.fillRect(0, 0, this.waveformCanvas.width, this.waveformCanvas.height);
+        
+                this.waveformCtx.lineWidth = 2;
+                this.waveformCtx.strokeStyle = '#88ccff';
+                this.waveformCtx.beginPath();
+
+                const sliceWidth = this.waveformCanvas.width / this.bufferLength;
+                let x = 0;
+
+                for (let i = 0; i < this.bufferLength; i++) {
+                    const v = this.dataArray[i] / 128.0;
+                    const y = v * (this.waveformCanvas.height / 2);
+
+                    if (i === 0) {
+                        this.waveformCtx.moveTo(x, y);
+                    } else {
+                        this.waveformCtx.lineTo(x, y);
+                    }
+
+                    x += sliceWidth;
+                }
+
+                this.waveformCtx.lineTo(this.waveformCanvas.width, this.waveformCanvas.height / 2);
+                this.waveformCtx.stroke();
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+        
+                if (this.isRotating) {
+                    this.scene.rotation.y += 0.001;
+                    this.scene.rotation.x = Math.sin(Date.now() * 0.0005) * 0.1;
+                }
+
+                if (this.isPlaying) {
+                    this.analyser.getByteFrequencyData(this.dataArray);
+                    const average = this.dataArray.reduce((a, b) => a + b) / this.bufferLength;
+            
+                    // Update geometry opacity based on audio
+                    this.scene.traverse(child => {
+                        if (child.type === 'Line' || child.type === 'LineSegments') {
+                            child.material.opacity = 0.3 + (average / 512);
+                        }
+                    });
+
+                    // Update lights
+                    this.lights.forEach(light => {
+                        light.intensity = 0.3 + (average / 256);
+                    });
+
+                    this.drawWaveform();
+                }
+
+                this.renderer.render(this.scene, this.camera);
+                this.controls.update();
+            }
+
+            setupEventListeners() {
+                // Play/Stop
+                document.getElementById('playBtn').addEventListener('click', () => {
+                    if (!this.isPlaying) {
+                        this.startSound();
+                    } else {
+                        this.stopSound();
+                    }
+                });
+
+                // Rotation
+                document.getElementById('rotateBtn').addEventListener('click', () => {
+                    this.isRotating = !this.isRotating;
+                });
+
+                // Geometry cycle button
+                document.getElementById('geometryBtn').addEventListener('click', () => {
+                    this.geometryIndex = (this.geometryIndex + 1) % this.geometryTypes.length;
+                    this.switchGeometry(this.geometryTypes[this.geometryIndex]);
+                    // Also update the select dropdown
+                    document.getElementById('geometrySelect').value =
+                        this.geometryTypes[this.geometryIndex];
+                });
+
+                // Frequency slider
+                document.getElementById('frequencySlider').addEventListener('input', (e) => {
+                    this.updateFrequency(parseFloat(e.target.value));
+                });
+
+                // Waveform select
+                document.getElementById('waveformSelect').addEventListener('change', (e) => {
+                    if (this.oscillator) {
+                        this.oscillator.type = e.target.value;
+                    }
+                });
+
+                // Geometry select
+                document.getElementById('geometrySelect').addEventListener('change', (e) => {
+                    this.switchGeometry(e.target.value);
+                    // Update the geometry index to match manual selection
+                    this.geometryIndex = this.geometryTypes.indexOf(e.target.value);
+                });
+
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+            
+                    this.waveformCanvas.width = this.waveformCanvas.offsetWidth;
+                    this.waveformCanvas.height = this.waveformCanvas.offsetHeight;
+                });
             }
 
             startSound() {
+                this.oscillator = this.audioCtx.createOscillator();
+                this.oscillator.type = document.getElementById('waveformSelect').value;
+                this.oscillator.frequency.setValueAtTime(
+                    parseFloat(document.getElementById('frequencySlider').value),
+                    this.audioCtx.currentTime
+                );
+        
+                this.oscillator.connect(this.gainNode);
+                this.gainNode.connect(this.analyser);
+                this.analyser.connect(this.audioCtx.destination);
+        
                 this.oscillator.start();
                 this.isPlaying = true;
             }
 
             stopSound() {
-                this.oscillator.stop();
-                this.isPlaying = false;
-            }
-
-            animate() {
-                requestAnimationFrame(this.animate.bind(this));
-                if (this.isRotating) {
-                    this.cube.rotation.x += 0.01;
-                    this.cube.rotation.y += 0.01;
+                if (this.oscillator) {
+                    this.oscillator.stop();
+                    this.oscillator.disconnect();
                 }
-                this.controls.update();
-                this.renderer.render(this.scene, this.camera);
+                this.isPlaying = false;
             }
         }
 
-        const app = new UniversalMatrix();
-
-        document.getElementById('playBtn').addEventListener('click', () => {
-            if (!app.isPlaying) {
-                app.startSound();
-            } else {
-                app.stopSound();
-            }
-        });
-
-        document.getElementById('rotateBtn').addEventListener('click', () => {
-            app.isRotating = !app.isRotating;
-        });
+        function initApplication() {
+            new UniversalMatrix();
+        }
     </script>
 </body>
 </html>
