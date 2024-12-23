@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1.0, user-scalable=no"
   />
-  <title>Interactive Fibonacci Seed of Life - Enhanced</title>
+  <title>Interactive Fibonacci Seed of Life - 3D Enhanced</title>
   <style>
     body {
       margin: 0;
@@ -16,18 +16,49 @@
       touch-action: none;
     }
 
+    /* -------------------------------------
+       Container & Perspective
+    -------------------------------------- */
     #container {
       position: relative;
       width: 100vw;
       height: 100vh;
+      /* ** 3D Perspective ** */
+      perspective: 1200px;
+      perspective-origin: 50% 50%;
+      overflow: hidden;
     }
 
+    /* -------------------------------------
+       SVG sizing
+    -------------------------------------- */
     svg {
       position: absolute;
       top: 50%;
       left: 50%;
+      /* We'll center the SVG with translate,
+         but the "3D effect" is from the parent perspective. */
       transform: translate(-50%, -50%);
       touch-action: none;
+    }
+
+    /* We'll apply 3D transforms to this <g> */
+    #rotatingGroup {
+      transform-origin: 50% 50%;
+      transform-style: preserve-3d;
+    }
+
+    /* -------------------------------------
+       Tooltip & Info Panels
+    -------------------------------------- */
+    .fibonacci-number {
+      cursor: pointer;
+      pointer-events: all;
+      transition: all 0.3s ease;
+    }
+    .fibonacci-number.active {
+      font-size: 24px;
+      filter: brightness(2);
     }
 
     .info {
@@ -39,24 +70,12 @@
       z-index: 100;
     }
 
-    .fibonacci-number {
-      cursor: pointer;
-      pointer-events: all;
-      transition: all 0.3s ease;
-    }
-
-    .fibonacci-number.active {
-      font-size: 24px;
-      filter: brightness(2);
-    }
-
     .number-connection {
       stroke-width: 2;
       stroke-dasharray: 5;
       opacity: 0.6;
       animation: flowLine 2s infinite linear;
     }
-
     @keyframes flowLine {
       from {
         stroke-dashoffset: 20;
@@ -82,7 +101,6 @@
       text-align: center;
       animation: fadeIn 0.3s ease;
     }
-
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -107,15 +125,9 @@
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
-    .highlight-path {
-      stroke: #fff;
-      stroke-width: 2;
-      fill: none;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    /* Control panel styling */
+    /* -------------------------------------
+       Control Panel
+    -------------------------------------- */
     #controls {
       position: fixed;
       top: 20px;
@@ -141,7 +153,6 @@
       cursor: pointer;
       transition: all 0.3s ease;
     }
-
     .control-button:hover {
       background: rgba(255, 255, 255, 0.2);
     }
@@ -152,18 +163,26 @@
       margin-top: 5px;
       align-items: flex-start;
     }
-
     .slider-container label {
       margin-bottom: 2px;
       font-size: 12px;
       color: #ccc;
     }
-
     .speed-slider {
       width: 100px;
     }
 
-    /* Color Cycle Animation for circles */
+    /* -------------------------------------
+       Background & Glow
+    -------------------------------------- */
+    .highlight-path {
+      stroke: #fff;
+      stroke-width: 2;
+      fill: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
     @keyframes colorCycle {
       0% {
         stroke: hsl(0, 100%, 50%);
@@ -203,6 +222,7 @@
         </filter>
       </defs>
       <rect x="-400" y="-400" width="800" height="800" fill="url(#backgroundGradient)"></rect>
+      <!-- We'll be 3D-transforming this group via CSS -->
       <g id="rotatingGroup"></g>
     </svg>
 
@@ -235,33 +255,36 @@
     const rotatingGroup = document.getElementById("rotatingGroup");
     const numberInfo = document.getElementById("detailedInfo");
     const rotationSpeedSlider = document.getElementById("rotationSpeed");
+
+    // Auto-rotation toggle
     let autoRotate = false;
     let autoRotationSpeed = parseFloat(rotationSpeedSlider.value);
 
-    // Generate Fibonacci sequence
-    function generateFibonacciSequence(n) {
-      let sequence = [0, 1];
-      for (let i = 2; i < n; i++) {
-        // Keep last digit only
-        sequence[i] = (sequence[i - 1] + sequence[i - 2]) % 10;
-      }
-      return sequence;
-    }
-
-    const fibSequence = generateFibonacciSequence(60);
-
-    // Rotation and zoom
-    let rotation = 0;
+    // We'll do 3D rotation around the X & Y axes
+    let rotationX = 0;
+    let rotationY = 0;
     let scale = 1;
+
+    // Drag control
     let startX = 0;
     let startY = 0;
     let isDragging = false;
     let lastPinchDistance = null;
 
+    // Generate Fibonacci sequence
+    function generateFibonacciSequence(n) {
+      let sequence = [0, 1];
+      for (let i = 2; i < n; i++) {
+        sequence[i] = (sequence[i - 1] + sequence[i - 2]) % 10; // last digit only
+      }
+      return sequence;
+    }
+    const fibSequence = generateFibonacciSequence(60);
+
     function createPattern() {
       const radius = 300;
 
-      // Create the connections group first
+      // Group for lines
       const connectionsGroup = document.createElementNS(
         "http://www.w3.org/2000/svg",
         "g"
@@ -269,7 +292,7 @@
       connectionsGroup.id = "connections";
       rotatingGroup.appendChild(connectionsGroup);
 
-      // Create outer circle with color cycle
+      // Outer circle
       const outerCircle = document.createElementNS(
         "http://www.w3.org/2000/svg",
         "circle"
@@ -283,7 +306,7 @@
       outerCircle.classList.add("color-cycle");
       rotatingGroup.appendChild(outerCircle);
 
-      // Create inner circles for Seed of Life pattern
+      // 6 inner circles for the Seed of Life
       for (let i = 0; i < 6; i++) {
         const angle = (i * Math.PI * 2) / 6;
         const centerX = Math.cos(angle) * radius * 0.5;
@@ -303,7 +326,7 @@
         rotatingGroup.appendChild(circle);
       }
 
-      // Create center circle
+      // Center circle
       const centerCircle = document.createElementNS(
         "http://www.w3.org/2000/svg",
         "circle"
@@ -317,7 +340,7 @@
       centerCircle.classList.add("color-cycle");
       rotatingGroup.appendChild(centerCircle);
 
-      // Create numbers
+      // Fibonacci numbers
       for (let i = 0; i < 216; i++) {
         const angle = (i * 2 * Math.PI) / 108;
         const r = i < 108 ? radius : radius * 0.75;
@@ -352,19 +375,19 @@
       }
     }
 
-    // Handle user interactions
+    // When a number is clicked
     function handleNumberClick(element, index) {
       clearHighlights();
       element.classList.add("active");
 
       const value = fibSequence[index % 60];
       const relatedNumbers = findRelatedNumbers(value);
-
       highlightRelatedNumbers(relatedNumbers);
       createConnections(element, relatedNumbers);
       showDetailedInfo(value, index, relatedNumbers);
     }
 
+    // Find all identical numbers
     function findRelatedNumbers(value) {
       const related = [];
       document.querySelectorAll(".fibonacci-number").forEach((el) => {
@@ -374,13 +397,13 @@
       });
       return related;
     }
-
     function highlightRelatedNumbers(elements) {
       elements.forEach((el) => {
         el.classList.add("active");
       });
     }
 
+    // Connect lines between source and all matching
     function createConnections(sourceElement, relatedElements) {
       const connectionsGroup = document.getElementById("connections");
       if (!connectionsGroup) return;
@@ -399,6 +422,7 @@
       });
     }
 
+    // Display detailed info
     function showDetailedInfo(value, index, relatedNumbers) {
       const sequence = calculateLocalSequence(index);
 
@@ -413,11 +437,13 @@
       numberInfo.style.display = "block";
     }
 
+    // A little snippet of the sequence around current
     function calculateLocalSequence(index) {
       const start = Math.max(0, (index % 60) - 2);
       return fibSequence.slice(start, start + 5);
     }
 
+    // Mouseover tooltip
     function showTooltip(event, number, index) {
       const tooltip = document.querySelector(".number-tooltip");
       tooltip.textContent = `${number} (${index + 1})`;
@@ -430,11 +456,11 @@
       document.querySelector(".number-tooltip").style.display = "none";
     }
 
+    // Clear all lines & highlights
     function clearHighlights() {
       document.querySelectorAll(".fibonacci-number").forEach((el) => {
         el.classList.remove("active");
       });
-
       const connectionsGroup = document.getElementById("connections");
       if (connectionsGroup) {
         while (connectionsGroup.firstChild) {
@@ -443,11 +469,14 @@
       }
     }
 
-    // Touch and mouse controls
+    /* ----------------------------------
+       Touch & Mouse events for 3D rotation
+    ---------------------------------- */
     function handleTouchStart(e) {
       if (e.touches.length === 1) {
         isDragging = true;
         startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
       } else if (e.touches.length === 2) {
         lastPinchDistance = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
@@ -458,20 +487,24 @@
 
     function handleTouchMove(e) {
       e.preventDefault();
-      if (isDragging && e.touches.length === 1) {
-        const deltaX = e.touches[0].clientX - startX;
-        rotation += deltaX * 0.5;
+      if (e.touches.length === 1 && isDragging) {
+        // Rotate in 3D based on drag
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        rotationX += dy * 0.2; // tilt up/down
+        rotationY += dx * 0.2; // spin around Y
         startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
         updateTransform();
       } else if (e.touches.length === 2) {
+        // Pinch for zoom
         const currentPinchDistance = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
         );
-
         if (lastPinchDistance !== null) {
           const delta = currentPinchDistance - lastPinchDistance;
-          scale = Math.max(0.5, Math.min(3, scale + delta * 0.003));
+          scale = Math.max(0.3, Math.min(3, scale + delta * 0.003));
           updateTransform();
         }
         lastPinchDistance = currentPinchDistance;
@@ -483,42 +516,63 @@
       lastPinchDistance = null;
     }
 
-    // Randomize stroke/fill colors
+    // Also allow mouse-based drag
+    function handleMouseDown(e) {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+    }
+    function handleMouseMove(e) {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      rotationX += dy * 0.2; // tilt
+      rotationY += dx * 0.2; // spin
+      startX = e.clientX;
+      startY = e.clientY;
+      updateTransform();
+    }
+    function handleMouseUp() {
+      isDragging = false;
+    }
+
+    // Random color generator
     function randomizeColors() {
-      // Random color generator
       const randColor = () =>
         `hsl(${Math.floor(Math.random() * 360)}, 100%, 50%)`;
 
-      // Update circles
       document.querySelectorAll("circle").forEach((circle) => {
         circle.setAttribute("stroke", randColor());
       });
-
-      // Update text elements
       document.querySelectorAll(".fibonacci-number").forEach((textEl) => {
         textEl.setAttribute("fill", randColor());
       });
     }
 
     function updateTransform() {
-      rotatingGroup.setAttribute(
-        "transform",
-        `rotate(${rotation}) scale(${scale})`
-      );
+      rotatingGroup.style.transform = `
+        rotateX(${rotationX}deg)
+        rotateY(${rotationY}deg)
+        scale(${scale})
+      `;
     }
 
-    // Animation loop for auto-rotation
+    // Main animation loop for auto-rotation
     function animate() {
       if (autoRotate) {
-        rotation += autoRotationSpeed;
+        rotationY += autoRotationSpeed * 10; // auto spin around Y
         updateTransform();
       }
       requestAnimationFrame(animate);
     }
 
     // Event listeners
-    svg.addEventListener("touchstart", handleTouchStart, false);
-    svg.addEventListener("touchmove", handleTouchMove, false);
+    svg.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    svg.addEventListener("touchstart", handleTouchStart, { passive: false });
+    svg.addEventListener("touchmove", handleTouchMove, { passive: false });
     svg.addEventListener("touchend", handleTouchEnd, false);
     svg.addEventListener("touchcancel", handleTouchEnd, false);
 
@@ -527,7 +581,8 @@
     });
 
     document.getElementById("resetView").addEventListener("click", () => {
-      rotation = 0;
+      rotationX = 0;
+      rotationY = 0;
       scale = 1;
       updateTransform();
       clearHighlights();
