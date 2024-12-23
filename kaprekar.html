@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Psychedelic Kaprekar 6174 — GME Diamond Hands Edition</title>
+  <style>
+    body {
+      margin: 0; 
+      padding: 0; 
+      overflow: hidden; 
+      background: #000; /* Keep it black for max contrast */
+      font-family: sans-serif;
+      color: #fff;
+    }
+    #overlay {
+      position: absolute;
+      top: 0; left: 0;
+      padding: 10px;
+      z-index: 999;
+      color: lime;
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      margin: 0 0 5px 0;
+      font-size: 18px;
+    }
+    p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="overlay">
+  <h1>Kaprekar’s Constant 6174</h1>
+  <p>It’s a funnel… it’s a vortex… it’s an attractor!</p>
+  <p>Diamond Hands to 6174, fellow apes!</p>
+</div>
+
+<!-- Include Three.js from a CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.151.3/build/three.min.js"></script>
+<!-- Include an optional text geometry helper -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/loaders/FontLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/geometries/TextGeometry.js"></script>
+
+<script>
+  let scene, camera, renderer;
+  let textMeshKaprekar, textMeshStonks;
+  let rotatingGroup, starParticles = [];
+  let clock;
+
+  // Some neon colors for that DMT vibe
+  const colorPalette = [
+    0xff00ff, 0xffff00, 0x00ff00, 0x00ffff, 0xff9900, 0xff0066, 0xccff00
+  ];
+
+  function init() {
+    scene = new THREE.Scene();
+    clock = new THREE.Clock();
+
+    // Fog for extra trippy depth
+    scene.fog = new THREE.FogExp2(0x000000, 0.003);
+
+    // Camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.z = 40;
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // A group that will rotate as one
+    rotatingGroup = new THREE.Group();
+    scene.add(rotatingGroup);
+
+    // Add some swirling torus geometry for that cosmic flair
+    const torusGeometry = new THREE.TorusKnotGeometry(10, 1.5, 200, 32, 2, 3);
+    const torusMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      metalness: 0.2,
+      roughness: 0.1,
+      emissive: 0x000000
+    });
+    const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
+    rotatingGroup.add(torusMesh);
+
+    // Add lights for color pulses
+    const pointLight1 = new THREE.PointLight(0xffffff, 1, 100);
+    pointLight1.position.set(20, 20, 20);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xffffff, 1, 100);
+    pointLight2.position.set(-20, -20, -20);
+    scene.add(pointLight2);
+
+    // Some ambient
+    const ambientLight = new THREE.AmbientLight(0x555555);
+    scene.add(ambientLight);
+
+    // Load a font for the text
+    const loader = new THREE.FontLoader();
+    loader.load('https://cdn.jsdelivr.net/npm/three@0.151.3/examples/fonts/helvetiker_regular.typeface.json', function(font){
+      // Kaprekar’s 6174
+      const textGeoKaprekar = new THREE.TextGeometry("6174", {
+        font: font,
+        size: 5,
+        height: 1,
+        curveSegments: 12,
+      });
+      const textMatKaprekar = new THREE.MeshStandardMaterial({
+        color: 0x00ff00, 
+        emissive: 0x000000,
+        metalness: 0.5,
+        roughness: 0.5
+      });
+      textMeshKaprekar = new THREE.Mesh(textGeoKaprekar, textMatKaprekar);
+      textMeshKaprekar.position.set(-10, 6, 0);
+      rotatingGroup.add(textMeshKaprekar);
+
+      // “GME Stonks!”
+      const textGeoStonks = new THREE.TextGeometry("GME - TINFOIL THEORY", {
+        font: font,
+        size: 2,
+        height: 0.6,
+      });
+      const textMatStonks = new THREE.MeshStandardMaterial({
+        color: 0xff00ff, 
+        emissive: 0x000000,
+        metalness: 0.5,
+        roughness: 0.5
+      });
+      textMeshStonks = new THREE.Mesh(textGeoStonks, textMatStonks);
+      textMeshStonks.position.set(-15, -8, 0);
+      rotatingGroup.add(textMeshStonks);
+    });
+
+    // Create a starfield of small cubes/particles that swirl around
+    const particleGeometry = new THREE.SphereGeometry(0.1, 6, 6);
+    for (let i = 0; i < 600; i++) {
+      const particleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+
+      // Random position inside a sphere
+      const radius = 100 * Math.random();
+      const theta = 2 * Math.PI * Math.random();
+      const phi = Math.PI * Math.random();
+      particle.position.set(
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.sin(phi) * Math.sin(theta),
+        radius * Math.cos(phi)
+      );
+      scene.add(particle);
+      starParticles.push(particle);
+    }
+
+    window.addEventListener('resize', onWindowResize, false);
+    animate();
+  }
+
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const elapsed = clock.getElapsedTime();
+
+    // Slowly rotate the main group
+    rotatingGroup.rotation.x += 0.005;
+    rotatingGroup.rotation.y += 0.003;
+
+    // Pulse the torus color for that “trippy” vibe
+    rotatingGroup.children.forEach(obj => {
+      if (obj.isMesh) {
+        const t = Math.sin(elapsed * 2.0) * 0.5 + 0.5;
+        obj.material.color.setHSL(t, 1.0, 0.5);
+      }
+    });
+
+    // Make the starfield move outward/inward in a wave
+    starParticles.forEach((particle, idx) => {
+      const speed = Math.sin(elapsed + idx) * 0.05;
+      particle.position.x += (particle.position.x * speed * 0.01);
+      particle.position.y += (particle.position.y * speed * 0.01);
+      particle.position.z += (particle.position.z * speed * 0.01);
+    });
+
+    // Flash the scene with random color lights occasionally
+    const randomFlash = Math.random();
+    if (randomFlash > 0.98) {
+      const newColor = new THREE.Color(colorPalette[Math.floor(Math.random() * colorPalette.length)]);
+      scene.background = newColor;
+    }
+
+    // Subtle camera bobbing for extra dimension
+    camera.position.z = 40 + Math.sin(elapsed * 0.5) * 5;
+
+    renderer.render(scene, camera);
+  }
+
+  init();
+</script>
+</body>
+</html>
