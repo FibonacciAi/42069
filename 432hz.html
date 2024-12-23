@@ -1,765 +1,220 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>432 Hz Universal Matrix (Enhanced + Sound-Linked Geometry)</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { 
-            margin: 0; 
-            background: #000;
-            color: #fff;
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-        }
-        .ui-container {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 100;
-        }
-        .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.85);
-            padding: 20px;
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-            pointer-events: auto;
-        }
-        .harmonics {
-            position: fixed;
-            left: 20px;
-            top: 20px;
-            background: rgba(0,0,0,0.85);
-            padding: 20px;
-            border-radius: 12px;
-            max-width: 300px;
-            max-height: 80vh;
-            overflow-y: auto;
-            font-size: 14px;
-            backdrop-filter: blur(5px);
-            pointer-events: auto;
-        }
-        .waveform {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            padding: 15px;
-            border-radius: 12px;
-            width: 80%;
-            height: 100px;
-            backdrop-filter: blur(5px);
-            pointer-events: auto;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        button {
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #333;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        button:hover {
-            background: #333;
-            border-color: #666;
-        }
-        .slider-container {
-            margin: 15px 0;
-        }
-        .slider {
-            width: 100%;
-            -webkit-appearance: none;
-            height: 5px;
-            border-radius: 5px;
-            background: #333;
-            outline: none;
-        }
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background: #88ccff;
-            cursor: pointer;
-        }
-        .frequency-display {
-            font-size: 28px;
-            text-align: center;
-            color: #88ccff;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        .harmonics h3 {
-            color: #88ccff;
-            margin: 10px 0;
-        }
-        .harmonics p {
-            margin: 5px 0;
-            opacity: 0.8;
-        }
-        .ratio-display {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .ratio-box {
-            background: rgba(136, 204, 255, 0.1);
-            padding: 8px;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 12px;
-        }
-        canvas {
-            display: block;
-        }
-        #waveformCanvas {
-            width: 100%;
-            height: 100%;
-        }
-        .mode-select {
-            margin: 10px 0;
-            padding: 8px;
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #333;
-            border-radius: 4px;
-            width: 100%;
-        }
-        .stats {
-            position: fixed;
-            bottom: 140px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 12px;
-            backdrop-filter: blur(5px);
-            display: flex;
-            gap: 20px;
-        }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-value {
-            color: #88ccff;
-            font-size: 16px;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Mandelbrot Audio Reactive</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      font-family: sans-serif;
+      color: #fff;
+    }
+    .ui-container {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 999;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin: 6px 0;
+    }
+    input[type=range] {
+      width: 200px;
+    }
+    #fractalCanvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+  </style>
 </head>
 <body>
-    <div class="ui-container">
-        <div class="controls">
-            <div class="frequency-display">432 Hz</div>
-            <div class="button-group">
-                <button id="playBtn">▶ Play/Stop</button>
-                <button id="rotateBtn">⟳ Rotate</button>
-                <button id="geometryBtn">⬡ Geometry</button>
-            </div>
-            <div class="slider-container">
-                <input type="range" class="slider" id="frequencySlider" 
-                       min="420" max="444" value="432" step="0.1">
-            </div>
-            <select class="mode-select" id="waveformSelect">
-                <option value="sine">Sine Wave (Pure)</option>
-                <option value="triangle">Triangle Wave (Harmonic)</option>
-                <option value="square">Square Wave (Rich)</option>
-                <option value="sawtooth">Sawtooth (Complex)</option>
-            </select>
-            <select class="mode-select" id="geometrySelect">
-                <option value="">(No Geometry)</option>
-                <option value="metatron">Metatron's Cube</option>
-                <option value="flower">Flower of Life</option>
-                <option value="sri">Sri Yantra</option>
-                <option value="merkaba">Merkaba</option>
-            </select>
-        </div>
+  <div class="ui-container">
+    <label>
+      Frequency: <span id="freqLabel">432</span> Hz
+      <input id="frequencySlider" type="range" min="220" max="880" step="1" value="432" />
+    </label>
+    <button id="playBtn">Play / Stop</button>
+  </div>
+  
+  <canvas id="fractalCanvas"></canvas>
 
-        <div class="harmonics">
-            <h3>432 Hz Matrix</h3>
-            <div class="ratio-display">
-                <div class="ratio-box">1:1<br>432 Hz<br>Base</div>
-                <div class="ratio-box">2:3<br>648 Hz<br>Perfect 5th</div>
-                <div class="ratio-box">3:4<br>576 Hz<br>Perfect 4th</div>
-            </div>
-            <h3>Cosmic Ratios</h3>
-            <p>432² = Speed of Light</p>
-            <p>432 × 2000 = Sun Diameter</p>
-            <p>432 × 60 = Earth Precession</p>
-            <h3>Sacred Numbers</h3>
-            <p>108 = 432 ÷ 4</p>
-            <p>216 = 432 ÷ 2</p>
-            <p>864 = 432 × 2</p>
-        </div>
-
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-value" id="wavelengthDisplay">0.794m</div>
-                <div>Wavelength</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="noteDisplay">A4</div>
-                <div>Note</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="ratioDisplay">1:1</div>
-                <div>Ratio</div>
-            </div>
-        </div>
-
-        <div class="waveform">
-            <canvas id="waveformCanvas"></canvas>
-        </div>
-    </div>
-
-    <script>
-        // Load Three.js
-        const threeScript = document.createElement('script');
-        threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-        threeScript.onload = () => {
-            // Load OrbitControls after Three.js is loaded
-            const orbitControlsScript = document.createElement('script');
-            orbitControlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
-            orbitControlsScript.onload = () => initApplication();
-            document.head.appendChild(orbitControlsScript);
-        };
-        document.head.appendChild(threeScript);
-
-        class UniversalMatrix {
-            constructor() {
-                // Predefined geometry sets
-                this.geometryTypes = ['metatron', 'flower', 'sri', 'merkaba'];
-                this.geometryIndex = -1;  // start with no geometry
-
-                this.initThreeJS();
-                this.initAudio();
-                this.setupEventListeners();
-                this.createGeometries();
+  <script>
+    class MandelbrotAudio {
+      constructor() {
+        // Canvas & context
+        this.canvas = document.getElementById('fractalCanvas');
+        this.ctx = this.canvas.getContext('2d');
         
-                this.isPlaying = false;
-                this.isRotating = true;
-                this.currentGeometry = null;  // no geometry at start
-
-                // We'll keep track of the geometry group in a variable
-                this.currentGeometryGroup = null;
-
-                // Start animation loop
-                this.animate();
-            }
-
-            initThreeJS() {
-                // Scene setup
-                this.scene = new THREE.Scene();
-                this.camera = new THREE.PerspectiveCamera(
-                    75,
-                    window.innerWidth / window.innerHeight,
-                    0.1,
-                    1000
-                );
-                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setClearColor(0x000000, 1);
-                document.body.appendChild(this.renderer.domElement);
-
-                // Lighting
-                this.setupLighting();
+        // Resize to full window
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
         
-                // Camera position
-                this.camera.position.z = 7;
-
-                // Add orbital controls
-                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.05;
-            }
-
-            setupLighting() {
-                // Ambient light
-                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-                this.scene.add(ambientLight);
-
-                // Point lights
-                this.lights = [];
-                const colors = [0x88ccff, 0xff88cc, 0xccff88];
-                for (let i = 0; i < 3; i++) {
-                    const light = new THREE.PointLight(colors[i], 0.5);
-                    light.position.set(
-                        Math.cos(i * Math.PI * 2 / 3) * 8,
-                        Math.sin(i * Math.PI * 2 / 3) * 8,
-                        3
-                    );
-                    this.scene.add(light);
-                    this.lights.push(light);
-                }
-            }
-
-            initAudio() {
-                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                this.gainNode = this.audioCtx.createGain();
-                this.gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+        // Audio: Oscillator, Gain, Analyser
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        this.isPlaying = false;
         
-                // Analyzer setup
-                this.analyser = this.audioCtx.createAnalyser();
-                this.analyser.fftSize = 2048;
-                this.bufferLength = this.analyser.frequencyBinCount;
-                this.dataArray = new Uint8Array(this.bufferLength);
+        this.gainNode = this.audioCtx.createGain();
+        this.gainNode.gain.value = 0.2;  // slightly quiet by default
         
-                // Waveform canvas setup
-                this.setupWaveformDisplay();
-            }
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 1024;
+        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
-            setupWaveformDisplay() {
-                this.waveformCanvas = document.getElementById('waveformCanvas');
-                this.waveformCtx = this.waveformCanvas.getContext('2d');
-                this.waveformCanvas.width = this.waveformCanvas.offsetWidth;
-                this.waveformCanvas.height = this.waveformCanvas.offsetHeight;
-            }
-
-            createGeometries() {
-                // Pre-generate the geometry objects, but don't add any to scene yet
-                this.geometries = {
-                    metatron: this.createMetatronsCube3D(),
-                    flower: this.createFlowerOfLife3D(),
-                    sri: this.createSriYantra3D(),
-                    merkaba: this.createMerkaba3D()
-                };
-            }
-
-            /*
-             * Creates Metatron's Cube using spheres for each vertex and lines in 3D
-             */
-            createMetatronsCube3D() {
-                const group = new THREE.Group();
-                const radius = 2;
-                const sphereMaterial = new THREE.MeshPhongMaterial({
-                    color: 0x88ccff,
-                    emissive: 0x003355,
-                    shininess: 50
-                });
-                const lineMaterial = new THREE.LineBasicMaterial({
-                    color: 0xffffff,
-                    transparent: true,
-                    opacity: 0.6
-                });
-
-                // Create center + outer vertices (12 around circle)
-                const vertices = [];
-                vertices.push(new THREE.Vector3(0, 0, 0));  // center
-
-                // Outer ring
-                for (let i = 0; i < 12; i++) {
-                    const angle = (i / 6) * Math.PI;
-                    const x = Math.cos(angle) * radius;
-                    const y = Math.sin(angle) * radius;
-                    // Give slight Z offsets to randomize in 3D
-                    const z = (i % 2 === 0) ? 0.2 : -0.2; 
-                    vertices.push(new THREE.Vector3(x, y, z));
-                }
-
-                // Add spheres at each vertex
-                vertices.forEach(v => {
-                    const sphereGeo = new THREE.SphereGeometry(0.1, 16, 16);
-                    const sphere = new THREE.Mesh(sphereGeo, sphereMaterial.clone());
-                    sphere.position.copy(v);
-                    group.add(sphere);
-                });
-
-                // Connect lines
-                for (let i = 0; i < vertices.length; i++) {
-                    for (let j = i + 1; j < vertices.length; j++) {
-                        const geo = new THREE.BufferGeometry().setFromPoints([vertices[i], vertices[j]]);
-                        const line = new THREE.Line(geo, lineMaterial.clone());
-                        group.add(line);
-                    }
-                }
-
-                return group;
-            }
-
-            /*
-             * Creates a 3D Flower of Life by revolving a small semicircle "petal" shape
-             * around the Y-axis with LatheGeometry, then duplicating & scaling.
-             */
-            createFlowerOfLife3D() {
-                const group = new THREE.Group();
-                const meshMaterial = new THREE.MeshLambertMaterial({
-                    color: 0x88ccff,
-                    emissive: 0x002233,
-                    wireframe: false
-                });
-
-                // Lathe shape (semicircle as a petal)
-                const points = [];
-                const petalRadius = 1;
-                for (let i = 0; i <= 10; i++) {
-                    const theta = (Math.PI * i) / 10; // 0 to π
-                    const x = Math.sin(theta) * petalRadius;
-                    const y = Math.cos(theta) * petalRadius;
-                    points.push(new THREE.Vector2(y, x));
-                }
-
-                // revolve it to get a "flower petal" shape
-                const latheGeometry = new THREE.LatheGeometry(points, 32);
-                const latheMesh = new THREE.Mesh(latheGeometry, meshMaterial);
-                group.add(latheMesh);
-
-                // create multiple "petals" around center
-                const petalsCount = 6;
-                for (let p = 1; p < petalsCount; p++) {
-                    const petalClone = latheMesh.clone();
-                    petalClone.rotation.y = (p * Math.PI * 2) / petalsCount;
-                    group.add(petalClone);
-                }
-
-                // optional: add a ring geometry
-                const ringGeo = new THREE.RingGeometry(0.9, 1.1, 48);
-                const ringMat = new THREE.MeshBasicMaterial({
-                    color: 0xffffff,
-                    side: THREE.DoubleSide,
-                    transparent: true,
-                    opacity: 0.4
-                });
-                const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-                ringMesh.rotation.x = -Math.PI / 2;
-                group.add(ringMesh);
-
-                // second ring offset
-                const ringMesh2 = ringMesh.clone();
-                ringMesh2.scale.set(1.5, 1.5, 1.5);
-                ringMesh2.position.y = -0.2;
-                group.add(ringMesh2);
-
-                return group;
-            }
-
-            /*
-             * Creates a 3D Sri Yantra by layering extruded triangles
-             */
-            createSriYantra3D() {
-                const group = new THREE.Group();
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xff8888,
-                    emissive: 0x330000,
-                    shininess: 30
-                });
-                
-                // We'll stack a few triangles on top of each other, 
-                // decreasing size to mimic the yantra layering
-                const layers = 9;
-                for (let i = 0; i < layers; i++) {
-                    const size = 2 - (i * 0.2);
-                    const height = 1.7 - (i * 0.17);
-
-                    const shape = new THREE.Shape();
-                    shape.moveTo(-size, -height / 2);
-                    shape.lineTo(size, -height / 2);
-                    shape.lineTo(0, height);
-                    shape.lineTo(-size, -height / 2);
-
-                    // extrude for some thickness
-                    const extrudeSettings = {
-                        depth: 0.05,
-                        bevelEnabled: false
-                    };
-                    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-                    const mesh = new THREE.Mesh(geometry, material.clone());
-                    
-                    // offset the layering so each triangle is stacked in 3D
-                    mesh.position.z = i * 0.1;
-                    
-                    group.add(mesh);
-                }
-
-                return group;
-            }
-
-            /*
-             * Creates a 3D Merkaba from two tetrahedrons, slightly offset
-             */
-            createMerkaba3D() {
-                const group = new THREE.Group();
-                const size = 2;
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0x88ccff,
-                    emissive: 0x001133,
-                    shininess: 50,
-                    wireframe: false
-                });
-
-                // Tetrahedron #1
-                const tetraGeometry = new THREE.TetrahedronGeometry(size);
-                const tetraMesh1 = new THREE.Mesh(tetraGeometry, material.clone());
-
-                // Tetrahedron #2
-                const tetraMesh2 = tetraMesh1.clone();
-                tetraMesh2.rotation.x = Math.PI;
-                // offset so they don't overlap perfectly
-                tetraMesh2.position.y = -0.2; 
-
-                group.add(tetraMesh1);
-                group.add(tetraMesh2);
-
-                return group;
-            }
-
-            switchGeometry(type) {
-                // Remove existing geometry from the scene
-                if (this.currentGeometryGroup) {
-                    this.scene.remove(this.currentGeometryGroup);
-                    this.currentGeometryGroup = null;
-                }
-
-                // If user selected "(No Geometry)", stop here
-                if (!type) {
-                    this.currentGeometry = null;
-                    return;
-                }
-
-                // Otherwise, add new geometry
-                this.currentGeometryGroup = this.geometries[type];
-                this.scene.add(this.currentGeometryGroup);
-                this.currentGeometry = type;
-
-                // Apply an initial geometry scale/offset to match the current frequency
-                const freqVal = parseFloat(document.getElementById('frequencySlider').value);
-                this.updateGeometryScale(freqVal);
-            }
-
-            updateFrequency(frequency) {
-                // Update the oscillator frequency
-                if (this.oscillator) {
-                    this.oscillator.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
-                }
-
-                // Update UI display
-                document.querySelector('.frequency-display').textContent = `${frequency} Hz`;
-                this.updateStats(frequency);
-
-                // Dynamically scale/rotate geometry according to frequency
-                this.updateGeometryScale(frequency);
-            }
-
-            updateGeometryScale(frequency) {
-                if (!this.currentGeometryGroup) return;
-
-                // Example formula: relative scale with a mild range around the base (432)
-                // You can tweak this to taste.
-                const base = 432;
-                const ratio = frequency / base;  // e.g. 432 => ratio=1, 440 => ratio=1.0185, etc.
-                
-                // scale geometry group
-                const scaleFactor = 0.8 + (ratio * 0.4);  // scale ~0.8 to ~1.2 if freq is near 432
-                this.currentGeometryGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-                // small rotation as a function of difference from 432
-                const rotationBias = (frequency - base) * 0.01; 
-                this.currentGeometryGroup.rotation.z = rotationBias;
-            }
-
-            updateStats(frequency) {
-                // Update wavelength (speed of sound / frequency ~ 343 m/s in air)
-                const wavelength = (343 / frequency).toFixed(3);
-                document.getElementById('wavelengthDisplay').textContent = `${wavelength}m`;
+        // Hook up the UI
+        this.freqSlider = document.getElementById('frequencySlider');
+        this.freqLabel  = document.getElementById('freqLabel');
+        this.playBtn    = document.getElementById('playBtn');
         
-                // Update musical note
-                const note = this.getMusicalNote(frequency);
-                document.getElementById('noteDisplay').textContent = note;
+        this.freqSlider.addEventListener('input', e => {
+          this.freqLabel.textContent = e.target.value;
+          if (this.oscillator) {
+            this.oscillator.frequency.setValueAtTime(
+              parseFloat(e.target.value),
+              this.audioCtx.currentTime
+            );
+          }
+        });
         
-                // Update ratio
-                const ratio = this.getFrequencyRatio(frequency);
-                document.getElementById('ratioDisplay').textContent = ratio;
-            }
-
-            getMusicalNote(frequency) {
-                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-                const a4 = 440;
-                const c0 = a4 * Math.pow(2, -4.75);
-                const h = Math.round(12 * Math.log2(frequency / c0));
-                const octave = Math.floor(h / 12);
-                const n = h % 12;
-                return notes[n] + octave;
-            }
-
-            getFrequencyRatio(frequency) {
-                const baseFreq = 432;
-                const ratio = frequency / baseFreq;
-                return `${ratio.toFixed(3)}:1`;
-            }
-
-            drawWaveform() {
-                this.analyser.getByteTimeDomainData(this.dataArray);
+        this.playBtn.addEventListener('click', () => {
+          if (!this.isPlaying) {
+            this.startSound();
+            this.playBtn.textContent = "Stop";
+          } else {
+            this.stopSound();
+            this.playBtn.textContent = "Play";
+          }
+        });
         
-                this.waveformCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-                this.waveformCtx.fillRect(0, 0, this.waveformCanvas.width, this.waveformCanvas.height);
+        // Start the animation loop
+        this.animate();
+      }
+      
+      resizeCanvas() {
+        this.canvas.width  = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+      
+      startSound() {
+        this.oscillator = this.audioCtx.createOscillator();
+        this.oscillator.type = 'sine';
+        // Use current slider value
+        this.oscillator.frequency.setValueAtTime(
+          parseFloat(this.freqSlider.value),
+          this.audioCtx.currentTime
+        );
         
-                this.waveformCtx.lineWidth = 2;
-                this.waveformCtx.strokeStyle = '#88ccff';
-                this.waveformCtx.beginPath();
-
-                const sliceWidth = this.waveformCanvas.width / this.bufferLength;
-                let x = 0;
-
-                for (let i = 0; i < this.bufferLength; i++) {
-                    const v = this.dataArray[i] / 128.0;
-                    const y = v * (this.waveformCanvas.height / 2);
-
-                    if (i === 0) {
-                        this.waveformCtx.moveTo(x, y);
-                    } else {
-                        this.waveformCtx.lineTo(x, y);
-                    }
-                    x += sliceWidth;
-                }
-
-                this.waveformCtx.lineTo(this.waveformCanvas.width, this.waveformCanvas.height / 2);
-                this.waveformCtx.stroke();
-            }
-
-            animate() {
-                requestAnimationFrame(this.animate.bind(this));
+        // Chain: oscillator -> gain -> analyser -> destination
+        this.oscillator.connect(this.gainNode);
+        this.gainNode.connect(this.analyser);
+        this.analyser.connect(this.audioCtx.destination);
         
-                if (this.isRotating) {
-                    this.scene.rotation.y += 0.001;
-                    this.scene.rotation.x = Math.sin(Date.now() * 0.0005) * 0.1;
-                }
-
-                if (this.isPlaying) {
-                    this.analyser.getByteFrequencyData(this.dataArray);
-                    const average = this.dataArray.reduce((a, b) => a + b) / this.bufferLength;
-            
-                    // Update geometry opacity / emissive based on audio
-                    this.scene.traverse(child => {
-                        if (child.material && child.material.opacity !== undefined) {
-                            child.material.opacity = 0.4 + (average / 512);
-                        }
-                        if (child.material && child.material.emissive) {
-                            // Bump emissive intensity
-                            const intensity = (average / 255) * 0.2;
-                            child.material.emissiveIntensity = intensity;
-                        }
-                    });
-
-                    // Update lights
-                    this.lights.forEach(light => {
-                        light.intensity = 0.3 + (average / 256);
-                    });
-
-                    this.drawWaveform();
-                }
-
-                this.renderer.render(this.scene, this.camera);
-                this.controls.update();
-            }
-
-            setupEventListeners() {
-                // Play/Stop
-                document.getElementById('playBtn').addEventListener('click', () => {
-                    if (!this.isPlaying) {
-                        this.startSound();
-                    } else {
-                        this.stopSound();
-                    }
-                });
-
-                // Rotation
-                document.getElementById('rotateBtn').addEventListener('click', () => {
-                    this.isRotating = !this.isRotating;
-                });
-
-                // Geometry cycle button
-                document.getElementById('geometryBtn').addEventListener('click', () => {
-                    // Move to next geometry index
-                    this.geometryIndex = (this.geometryIndex + 1) % (this.geometryTypes.length + 1);
-                    // If geometryIndex is at the last slot, set to no geometry
-                    if (this.geometryIndex === this.geometryTypes.length) {
-                        this.switchGeometry("");  // blank => no geometry
-                        document.getElementById('geometrySelect').value = "";
-                    } else {
-                        const selectedType = this.geometryTypes[this.geometryIndex];
-                        this.switchGeometry(selectedType);
-                        // Also update the select dropdown
-                        document.getElementById('geometrySelect').value = selectedType;
-                    }
-                });
-
-                // Frequency slider
-                document.getElementById('frequencySlider').addEventListener('input', (e) => {
-                    this.updateFrequency(parseFloat(e.target.value));
-                });
-
-                // Waveform select
-                document.getElementById('waveformSelect').addEventListener('change', (e) => {
-                    if (this.oscillator) {
-                        this.oscillator.type = e.target.value;
-                    }
-                });
-
-                // Geometry select
-                document.getElementById('geometrySelect').addEventListener('change', (e) => {
-                    this.switchGeometry(e.target.value);
-                    // Update geometryIndex to reflect user choice or no geometry
-                    const gVal = e.target.value;
-                    if (!gVal) {
-                        this.geometryIndex = this.geometryTypes.length; // no geometry
-                    } else {
-                        this.geometryIndex = this.geometryTypes.indexOf(gVal);
-                    }
-                });
-
-                // Window resize
-                window.addEventListener('resize', () => {
-                    this.camera.aspect = window.innerWidth / window.innerHeight;
-                    this.camera.updateProjectionMatrix();
-                    this.renderer.setSize(window.innerWidth, window.innerHeight);
-            
-                    this.waveformCanvas.width = this.waveformCanvas.offsetWidth;
-                    this.waveformCanvas.height = this.waveformCanvas.offsetHeight;
-                });
-            }
-
-            startSound() {
-                this.oscillator = this.audioCtx.createOscillator();
-                this.oscillator.type = document.getElementById('waveformSelect').value;
-                this.oscillator.frequency.setValueAtTime(
-                    parseFloat(document.getElementById('frequencySlider').value),
-                    this.audioCtx.currentTime
-                );
-        
-                this.oscillator.connect(this.gainNode);
-                this.gainNode.connect(this.analyser);
-                this.analyser.connect(this.audioCtx.destination);
-        
-                this.oscillator.start();
-                this.isPlaying = true;
-            }
-
-            stopSound() {
-                if (this.oscillator) {
-                    this.oscillator.stop();
-                    this.oscillator.disconnect();
-                }
-                this.isPlaying = false;
-            }
+        this.oscillator.start();
+        this.isPlaying = true;
+      }
+      
+      stopSound() {
+        if (this.oscillator) {
+          this.oscillator.stop();
+          this.oscillator.disconnect();
         }
-
-        function initApplication() {
-            new UniversalMatrix();
+        this.isPlaying = false;
+      }
+      
+      animate() {
+        requestAnimationFrame(() => this.animate());
+        
+        // Get audio data
+        this.analyser.getByteTimeDomainData(this.dataArray);
+        
+        // Compute average amplitude
+        let sum = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+          sum += this.dataArray[i];
         }
-    </script>
+        const avgAmplitude = sum / this.dataArray.length;  // ~128 is silent, higher means louder
+        
+        // Frequency from the slider
+        const freq = parseFloat(this.freqSlider.value);
+        
+        // Now draw the fractal with audio-driven parameters
+        this.drawMandelbrot(freq, avgAmplitude);
+      }
+      
+      drawMandelbrot(freq, amp) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        
+        // Example approach:
+        // - Let freq drive "zoom"
+        // - Let amp drive "maxIterations" or color shift
+        const baseFreq = 432; 
+        const freqRatio = freq / baseFreq; // e.g. ~1 if freq=432
+        const zoom = 2.5 / freqRatio; // dynamic zoom: lower freq -> bigger fractal
+        const maxIterations = Math.floor(50 + (amp - 128) * 0.5);
+        
+        // Center the fractal near (-0.5, 0)
+        // We'll also offset slightly based on freq to shift horizontally
+        const xCenter = -0.5 + (freqRatio - 1) * 0.3;
+        const yCenter = 0;
+        
+        // Each pixel => map to complex plane & iterate
+        const imageData = this.ctx.createImageData(w, h);
+        const data = imageData.data;
+        
+        for (let py = 0; py < h; py++) {
+          for (let px = 0; px < w; px++) {
+            
+            // Convert (px,py) to complex plane (cx,cy)
+            const cx = xCenter + (px - w/2) * (4 / w) * (1 / zoom);
+            const cy = yCenter + (py - h/2) * (4 / h) * (1 / zoom);
+            
+            let x = 0, y = 0;
+            let iteration = 0;
+            
+            while (x*x + y*y <= 4 && iteration < maxIterations) {
+              const xTemp = x*x - y*y + cx;
+              y = 2*x*y + cy;
+              x = xTemp;
+              iteration++;
+            }
+            
+            const idx = (py * w + px) * 4;
+            
+            // Simple color scheme
+            if (iteration === maxIterations) {
+              // Inside the set => black
+              data[idx+0] = 0;
+              data[idx+1] = 0;
+              data[idx+2] = 0;
+              data[idx+3] = 255;  // fully opaque
+            } else {
+              // Outside the set => color by iteration
+              // We'll scale it so color depends also on amplitude
+              const c = 255 - Math.floor((iteration / maxIterations) * 255);
+              data[idx+0] = (c + amp) % 255;   // R
+              data[idx+1] = (c + 2*amp) % 255; // G
+              data[idx+2] = (c + 4*amp) % 255; // B
+              data[idx+3] = 255;
+            }
+          }
+        }
+        
+        this.ctx.putImageData(imageData, 0, 0);
+      }
+    }
+    
+    // Initialize
+    const app = new MandelbrotAudio();
+  </script>
 </body>
 </html>
