@@ -2,605 +2,381 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, user-scalable=no"
-  />
-  <title>Interactive Fibonacci Seed of Life - 3D Enhanced</title>
+  <title>Fibonacci Seed of Life - Three.js 3D Experience</title>
   <style>
     body {
       margin: 0;
-      overflow: hidden;
-      background: black;
-      font-family: Arial, sans-serif;
-      touch-action: none;
+      overflow: hidden; /* Remove scrollbars */
+      background-color: #000; /* black background */
+      font-family: sans-serif;
     }
-
-    /* -------------------------------------
-       Container & Perspective
-    -------------------------------------- */
-    #container {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      /* ** 3D Perspective ** */
-      perspective: 1200px;
-      perspective-origin: 50% 50%;
-      overflow: hidden;
-    }
-
-    /* -------------------------------------
-       SVG sizing
-    -------------------------------------- */
-    svg {
+    #infoPanel {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      /* We'll center the SVG with translate,
-         but the "3D effect" is from the parent perspective. */
-      transform: translate(-50%, -50%);
-      touch-action: none;
-    }
-
-    /* We'll apply 3D transforms to this <g> */
-    #rotatingGroup {
-      transform-origin: 50% 50%;
-      transform-style: preserve-3d;
-    }
-
-    /* -------------------------------------
-       Tooltip & Info Panels
-    -------------------------------------- */
-    .fibonacci-number {
-      cursor: pointer;
-      pointer-events: all;
-      transition: all 0.3s ease;
-    }
-    .fibonacci-number.active {
-      font-size: 24px;
-      filter: brightness(2);
-    }
-
-    .info {
-      position: absolute;
-      color: white;
-      padding: 10px;
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-      pointer-events: none;
-      z-index: 100;
-    }
-
-    .number-connection {
-      stroke-width: 2;
-      stroke-dasharray: 5;
-      opacity: 0.6;
-      animation: flowLine 2s infinite linear;
-    }
-    @keyframes flowLine {
-      from {
-        stroke-dashoffset: 20;
-      }
-      to {
-        stroke-dashoffset: 0;
-      }
-    }
-
-    #detailedInfo {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.9);
+      top: 10px;
+      left: 10px;
       color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      border: 1px solid #fff;
-      z-index: 1000;
-      display: none;
-      max-width: 80%;
-      text-align: center;
-      animation: fadeIn 0.3s ease;
-    }
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-    }
-
-    .number-tooltip {
-      position: absolute;
-      background: rgba(255, 255, 255, 0.9);
-      color: #000;
-      padding: 5px 10px;
-      border-radius: 5px;
-      pointer-events: none;
-      z-index: 1001;
-      display: none;
-      font-size: 14px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-    /* -------------------------------------
-       Control Panel
-    -------------------------------------- */
-    #controls {
-      position: fixed;
-      top: 20px;
-      right: 20px;
+      z-index: 999;
       background: rgba(0, 0, 0, 0.7);
       padding: 10px;
-      border-radius: 5px;
-      color: white;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 5px;
+      border-radius: 8px;
+      font-size: 14px;
+      user-select: none;
     }
-
-    .control-button {
+    button {
+      cursor: pointer;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: white;
       padding: 5px 10px;
       margin: 2px 0;
       border-radius: 3px;
-      cursor: pointer;
       transition: all 0.3s ease;
     }
-    .control-button:hover {
+    button:hover {
       background: rgba(255, 255, 255, 0.2);
     }
-
-    .slider-container {
-      display: flex;
-      flex-direction: column;
-      margin-top: 5px;
-      align-items: flex-start;
-    }
-    .slider-container label {
-      margin-bottom: 2px;
-      font-size: 12px;
-      color: #ccc;
-    }
-    .speed-slider {
-      width: 100px;
-    }
-
-    /* -------------------------------------
-       Background & Glow
-    -------------------------------------- */
-    .highlight-path {
-      stroke: #fff;
-      stroke-width: 2;
-      fill: none;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    @keyframes colorCycle {
-      0% {
-        stroke: hsl(0, 100%, 50%);
-      }
-      25% {
-        stroke: hsl(120, 100%, 50%);
-      }
-      50% {
-        stroke: hsl(240, 100%, 50%);
-      }
-      75% {
-        stroke: hsl(300, 100%, 50%);
-      }
-      100% {
-        stroke: hsl(360, 100%, 50%);
-      }
-    }
-    .color-cycle {
-      animation: colorCycle 5s infinite linear;
+    #tooltip {
+      position: absolute;
+      pointer-events: none;
+      display: none;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
+      font-size: 14px;
+      border-radius: 5px;
+      z-index: 1000;
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <svg id="mainSvg" width="800" height="800" viewBox="-400 -400 800 800">
-      <defs>
-        <radialGradient id="backgroundGradient">
-          <stop offset="0%" stop-color="#1a1a2e" />
-          <stop offset="100%" stop-color="#000000" />
-        </radialGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      <rect x="-400" y="-400" width="800" height="800" fill="url(#backgroundGradient)"></rect>
-      <!-- We'll be 3D-transforming this group via CSS -->
-      <g id="rotatingGroup"></g>
-    </svg>
-
-    <div id="detailedInfo"></div>
-    <div class="number-tooltip"></div>
-
-    <!-- Controls -->
-    <div id="controls">
-      <button class="control-button" id="resetView">Reset View</button>
-      <button class="control-button" id="toggleRotation">Toggle Auto-Rotation</button>
-      <button class="control-button" id="randomizeColors">Randomize Colors</button>
-
-      <div class="slider-container">
-        <label for="rotationSpeed">Rotation Speed</label>
-        <input
-          type="range"
-          id="rotationSpeed"
-          class="speed-slider"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.2"
-        />
-      </div>
-    </div>
+  <div id="infoPanel">
+    <button id="btnReset">Reset View</button>
+    <button id="btnRandomize">Randomize Colors</button>
+    <button id="btnToggleRotation">Toggle Auto-Rotation</button>
   </div>
-
+  <div id="tooltip"></div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/OrbitControls.js"></script>
   <script>
-    const svg = document.getElementById("mainSvg");
-    const rotatingGroup = document.getElementById("rotatingGroup");
-    const numberInfo = document.getElementById("detailedInfo");
-    const rotationSpeedSlider = document.getElementById("rotationSpeed");
+    /**********************************************************
+     * Basic Three.js Setup
+     **********************************************************/
+    let scene, camera, renderer, controls;
+    let seedGroup; // will contain circles, text, lines
+    let autoRotate = true; // camera auto-rotation
+    let rotationSpeed = 0.002; // how fast the camera auto-rotates
+    const toolTip = document.getElementById('tooltip');
 
-    // Auto-rotation toggle
-    let autoRotate = false;
-    let autoRotationSpeed = parseFloat(rotationSpeedSlider.value);
+    init();
+    animate();
 
-    // We'll do 3D rotation around the X & Y axes
-    let rotationX = 0;
-    let rotationY = 0;
-    let scale = 1;
+    function init() {
+      // Create scene
+      scene = new THREE.Scene();
 
-    // Drag control
-    let startX = 0;
-    let startY = 0;
-    let isDragging = false;
-    let lastPinchDistance = null;
+      // Set up camera
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 0, 1000);
 
-    // Generate Fibonacci sequence
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // OrbitControls
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 300; // how close can zoom
+      controls.maxDistance = 2000; // how far can zoom
+
+      // Lights (ambient + point)
+      scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+      const pointLight = new THREE.PointLight(0xffffff, 0.8);
+      pointLight.position.set(1000, 1000, 1000);
+      scene.add(pointLight);
+
+      // Add the seed group
+      seedGroup = new THREE.Group();
+      scene.add(seedGroup);
+
+      // Generate the pattern
+      createSeedOfLife();
+
+      // Listen to window resize
+      window.addEventListener('resize', onWindowResize, false);
+
+      // Hook up UI
+      document.getElementById('btnReset').addEventListener('click', resetView);
+      document.getElementById('btnRandomize').addEventListener('click', randomizeColors);
+      document.getElementById('btnToggleRotation').addEventListener('click', () => {
+        autoRotate = !autoRotate;
+      });
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    /**********************************************************
+     * Fibonacci Sequence & Pattern Construction
+     **********************************************************/
     function generateFibonacciSequence(n) {
-      let sequence = [0, 1];
+      const seq = [0, 1];
       for (let i = 2; i < n; i++) {
-        sequence[i] = (sequence[i - 1] + sequence[i - 2]) % 10; // last digit only
+        seq[i] = (seq[i - 1] + seq[i - 2]) % 10; // keep last digit
       }
-      return sequence;
+      return seq;
     }
     const fibSequence = generateFibonacciSequence(60);
 
-    function createPattern() {
+    function createSeedOfLife() {
       const radius = 300;
 
-      // Group for lines
-      const connectionsGroup = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "g"
-      );
-      connectionsGroup.id = "connections";
-      rotatingGroup.appendChild(connectionsGroup);
-
       // Outer circle
-      const outerCircle = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "circle"
-      );
-      outerCircle.setAttribute("cx", "0");
-      outerCircle.setAttribute("cy", "0");
-      outerCircle.setAttribute("r", radius);
-      outerCircle.setAttribute("fill", "none");
-      outerCircle.setAttribute("stroke", "#FF00FF");
-      outerCircle.setAttribute("filter", "url(#glow)");
-      outerCircle.classList.add("color-cycle");
-      rotatingGroup.appendChild(outerCircle);
+      const outerCircle = makeCircle(radius, 0xff00ff);
+      seedGroup.add(outerCircle);
 
-      // 6 inner circles for the Seed of Life
+      // 6 circles for Seed of Life
       for (let i = 0; i < 6; i++) {
         const angle = (i * Math.PI * 2) / 6;
-        const centerX = Math.cos(angle) * radius * 0.5;
-        const centerY = Math.sin(angle) * radius * 0.5;
-
-        const circle = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "circle"
-        );
-        circle.setAttribute("cx", centerX);
-        circle.setAttribute("cy", centerY);
-        circle.setAttribute("r", radius * 0.5);
-        circle.setAttribute("fill", "none");
-        circle.setAttribute("stroke", "#00FFFF");
-        circle.setAttribute("filter", "url(#glow)");
-        circle.classList.add("color-cycle");
-        rotatingGroup.appendChild(circle);
+        const cx = Math.cos(angle) * radius * 0.5;
+        const cy = Math.sin(angle) * radius * 0.5;
+        const c = makeCircle(radius * 0.5, 0x00ffff);
+        c.position.set(cx, cy, 0);
+        seedGroup.add(c);
       }
 
       // Center circle
-      const centerCircle = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "circle"
-      );
-      centerCircle.setAttribute("cx", "0");
-      centerCircle.setAttribute("cy", "0");
-      centerCircle.setAttribute("r", radius * 0.5);
-      centerCircle.setAttribute("fill", "none");
-      centerCircle.setAttribute("stroke", "#00FF00");
-      centerCircle.setAttribute("filter", "url(#glow)");
-      centerCircle.classList.add("color-cycle");
-      rotatingGroup.appendChild(centerCircle);
+      const centerCircle = makeCircle(radius * 0.5, 0x00ff00);
+      seedGroup.add(centerCircle);
 
-      // Fibonacci numbers
+      // 216 Fibonacci digits
+      // 108 in outer ring, 108 in inner ring (0.75 * radius)
+      // We'll also store each digit's 3D position for connecting lines.
       for (let i = 0; i < 216; i++) {
+        const ringRadius = i < 108 ? radius : radius * 0.75;
         const angle = (i * 2 * Math.PI) / 108;
-        const r = i < 108 ? radius : radius * 0.75;
-        const x = Math.cos(angle) * r;
-        const y = Math.sin(angle) * r;
+        const x = Math.cos(angle) * ringRadius;
+        const y = Math.sin(angle) * ringRadius;
+        const fibVal = fibSequence[i % 60];
 
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", x);
-        text.setAttribute("y", y);
-        text.setAttribute("text-anchor", "middle");
-        text.setAttribute("dominant-baseline", "middle");
-        text.setAttribute("fill", i < 108 ? "#FFFF00" : "#FF00FF");
-        text.setAttribute("font-size", "16");
-        text.setAttribute("class", "fibonacci-number");
-        text.setAttribute("data-index", i);
-        text.textContent = fibSequence[i % 60];
-
-        text.addEventListener("click", (e) => {
-          e.stopPropagation();
-          handleNumberClick(text, i);
-        });
-
-        text.addEventListener("mouseover", (e) => {
-          showTooltip(e, fibSequence[i % 60], i);
-        });
-
-        text.addEventListener("mouseout", () => {
-          hideTooltip();
-        });
-
-        rotatingGroup.appendChild(text);
+        // Create the text sprite
+        const colorHex = i < 108 ? 0xffff00 : 0xff00ff;
+        const fibText = makeFibonacciText(fibVal, colorHex, i);
+        fibText.position.set(x, y, 0);
+        seedGroup.add(fibText);
       }
     }
 
-    // When a number is clicked
-    function handleNumberClick(element, index) {
-      clearHighlights();
-      element.classList.add("active");
-
-      const value = fibSequence[index % 60];
-      const relatedNumbers = findRelatedNumbers(value);
-      highlightRelatedNumbers(relatedNumbers);
-      createConnections(element, relatedNumbers);
-      showDetailedInfo(value, index, relatedNumbers);
+    /**********************************************************
+     * Geometry-Building Helpers
+     **********************************************************/
+    // Create a circle (wireframe ring)
+    function makeCircle(r, colorHex) {
+      const circleGeom = new THREE.CircleGeometry(r, 128);
+      // Convert circle to wireframe ring
+      // We'll use line segments to show edges only
+      const edges = new THREE.EdgesGeometry(circleGeom);
+      const mat = new THREE.LineBasicMaterial({ color: colorHex });
+      const circle = new THREE.LineSegments(edges, mat);
+      return circle;
     }
 
-    // Find all identical numbers
-    function findRelatedNumbers(value) {
-      const related = [];
-      document.querySelectorAll(".fibonacci-number").forEach((el) => {
-        if (el.textContent === value.toString()) {
-          related.push(el);
-        }
-      });
-      return related;
-    }
-    function highlightRelatedNumbers(elements) {
-      elements.forEach((el) => {
-        el.classList.add("active");
-      });
-    }
+    // Create a text sprite for Fibonacci digits
+    function makeFibonacciText(val, colorHex, index) {
+      // We'll use a CSS-like sprite approach
+      const canvas = document.createElement('canvas');
+      const size = 64;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#' + colorHex.toString(16).padStart(6, '0');
+      ctx.font = 'bold 48px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(val, size / 2, size / 2);
 
-    // Connect lines between source and all matching
-    function createConnections(sourceElement, relatedElements) {
-      const connectionsGroup = document.getElementById("connections");
-      if (!connectionsGroup) return;
+      const tex = new THREE.Texture(canvas);
+      tex.needsUpdate = true;
+      const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+      const sprite = new THREE.Sprite(spriteMat);
+      // Scale it down so it's not huge in the scene
+      sprite.scale.set(40, 40, 1);
 
-      relatedElements.forEach((target) => {
-        if (target !== sourceElement) {
-          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-          line.setAttribute("x1", sourceElement.getAttribute("x"));
-          line.setAttribute("y1", sourceElement.getAttribute("y"));
-          line.setAttribute("x2", target.getAttribute("x"));
-          line.setAttribute("y2", target.getAttribute("y"));
-          line.setAttribute("class", "number-connection");
-          line.setAttribute("stroke", sourceElement.getAttribute("fill"));
-          connectionsGroup.appendChild(line);
-        }
-      });
+      // Custom data for interactivity
+      sprite.userData = {
+        digitValue: val,
+        index: index
+      };
+
+      // Mouse events: We'll do raycasting
+      // (for simplicity, we handle tooltips in the animate() with a raycast)
+      return sprite;
     }
 
-    // Display detailed info
-    function showDetailedInfo(value, index, relatedNumbers) {
-      const sequence = calculateLocalSequence(index);
+    /**********************************************************
+     * Interactivity: Raycasting for tooltips, etc.
+     **********************************************************/
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
 
-      numberInfo.innerHTML = `
-        <h3>Number ${value}</h3>
-        <p>Position: ${index + 1}/216</p>
-        <p>Sequence Position: ${(index % 60) + 1}/60</p>
-        <p>Local Sequence: ${sequence.join(" → ")}</p>
-        <p>Occurrences: ${relatedNumbers.length}</p>
-        <p>Ring: ${index < 108 ? "Outer (Yellow)" : "Inner (Pink)"}</p>
-      `;
-      numberInfo.style.display = "block";
+    document.addEventListener('mousemove', onDocumentMouseMove, false);
+    document.addEventListener('click', onDocumentClick, false);
+
+    function onDocumentMouseMove(event) {
+      // Convert mouse to normalized device coords
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
     }
 
-    // A little snippet of the sequence around current
-    function calculateLocalSequence(index) {
-      const start = Math.max(0, (index % 60) - 2);
-      return fibSequence.slice(start, start + 5);
-    }
+    function onDocumentClick() {
+      // On click, find what we clicked
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(seedGroup.children, true);
 
-    // Mouseover tooltip
-    function showTooltip(event, number, index) {
-      const tooltip = document.querySelector(".number-tooltip");
-      tooltip.textContent = `${number} (${index + 1})`;
-      tooltip.style.left = `${event.clientX + 10}px`;
-      tooltip.style.top = `${event.clientY + 10}px`;
-      tooltip.style.display = "block";
-    }
-
-    function hideTooltip() {
-      document.querySelector(".number-tooltip").style.display = "none";
-    }
-
-    // Clear all lines & highlights
-    function clearHighlights() {
-      document.querySelectorAll(".fibonacci-number").forEach((el) => {
-        el.classList.remove("active");
-      });
-      const connectionsGroup = document.getElementById("connections");
-      if (connectionsGroup) {
-        while (connectionsGroup.firstChild) {
-          connectionsGroup.removeChild(connectionsGroup.firstChild);
+      if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (obj instanceof THREE.Sprite) {
+          // It's a Fibonacci text sprite
+          handleNumberClick(obj);
         }
       }
     }
 
-    /* ----------------------------------
-       Touch & Mouse events for 3D rotation
-    ---------------------------------- */
-    function handleTouchStart(e) {
-      if (e.touches.length === 1) {
-        isDragging = true;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-      } else if (e.touches.length === 2) {
-        lastPinchDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-      }
-    }
+    function handleNumberClick(sprite) {
+      // Clear any old lines
+      clearConnections();
 
-    function handleTouchMove(e) {
-      e.preventDefault();
-      if (e.touches.length === 1 && isDragging) {
-        // Rotate in 3D based on drag
-        const dx = e.touches[0].clientX - startX;
-        const dy = e.touches[0].clientY - startY;
-        rotationX += dy * 0.2; // tilt up/down
-        rotationY += dx * 0.2; // spin around Y
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        updateTransform();
-      } else if (e.touches.length === 2) {
-        // Pinch for zoom
-        const currentPinchDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        if (lastPinchDistance !== null) {
-          const delta = currentPinchDistance - lastPinchDistance;
-          scale = Math.max(0.3, Math.min(3, scale + delta * 0.003));
-          updateTransform();
+      // Find all identical numbers
+      const val = sprite.userData.digitValue;
+      // console.log("Clicked digit:", val);
+
+      // Connect lines to all matching digits
+      const matchedSprites = seedGroup.children.filter(ch => {
+        return (ch instanceof THREE.Sprite) && (ch.userData.digitValue === val);
+      });
+
+      // Draw lines from clicked sprite to each matching sprite
+      matchedSprites.forEach(target => {
+        if (target !== sprite) {
+          const line = makeConnection(sprite.position, target.position, sprite.material.color.getHex());
+          seedGroup.add(line);
         }
-        lastPinchDistance = currentPinchDistance;
+      });
+    }
+
+    // Make a line from p1 to p2
+    function makeConnection(p1, p2, colorHex) {
+      const geo = new THREE.BufferGeometry().setFromPoints([p1.clone(), p2.clone()]);
+      const mat = new THREE.LineBasicMaterial({ color: colorHex });
+      const line = new THREE.Line(geo, mat);
+      line.userData.isConnection = true;
+      return line;
+    }
+
+    function clearConnections() {
+      // Remove any child with userData.isConnection === true
+      const toRemove = [];
+      seedGroup.children.forEach(ch => {
+        if (ch.userData.isConnection) {
+          toRemove.push(ch);
+        }
+      });
+      toRemove.forEach(ch => seedGroup.remove(ch));
+    }
+
+    /**********************************************************
+     * Tooltip Handling in Animate (via Raycaster)
+     **********************************************************/
+    function updateTooltip() {
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(seedGroup.children, true);
+
+      if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (obj instanceof THREE.Sprite) {
+          toolTip.style.display = 'block';
+          toolTip.style.left = (event.clientX + 10) + 'px';
+          toolTip.style.top = (event.clientY + 10) + 'px';
+          const digit = obj.userData.digitValue;
+          const idx = obj.userData.index;
+          toolTip.innerHTML = `
+            <strong>Fibonacci digit:</strong> ${digit}<br/>
+            Position: ${idx + 1} / 216
+          `;
+        } else {
+          // Not a sprite
+          toolTip.style.display = 'none';
+        }
+      } else {
+        // No intersect
+        toolTip.style.display = 'none';
       }
     }
 
-    function handleTouchEnd() {
-      isDragging = false;
-      lastPinchDistance = null;
-    }
-
-    // Also allow mouse-based drag
-    function handleMouseDown(e) {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-    }
-    function handleMouseMove(e) {
-      if (!isDragging) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      rotationX += dy * 0.2; // tilt
-      rotationY += dx * 0.2; // spin
-      startX = e.clientX;
-      startY = e.clientY;
-      updateTransform();
-    }
-    function handleMouseUp() {
-      isDragging = false;
-    }
-
-    // Random color generator
-    function randomizeColors() {
-      const randColor = () =>
-        `hsl(${Math.floor(Math.random() * 360)}, 100%, 50%)`;
-
-      document.querySelectorAll("circle").forEach((circle) => {
-        circle.setAttribute("stroke", randColor());
-      });
-      document.querySelectorAll(".fibonacci-number").forEach((textEl) => {
-        textEl.setAttribute("fill", randColor());
-      });
-    }
-
-    function updateTransform() {
-      rotatingGroup.style.transform = `
-        rotateX(${rotationX}deg)
-        rotateY(${rotationY}deg)
-        scale(${scale})
-      `;
-    }
-
-    // Main animation loop for auto-rotation
+    /**********************************************************
+     * Animate Loop
+     **********************************************************/
     function animate() {
-      if (autoRotate) {
-        rotationY += autoRotationSpeed * 10; // auto spin around Y
-        updateTransform();
-      }
       requestAnimationFrame(animate);
+
+      // Auto-rotate camera around Y (to the left or right)
+      if (autoRotate) {
+        // We'll orbit by adjusting controls' azimuthAngle
+        // Negative value to spin in the "other" direction
+        controls.azimuthAngle -= rotationSpeed;
+      }
+
+      controls.update();
+      updateTooltip();
+      renderer.render(scene, camera);
     }
 
-    // Event listeners
-    svg.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    /**********************************************************
+     * UI Buttons
+     **********************************************************/
+    function resetView() {
+      // Reset camera, controls, clear lines
+      camera.position.set(0, 0, 1000);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      clearConnections();
+    }
 
-    svg.addEventListener("touchstart", handleTouchStart, { passive: false });
-    svg.addEventListener("touchmove", handleTouchMove, { passive: false });
-    svg.addEventListener("touchend", handleTouchEnd, false);
-    svg.addEventListener("touchcancel", handleTouchEnd, false);
+    function randomizeColors() {
+      // Re-draw circles + text with random colors
+      seedGroup.children.forEach(obj => {
+        if (obj instanceof THREE.LineSegments) {
+          // It's a circle or a connection line
+          if (!obj.userData.isConnection) {
+            obj.material.color.setHSL(Math.random(), 1.0, 0.5);
+          }
+        } else if (obj instanceof THREE.Sprite) {
+          // Recreate text
+          const val = obj.userData.digitValue;
+          const idx = obj.userData.index;
+          const newColor = new THREE.Color().setHSL(Math.random(), 1.0, 0.5);
+          const canvas = document.createElement('canvas');
+          const size = 64;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#' + newColor.getHexString();
+          ctx.font = 'bold 48px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(val, size / 2, size / 2);
 
-    document.getElementById("toggleRotation").addEventListener("click", () => {
-      autoRotate = !autoRotate;
-    });
-
-    document.getElementById("resetView").addEventListener("click", () => {
-      rotationX = 0;
-      rotationY = 0;
-      scale = 1;
-      updateTransform();
-      clearHighlights();
-      numberInfo.style.display = "none";
-    });
-
-    document
-      .getElementById("randomizeColors")
-      .addEventListener("click", randomizeColors);
-
-    rotationSpeedSlider.addEventListener("input", () => {
-      autoRotationSpeed = parseFloat(rotationSpeedSlider.value);
-    });
-
-    // Initialize
-    createPattern();
-    updateTransform();
-    animate();
+          const tex = new THREE.Texture(canvas);
+          tex.needsUpdate = true;
+          obj.material.map = tex;
+          obj.material.color = newColor; // set base color too
+        }
+      });
+    }
   </script>
 </body>
 </html>
