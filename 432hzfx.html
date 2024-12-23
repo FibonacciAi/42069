@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>432 Hz Universal Matrix</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        .ui-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+        }
+        .frequency-display {
+            font-size: 28px;
+            text-align: center;
+            color: #88ccff;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        button {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #333;
+            border-color: #666;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <!-- Include Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="ui-container">
+        <div class="controls">
+            <div class="frequency-display">432 Hz</div>
+            <button id="playBtn">▶ Play/Stop</button>
+            <button id="rotateBtn">⟳ Rotate</button>
+        </div>
+        <canvas id="waveformCanvas"></canvas>
+    </div>
+
+    <script>
+        class UniversalMatrix {
+            constructor() {
+                this.initThreeJS();
+                this.initAudio();
+                this.isPlaying = false;
+                this.isRotating = true;
+                this.animate();
+            }
+
+            initThreeJS() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                document.body.appendChild(this.renderer.domElement);
+
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.1;
+
+                this.camera.position.z = 5;
+                const light = new THREE.PointLight(0x88ccff, 1);
+                light.position.set(5, 5, 5);
+                this.scene.add(light);
+
+                const geometry = new THREE.BoxGeometry();
+                const material = new THREE.MeshBasicMaterial({ color: 0x88ccff, wireframe: true });
+                this.cube = new THREE.Mesh(geometry, material);
+                this.scene.add(this.cube);
+
+                window.addEventListener('resize', this.onWindowResize.bind(this));
+            }
+
+            initAudio() {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.gainNode = this.audioCtx.createGain();
+                this.gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+
+                this.oscillator = this.audioCtx.createOscillator();
+                this.oscillator.type = 'sine';
+                this.oscillator.frequency.setValueAtTime(432, this.audioCtx.currentTime);
+                this.oscillator.connect(this.gainNode).connect(this.audioCtx.destination);
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            startSound() {
+                this.oscillator.start();
+                this.isPlaying = true;
+            }
+
+            stopSound() {
+                this.oscillator.stop();
+                this.isPlaying = false;
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                if (this.isRotating) {
+                    this.cube.rotation.x += 0.01;
+                    this.cube.rotation.y += 0.01;
+                }
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        const app = new UniversalMatrix();
+
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (!app.isPlaying) {
+                app.startSound();
+            } else {
+                app.stopSound();
+            }
+        });
+
+        document.getElementById('rotateBtn').addEventListener('click', () => {
+            app.isRotating = !app.isRotating;
+        });
+    </script>
+</body>
+</html>
