@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>432 Hz Universal Matrix (Enhanced 3D)</title>
+    <title>432 Hz Universal Matrix (Enhanced + Sound-Linked Geometry)</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -182,6 +182,7 @@
                 <option value="sawtooth">Sawtooth (Complex)</option>
             </select>
             <select class="mode-select" id="geometrySelect">
+                <option value="">(No Geometry)</option>
                 <option value="metatron">Metatron's Cube</option>
                 <option value="flower">Flower of Life</option>
                 <option value="sri">Sri Yantra</option>
@@ -241,8 +242,9 @@
 
         class UniversalMatrix {
             constructor() {
+                // Predefined geometry sets
                 this.geometryTypes = ['metatron', 'flower', 'sri', 'merkaba'];
-                this.geometryIndex = 0;
+                this.geometryIndex = -1;  // start with no geometry
 
                 this.initThreeJS();
                 this.initAudio();
@@ -251,8 +253,12 @@
         
                 this.isPlaying = false;
                 this.isRotating = true;
-                this.currentGeometry = 'metatron';
-        
+                this.currentGeometry = null;  // no geometry at start
+
+                // We'll keep track of the geometry group in a variable
+                this.currentGeometryGroup = null;
+
+                // Start animation loop
                 this.animate();
             }
 
@@ -325,14 +331,13 @@
             }
 
             createGeometries() {
+                // Pre-generate the geometry objects, but don't add any to scene yet
                 this.geometries = {
                     metatron: this.createMetatronsCube3D(),
                     flower: this.createFlowerOfLife3D(),
                     sri: this.createSriYantra3D(),
                     merkaba: this.createMerkaba3D()
                 };
-        
-                this.switchGeometry(this.currentGeometry);
             }
 
             /*
@@ -362,7 +367,7 @@
                     const x = Math.cos(angle) * radius;
                     const y = Math.sin(angle) * radius;
                     // Give slight Z offsets to randomize in 3D
-                    const z = i % 2 === 0 ? 0.2 : -0.2; 
+                    const z = (i % 2 === 0) ? 0.2 : -0.2; 
                     vertices.push(new THREE.Vector3(x, y, z));
                 }
 
@@ -392,11 +397,6 @@
              */
             createFlowerOfLife3D() {
                 const group = new THREE.Group();
-                const lineMaterial = new THREE.LineBasicMaterial({
-                    color: 0x88ccff,
-                    transparent: true,
-                    opacity: 0.6
-                });
                 const meshMaterial = new THREE.MeshLambertMaterial({
                     color: 0x88ccff,
                     emissive: 0x002233,
@@ -426,18 +426,19 @@
                     group.add(petalClone);
                 }
 
-                // optional: add a ring of lines around
+                // optional: add a ring geometry
                 const ringGeo = new THREE.RingGeometry(0.9, 1.1, 48);
-                const ringMesh = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({
+                const ringMat = new THREE.MeshBasicMaterial({
                     color: 0xffffff,
                     side: THREE.DoubleSide,
                     transparent: true,
                     opacity: 0.4
-                }));
+                });
+                const ringMesh = new THREE.Mesh(ringGeo, ringMat);
                 ringMesh.rotation.x = -Math.PI / 2;
                 group.add(ringMesh);
 
-                // possible second "layer" offset
+                // second ring offset
                 const ringMesh2 = ringMesh.clone();
                 ringMesh2.scale.set(1.5, 1.5, 1.5);
                 ringMesh2.position.y = -0.2;
@@ -517,23 +518,57 @@
             }
 
             switchGeometry(type) {
-                // Remove existing geometry groups from the scene
-                this.scene.children
-                    .filter(child => child.isGroup)
-                    .forEach(child => this.scene.remove(child));
+                // Remove existing geometry from the scene
+                if (this.currentGeometryGroup) {
+                    this.scene.remove(this.currentGeometryGroup);
+                    this.currentGeometryGroup = null;
+                }
 
-                // Add new geometry
-                this.scene.add(this.geometries[type]);
+                // If user selected "(No Geometry)", stop here
+                if (!type) {
+                    this.currentGeometry = null;
+                    return;
+                }
+
+                // Otherwise, add new geometry
+                this.currentGeometryGroup = this.geometries[type];
+                this.scene.add(this.currentGeometryGroup);
                 this.currentGeometry = type;
+
+                // Apply an initial geometry scale/offset to match the current frequency
+                const freqVal = parseFloat(document.getElementById('frequencySlider').value);
+                this.updateGeometryScale(freqVal);
             }
 
             updateFrequency(frequency) {
+                // Update the oscillator frequency
                 if (this.oscillator) {
                     this.oscillator.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
                 }
-        
+
+                // Update UI display
                 document.querySelector('.frequency-display').textContent = `${frequency} Hz`;
                 this.updateStats(frequency);
+
+                // Dynamically scale/rotate geometry according to frequency
+                this.updateGeometryScale(frequency);
+            }
+
+            updateGeometryScale(frequency) {
+                if (!this.currentGeometryGroup) return;
+
+                // Example formula: relative scale with a mild range around the base (432)
+                // You can tweak this to taste.
+                const base = 432;
+                const ratio = frequency / base;  // e.g. 432 => ratio=1, 440 => ratio=1.0185, etc.
+                
+                // scale geometry group
+                const scaleFactor = 0.8 + (ratio * 0.4);  // scale ~0.8 to ~1.2 if freq is near 432
+                this.currentGeometryGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                // small rotation as a function of difference from 432
+                const rotationBias = (frequency - base) * 0.01; 
+                this.currentGeometryGroup.rotation.z = rotationBias;
             }
 
             updateStats(frequency) {
@@ -648,11 +683,18 @@
 
                 // Geometry cycle button
                 document.getElementById('geometryBtn').addEventListener('click', () => {
-                    this.geometryIndex = (this.geometryIndex + 1) % this.geometryTypes.length;
-                    this.switchGeometry(this.geometryTypes[this.geometryIndex]);
-                    // Also update the select dropdown
-                    document.getElementById('geometrySelect').value = 
-                        this.geometryTypes[this.geometryIndex];
+                    // Move to next geometry index
+                    this.geometryIndex = (this.geometryIndex + 1) % (this.geometryTypes.length + 1);
+                    // If geometryIndex is at the last slot, set to no geometry
+                    if (this.geometryIndex === this.geometryTypes.length) {
+                        this.switchGeometry("");  // blank => no geometry
+                        document.getElementById('geometrySelect').value = "";
+                    } else {
+                        const selectedType = this.geometryTypes[this.geometryIndex];
+                        this.switchGeometry(selectedType);
+                        // Also update the select dropdown
+                        document.getElementById('geometrySelect').value = selectedType;
+                    }
                 });
 
                 // Frequency slider
@@ -670,8 +712,13 @@
                 // Geometry select
                 document.getElementById('geometrySelect').addEventListener('change', (e) => {
                     this.switchGeometry(e.target.value);
-                    // Update the geometry index to match manual selection
-                    this.geometryIndex = this.geometryTypes.indexOf(e.target.value);
+                    // Update geometryIndex to reflect user choice or no geometry
+                    const gVal = e.target.value;
+                    if (!gVal) {
+                        this.geometryIndex = this.geometryTypes.length; // no geometry
+                    } else {
+                        this.geometryIndex = this.geometryTypes.indexOf(gVal);
+                    }
                 });
 
                 // Window resize
