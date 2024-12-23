@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethics Committee Report Analysis - Rep. Matt Gaetz</title>
+    <style>
+        /* Previous mobile-friendly styles remain */
+        /* Additional styles for collapsible sections and print */
+        
+        .collapsible {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            border: none;
+            background: none;
+            color: inherit;
+            font: inherit;
+            text-align: left;
+        }
+
+        .collapsible:after {
+            content: '\02795'; /* Unicode plus sign */
+            font-size: 13px;
+            margin-left: 5px;
+            color: var(--accent-color);
+        }
+
+        .active:after {
+            content: '\2796'; /* Unicode minus sign */
+        }
+
+        .content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .expanded {
+            max-height: 2000px; /* Adjust based on content */
+        }
+
+        @media print {
+            .collapsible:after {
+                display: none;
+            }
+
+            .content {
+                max-height: none;
+                overflow: visible;
+            }
+
+            .section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid var(--border-color);
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            body {
+                font-size: 12pt;
+                line-height: 1.45;
+            }
+
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+
+            .bullet {
+                page-break-inside: avoid;
+            }
+            
+            a {
+                text-decoration: none;
+                color: black;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>House Ethics Committee Report Analysis: Rep. Matt Gaetz</h1>
+    
+    <div class="section">
+        <button class="collapsible">
+            <h2>Summary</h2>
+        </button>
+        <div class="content">
+            <p>On December 23, 2024, the House Ethics Committee released its report detailing findings from an investigation into allegations against former Representative Matt Gaetz. The investigation found substantial evidence that Gaetz engaged in multiple violations of state and federal laws, House rules, and standards of conduct between 2017-2020.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <button class="collapsible">
+            <h2>Key Findings</h2>
+        </button>
+        <div class="content">
+            <div class="finding">
+                <h3>Sexual Misconduct</h3>
+                <div class="bullet">• Found substantial evidence that Gaetz paid women for sexual activity from 2017-2020</div>
+                <div class="bullet">• Determined Gaetz engaged in sexual activity with a 17-year-old girl in July 2017</div>
+                <div class="bullet">• Documented tens of thousands of dollars in payments to multiple women through various payment platforms</div>
+                <div class="bullet">• Did not find sufficient evidence to conclude Gaetz violated federal sex trafficking laws</div>
+            </div>
+
+            <div class="finding">
+                <h3>Drug Use</h3>
+                <div class="bullet">• Found substantial evidence of cocaine, ecstasy, and marijuana use</div>
+                <div class="bullet">• Multiple witnesses testified to observing Gaetz using illegal substances</div>
+                <div class="bullet">• Evidence showed Gaetz used a pseudonymous email account to purchase marijuana</div>
+            </div>
+
+            <div class="finding">
+                <h3>Gift Rule Violations</h3>
+                <div class="bullet">• Accepted impermissible gifts including private plane travel and lodging during a 2018 Bahamas trip</div>
+                <div class="bullet">• Failed to seek required Committee approval for gifts exceeding value thresholds</div>
+                <div class="bullet">• Did not properly disclose gifts on Financial Disclosure forms</div>
+            </div>
+
+            <div class="finding">
+                <h3>Misuse of Official Resources</h3>
+                <div class="bullet">• Used congressional staff to assist a woman with whom he had a sexual relationship in obtaining an expedited passport</div>
+                <div class="bullet">• Woman was not a constituent of his district</div>
+            </div>
+
+            <div class="finding">
+                <h3>Obstruction</h3>
+                <div class="bullet">• Failed to comply with Committee subpoenas</div>
+                <div class="bullet">• Provided minimal documentation in response to requests</div>
+                <div class="bullet">• Declined voluntary interview and failed to appear for compelled testimony</div>
+                <div class="bullet">• Made misleading statements about cooperation with investigation</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <button class="collapsible">
+            <h2>Investigation Timeline</h2>
+        </button>
+        <div class="content">
+            <div class="bullet">• Investigation began April 9, 2021</div>
+            <div class="bullet">• Initially deferred at DOJ's request until February 2023</div>
+            <div class="bullet">• Gaetz resigned from House on November 14, 2024</div>
+            <div class="bullet">• Committee issued report despite losing jurisdiction after resignation</div>
+            <div class="bullet">• Several Committee members dissented on decision to release report after resignation</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <button class="collapsible">
+            <h2>Committee Actions</h2>
+        </button>
+        <div class="content">
+            <div class="bullet">• Reviewed nearly 14,000 documents</div>
+            <div class="bullet">• Contacted over two dozen witnesses</div>
+            <div class="bullet">• Issued 29 subpoenas</div>
+            <div class="bullet">• Made multiple attempts to obtain Gaetz's testimony</div>
+            <div class="bullet">• Faced significant delays due to DOJ's limited cooperation</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <button class="collapsible">
+            <h2>Note on Report Release</h2>
+        </button>
+        <div class="content">
+            <p>The report represents a rare instance of the Ethics Committee releasing findings after a member's resignation. The Committee majority determined public release was warranted given the serious nature of the findings, though several members dissented on jurisdictional grounds.</p>
+        </div>
+    </div>
+
+    <!-- Print-only section -->
+    <div class="section print-only" style="display: none;">
+        <h2>Report Information</h2>
+        <p>Printed on: <span id="print-date"></span></p>
+        <p>Document Reference: House Ethics Committee Report Analysis - December 2024</p>
+    </div>
+
+    <script>
+        // Collapsible functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial state - expand first section
+            const firstContent = document.querySelector('.content');
+            if (firstContent) {
+                firstContent.classList.add('expanded');
+                firstContent.previousElementSibling.classList.add('active');
+            }
+
+            // Add click handlers to all collapsible buttons
+            const coll = document.getElementsByClassName("collapsible");
+            Array.from(coll).forEach(button => {
+                button.addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    const content = this.nextElementSibling;
+                    content.classList.toggle("expanded");
+
+                    // Smooth scroll into view if expanding
+                    if (content.classList.contains("expanded")) {
+                        setTimeout(() => {
+                            button.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 300);
+                    }
+                });
+            });
+        });
+
+        // Print functionality
+        window.addEventListener('beforeprint', function() {
+            // Expand all sections before printing
+            document.querySelectorAll('.content').forEach(content => {
+                content.classList.add('expanded');
+            });
+
+            // Add print date
+            const printDate = document.getElementById('print-date');
+            if (printDate) {
+                const date = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                printDate.textContent = date;
+            }
+
+            // Show print-only elements
+            document.querySelectorAll('.print-only').forEach(el => {
+                el.style.display = 'block';
+            });
+        });
+
+        // After print cleanup
+        window.addEventListener('afterprint', function() {
+            // Restore original collapse states
+            document.querySelectorAll('.content').forEach((content, index) => {
+                if (index !== 0) { // Keep first section expanded
+                    content.classList.remove('expanded');
+                }
+            });
+
+            // Hide print-only elements
+            document.querySelectorAll('.print-only').forEach(el => {
+                el.style.display = 'none';
+            });
+        });
+
+        // Accessibility improvements
+        document.querySelectorAll('.collapsible').forEach(button => {
+            button.setAttribute('aria-expanded', 'false');
+            button.addEventListener('click', function() {
+                const isExpanded = this.classList.contains('active');
+                this.setAttribute('aria-expanded', isExpanded);
+            });
+        });
+    </script>
+</body>
+</html>
