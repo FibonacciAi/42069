@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Psychedelic 3D Kaprekar 6174 + GME Tinfoil Madness</title>
+  <style>
+    body {
+      margin: 0; 
+      overflow: hidden; 
+      background-color: #000; 
+      font-family: sans-serif;
+      color: #fff;
+    }
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.4);
+      z-index: 999;
+    }
+    #overlay h1 {
+      margin: 0;
+      font-size: 1.2em;
+      color: lime;
+    }
+    #overlay p {
+      margin: 4px 0;
+      font-size: 0.9em;
+      color: #ddd;
+    }
+  </style>
+</head>
+<body>
+
+<div id="overlay">
+  <h1>Kaprekar’s Constant & GME Tinfoil Theory</h1>
+  <p>Diamond hands swirling in 3D cosmic neon!</p>
+</div>
+
+<!-- THREE.js and its submodules loaded via ES Modules -->
+<script type="module">
+/* 
+  We’ll import from a CDN:
+  - THREE core
+  - OrbitControls for navigation
+  - FontLoader & TextGeometry for text
+  - Postprocessing modules (EffectComposer, RenderPass, UnrealBloomPass)
+*/
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.151.3/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/controls/OrbitControls.js';
+import { FontLoader } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/geometries/TextGeometry.js';
+import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+let scene, camera, renderer, composer;
+let clock;
+let rotatingGroup;
+let textMesh6174, textMeshGME;
+let font;
+
+let colorPalette = [
+  0xff00ff, 0xffff00, 0x00ff00, 0x00ffff, 0xff9900, 0xff0066, 0xccff00, 0xff0000, 0xAA00FF
+];
+
+init();
+animate();
+
+function init() {
+  scene = new THREE.Scene();
+  clock = new THREE.Clock();
+
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.position.set(0, 20, 45);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // Basic lights
+  const pointLight = new THREE.PointLight(0xffffff, 1.5);
+  pointLight.position.set(30, 30, 30);
+  scene.add(pointLight);
+
+  // Another pointLight for “disco-ball” effect
+  const pointLight2 = new THREE.PointLight(0xffffff, 1.2);
+  pointLight2.position.set(-30, -10, -30);
+  scene.add(pointLight2);
+
+  // Ambient to soften shadows
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+  scene.add(ambientLight);
+
+  // Postprocessing composer
+  composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  // UnrealBloomPass for that intense glow
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.2,  // strength
+    0.4,  // radius
+    0.85  // threshold
+  );
+  composer.addPass(bloomPass);
+
+  // OrbitControls so we can fly around
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.minDistance = 10;
+  controls.maxDistance = 150;
+
+  // A group that rotates altogether
+  rotatingGroup = new THREE.Group();
+  scene.add(rotatingGroup);
+
+  // Add a big TorusKnot
+  const torusGeo = new THREE.TorusKnotGeometry(10, 1.8, 200, 32, 2, 3);
+  const torusMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    metalness: 0.5,
+    roughness: 0.3
+  });
+  const torusMesh = new THREE.Mesh(torusGeo, torusMat);
+  rotatingGroup.add(torusMesh);
+
+  // Load a font to create text geometries
+  const fontLoader = new FontLoader();
+  fontLoader.load(
+    'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/fonts/helvetiker_regular.typeface.json',
+    (loadedFont) => {
+      font = loadedFont;
+      createText();
+    }
+  );
+
+  // Create random swirling shapes
+  createRandomShapes();
+
+  window.addEventListener('resize', onWindowResize, false);
+}
+
+function createText() {
+  // 6174 text
+  const textGeo6174 = new TextGeometry("6174", {
+    font: font,
+    size: 4,
+    height: 1,
+    curveSegments: 10
+  });
+  const textMat6174 = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  textMesh6174 = new THREE.Mesh(textGeo6174, textMat6174);
+  textMesh6174.position.set(-7, 5, 0);
+  rotatingGroup.add(textMesh6174);
+
+  // “GME TINFOIL THEORY”
+  const textGeoGME = new TextGeometry("GME TINFOIL THEORY", {
+    font: font,
+    size: 2,
+    height: 0.8,
+    curveSegments: 10
+  });
+  const textMatGME = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  textMeshGME = new THREE.Mesh(textGeoGME, textMatGME);
+  textMeshGME.position.set(-15, -5, 0);
+  rotatingGroup.add(textMeshGME);
+}
+
+function createRandomShapes() {
+  // We'll add a few random shapes (spheres, cubes) in the scene
+  // that will pulse in color and slightly scale with time.
+  const shapesGroup = new THREE.Group();
+  scene.add(shapesGroup);
+
+  const shapeCount = 20; 
+  for(let i=0; i<shapeCount; i++) {
+    let geometry;
+    if (Math.random() > 0.5) {
+      geometry = new THREE.SphereGeometry(1 + Math.random()*2, 12, 12);
+    } else {
+      geometry = new THREE.BoxGeometry(1 + Math.random()*2, 1 + Math.random()*2, 1 + Math.random()*2);
+    }
+    const material = new THREE.MeshStandardMaterial({
+      color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
+      metalness: 0.4,
+      roughness: 0.4
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    // Position randomly in a sphere region around the origin
+    const radius = 25 + Math.random() * 15;
+    const theta = Math.random() * 2 * Math.PI;
+    const phi = Math.random() * Math.PI;
+
+    mesh.position.set(
+      radius * Math.sin(phi) * Math.cos(theta),
+      radius * Math.sin(phi) * Math.sin(theta),
+      radius * Math.cos(phi)
+    );
+
+    // Let’s store a custom speed for pulsing
+    mesh.userData.pulseSpeed = 0.2 + Math.random();
+
+    shapesGroup.add(mesh);
+  }
+}
+
+// Window resizing
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsed = clock.getElapsedTime();
+
+  // Rotate the main group for that cosmic swirl
+  rotatingGroup.rotation.y += 0.002;
+
+  // Animate text color shift: use a hue shift based on time
+  if (textMesh6174) {
+    const hue = (Math.sin(elapsed * 1.5) * 0.5 + 0.5);
+    textMesh6174.material.color.setHSL(hue, 1.0, 0.5);
+  }
+  if (textMeshGME) {
+    const hue2 = (Math.sin(elapsed * 0.9 + 2) * 0.5 + 0.5);
+    textMeshGME.material.color.setHSL(hue2, 1.0, 0.5);
+  }
+
+  // Pulse the torus color
+  rotatingGroup.children.forEach(obj => {
+    if (obj.isMesh) {
+      const wave = 0.5 + 0.5 * Math.sin(elapsed * 3);
+      obj.material.color.setHSL(wave, 1.0, 0.5);
+    }
+  });
+
+  // Optionally, we could find the shapesGroup we added and animate them
+  // The shapes are directly in scene.children, so let's do a quick search
+  scene.children.forEach(child => {
+    // If it has many children, likely our shapesGroup
+    if (child.children && child.children.length === 20) {
+      child.children.forEach((mesh) => {
+        // Scale pulsation
+        let scaleOffset = Math.sin(elapsed * mesh.userData.pulseSpeed) * 0.2;
+        mesh.scale.set(1 + scaleOffset, 1 + scaleOffset, 1 + scaleOffset);
+
+        // Optionally rotate them randomly
+        mesh.rotation.x += 0.01 * mesh.userData.pulseSpeed;
+        mesh.rotation.y += 0.02 * mesh.userData.pulseSpeed;
+      });
+    }
+  });
+
+  // Render with postprocessing
+  composer.render();
+}
+</script>
+
+</body>
+</html>
