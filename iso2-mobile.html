@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sacred Geometry Isometric Grid (Mobile-Friendly)</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Courier New', monospace;
+    }
+    canvas {
+      display: block;
+    }
+    /* Control panel container */
+    .controls {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 999;
+      background: rgba(0, 20, 20, 0.8);
+      padding: 15px;
+      border-radius: 8px;
+      color: #0ff;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 0 20px rgba(0,255,255,0.2);
+      max-height: 80vh;
+      overflow-y: auto;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+    .controls.hidden {
+      max-height: 0;
+      opacity: 0;
+      padding: 0 15px; /* keep minimal padding so contents fade out */
+      overflow: hidden;
+    }
+
+    .control-group {
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .control-group label {
+      flex: 1 1 120px;
+    }
+    .control-group input[type="range"],
+    .control-group input[type="color"] {
+      flex: 2 1 150px;
+    }
+    .value-display {
+      width: 40px;
+      text-align: right;
+    }
+    button {
+      margin-top: 5px;
+      border: 1px solid #0ff;
+      background: rgba(0,255,255,0.2);
+      color: #0ff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+    button:hover {
+      background: rgba(0,255,255,0.3);
+      box-shadow: 0 0 10px rgba(0,255,255,0.5);
+    }
+    /* Toggle button for the entire panel */
+    .toggle-controls {
+      position: fixed;
+      top: 10px;
+      left: 20px;
+      z-index: 1000;
+      background: #0ff;
+      color: #000;
+      border-radius: 4px;
+      padding: 6px 10px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0,255,255,0.5);
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 600px) {
+      .toggle-controls {
+        /* Slightly smaller toggle button on mobile */
+        top: 5px;
+        left: 5px;
+        font-size: 0.9rem;
+      }
+      .controls {
+        top: 40px; /* placed below toggle button */
+        left: 5px;
+        width: 90%;
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+      .controls.hidden {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+      }
+      .control-group {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .control-group label,
+      .control-group input[type="range"],
+      .control-group input[type="color"] {
+        width: 100%;
+        flex: 1 1 auto;
+      }
+      .value-display {
+        text-align: left;
+        width: auto;
+      }
+      button {
+        width: 100%;
+        margin-top: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toggle Controls Button -->
+  <button class="toggle-controls">Controls</button>
+
+  <!-- Control Panel -->
+  <div class="controls" id="controlsPanel">
+    <div class="control-group">
+      <label for="lineColor">Line Color:</label>
+      <input type="color" id="lineColor" value="#00FFFF" />
+    </div>
+
+    <div class="control-group">
+      <label for="bgColor">Background:</label>
+      <input type="color" id="bgColor" value="#000000" />
+    </div>
+
+    <div class="control-group">
+      <label for="gridDensity">Grid Density:</label>
+      <input type="range" id="gridDensity" min="5" max="50" step="1" value="10" />
+      <span class="value-display" id="gridDensityValue">10</span>
+    </div>
+
+    <div class="control-group">
+      <label for="zoomSlider">Zoom:</label>
+      <input type="range" id="zoomSlider" min="0.1" max="3" step="0.1" value="1" />
+      <span class="value-display" id="zoomValue">1.0</span>
+    </div>
+
+    <div class="control-group">
+      <label for="intensitySlider">Wave Intensity:</label>
+      <input type="range" id="intensitySlider" min="0" max="100" step="1" value="70" />
+      <span class="value-display" id="intensityValue">70</span>
+    </div>
+
+    <div class="control-group">
+      <label for="speedSlider">Wave Speed:</label>
+      <input type="range" id="speedSlider" min="0" max="100" step="1" value="30" />
+      <span class="value-display" id="speedValue">30</span>
+    </div>
+
+    <div class="control-group">
+      <label for="waveFreqSlider">Wave Frequency:</label>
+      <input type="range" id="waveFreqSlider" min="0.01" max="0.2" step="0.001" value="0.094" />
+      <span class="value-display" id="waveFreqValue">0.094</span>
+    </div>
+
+    <div class="control-group">
+      <label for="lineWidthSlider">Line Width:</label>
+      <input type="range" id="lineWidthSlider" min="0.1" max="5" step="0.1" value="1.5" />
+      <span class="value-display" id="lineWidthValue">1.5</span>
+    </div>
+
+    <div class="control-group">
+      <label for="circleCountSlider">Circle Count:</label>
+      <input type="range" id="circleCountSlider" min="1" max="30" step="1" value="6" />
+      <span class="value-display" id="circleCountValue">6</span>
+    </div>
+
+    <div class="control-group">
+      <label for="squareCountSlider">Square Count:</label>
+      <input type="range" id="squareCountSlider" min="1" max="30" step="1" value="4" />
+      <span class="value-display" id="squareCountValue">4</span>
+    </div>
+
+    <div class="control-group">
+      <button id="toggleAnimation">Pause Animation</button>
+      <button id="resetView">Reset View</button>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <canvas id="canvas"></canvas>
+
+  <script>
+    // =============== 1. Setup and Basic Config ===============
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let config = {
+      lineColor: '#00FFFF',
+      bgColor: '#000000',
+      gridDensity: 10,
+      zoom: 1,
+      intensity: 0.7,       // wave intensity
+      speed: 0.3,           // wave speed
+      waveFreq: 0.094,      // wave frequency (approx 4π/133)
+      lineWidth: 1.5,
+      animate: true,
+      time: 0,
+      offset: { x: 0, y: 0 },
+      rotation: 0,
+      circleCount: 6,
+      squareCount: 4,
+    };
+
+    let isDragging = false;
+    let lastMousePos = { x: 0, y: 0 };
+
+    // =============== 2. Resize Handling ===============
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // =============== 3. Draw Sacred Geometry ===============
+    function drawGrid() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+
+      // Clear background
+      ctx.fillStyle = config.bgColor;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(config.rotation);
+      ctx.translate(-w / 2, -h / 2);
+      ctx.translate(config.offset.x, config.offset.y);
+
+      // Basic line style
+      ctx.strokeStyle = config.lineColor;
+      ctx.lineWidth = config.lineWidth;
+
+      // Calculate wave parameters
+      const waveFactor = 20 * config.intensity; 
+      const waveFreq   = config.waveFreq;       
+      const spacing    = config.gridDensity * config.zoom;
+      const numLines   = Math.ceil(Math.max(w, h) / spacing) * 2;
+
+      // 3A. Isometric + Wave Grid
+      ctx.beginPath();
+      for (let i = -numLines; i < numLines; i++) {
+        // "Up" diagonal
+        let x1 = i * spacing;
+        let y1 = 0;
+        let x2 = x1 + h;
+        let y2 = h;
+        const wave = Math.sin(config.time + i * waveFreq) * waveFactor;
+        x1 += wave;  x2 += wave;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+
+        // "Down" diagonal
+        x1 = i * spacing;
+        y1 = h;
+        x2 = x1 + h;
+        y2 = 0;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+
+        // Horizontal
+        const yH = i * spacing;
+        const waveY = Math.sin(config.time + i * waveFreq) * waveFactor;
+        ctx.moveTo(0, yH + waveY);
+        ctx.lineTo(w, yH + waveY);
+
+        // Vertical
+        const xV = i * spacing;
+        const waveX = Math.sin(config.time + i * waveFreq) * waveFactor;
+        ctx.moveTo(xV + waveX, 0);
+        ctx.lineTo(xV + waveX, h);
+      }
+      ctx.stroke();
+
+      // 3B. Concentric Circles
+      const circleMaxRadius = Math.min(w, h) * 0.7; 
+      for (let c = 1; c <= config.circleCount; c++) {
+        const radius = (circleMaxRadius / config.circleCount) * c * 0.5;
+        ctx.beginPath();
+        const circleWave = Math.sin(config.time + c * waveFreq * 5) * waveFactor;
+        const finalRadius = Math.max(0, radius + circleWave);
+        ctx.arc(w / 2, h / 2, finalRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 3C. Nested Squares (rotated 45°)
+      const squareMaxSize = Math.min(w, h) * 0.6;
+      for (let s = 1; s <= config.squareCount; s++) {
+        const size = (squareMaxSize / config.squareCount) * s;
+        ctx.beginPath();
+        const half = size / 2;
+        for (let corner = 0; corner < 4; corner++) {
+          const angle   = (Math.PI / 4) + (Math.PI / 2) * corner;
+          const waveVal = Math.sin(config.time + (s + corner) * waveFreq * 3) * waveFactor;
+          const baseRadius = half * Math.SQRT2;
+          const r = baseRadius + waveVal;
+          const cx = (w / 2) + r * Math.cos(angle);
+          const cy = (h / 2) + r * Math.sin(angle);
+          if (corner === 0) ctx.moveTo(cx, cy);
+          else ctx.lineTo(cx, cy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      // 3D. Glow Effect
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = config.lineColor + '33';
+      ctx.lineWidth = config.lineWidth + 0.5;
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+
+      ctx.restore();
+    }
+
+    // =============== 4. Animation Loop ===============
+    function animate() {
+      if (config.animate) {
+        config.time += config.speed * 0.01;
+      }
+      drawGrid();
+      requestAnimationFrame(animate);
+    }
+
+    // =============== 5. Mouse Drag + Wheel Zoom ===============
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      lastMousePos = { x: e.clientX, y: e.clientY };
+    });
+    canvas.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const dx = e.clientX - lastMousePos.x;
+        const dy = e.clientY - lastMousePos.y;
+        config.offset.x += dx;
+        config.offset.y += dy;
+        lastMousePos = { x: e.clientX, y: e.clientY };
+      }
+    });
+    canvas.addEventListener('mouseup', () => { isDragging = false; });
+    canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = -Math.sign(e.deltaY) * 0.1;
+      config.zoom = Math.max(0.1, Math.min(3, config.zoom + delta));
+      zoomSlider.value = config.zoom;
+      zoomValue.textContent = config.zoom.toFixed(1);
+    });
+
+    // =============== 6. Touch & Gesture Support ===============
+    let initialZoom = config.zoom;
+    let touchStartDist = 0;
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        touchStartDist = getDistance(e.touches[0], e.touches[1]);
+        initialZoom = config.zoom;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && isDragging) {
+        const dx = e.touches[0].clientX - lastMousePos.x;
+        const dy = e.touches[0].clientY - lastMousePos.y;
+        config.offset.x += dx;
+        config.offset.y += dy;
+        lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        const currentDist = getDistance(e.touches[0], e.touches[1]);
+        const scale = currentDist / touchStartDist;
+        config.zoom = Math.max(0.1, Math.min(3, initialZoom * scale));
+        zoomSlider.value = config.zoom;
+        zoomValue.textContent = config.zoom.toFixed(1);
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    function getDistance(touch1, touch2) {
+      const dx = touch2.clientX - touch1.clientX;
+      const dy = touch2.clientY - touch1.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // =============== 7. Control Panel ===============
+    // DOM elements
+    const controlsPanel   = document.getElementById('controlsPanel');
+    const toggleControls  = document.querySelector('.toggle-controls');
+
+    const lineColorEl     = document.getElementById('lineColor');
+    const bgColorEl       = document.getElementById('bgColor');
+    const gridDensityEl   = document.getElementById('gridDensity');
+    const gridDensityValEl= document.getElementById('gridDensityValue');
+    const zoomSliderEl    = document.getElementById('zoomSlider');
+    const zoomValEl       = document.getElementById('zoomValue');
+    const intensityEl     = document.getElementById('intensitySlider');
+    const intensityValEl  = document.getElementById('intensityValue');
+    const speedEl         = document.getElementById('speedSlider');
+    const speedValEl      = document.getElementById('speedValue');
+    const waveFreqEl      = document.getElementById('waveFreqSlider');
+    const waveFreqValEl   = document.getElementById('waveFreqValue');
+    const lineWidthEl     = document.getElementById('lineWidthSlider');
+    const lineWidthValEl  = document.getElementById('lineWidthValue');
+    const circleCountEl   = document.getElementById('circleCountSlider');
+    const circleCountValEl= document.getElementById('circleCountValue');
+    const squareCountEl   = document.getElementById('squareCountSlider');
+    const squareCountValEl= document.getElementById('squareCountValue');
+
+    const toggleAnimBtn   = document.getElementById('toggleAnimation');
+    const resetViewBtn    = document.getElementById('resetView');
+
+    // Show/hide control panel
+    let controlsVisible = true;
+    toggleControls.addEventListener('click', () => {
+      controlsVisible = !controlsVisible;
+      controlsPanel.classList.toggle('hidden', !controlsVisible);
+    });
+
+    // Hooks
+    lineColorEl.addEventListener('input', (e) => {
+      config.lineColor = e.target.value;
+    });
+    bgColorEl.addEventListener('input', (e) => {
+      config.bgColor = e.target.value;
+    });
+    gridDensityEl.addEventListener('input', (e) => {
+      config.gridDensity = parseInt(e.target.value, 10);
+      gridDensityValEl.textContent = e.target.value;
+    });
+    zoomSliderEl.addEventListener('input', (e) => {
+      config.zoom = parseFloat(e.target.value);
+      zoomValEl.textContent = config.zoom.toFixed(1);
+    });
+    intensityEl.addEventListener('input', (e) => {
+      config.intensity = parseInt(e.target.value, 10) / 100.0;
+      intensityValEl.textContent = e.target.value;
+    });
+    speedEl.addEventListener('input', (e) => {
+      config.speed = parseInt(e.target.value, 10) / 100.0;
+      speedValEl.textContent = e.target.value;
+    });
+    waveFreqEl.addEventListener('input', (e) => {
+      config.waveFreq = parseFloat(e.target.value);
+      waveFreqValEl.textContent = config.waveFreq.toFixed(3);
+    });
+    lineWidthEl.addEventListener('input', (e) => {
+      config.lineWidth = parseFloat(e.target.value);
+      lineWidthValEl.textContent = config.lineWidth.toFixed(1);
+    });
+    circleCountEl.addEventListener('input', (e) => {
+      config.circleCount = parseInt(e.target.value, 10);
+      circleCountValEl.textContent = e.target.value;
+    });
+    squareCountEl.addEventListener('input', (e) => {
+      config.squareCount = parseInt(e.target.value, 10);
+      squareCountValEl.textContent = e.target.value;
+    });
+
+    toggleAnimBtn.addEventListener('click', (e) => {
+      config.animate = !config.animate;
+      e.target.textContent = config.animate ? 'Pause Animation' : 'Resume Animation';
+    });
+
+    resetViewBtn.addEventListener('click', () => {
+      config.lineColor    = '#00FFFF';
+      config.bgColor      = '#000000';
+      config.gridDensity  = 10;
+      config.zoom         = 1;
+      config.intensity    = 0.7;
+      config.speed        = 0.3;
+      config.waveFreq     = 0.094; 
+      config.lineWidth    = 1.5;
+      config.offset       = { x: 0, y: 0 };
+      config.rotation     = 0;
+      config.time         = 0;
+      config.circleCount  = 6;
+      config.squareCount  = 4;
+
+      lineColorEl.value        = config.lineColor;
+      bgColorEl.value          = config.bgColor;
+      gridDensityEl.value      = config.gridDensity;
+      gridDensityValEl.textContent = config.gridDensity;
+      zoomSliderEl.value       = config.zoom;
+      zoomValEl.textContent    = config.zoom.toFixed(1);
+      intensityEl.value        = (config.intensity * 100).toString();
+      intensityValEl.textContent = (config.intensity * 100).toString();
+      speedEl.value            = (config.speed * 100).toString();
+      speedValEl.textContent   = (config.speed * 100).toString();
+      waveFreqEl.value         = config.waveFreq.toString();
+      waveFreqValEl.textContent= config.waveFreq.toFixed(3);
+      lineWidthEl.value        = config.lineWidth;
+      lineWidthValEl.textContent = config.lineWidth.toFixed(1);
+      circleCountEl.value      = config.circleCount;
+      circleCountValEl.textContent = config.circleCount;
+      squareCountEl.value      = config.squareCount;
+      squareCountValEl.textContent = config.squareCount;
+    });
+
+    // =============== 8. Init ===============
+    resizeCanvas();
+    animate();
+  </script>
+</body>
+</html>
