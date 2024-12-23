@@ -1,25 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Mandelbulb + Audio Reactive</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      background: #000; color: #fff;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    .ui-container {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 999;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin: 6px 0;
+      font-weight: 500;
+    }
+    input[type=range] {
+      width: 200px;
+    }
+    button {
+      margin-top: 10px;
+      width: 100%;
+      font-size: 0.9rem;
+      padding: 5px 0;
+    }
+    #info {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+<div class="ui-container">
+  <label>
+    Frequency: <span id="freqValue">432</span> Hz
+    <input id="freqSlider" type="range" min="220" max="880" step="1" value="432" />
+  </label>
+  <button id="playBtn">Play</button>
+  <div id="info">Use mouse/trackpad/touch to orbit. Audio amplitude & frequency affect the fractal.</div>
+</div>
+
+<!-- Load Three.js + OrbitControls from CDN in classic mode -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/controls/OrbitControls.js"></script>
+
 <script>
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer();
-  renderer.setSize(innerWidth, innerHeight);
-  document.body.appendChild(renderer.domElement);
+/**
+ * 3D Mandelbulb fractal via ray marching + Audio analysis.
+ * - Orbit the fractal with mouse or trackpad gestures.
+ * - Adjust oscillator freq, fractal responds to amplitude & freq.
+ * - This is a resource-intensive approach—reduce steps/iterations if performance is too low.
+ */
+class MandelbulbAudio3D {
+  constructor() {
+    // Scene & Camera
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    this.camera.position.set(0, 0, 4);
 
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  camera.position.z = 5;
+    // Renderer
+    this.renderer = new THREE.WebGLRenderer({antialias: true});
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(this.renderer.domElement);
 
-  // Just a basic cube
-  const geometry = new THREE.BoxGeometry();
-  const material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-  const cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
+    // OrbitControls (mouse/touch/trackpad orbit + zoom)
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
 
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
+    // Audio
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.isPlaying = false;
+    this.oscillator = null;
+    this.analyser = this.audioCtx.createAnalyser();
+    this.analyser.fftSize = 1024;
+    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+
+    // UI elements
+    this.freqSlider = document.getElementById('freqSlider');
+    this.freqValue  = document.getElementById('freqValue');
+    this.playBtn    = document.getElementById('playBtn');
+
+    // Hook up the slider
+    this.freqSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      this.freqValue.textContent = val;
+      if (this.oscillator) {
+        this.oscillator.frequency.setValueAtTime(val, this.audioCtx.currentTime);
+      }
+    });
+
+    // Hook up the Play/Stop button
+    this.playBtn.addEventListener('click', () => {
+      if (!this.isPlaying) {
+        this.startSound();
+        this.playBtn.textContent = 'Stop';
+      } else {
+        this.stopSound();
+        this.playBtn.textContent = 'Play';
+      }
+    });
+
+    // The plane that covers the view: we do a ray march in the fragment shader
+    this.initFractalRayMarchPlane();
+
+    // Resize handling
+    window.addEventListener('resize', () => this.onResize());
+    this.onResize();
+
+    // Animation loop
+    this.animate();
   }
-  animate();
+
+  startSound() {
+    this.oscillator = this.audioCtx.createOscillator();
+    this.oscillator.type = 'sine';
+    const freqVal = parseFloat(this.freqSlider.value);
+    this.oscillator.frequency.setValueAtTime(freqVal, this.audioCtx.currentTime);
+
+    // Simple gain
+    const gainNode = this.audioCtx.createGain();
+    gainNode.gain.value = 0.2;
+
+    // Connect: oscillator -> gain -> analyser -> destination
+    this.oscillator.connect(gainNode);
+    gainNode.connect(this.analyser);
+    this.analyser.connect(this.audioCtx.destination);
+
+    this.oscillator.start();
+    this.isPlaying = true;
+  }
+
+  stopSound() {
+    if (this.oscillator) {
+      this.oscillator.stop();
+      this.oscillator.disconnect();
+      this.oscillator = null;
+    }
+    this.isPlaying = false;
+  }
+
+  initFractalRayMarchPlane() {
+    const planeGeo = new THREE.PlaneGeometry(2, 2);
+
+    // We'll store fractal parameters in these uniforms
+    this.fractalUniforms = {
+      uTime:       { value: 0.0 },
+      uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      uFrequency:  { value: parseFloat(this.freqSlider.value) },
+      uAmplitude:  { value: 128.0 },  // ~128 means quiet
+      uCamPos:     { value: new THREE.Vector3(0,0,4) }
+    };
+
+    // Ray marching the Mandelbulb in the fragment shader
+    const fractalMaterial = new THREE.ShaderMaterial({
+      uniforms: this.fractalUniforms,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.);
+        }
+      `,
+      fragmentShader: `
+        precision highp float;
+        varying vec2 vUv;
+        uniform vec2  uResolution;
+        uniform float uTime;
+        uniform float uFrequency;
+        uniform float uAmplitude;
+        uniform vec3  uCamPos;
+
+        // Ray marching settings
+        // You can tweak for performance.
+        #define MAX_MARCH_STEPS 64
+        #define MAX_DIST 10.0
+        #define EPS 0.0005
+
+        // Mandelbulb distance estimation
+        // For reference, see http://www.iquilezles.org/www/articles/mandelbulb/mandelbulb.htm
+        float mandelbulbDE(vec3 pos) {
+          const float Power = 8.0; // or 8 for the classic mandelbulb
+          vec3 z = pos;
+          float dr = 1.0;
+          float r = 0.0;
+          for(int i=0; i<8; i++){
+            r = length(z);
+            if(r>2.0) break;
+
+            // theta, phi
+            float theta = acos(z.z / r);
+            float phi   = atan(z.y, z.x);
+            float rPow  = pow(r, Power - 1.0);
+
+            dr = rPow * Power * dr + 1.0;
+
+            // scale
+            float zr = pow(r, Power);
+            theta = theta * Power;
+            phi   = phi   * Power;
+
+            z = zr * vec3(
+              sin(theta)*cos(phi),
+              sin(theta)*sin(phi),
+              cos(theta)
+            ) + pos;
+          }
+          return 0.5*log(r)*r / dr;
+        }
+
+        // Basic normal estimate
+        vec3 getNormal(vec3 p) {
+          const float e = 0.002;
+          float d = mandelbulbDE(p);
+          vec3 n = vec3(
+            mandelbulbDE(p + vec3(e,0,0)) - d,
+            mandelbulbDE(p + vec3(0,e,0)) - d,
+            mandelbulbDE(p + vec3(0,0,e)) - d
+          );
+          return normalize(n);
+        }
+
+        // Ray march from camera through plane
+        vec3 rayDirection(vec2 uv, vec3 ro, vec3 lookAt) {
+          // camera forward
+          vec3 forward = normalize(lookAt - ro);
+          // camera right & up
+          vec3 right = normalize(cross(forward, vec3(0,1,0)));
+          vec3 up    = cross(right, forward);
+
+          float fov = 1.2; // bigger => wide angle
+          vec3 rd = normalize(uv.x*right + uv.y*up + forward*fov);
+          return rd;
+        }
+
+        void main() {
+          // uv => [-1,1]
+          vec2 uv = (vUv - 0.5)*2.0;
+          uv.x *= uResolution.x / uResolution.y;
+
+          // camera
+          vec3 ro = uCamPos; // where camera is
+          vec3 lookAt = vec3(0.0, 0.0, 0.0);
+
+          // build ray
+          vec3 rd = rayDirection(uv, ro, lookAt);
+
+          // ray march
+          float totalDist = 0.0;
+          vec3 p = ro;
+          float dist;
+          int steps = 0;
+
+          for(int i=0; i<MAX_MARCH_STEPS; i++){
+            p = ro + rd*totalDist;
+            dist = mandelbulbDE(p);
+            if(dist < EPS) {
+              steps = i;
+              break;
+            }
+            totalDist += dist;
+            if(totalDist > MAX_DIST) {
+              steps = i;
+              break;
+            }
+          }
+
+          // If we never hit, background
+          if(totalDist > MAX_DIST) {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            return;
+          }
+
+          // otherwise we have a surface => shading
+          vec3 normal = getNormal(p);
+
+          // amplitude range ~ [0,255]
+          float amp = (uAmplitude - 128.)*0.01;
+          float freqRatio = (uFrequency - 432.)*0.002;
+
+          // simple color
+          float diff = max(0.0, dot(normal, normalize(vec3(1.0,1.0,1.0))));
+          // color shift from freq & amplitude
+          vec3 baseColor = vec3(0.2+freqRatio, 0.5+amp, 1.0-amp);
+          vec3 color = baseColor * diff;
+
+          // fade color based on steps => subtle shading
+          float factor = float(steps)/float(MAX_MARCH_STEPS);
+          color *= (1.0 - factor*0.4);
+
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `,
+      side: THREE.DoubleSide
+    });
+
+    this.fractalMesh = new THREE.Mesh(planeGeo, fractalMaterial);
+    this.scene.add(this.fractalMesh);
+  }
+
+  onResize() {
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    if (this.fractalUniforms.uResolution) {
+      this.fractalUniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    }
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate());
+
+    // Update audio amplitude
+    if (this.isPlaying) {
+      this.analyser.getByteTimeDomainData(this.dataArray);
+      let sum = 0;
+      for (let i=0; i<this.dataArray.length; i++) {
+        sum += this.dataArray[i];
+      }
+      this.fractalUniforms.uAmplitude.value = sum / this.dataArray.length; // ~128 quiet
+    }
+
+    // Update frequency
+    let freqVal = parseFloat(this.freqSlider.value);
+    this.fractalUniforms.uFrequency.value = freqVal;
+
+    // Update time
+    this.fractalUniforms.uTime.value += 0.01;
+
+    // Update camera uniform so the raymarch origin tracks the actual camera
+    this.fractalUniforms.uCamPos.value.copy(this.camera.position);
+
+    // OrbitControls
+    this.controls.update();
+
+    // Render
+    this.renderer.render(this.scene, this.camera);
+  }
+}
+
+window.addEventListener('load', () => {
+  new MandelbulbAudio3D();
+});
 </script>
+</body>
+</html>
