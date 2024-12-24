@@ -312,9 +312,12 @@ class CR7Visualization {
 
     setupAudioControls() {
         document.getElementById('startAudio').onclick = async () => {
+            console.log('Start Audio button clicked');
             if (this.audioAnalyzer.audioContext.state === 'suspended') {
+                console.log('Resuming AudioContext');
                 await this.audioAnalyzer.audioContext.resume();
             }
+            console.log('Starting SIUUU sound');
             this.audioAnalyzer.startSIUUU();
         };
 
