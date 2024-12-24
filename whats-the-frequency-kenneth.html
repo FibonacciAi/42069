@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex Mathematics Matrix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .overlay {
+            position: fixed;
+            padding: 20px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        #info-panel {
+            top: 20px;
+            left: 20px;
+            max-width: 300px;
+        }
+
+        #controls {
+            top: 20px;
+            right: 20px;
+        }
+
+        .button {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background: #333;
+            border-color: #88ccff;
+        }
+
+        .button.active {
+            background: #88ccff;
+            color: #000;
+        }
+
+        .analyzer-container {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        #frequency-spectrum {
+            width: 100%;
+            height: 150px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #88ccff;
+        }
+
+        #waveform {
+            width: 100%;
+            height: 80px;
+            margin-top: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+        }
+
+        .filter-controls {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+
+        .filter-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-slider label {
+            display: flex;
+            justify-content: space-between;
+            color: #88ccff;
+            font-size: 14px;
+        }
+
+        .filter-slider input[type="range"] {
+            width: 100%;
+            height: 20px;
+            -webkit-appearance: none;
+            background: rgba(136, 204, 255, 0.2);
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .filter-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #88ccff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-slider input[type="range"]::-webkit-slider-thumb:hover {
+            background: #aaddff;
+            transform: scale(1.1);
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+
+        .preset-button {
+            background: rgba(136, 204, 255, 0.2);
+            border: 1px solid #88ccff;
+            color: #88ccff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preset-button:hover {
+            background: rgba(136, 204, 255, 0.4);
+        }
+
+        .filter-response {
+            width: 100%;
+            height: 60px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="info-panel" class="overlay">
+        <h2>Vortex Mathematics</h2>
+        <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
+    </div>
+
+    <div id="controls" class="overlay">
+        <button class="button" id="toggleRotation">Toggle Rotation</button>
+        <button class="button" id="toggleSound">Toggle Sound</button>
+        <div class="value-display" id="energy-value">Energy: 432 Hz</div>
+    </div>
+
+    <div class="analyzer-container">
+        <canvas id="frequency-spectrum"></canvas>
+        <div class="spectrum-labels">
+            <span>20 Hz</span>
+            <span>100 Hz</span>
+            <span>500 Hz</span>
+            <span>1 kHz</span>
+            <span>5 kHz</span>
+            <span>20 kHz</span>
+        </div>
+        <canvas id="waveform"></canvas>
+    </div>
+
+    <div class="filter-controls">
+        <h3 style="color: #88ccff; margin-bottom: 10px;">Frequency Filters</h3>
+        
+        <div class="filter-slider">
+            <label>
+                <span>Low-Pass Cutoff</span>
+                <span id="lpf-value">20000 Hz</span>
+            </label>
+            <input type="range" id="lpf-frequency" min="20" max="20000" step="1" value="20000">
+            <canvas id="lpf-response" class="filter-response"></canvas>
+        </div>
+
+        <div class="filter-slider">
+            <label>
+                <span>High-Pass Cutoff</span>
+                <span id="hpf-value">20 Hz</span>
+            </label>
+            <input type="range" id="hpf-frequency" min="20" max="20000" step="1" value="20">
+            <canvas id="hpf-response" class="filter-response"></canvas>
+        </div>
+
+        <div class="filter-slider">
+            <label>
+                <span>Peak Frequency</span>
+                <span id="peak-value">1000 Hz</span>
+            </label>
+            <input type="range" id="peak-frequency" min="20" max="20000" step="1" value="1000">
+            <input type="range" id="peak-gain" min="-12" max="12" step="0.1" value="0">
+            <canvas id="peak-response" class="filter-response"></canvas>
+        </div>
+
+        <div class="preset-buttons">
+            <button class="preset-button" data-preset="flat">Flat</button>
+            <button class="preset-button" data-preset="bass">Bass Boost</button>
+            <button class="preset-button" data-preset="vocal">Vocal Boost</button>
+            <button class="preset-button" data-preset="air">Air Boost</button>
+        </div>
+    </div>
+
+    <!-- Script tags will be added in the next parts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script>
+// Core Audio Engine Class
+class AudioEngine {
+    constructor() {
+        this.initializeAudioContext();
+        this.setupNodes();
+        this.setupAnalyzers();
+    }
+
+    initializeAudioContext() {
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        this.started = false;
+    }
+
+    setupNodes() {
+        // Oscillator
+        this.oscillator = this.audioCtx.createOscillator();
+        this.oscillator.type = 'sine';
+        this.oscillator.frequency.setValueAtTime(432, this.audioCtx.currentTime);
+
+        // Gain
+        this.masterGain = this.audioCtx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
+
+        // Compressor
+        this.compressor = this.audioCtx.createDynamicsCompressor();
+        this.compressor.threshold.setValueAtTime(-24, this.audioCtx.currentTime);
+        this.compressor.knee.setValueAtTime(30, this.audioCtx.currentTime);
+        this.compressor.ratio.setValueAtTime(12, this.audioCtx.currentTime);
+        this.compressor.attack.setValueAtTime(0.003, this.audioCtx.currentTime);
+        this.compressor.release.setValueAtTime(0.25, this.audioCtx.currentTime);
+    }
+
+    setupAnalyzers() {
+        // FFT Analyzer
+        this.fftAnalyzer = this.audioCtx.createAnalyser();
+        this.fftAnalyzer.fftSize = 2048;
+        this.fftBufferLength = this.fftAnalyzer.frequencyBinCount;
+        this.fftDataArray = new Uint8Array(this.fftBufferLength);
+
+        // Waveform Analyzer
+        this.waveAnalyzer = this.audioCtx.createAnalyser();
+        this.waveAnalyzer.fftSize = 1024;
+        this.waveBufferLength = this.waveAnalyzer.frequencyBinCount;
+        this.waveDataArray = new Uint8Array(this.waveBufferLength);
+
+        // Connect nodes
+        this.oscillator.connect(this.masterGain);
+        this.masterGain.connect(this.compressor);
+        this.compressor.connect(this.fftAnalyzer);
+        this.fftAnalyzer.connect(this.waveAnalyzer);
+        this.waveAnalyzer.connect(this.audioCtx.destination);
+    }
+
+    start() {
+        if (!this.started) {
+            this.oscillator.start();
+            this.started = true;
+        }
+    }
+
+    setFrequency(freq) {
+        this.oscillator.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+    }
+
+    setVolume(volume) {
+        this.masterGain.gain.setValueAtTime(volume, this.audioCtx.currentTime);
+    }
+}
+
+// Visualization Engine Class
+class VisualizationEngine {
+    constructor(audioEngine) {
+        this.audioEngine = audioEngine;
+        this.setupCanvases();
+        this.initializeThree();
+        this.animate();
+    }
+
+    setupCanvases() {
+        // Spectrum canvas
+        this.spectrumCanvas = document.getElementById('frequency-spectrum');
+        this.spectrumCtx = this.spectrumCanvas.getContext('2d');
+        this.resizeCanvas(this.spectrumCanvas);
+
+        // Waveform canvas
+        this.waveformCanvas = document.getElementById('waveform');
+        this.waveformCtx = this.waveformCanvas.getContext('2d');
+        this.resizeCanvas(this.waveformCanvas);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            this.resizeCanvas(this.spectrumCanvas);
+            this.resizeCanvas(this.waveformCanvas);
+        });
+    }
+
+    resizeCanvas(canvas) {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+    }
+
+    initializeThree() {
+        // Scene setup
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('container').appendChild(this.renderer.domElement);
+
+        // Create vortex geometry
+        const geometry = new THREE.TorusKnotGeometry(2, 0.5, 128, 32, 2, 3);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x88ccff,
+            metalness: 0.7,
+            roughness: 0.2,
+            emissive: 0x003366,
+            emissiveIntensity: 0.5
+        });
+        this.vortexMesh = new THREE.Mesh(geometry, material);
+        this.scene.add(this.vortexMesh);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(5, 5, 5);
+        this.scene.add(pointLight);
+
+        // Camera position
+        this.camera.position.z = 5;
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(width, height);
+        });
+    }
+
+    drawSpectrum() {
+        const ctx = this.spectrumCtx;
+        const canvas = this.spectrumCanvas;
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+
+        // Get frequency data
+        this.audioEngine.fftAnalyzer.getByteFrequencyData(this.audioEngine.fftDataArray);
+
+        // Clear canvas
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw spectrum
+        const barWidth = width / this.audioEngine.fftBufferLength * 2.5;
+        let x = 0;
+
+        for (let i = 0; i < this.audioEngine.fftBufferLength; i++) {
+            const barHeight = this.audioEngine.fftDataArray[i] * height / 256;
+            
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
+            gradient.addColorStop(0, '#88ccff');
+            gradient.addColorStop(1, '#003366');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+
+            x += barWidth + 1;
+        }
+    }
+
+    drawWaveform() {
+        const ctx = this.waveformCtx;
+        const canvas = this.waveformCanvas;
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+
+        // Get waveform data
+        this.audioEngine.waveAnalyzer.getByteTimeDomainData(this.audioEngine.waveDataArray);
+
+        // Clear canvas
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw waveform
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#88ccff';
+        ctx.beginPath();
+
+        const sliceWidth = width / this.audioEngine.waveBufferLength;
+        let x = 0;
+
+        for (let i = 0; i < this.audioEngine.waveBufferLength; i++) {
+            const v = this.audioEngine.waveDataArray[i] / 128.0;
+            const y = v * height / 2;
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+
+            x += sliceWidth;
+        }
+
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+
+        // Update visualizations
+        this.drawSpectrum();
+        this.drawWaveform();
+
+        // Update 3D scene
+        this.vortexMesh.rotation.x += 0.005;
+        this.vortexMesh.rotation.y += 0.003;
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+</script>
+<script>
+// Frequency Filter System
+class FrequencyFilter {
+    constructor(audioEngine) {
+        this.audioEngine = audioEngine;
+        this.setupFilters();
+        this.setupControls();
+        this.setupPresets();
+        this.setupResponseVisualizers();
+    }
+
+    setupFilters() {
+        const ctx = this.audioEngine.audioCtx;
+
+        // Low-pass filter
+        this.lowPassFilter = ctx.createBiquadFilter();
+        this.lowPassFilter.type = 'lowpass';
+        this.lowPassFilter.frequency.value = 20000;
+        this.lowPassFilter.Q.value = 0.707;
+
+        // High-pass filter
+        this.highPassFilter = ctx.createBiquadFilter();
+        this.highPassFilter.type = 'highpass';
+        this.highPassFilter.frequency.value = 20;
+        this.highPassFilter.Q.value = 0.707;
+
+        // Peak filter
+        this.peakFilter = ctx.createBiquadFilter();
+        this.peakFilter.type = 'peaking';
+        this.peakFilter.frequency.value = 1000;
+        this.peakFilter.gain.value = 0;
+        this.peakFilter.Q.value = 1;
+
+        // Reconnect audio chain
+        this.audioEngine.compressor.disconnect();
+        this.audioEngine.compressor.connect(this.highPassFilter);
+        this.highPassFilter.connect(this.lowPassFilter);
+        this.lowPassFilter.connect(this.peakFilter);
+        this.peakFilter.connect(this.audioEngine.fftAnalyzer);
+    }
+
+    setupControls() {
+        // Low-pass filter controls
+        const lpfSlider = document.getElementById('lpf-frequency');
+        const lpfValue = document.getElementById('lpf-value');
+        
+        lpfSlider.addEventListener('input', (e) => {
+            const frequency = this.logScale(e.target.value);
+            this.lowPassFilter.frequency.setValueAtTime(frequency, this.audioEngine.audioCtx.currentTime);
+            lpfValue.textContent = `${Math.round(frequency)} Hz`;
+            this.updateFilterResponses();
+        });
+
+        // High-pass filter controls
+        const hpfSlider = document.getElementById('hpf-frequency');
+        const hpfValue = document.getElementById('hpf-value');
+        
+        hpfSlider.addEventListener('input', (e) => {
+            const frequency = this.logScale(e.target.value);
+            this.highPassFilter.frequency.setValueAtTime(frequency, this.audioEngine.audioCtx.currentTime);
+            hpfValue.textContent = `${Math.round(frequency)} Hz`;
+            this.updateFilterResponses();
+        });
+
+        // Peak filter controls
+        const peakFreqSlider = document.getElementById('peak-frequency');
+        const peakGainSlider = document.getElementById('peak-gain');
+        const peakValue = document.getElementById('peak-value');
+        
+        peakFreqSlider.addEventListener('input', (e) => {
+            const frequency = this.logScale(e.target.value);
+            this.peakFilter.frequency.setValueAtTime(frequency, this.audioEngine.audioCtx.currentTime);
+            peakValue.textContent = `${Math.round(frequency)} Hz`;
+            this.updateFilterResponses();
+        });
+
+        peakGainSlider.addEventListener('input', (e) => {
+            this.peakFilter.gain.setValueAtTime(parseFloat(e.target.value), this.audioEngine.audioCtx.currentTime);
+            this.updateFilterResponses();
+        });
+    }
+
+    setupPresets() {
+        const presets = {
+            flat: {
+                lowPass: 20000,
+                highPass: 20,
+                peakFreq: 1000,
+                peakGain: 0
+            },
+            bass: {
+                lowPass: 20000,
+                highPass: 20,
+                peakFreq: 60,
+                peakGain: 6
+            },
+            vocal: {
+                lowPass: 20000,
+                highPass: 100,
+                peakFreq: 3000,
+                peakGain: 3
+            },
+            air: {
+                lowPass: 20000,
+                highPass: 20,
+                peakFreq: 12000,
+                peakGain: 6
+            }
+        };
+
+        document.querySelectorAll('.preset-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const preset = presets[button.dataset.preset];
+                this.applyPreset(preset);
+            });
+        });
+    }
+
+    applyPreset(preset) {
+        const ctx = this.audioEngine.audioCtx;
+        
+        // Update filter values
+        this.lowPassFilter.frequency.setValueAtTime(preset.lowPass, ctx.currentTime);
+        this.highPassFilter.frequency.setValueAtTime(preset.highPass, ctx.currentTime);
+        this.peakFilter.frequency.setValueAtTime(preset.peakFreq, ctx.currentTime);
+        this.peakFilter.gain.setValueAtTime(preset.peakGain, ctx.currentTime);
+
+        // Update UI
+        document.getElementById('lpf-frequency').value = this.inverseLogScale(preset.lowPass);
+        document.getElementById('hpf-frequency').value = this.inverseLogScale(preset.highPass);
+        document.getElementById('peak-frequency').value = this.inverseLogScale(preset.peakFreq);
+        document.getElementById('peak-gain').value = preset.peakGain;
+
+        document.getElementById('lpf-value').textContent = `${Math.round(preset.lowPass)} Hz`;
+        document.getElementById('hpf-value').textContent = `${Math.round(preset.highPass)} Hz`;
+        document.getElementById('peak-value').textContent = `${Math.round(preset.peakFreq)} Hz`;
+
+        this.updateFilterResponses();
+    }
+
+    setupResponseVisualizers() {
+        this.responseCanvases = {
+            lpf: document.getElementById('lpf-response'),
+            hpf: document.getElementById('hpf-response'),
+            peak: document.getElementById('peak-response')
+        };
+
+        Object.values(this.responseCanvases).forEach(canvas => {
+            canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+            canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        });
+
+        this.updateFilterResponses();
+    }
+
+    updateFilterResponses() {
+        this.drawFilterResponse(this.responseCanvases.lpf, this.lowPassFilter);
+        this.drawFilterResponse(this.responseCanvases.hpf, this.highPassFilter);
+        this.drawFilterResponse(this.responseCanvases.peak, this.peakFilter);
+    }
+
+    drawFilterResponse(canvas, filter) {
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath();
+        ctx.strokeStyle = '#88ccff';
+        ctx.lineWidth = 2;
+
+        for (let x = 0; x < width; x++) {
+            const frequency = this.logScale(x / width * 20000);
+            const response = this.getFilterResponse(filter, frequency);
+            const y = height / 2 - (response * height / 4);
+            
+            if (x === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.stroke();
+    }
+
+    getFilterResponse(filter, frequency) {
+        const resonance = filter.Q ? filter.Q.value : 1;
+        const filterFreq = filter.frequency.value;
+        
+        if (filter.type === 'lowpass') {
+            return 1 / (1 + Math.pow(frequency / filterFreq, 2 * resonance));
+        } else if (filter.type === 'highpass') {
+            return 1 / (1 + Math.pow(filterFreq / frequency, 2 * resonance));
+        } else if (filter.type === 'peaking') {
+            const gain = filter.gain.value;
+            const bandwidth = 2 / resonance;
+            return 1 + (gain / 20) * (1 / (1 + Math.pow((frequency - filterFreq) / (bandwidth * filterFreq), 2)));
+        }
+        return 1;
+    }
+
+    logScale(value) {
+        return Math.exp(Math.log(20) + (Math.log(20000) - Math.log(20)) * value / 20000);
+    }
+
+    inverseLogScale(value) {
+        return 20000 * (Math.log(value) - Math.log(20)) / (Math.log(20000) - Math.log(20));
+    }
+}
+
+// Main Application Class
+class VortexApp {
+    constructor() {
+        this.audioEngine = new AudioEngine();
+        this.visualizer = new VisualizationEngine(this.audioEngine);
+        this.filter = new FrequencyFilter(this.audioEngine);
+        this.setupControls();
+    }
+
+    setupControls() {
+        const toggleSound = document.getElementById('toggleSound');
+        const toggleRotation = document.getElementById('toggleRotation');
+        
+        toggleSound.addEventListener('click', () => {
+            if (this.audioEngine.audioCtx.state === 'suspended') {
+                this.audioEngine.audioCtx.resume();
+                this.audioEngine.start();
+                toggleSound.classList.add('active');
+            } else if (this.audioEngine.audioCtx.state === 'running') {
+                this.audioEngine.audioCtx.suspend();
+                toggleSound.classList.remove('active');
+            }
+        });
+
+        toggleRotation.addEventListener('click', () => {
+            this.visualizer.vortexMesh.rotation.x = 0;
+            this.visualizer.vortexMesh.rotation.y = 0;
+            toggleRotation.classList.toggle('active');
+        });
+    }
+}
+
+// Initialize the application
+window.addEventListener('DOMContentLoaded', () => {
+    window.vortexApp = new VortexApp();
+});
+</script>
+</body>
+</html>
