@@ -216,6 +216,45 @@
     transform: translateY(1px);
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.slider {
+    width: 150px;
+    height: 5px;
+    -webkit-appearance: none;
+    background: #333;
+    outline: none;
+    border-radius: 5px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #4169E1;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #4169E1;
+    cursor: pointer;
+}
+
+#speedValue {
+    color: white;
+    font-size: 14px;
+    min-width: 80px;
+}
     </style>
 </head>
 <body>
@@ -226,16 +265,14 @@
         <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
     </div>
 
-    <div id="controls" class="overlay">
+   <div id="controls" class="overlay">
+    <!-- Add these elements with your existing controls -->
+    <div class="control-group">
         <button class="button" id="toggleRotation">Toggle Rotation</button>
-        <button class="button" id="toggleSound">Toggle Sound</button>
-        <button class="button" id="visualMode-default">Default</button>
-        <button class="button" id="visualMode-wireframe">Wireframe</button>
-        <button class="button" id="visualMode-particles">Particles</button>
-        <button class="button" id="visualMode-ribbons">Ribbons</button>
+        <input type="range" id="rotationSpeed" min="0" max="100" value="50" class="slider">
+        <span id="speedValue">Speed: 0.01</span>
     </div>
-        <div class="value-display" id="energy-value">Energy: 432 Hz</div>
-    </div>
+</div>
 
     <div class="analyzer-container">
         <canvas id="frequency-spectrum"></canvas>
@@ -534,20 +571,16 @@ createOrbitRing(x, y, rotation, tilt) {
     }
 
     createParticleSystems() {
-    const particleCount = 8000;  // Increased from 5000
+    const particleCount = 15000;  // Increased particle count
     const particleGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount; i++) {
         const i3 = i * 3;
-        const radius = 5;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.random() * Math.PI * 2;
-
-        positions[i3] = radius * Math.cos(theta) * Math.sin(phi);
-        positions[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
-        positions[i3 + 2] = radius * Math.cos(phi);
+        positions[i3] = (Math.random() - 0.5) * 10;
+        positions[i3 + 1] = (Math.random() - 0.5) * 10;
+        positions[i3 + 2] = (Math.random() - 0.5) * 10;
 
         colors[i3] = Math.random();
         colors[i3 + 1] = Math.random();
@@ -558,12 +591,11 @@ createOrbitRing(x, y, rotation, tilt) {
     particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const particleMaterial = new THREE.PointsMaterial({
-        size: 0.08,          // Increased from 0.05
+        size: 0.05,
         vertexColors: true,
         transparent: true,
         opacity: 0.8,
-        blending: THREE.AdditiveBlending,
-        sizeAttenuation: true
+        blending: THREE.AdditiveBlending
     });
 
     this.particleSystem = new THREE.Points(particleGeometry, particleMaterial);
@@ -716,19 +748,13 @@ createOrbitRing(x, y, rotation, tilt) {
     }
 
     animate() {
-        requestAnimationFrame(() => this.animate());
-
-        // Update visualizations
-        this.updateGeometryDistortion();
-        this.updateParticles();
-        this.updateRibbons();
-
-        // Update controls
-        this.controls.update();
-
-        // Render with post-processing
-        this.composer.render();
-    }
+    requestAnimationFrame(() => this.animate());
+    
+    this.updateGeometryDistortion();
+    this.updateParticles();
+    this.updateRibbons();
+    this.controls.update();
+    this.composer.render();
 }
 </script>
 <script>
@@ -954,33 +980,45 @@ class VortexApp {
     }
 
     setupControls() {
-        ['default', 'wireframe', 'particles', 'ribbons'].forEach(mode => {
-    document.getElementById(`visualMode-${mode}`).addEventListener('click', () => {
-        this.visualizer.setVisualizationMode(mode);
-        document.querySelectorAll('#controls .button').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`visualMode-${mode}`).classList.add('active');
-    });
-});
-        const toggleSound = document.getElementById('toggleSound');
-        const toggleRotation = document.getElementById('toggleRotation');
-        
-        toggleSound.addEventListener('click', () => {
-            if (this.audioEngine.audioCtx.state === 'suspended') {
-                this.audioEngine.audioCtx.resume();
-                this.audioEngine.start();
-                toggleSound.classList.add('active');
-            } else if (this.audioEngine.audioCtx.state === 'running') {
-                this.audioEngine.audioCtx.suspend();
-                toggleSound.classList.remove('active');
-            }
-        });
+    // Store rotation state and speed as class properties
+    this.isRotating = true;
+    this.rotationSpeed = 0.01;
 
-        toggleRotation.addEventListener('click', () => {
-            this.visualizer.vortexMesh.rotation.x = 0;
-            this.visualizer.vortexMesh.rotation.y = 0;
-            toggleRotation.classList.toggle('active');
+    const toggleRotation = document.getElementById('toggleRotation');
+    const rotationSpeedSlider = document.getElementById('rotationSpeed');
+    const speedValue = document.getElementById('speedValue');
+
+    // Toggle rotation
+    toggleRotation.addEventListener('click', () => {
+        this.isRotating = !this.isRotating;
+        toggleRotation.classList.toggle('active');
+    });
+
+    // Update rotation speed
+    rotationSpeedSlider.addEventListener('input', (e) => {
+        this.rotationSpeed = (e.target.value / 2500); // Convert slider value to reasonable speed
+        speedValue.textContent = `Speed: ${this.rotationSpeed.toFixed(4)}`;
+    });
+
+    // Update the visualizer's animate method to use these controls
+    const originalAnimate = this.visualizer.animate.bind(this.visualizer);
+    this.visualizer.animate = () => {
+        if (this.isRotating) {
+            this.visualizer.vortexMesh.rotation.x += this.rotationSpeed;
+            this.visualizer.vortexMesh.rotation.y += this.rotationSpeed;
+        }
+        originalAnimate();
+    };
+
+    // Add your other existing control setup code here
+    ['default', 'wireframe', 'particles', 'ribbons'].forEach(mode => {
+        document.getElementById(`visualMode-${mode}`).addEventListener('click', () => {
+            this.visualizer.setVisualizationMode(mode);
+            document.querySelectorAll('#controls .button').forEach(btn => 
+                btn.classList.remove('active'));
+            document.getElementById(`visualMode-${mode}`).classList.add('active');
         });
-    }
+    });
 }
 
 // Initialize the application
