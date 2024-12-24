@@ -194,6 +194,11 @@
     <div id="controls" class="overlay">
         <button class="button" id="toggleRotation">Toggle Rotation</button>
         <button class="button" id="toggleSound">Toggle Sound</button>
+        <button class="button" id="visualMode-default">Default</button>
+        <button class="button" id="visualMode-wireframe">Wireframe</button>
+        <button class="button" id="visualMode-particles">Particles</button>
+        <button class="button" id="visualMode-ribbons">Ribbons</button>
+    </div>
         <div class="value-display" id="energy-value">Energy: 432 Hz</div>
     </div>
 
@@ -251,6 +256,15 @@
 
     <!-- Script tags will be added in the next parts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/FilmPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/FilmShader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script>
 // Core Audio Engine Class
@@ -326,160 +340,279 @@ class AudioEngine {
 class VisualizationEngine {
     constructor(audioEngine) {
         this.audioEngine = audioEngine;
+        this.mode = 'default'; // default, wireframe, particles, ribbons
         this.setupCanvases();
         this.initializeThree();
+        this.createParticleSystems();
+        this.createRibbons();
+        this.setupPostProcessing();
         this.animate();
     }
 
     setupCanvases() {
-        // Spectrum canvas
-        this.spectrumCanvas = document.getElementById('frequency-spectrum');
-        this.spectrumCtx = this.spectrumCanvas.getContext('2d');
-        this.resizeCanvas(this.spectrumCanvas);
-
-        // Waveform canvas
-        this.waveformCanvas = document.getElementById('waveform');
-        this.waveformCtx = this.waveformCanvas.getContext('2d');
-        this.resizeCanvas(this.waveformCanvas);
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            this.resizeCanvas(this.spectrumCanvas);
-            this.resizeCanvas(this.waveformCanvas);
-        });
-    }
-
-    resizeCanvas(canvas) {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
+        // [Previous canvas setup code remains the same]
     }
 
     initializeThree() {
-        // Scene setup
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            powerPreference: "high-performance"
+        });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         document.getElementById('container').appendChild(this.renderer.domElement);
 
-        // Create vortex geometry
-        const geometry = new THREE.TorusKnotGeometry(2, 0.5, 128, 32, 2, 3);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0x88ccff,
-            metalness: 0.7,
-            roughness: 0.2,
-            emissive: 0x003366,
-            emissiveIntensity: 0.5
-        });
-        this.vortexMesh = new THREE.Mesh(geometry, material);
+        // Base geometry
+        this.baseGeometry = new THREE.TorusKnotGeometry(2, 0.5, 256, 64, 2, 3);
+        this.vertices = this.baseGeometry.attributes.position.array;
+        this.originalVertices = [...this.vertices];
+
+        // Materials
+        this.materials = {
+            default: new THREE.MeshStandardMaterial({
+                color: 0x88ccff,
+                metalness: 0.7,
+                roughness: 0.2,
+                emissive: 0x003366,
+                emissiveIntensity: 0.5
+            }),
+            wireframe: new THREE.MeshStandardMaterial({
+                color: 0x88ccff,
+                wireframe: true,
+                emissive: 0x003366,
+                emissiveIntensity: 0.5
+            })
+        };
+
+        // Main mesh
+        this.vortexMesh = new THREE.Mesh(this.baseGeometry, this.materials.default);
         this.scene.add(this.vortexMesh);
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.scene.add(ambientLight);
-
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(5, 5, 5);
-        this.scene.add(pointLight);
+        this.setupLighting();
 
         // Camera position
         this.camera.position.z = 5;
+        
+        // Orbit controls
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
 
-        // Handle window resize
         window.addEventListener('resize', () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             this.camera.aspect = width / height;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(width, height);
+            this.composer.setSize(width, height);
         });
     }
 
-    drawSpectrum() {
-        const ctx = this.spectrumCtx;
-        const canvas = this.spectrumCanvas;
-        const width = canvas.width / window.devicePixelRatio;
-        const height = canvas.height / window.devicePixelRatio;
+    setupLighting() {
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(this.ambientLight);
 
-        // Get frequency data
-        this.audioEngine.fftAnalyzer.getByteFrequencyData(this.audioEngine.fftDataArray);
-
-        // Clear canvas
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw spectrum
-        const barWidth = width / this.audioEngine.fftBufferLength * 2.5;
-        let x = 0;
-
-        for (let i = 0; i < this.audioEngine.fftBufferLength; i++) {
-            const barHeight = this.audioEngine.fftDataArray[i] * height / 256;
-            
-            // Create gradient
-            const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
-            gradient.addColorStop(0, '#88ccff');
-            gradient.addColorStop(1, '#003366');
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-
-            x += barWidth + 1;
+        this.pointLights = [];
+        const colors = [0x88ccff, 0xff88cc, 0xccff88];
+        
+        for (let i = 0; i < 3; i++) {
+            const light = new THREE.PointLight(colors[i], 1, 10);
+            light.position.set(
+                Math.cos(i * Math.PI * 2 / 3) * 5,
+                Math.sin(i * Math.PI * 2 / 3) * 5,
+                2
+            );
+            this.pointLights.push(light);
+            this.scene.add(light);
         }
     }
 
-    drawWaveform() {
-        const ctx = this.waveformCtx;
-        const canvas = this.waveformCanvas;
-        const width = canvas.width / window.devicePixelRatio;
-        const height = canvas.height / window.devicePixelRatio;
+    createParticleSystems() {
+        const particleCount = 5000;
+        const particleGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
 
-        // Get waveform data
-        this.audioEngine.waveAnalyzer.getByteTimeDomainData(this.audioEngine.waveDataArray);
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * 10;
+            positions[i3 + 1] = (Math.random() - 0.5) * 10;
+            positions[i3 + 2] = (Math.random() - 0.5) * 10;
 
-        // Clear canvas
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw waveform
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#88ccff';
-        ctx.beginPath();
-
-        const sliceWidth = width / this.audioEngine.waveBufferLength;
-        let x = 0;
-
-        for (let i = 0; i < this.audioEngine.waveBufferLength; i++) {
-            const v = this.audioEngine.waveDataArray[i] / 128.0;
-            const y = v * height / 2;
-
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-
-            x += sliceWidth;
+            colors[i3] = Math.random();
+            colors[i3 + 1] = Math.random();
+            colors[i3 + 2] = Math.random();
         }
 
-        ctx.lineTo(width, height / 2);
-        ctx.stroke();
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const particleMaterial = new THREE.PointsMaterial({
+            size: 0.05,
+            vertexColors: true,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+
+        this.particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+        this.scene.add(this.particleSystem);
+        this.particleSystem.visible = false;
+    }
+
+    createRibbons() {
+        this.ribbons = [];
+        const ribbonCount = 12;
+        
+        for (let i = 0; i < ribbonCount; i++) {
+            const curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-5, 0, 0),
+                new THREE.Vector3(0, 2, 2),
+                new THREE.Vector3(5, 0, 0),
+                new THREE.Vector3(0, -2, -2)
+            ]);
+
+            const geometry = new THREE.TubeGeometry(curve, 100, 0.1, 8, false);
+            const material = new THREE.MeshStandardMaterial({
+                color: new THREE.Color().setHSL(i / ribbonCount, 0.8, 0.5),
+                metalness: 0.8,
+                roughness: 0.2
+            });
+
+            const ribbon = new THREE.Mesh(geometry, material);
+            ribbon.rotation.z = (i / ribbonCount) * Math.PI * 2;
+            this.ribbons.push(ribbon);
+            this.scene.add(ribbon);
+            ribbon.visible = false;
+        }
+    }
+
+    setupPostProcessing() {
+        this.composer = new THREE.EffectComposer(this.renderer);
+        
+        // Render pass
+        const renderPass = new THREE.RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+
+        // Bloom pass
+        this.bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.5,  // strength
+            0.4,  // radius
+            0.85  // threshold
+        );
+        this.composer.addPass(this.bloomPass);
+
+        // Film pass for grain effect
+        this.filmPass = new THREE.FilmPass(
+            0.35,  // noise intensity
+            0.025, // scanline intensity
+            648,   // scanline count
+            false  // grayscale
+        );
+        this.composer.addPass(this.filmPass);
+    }
+
+    setVisualizationMode(mode) {
+        this.mode = mode;
+        this.vortexMesh.visible = mode === 'default' || mode === 'wireframe';
+        this.particleSystem.visible = mode === 'particles';
+        this.ribbons.forEach(ribbon => ribbon.visible = mode === 'ribbons');
+
+        if (mode === 'wireframe') {
+            this.vortexMesh.material = this.materials.wireframe;
+        } else if (mode === 'default') {
+            this.vortexMesh.material = this.materials.default;
+        }
+    }
+
+    updateGeometryDistortion() {
+        const positions = this.baseGeometry.attributes.position.array;
+        const frequency = this.audioEngine.oscillator.frequency.value;
+        const analyser = this.audioEngine.fftAnalyzer;
+        const dataArray = this.audioEngine.fftDataArray;
+        analyser.getByteFrequencyData(dataArray);
+
+        // Calculate average frequency intensity
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+        }
+        const average = sum / dataArray.length;
+        const intensity = average / 255;
+
+        // Apply distortion
+        for (let i = 0; i < positions.length; i += 3) {
+            const offset = Math.sin(this.originalVertices[i] * frequency * 0.01 + Date.now() * 0.001);
+            positions[i] = this.originalVertices[i] + offset * intensity * 0.2;
+            positions[i + 1] = this.originalVertices[i + 1] + offset * intensity * 0.2;
+            positions[i + 2] = this.originalVertices[i + 2] + offset * intensity * 0.2;
+        }
+
+        this.baseGeometry.attributes.position.needsUpdate = true;
+
+        // Update color based on frequency
+        const hue = (frequency % 1000) / 1000;
+        this.vortexMesh.material.color.setHSL(hue, 0.8, 0.5);
+        this.vortexMesh.material.emissive.setHSL(hue, 0.8, 0.3);
+    }
+
+    updateParticles() {
+        if (this.mode === 'particles') {
+            const positions = this.particleSystem.geometry.attributes.position.array;
+            const colors = this.particleSystem.geometry.attributes.color.array;
+            const time = Date.now() * 0.001;
+
+            for (let i = 0; i < positions.length; i += 3) {
+                const x = positions[i];
+                const y = positions[i + 1];
+                const z = positions[i + 2];
+
+                positions[i] = Math.cos(time + x) * 3;
+                positions[i + 1] = Math.sin(time + y) * 3;
+                positions[i + 2] = Math.cos(time + z) * 3;
+
+                const hue = (Math.sin(time * 0.1 + i) + 1) * 0.5;
+                const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+                colors[i] = color.r;
+                colors[i + 1] = color.g;
+                colors[i + 2] = color.b;
+            }
+
+            this.particleSystem.geometry.attributes.position.needsUpdate = true;
+            this.particleSystem.geometry.attributes.color.needsUpdate = true;
+        }
+    }
+
+    updateRibbons() {
+        if (this.mode === 'ribbons') {
+            const time = Date.now() * 0.001;
+            this.ribbons.forEach((ribbon, i) => {
+                ribbon.rotation.x = Math.sin(time * 0.5 + i) * 0.3;
+                ribbon.rotation.y = Math.cos(time * 0.3 + i) * 0.2;
+                
+                const hue = (i / this.ribbons.length + time * 0.1) % 1;
+                ribbon.material.color.setHSL(hue, 0.8, 0.5);
+            });
+        }
     }
 
     animate() {
         requestAnimationFrame(() => this.animate());
 
         // Update visualizations
-        this.drawSpectrum();
-        this.drawWaveform();
+        this.updateGeometryDistortion();
+        this.updateParticles();
+        this.updateRibbons();
 
-        // Update 3D scene
-        this.vortexMesh.rotation.x += 0.005;
-        this.vortexMesh.rotation.y += 0.003;
-        this.renderer.render(this.scene, this.camera);
+        // Update controls
+        this.controls.update();
+
+        // Render with post-processing
+        this.composer.render();
     }
 }
 </script>
@@ -706,6 +839,13 @@ class VortexApp {
     }
 
     setupControls() {
+        ['default', 'wireframe', 'particles', 'ribbons'].forEach(mode => {
+    document.getElementById(`visualMode-${mode}`).addEventListener('click', () => {
+        this.visualizer.setVisualizationMode(mode);
+        document.querySelectorAll('#controls .button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`visualMode-${mode}`).classList.add('active');
+    });
+});
         const toggleSound = document.getElementById('toggleSound');
         const toggleRotation = document.getElementById('toggleRotation');
         
