@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex Mathematics Matrix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .overlay {
+            position: fixed;
+            padding: 20px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        #info-panel {
+            top: 20px;
+            left: 20px;
+            max-width: 300px;
+        }
+
+        #controls {
+            top: 20px;
+            right: 20px;
+        }
+
+        .button {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background: #333;
+            border-color: #88ccff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .button.active {
+            background: #88ccff;
+            color: #000;
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .slider {
+            width: 150px;
+            height: 5px;
+            -webkit-appearance: none;
+            background: #333;
+            outline: none;
+            border-radius: 5px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #4169E1;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #4169E1;
+            cursor: pointer;
+        }
+
+        #speedValue {
+            color: white;
+            font-size: 14px;
+            min-width: 80px;
+        }
+
+        .analyzer-container {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        #frequency-spectrum, #waveform {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+        }
+
+        #frequency-spectrum {
+            height: 150px;
+        }
+
+        #waveform {
+            height: 80px;
+            margin-top: 10px;
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #88ccff;
+        }
+
+        #visualMode-default {
+            background: linear-gradient(45deg, #4169E1, #00BFFF);
+            border-color: #4169E1;
+        }
+
+        #visualMode-wireframe {
+            background: linear-gradient(45deg, #ff00ee, #ff1493);
+            border-color: #ff00ee;
+        }
+
+        #visualMode-particles {
+            background: linear-gradient(45deg, #ff6b6b, #ffd700);
+            border-color: #ff6b6b;
+        }
+
+        #visualMode-ribbons {
+            background: linear-gradient(45deg, #4169e1, #00bfff);
+            border-color: #4169e1;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="info-panel" class="overlay">
+        <h2>Vortex Mathematics</h2>
+        <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
+    </div>
+
+    <div id="controls" class="overlay">
+        <div class="control-group">
+            <button class="button" id="toggleRotation">Toggle Rotation</button>
+            <input type="range" id="rotationSpeed" min="0" max="100" value="50" class="slider">
+            <span id="speedValue">Speed: 0.01</span>
+        </div>
+        <div class="mode-buttons">
+            <button class="button" id="visualMode-default">Default</button>
+            <button class="button" id="visualMode-wireframe">Wireframe</button>
+            <button class="button" id="visualMode-particles">Particles</button>
+            <button class="button" id="visualMode-ribbons">Ribbons</button>
+        </div>
+    </div>
+
+    <div class="analyzer-container">
+        <canvas id="frequency-spectrum"></canvas>
+        <div class="spectrum-labels">
+            <span>20 Hz</span>
+            <span>100 Hz</span>
+            <span>500 Hz</span>
+            <span>1 kHz</span>
+            <span>5 kHz</span>
+            <span>20 kHz</span>
+        </div>
+        <canvas id="waveform"></canvas>
+    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/FilmPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/FilmShader.js"></script>
+    <script>
+        // Audio Engine Class
+        class AudioEngine {
+            constructor() {
+                this.initializeAudioContext();
+                this.setupNodes();
+                this.setupAnalyzers();
+            }
+
+            initializeAudioContext() {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.started = false;
+            }
+
+            setupNodes() {
+                // Oscillator
+                this.oscillator = this.audioCtx.createOscillator();
+                this.oscillator.type = 'sine';
+                this.oscillator.frequency.setValueAtTime(432, this.audioCtx.currentTime);
+
+                // Gain
+                this.masterGain = this.audioCtx.createGain();
+                this.masterGain.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
+
+                // Compressor
+                this.compressor = this.audioCtx.createDynamicsCompressor();
+                this.compressor.threshold.setValueAtTime(-24, this.audioCtx.currentTime);
+                this.compressor.knee.setValueAtTime(30, this.audioCtx.currentTime);
+                this.compressor.ratio.setValueAtTime(12, this.audioCtx.currentTime);
+                this.compressor.attack.setValueAtTime(0.003, this.audioCtx.currentTime);
+                this.compressor.release.setValueAtTime(0.25, this.audioCtx.currentTime);
+
+                // Connect nodes
+                this.oscillator.connect(this.masterGain);
+                this.masterGain.connect(this.compressor);
+            }
+
+            setupAnalyzers() {
+                this.fftAnalyzer = this.audioCtx.createAnalyser();
+                this.fftAnalyzer.fftSize = 2048;
+                this.fftBufferLength = this.fftAnalyzer.frequencyBinCount;
+                this.fftDataArray = new Uint8Array(this.fftBufferLength);
+
+                this.waveAnalyzer = this.audioCtx.createAnalyser();
+                this.waveAnalyzer.fftSize = 1024;
+                this.waveBufferLength = this.waveAnalyzer.frequencyBinCount;
+                this.waveDataArray = new Uint8Array(this.waveBufferLength);
+
+                this.compressor.connect(this.fftAnalyzer);
+                this.fftAnalyzer.connect(this.waveAnalyzer);
+                this.waveAnalyzer.connect(this.audioCtx.destination);
+            }
+
+            start() {
+                if (!this.started) {
+                    this.oscillator.start();
+                    this.started = true;
+                }
+            }
+        }
+
+        // Visualization Engine Class
+        class VisualizationEngine {
+            constructor(audioEngine) {
+                this.audioEngine = audioEngine;
+                this.mode = 'default';
+                this.initializeThree();
+                this.createParticleSystems();
+                this.createRibbons();
+                this.setupPostProcessing();
+                this.animate();
+            }
+
+            initializeThree() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ 
+                    antialias: true,
+                    powerPreference: "high-performance"
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                document.getElementById('container').appendChild(this.renderer.domElement);
+
+                // Materials
+                this.materials = {
+                    default: new THREE.MeshStandardMaterial({
+                        color: 0x4169E1,
+                        metalness: 0.8,
+                        roughness: 0.2,
+                        emissive: 0x1E90FF,
+                        emissiveIntensity: 0.5,
+                        transparent: true,
+                        opacity: 0.9
+                    }),
+                    wireframe: new THREE.MeshStandardMaterial({
+                        color: 0x00BFFF,
+                        wireframe: true,
+                        emissive: 0x87CEEB,
+                        emissiveIntensity: 0.7
+                    })
+                };
+
+                // Base geometry
+                this.baseGeometry = new THREE.TorusKnotGeometry(2, 0.6, 300, 80, 2, 3);
+                this.vertices = this.baseGeometry.attributes.position.array;
+                this.originalVertices = [...this.vertices];
+
+                // Main mesh
+                this.vortexMesh = new THREE.Mesh(this.baseGeometry, this.materials.default);
+                this.scene.add(this.vortexMesh);
+
+                // Setup lighting
+                this.setupLighting();
+
+                // Camera position
+                this.camera.position.z = 5;
+
+                // Orbit controls
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    const width = window.innerWidth;
+                    const height = window.innerHeight;
+                    this.camera.aspect = width / height;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(width, height);
+                    this.composer.setSize(width, height);
+                });
+            }
+
+            setupLighting() {
+                this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                this.scene.add(this.ambientLight);
+
+                this.pointLights = [];
+                const colors = [0x88ccff, 0xff88cc, 0xccff88];
+                
+                for (let i = 0; i < 3; i++) {
+                    const light = new THREE.PointLight(colors[i], 1, 10);
+                    light.position.set(
+                        Math.cos(i * Math.PI * 2 / 3) * 5,
+                        Math.sin(i * Math.PI * 2 / 3) * 5,
+                        2
+                    );
+                    this.pointLights.push(light);
+                    this.scene.add(light);
+                }
+            }
+
+            createParticleSystems() {
+                const particleCount = 30000;
+                const particleGeometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+
+                for (let i = 0; i < particleCount; i++) {
+                    const i3 = i * 3;
+                    const radius = Math.random() * 8;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.random() * Math.PI * 2;
+
+                    positions[i3] = radius * Math.cos(theta) * Math.sin(phi);
+                    positions[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+                    positions[i3 + 2] = radius * Math.cos(phi);
+
+                    colors[i3] = Math.random();
+                    colors[i3 + 1] = Math.random();
+                    colors[i3 + 2] = Math.random();
+                }
+
+                particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const particleMaterial = new THREE.PointsMaterial({
+                    size: 0.03,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending,
+                    sizeAttenuation: true
+                });
+
+                this.particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+                this.scene.add(this.particleSystem);
+                this.particleSystem.visible = false;
+            }
+
+            // Continue with Part 3? This includes createRibbons(), updateParticles(), and the rest of the visualization methods
+        }
+    </script>
+</body>
+</html>
+createRibbons() {
+                this.ribbons = [];
+                const ribbonCount = 12;
+                
+                for (let i = 0; i < ribbonCount; i++) {
+                    const curve = new THREE.CatmullRomCurve3([
+                        new THREE.Vector3(-5, 0, 0),
+                        new THREE.Vector3(0, 2, 2),
+                        new THREE.Vector3(5, 0, 0),
+                        new THREE.Vector3(0, -2, -2)
+                    ]);
+
+                    const geometry = new THREE.TubeGeometry(curve, 100, 0.1, 8, false);
+                    const material = new THREE.MeshStandardMaterial({
+                        color: new THREE.Color().setHSL(i / ribbonCount, 0.8, 0.5),
+                        metalness: 0.8,
+                        roughness: 0.2
+                    });
+
+                    const ribbon = new THREE.Mesh(geometry, material);
+                    ribbon.rotation.z = (i / ribbonCount) * Math.PI * 2;
+                    this.ribbons.push(ribbon);
+                    this.scene.add(ribbon);
+                    ribbon.visible = false;
+                }
+            }
+
+            setupPostProcessing() {
+                this.composer = new THREE.EffectComposer(this.renderer);
+                
+                const renderPass = new THREE.RenderPass(this.scene, this.camera);
+                this.composer.addPass(renderPass);
+
+                this.bloomPass = new THREE.UnrealBloomPass(
+                    new THREE.Vector2(window.innerWidth, window.innerHeight),
+                    1.5,  // strength
+                    0.4,  // radius
+                    0.85  // threshold
+                );
+                this.composer.addPass(this.bloomPass);
+
+                this.filmPass = new THREE.FilmPass(
+                    0.35,  // noise intensity
+                    0.025, // scanline intensity
+                    648,   // scanline count
+                    false  // grayscale
+                );
+                this.composer.addPass(this.filmPass);
+            }
+
+            updateGeometryDistortion() {
+                const positions = this.baseGeometry.attributes.position.array;
+                const frequency = this.audioEngine.oscillator.frequency.value;
+                const analyser = this.audioEngine.fftAnalyzer;
+                const dataArray = this.audioEngine.fftDataArray;
+                analyser.getByteFrequencyData(dataArray);
+
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / dataArray.length;
+                const intensity = average / 255;
+
+                for (let i = 0; i < positions.length; i += 3) {
+                    const offset = Math.sin(this.originalVertices[i] * frequency * 0.01 + Date.now() * 0.001);
+                    positions[i] = this.originalVertices[i] + offset * intensity * 0.2;
+                    positions[i + 1] = this.originalVertices[i + 1] + offset * intensity * 0.2;
+                    positions[i + 2] = this.originalVertices[i + 2] + offset * intensity * 0.2;
+                }
+
+                this.baseGeometry.attributes.position.needsUpdate = true;
+
+                const hue = (frequency % 1000) / 1000;
+                if (this.mode === 'default') {
+                    this.vortexMesh.material.color.setHSL(hue, 0.8, 0.5);
+                    this.vortexMesh.material.emissive.setHSL(hue, 0.8, 0.3);
+                }
+            }
+
+            updateParticles() {
+                if (this.mode === 'particles' && this.particleSystem.visible) {
+                    const positions = this.particleSystem.geometry.attributes.position.array;
+                    const colors = this.particleSystem.geometry.attributes.color.array;
+                    const time = Date.now() * 0.0005;
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const i3 = i * 0.0001;
+                        const angle = i3 + time;
+                        const radius = 8 * (1 - Math.exp(-angle * 0.1));
+                        const heightScale = Math.exp(-angle * 0.1) * 2;
+                        
+                        positions[i] = Math.cos(angle * 2.5) * radius;
+                        positions[i + 1] = Math.sin(angle * 2.5) * radius;
+                        positions[i + 2] = Math.sin(angle) * heightScale;
+
+                        const hue = (Math.atan2(positions[i], positions[i + 1]) / (Math.PI * 2)) + 0.5;
+                        const saturation = 0.8;
+                        const lightness = 0.6 + Math.sin(time + i3) * 0.2;
+                        
+                        const color = new THREE.Color().setHSL(hue, saturation, lightness);
+                        colors[i] = color.r;
+                        colors[i + 1] = color.g;
+                        colors[i + 2] = color.b;
+                    }
+
+                    this.particleSystem.geometry.attributes.position.needsUpdate = true;
+                    this.particleSystem.geometry.attributes.color.needsUpdate = true;
+                }
+            }
+
+            updateRibbons() {
+                if (this.mode === 'ribbons') {
+                    const time = Date.now() * 0.001;
+                    this.ribbons.forEach((ribbon, i) => {
+                        ribbon.rotation.x = Math.sin(time * 0.5 + i) * 0.3;
+                        ribbon.rotation.y = Math.cos(time * 0.3 + i) * 0.2;
+                        
+                        const hue = (i / this.ribbons.length + time * 0.1) % 1;
+                        ribbon.material.color.setHSL(hue, 0.8, 0.5);
+                    });
+                }
+            }
+
+            setVisualizationMode(mode) {
+                this.mode = mode;
+                this.vortexMesh.visible = mode === 'default' || mode === 'wireframe';
+                this.particleSystem.visible = mode === 'particles';
+                this.ribbons.forEach(ribbon => ribbon.visible = mode === 'ribbons');
+
+                if (mode === 'wireframe') {
+                    this.vortexMesh.material = this.materials.wireframe;
+                } else if (mode === 'default') {
+                    this.vortexMesh.material = this.materials.default;
+                }
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.updateGeometryDistortion();
+                this.updateParticles();
+                this.updateRibbons();
+                this.controls.update();
+                this.composer.render();
+            }
+        }
+
+        // Main Application Class
+        class VortexApp {
+            constructor() {
+                this.audioEngine = new AudioEngine();
+                this.visualizer = new VisualizationEngine(this.audioEngine);
+                this.setupControls();
+                this.audioEngine.start();
+            }
+
+            setupControls() {
+                this.isRotating = true;
+                this.rotationSpeed = 0.01;
+
+                const toggleRotation = document.getElementById('toggleRotation');
+                const rotationSpeedSlider = document.getElementById('rotationSpeed');
+                const speedValue = document.getElementById('speedValue');
+
+                toggleRotation.addEventListener('click', () => {
+                    this.isRotating = !this.isRotating;
+                    toggleRotation.classList.toggle('active');
+                });
+
+                rotationSpeedSlider.addEventListener('input', (e) => {
+                    this.rotationSpeed = (e.target.value / 2500);
+                    speedValue.textContent = `Speed: ${this.rotationSpeed.toFixed(4)}`;
+                });
+
+                const originalAnimate = this.visualizer.animate.bind(this.visualizer);
+                this.visualizer.animate = () => {
+                    if (this.isRotating) {
+                        this.visualizer.vortexMesh.rotation.x += this.rotationSpeed;
+                        this.visualizer.vortexMesh.rotation.y += this.rotationSpeed;
+                    }
+                    originalAnimate();
+                };
+
+                ['default', 'wireframe', 'particles', 'ribbons'].forEach(mode => {
+                    document.getElementById(`visualMode-${mode}`).addEventListener('click', () => {
+                        this.visualizer.setVisualizationMode(mode);
+                        document.querySelectorAll('#controls .button').forEach(btn => 
+                            btn.classList.remove('active'));
+                        document.getElementById(`visualMode-${mode}`).classList.add('active');
+                    });
+                });
+            }
+        }
+
+        // Initialize the application
+        window.addEventListener('DOMContentLoaded', () => {
+            window.vortexApp = new VortexApp();
+        });
+    </script>
+</body>
+</html>
+
