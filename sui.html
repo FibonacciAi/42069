@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CR7 Quantum SIUUU Experience</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Montserrat', sans-serif;
+            color: white;
+        }
+        #audio-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border: 2px solid #FFD700;
+        }
+        .btn {
+            background: linear-gradient(45deg, #000000, #2C2C2C);
+            border: 2px solid #FFD700;
+            padding: 10px 20px;
+            color: #FFD700;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:hover {
+            background: #FFD700;
+            color: #000;
+            transform: scale(1.05);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        #cr7-logo {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+            z-index: 1000;
+        }
+        #stats-display {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid #FFD700;
+            font-size: 14px;
+        }
+        .stat {
+            margin: 5px 0;
+            color: #FFD700;
+        }
+        #signature {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 1000;
+            font-style: italic;
+            color: #FFD700;
+            font-size: 24px;
+        }
+        #sound-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #FFD700;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="cr7-logo">CR7</div>
+    <div id="sound-status">Click "Start SIUUU" to begin</div>
+    <div id="stats-display">
+        <div class="stat">Goals: 819+</div>
+        <div class="stat">Champions League: 5x</div>
+        <div class="stat">Ballon d'Or: 5x</div>
+        <div class="stat">SIUUU Energy: 0%</div>
+    </div>
+    <div id="signature">Cristiano Ronaldo</div>
+    <div id="audio-controls">
+        <button id="startAudio" class="btn">Start SIUUU</button>
+        <button id="useInput" class="btn">Live Reaction</button>
+        <button id="toggleCrowd" class="btn">Toggle Crowd</button>
+        <input type="file" id="audioFile" accept="audio/*" style="display: none;">
+        <button id="loadAudio" class="btn">Load CR7 Chant</button>
+    </div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+class AudioAnalyzer {
+    constructor() {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.fftSize = 2048;
+        this.bufferLength = this.analyser.frequencyBinCount;
+        this.dataArray = new Uint8Array(this.bufferLength);
+        this.freqData = new Uint8Array(this.bufferLength);
+        this.oscillator = null;
+        this.crowdNoise = null;
+        this.isCrowdPlaying = false;
+    }
+
+    startSIUUU() {
+        // Main SIUUU sound
+        const mainOsc = this.audioContext.createOscillator();
+        const mainGain = this.audioContext.createGain();
+        
+        mainOsc.type = 'sine';
+        mainOsc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        mainOsc.frequency.exponentialRampToValueAtTime(300, this.audioContext.currentTime + 0.6);
+        
+        mainGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        mainGain.gain.linearRampToValueAtTime(0.7, this.audioContext.currentTime + 0.1);
+        mainGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.6);
+
+        // Add vibrato
+        const vibratoOsc = this.audioContext.createOscillator();
+        const vibratoGain = this.audioContext.createGain();
+        
+        vibratoOsc.frequency.value = 10;
+        vibratoGain.gain.value = 20;
+        
+        vibratoOsc.connect(vibratoGain);
+        vibratoGain.connect(mainOsc.frequency);
+
+        // Connect everything
+        mainOsc.connect(mainGain);
+        mainGain.connect(this.analyser);
+        mainGain.connect(this.audioContext.destination);
+        
+        // Start oscillators
+        mainOsc.start(this.audioContext.currentTime);
+        vibratoOsc.start(this.audioContext.currentTime);
+        
+        // Stop after SIUUU
+        mainOsc.stop(this.audioContext.currentTime + 0.6);
+        vibratoOsc.stop(this.audioContext.currentTime + 0.6);
+
+        // Update status
+        document.getElementById('sound-status').textContent = "SIUUUUUU!!!";
+        setTimeout(() => {
+            document.getElementById('sound-status').textContent = this.isCrowdPlaying ? 
+                "Crowd chanting" : "Ready for next SIUUU";
+        }, 600);
+    }
+
+    toggleCrowdNoise() {
+        if (this.isCrowdPlaying) {
+            if (this.crowdNoise) {
+                this.crowdNoise.stop();
+                this.crowdNoise = null;
+            }
+            this.isCrowdPlaying = false;
+            document.getElementById('sound-status').textContent = "Crowd chant stopped";
+        } else {
+            this.startCrowdNoise();
+            this.isCrowdPlaying = true;
+            document.getElementById('sound-status').textContent = "Crowd chanting";
+        }
+    }
+
+    startCrowdNoise() {
+        const bufferSize = 2 * this.audioContext.sampleRate;
+        const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        this.crowdNoise = this.audioContext.createBufferSource();
+        this.crowdNoise.buffer = noiseBuffer;
+        
+        const bandpass = this.audioContext.createBiquadFilter();
+        bandpass.type = "bandpass";
+        bandpass.frequency.value = 300;
+        bandpass.Q.value = 0.5;
+
+        const crowdGain = this.audioContext.createGain();
+        crowdGain.gain.value = 0.15;
+
+        this.crowdNoise.connect(bandpass);
+        bandpass.connect(crowdGain);
+        crowdGain.connect(this.analyser);
+        crowdGain.connect(this.audioContext.destination);
+
+        this.crowdNoise.loop = true;
+        this.crowdNoise.start();
+    }
+
+    async setupMicrophone() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const source = this.audioContext.createMediaStreamSource(stream);
+            source.connect(this.analyser);
+            document.getElementById('sound-status').textContent = "Live audio input active";
+        } catch (err) {
+            console.error('Microphone access error:', err);
+            document.getElementById('sound-status').textContent = "Microphone access failed";
+        }
+    }
+
+    async loadAudioFile(file) {
+        try {
+            const buffer = await file.arrayBuffer();
+            const audioBuffer = await this.audioContext.decodeAudioData(buffer);
+            const source = this.audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(this.analyser);
+            source.connect(this.audioContext.destination);
+            source.start();
+            document.getElementById('sound-status').textContent = "Playing custom audio";
+        } catch (err) {
+            console.error('Audio file loading error:', err);
+            document.getElementById('sound-status').textContent = "Audio file error";
+        }
+    }
+
+    getAudioData() {
+        this.analyser.getByteTimeDomainData(this.dataArray);
+        this.analyser.getByteFrequencyData(this.freqData);
+        return {
+            timeDomain: this.dataArray,
+            frequency: this.freqData
+        };
+    }
+}
+
+// [Previous CR7ParticleSystem class remains exactly the same]
+
+class CR7Visualization {
+    constructor() {
+        this.audioAnalyzer = new AudioAnalyzer();
+        this.setup();
+        this.createScene();
+        this.setupAudioControls();
+        this.animate();
+    }
+
+    setup() {
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(this.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    createScene() {
+        this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.FogExp2(0x000000, 0.1);
+        
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.z = 5;
+
+        const ambientLight = new THREE.AmbientLight(0xFFD700, 0.5);
+        this.scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+        directionalLight.position.set(5, 5, 5);
+        this.scene.add(directionalLight);
+
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+
+        this.particleSystem = new CR7ParticleSystem(7777);
+        this.scene.add(this.particleSystem.points);
+        this.scene.add(this.particleSystem.soccerBall);
+    }
+
+    setupAudioControls() {
+        document.getElementById('startAudio').onclick = () => {
+            this.audioAnalyzer.audioContext.resume();
+            this.audioAnalyzer.startSIUUU();
+        };
+
+        document.getElementById('useInput').onclick = () => {
+            this.audioAnalyzer.setupMicrophone();
+        };
+
+        document.getElementById('toggleCrowd').onclick = () => {
+            this.audioAnalyzer.toggleCrowdNoise();
+        };
+
+        document.getElementById('loadAudio').onclick = () => {
+            document.getElementById('audioFile').click();
+        };
+
+        document.getElementById('audioFile').onchange = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                this.audioAnalyzer.loadAudioFile(file);
+            }
+        };
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+
+        const audioData = this.audioAnalyzer.getAudioData();
+        this.particleSystem.update(Array.from(audioData.frequency), performance.now() * 0.001);
+
+        const avgFreq = Array.from(audioData.frequency).reduce((a, b) => a + b, 0) / audioData.frequency.length;
+        document.querySelector('.stat:last-child').textContent = 
+            `SIUUU Energy: ${(avgFreq / 256 * 100).toFixed(0)}%`;
+
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+// Initialize visualization
+new CR7Visualization();
+</script>
+</body>
+</html>
