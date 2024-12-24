@@ -443,21 +443,27 @@ class VisualizationEngine {
         this.originalVertices = [...this.vertices];
 
         // Materials
-        this.materials = {
-            default: new THREE.MeshStandardMaterial({
-                color: 0x88ccff,
-                metalness: 0.7,
-                roughness: 0.2,
-                emissive: 0x003366,
-                emissiveIntensity: 0.5
-            }),
-            wireframe: new THREE.MeshStandardMaterial({
-                color: 0x88ccff,
-                wireframe: true,
-                emissive: 0x003366,
-                emissiveIntensity: 0.5
-            })
-        };
+        // Update the materials section in initializeThree()
+this.materials = {
+    default: new THREE.MeshStandardMaterial({
+        color: 0x4169E1,         // Royal Blue
+        metalness: 0.8,
+        roughness: 0.2,
+        emissive: 0x1E90FF,      // Dodger Blue
+        emissiveIntensity: 0.5,
+        transparent: true,
+        opacity: 0.9
+    }),
+    wireframe: new THREE.MeshStandardMaterial({
+        color: 0x00BFFF,         // Deep Sky Blue
+        wireframe: true,
+        emissive: 0x87CEEB,      // Sky Blue
+        emissiveIntensity: 0.7
+    })
+};
+
+// Update the base geometry
+this.baseGeometry = new THREE.TorusKnotGeometry(2, 0.6, 300, 80, 2, 3);
 
         // Main mesh
         this.vortexMesh = new THREE.Mesh(this.baseGeometry, this.materials.default);
@@ -528,36 +534,42 @@ createOrbitRing(x, y, rotation, tilt) {
     }
 
     createParticleSystems() {
-        const particleCount = 5000;
-        const particleGeometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
+    const particleCount = 8000;  // Increased from 5000
+    const particleGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
 
-        for (let i = 0; i < particleCount; i++) {
-            const i3 = i * 3;
-            positions[i3] = (Math.random() - 0.5) * 10;
-            positions[i3 + 1] = (Math.random() - 0.5) * 10;
-            positions[i3 + 2] = (Math.random() - 0.5) * 10;
+    for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        const radius = 5;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI * 2;
 
-            colors[i3] = Math.random();
-            colors[i3 + 1] = Math.random();
-            colors[i3 + 2] = Math.random();
-        }
+        positions[i3] = radius * Math.cos(theta) * Math.sin(phi);
+        positions[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+        positions[i3 + 2] = radius * Math.cos(phi);
 
-        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        const particleMaterial = new THREE.PointsMaterial({
-            size: 0.05,
-            vertexColors: true,
-            transparent: true,
-            blending: THREE.AdditiveBlending
-        });
-
-        this.particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-        this.scene.add(this.particleSystem);
-        this.particleSystem.visible = false;
+        colors[i3] = Math.random();
+        colors[i3 + 1] = Math.random();
+        colors[i3 + 2] = Math.random();
     }
+
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+        size: 0.08,          // Increased from 0.05
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true
+    });
+
+    this.particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+    this.scene.add(this.particleSystem);
+    this.particleSystem.visible = false;
+}
 
     createRibbons() {
         this.ribbons = [];
@@ -661,31 +673,34 @@ createOrbitRing(x, y, rotation, tilt) {
     }
 
     updateParticles() {
-        if (this.mode === 'particles') {
-            const positions = this.particleSystem.geometry.attributes.position.array;
-            const colors = this.particleSystem.geometry.attributes.color.array;
-            const time = Date.now() * 0.001;
+    if (this.mode === 'particles') {
+        const positions = this.particleSystem.geometry.attributes.position.array;
+        const colors = this.particleSystem.geometry.attributes.color.array;
+        const time = Date.now() * 0.001;
+        
+        for (let i = 0; i < positions.length; i += 3) {
+            // Slower movement and larger radius
+            const radius = 5;
+            const speed = 0.2;
+            const offset = i * 0.0001;
+            
+            // Spiral motion pattern
+            positions[i] = Math.cos(time * speed + offset) * radius * (1 + Math.sin(time * 0.1));
+            positions[i + 1] = Math.sin(time * speed + offset) * radius * (1 + Math.cos(time * 0.1));
+            positions[i + 2] = Math.cos(time * speed + offset + Math.PI) * radius * 0.5;
 
-            for (let i = 0; i < positions.length; i += 3) {
-                const x = positions[i];
-                const y = positions[i + 1];
-                const z = positions[i + 2];
-
-                positions[i] = Math.cos(time + x) * 3;
-                positions[i + 1] = Math.sin(time + y) * 3;
-                positions[i + 2] = Math.cos(time + z) * 3;
-
-                const hue = (Math.sin(time * 0.1 + i) + 1) * 0.5;
-                const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
-                colors[i] = color.r;
-                colors[i + 1] = color.g;
-                colors[i + 2] = color.b;
-            }
-
-            this.particleSystem.geometry.attributes.position.needsUpdate = true;
-            this.particleSystem.geometry.attributes.color.needsUpdate = true;
+            // Color cycling with better persistence
+            const hue = (Math.sin(time * 0.1 + i * 0.001) + 1) * 0.5;
+            const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+            colors[i] = color.r;
+            colors[i + 1] = color.g;
+            colors[i + 2] = color.b;
         }
+
+        this.particleSystem.geometry.attributes.position.needsUpdate = true;
+        this.particleSystem.geometry.attributes.color.needsUpdate = true;
     }
+}
 
     updateRibbons() {
         if (this.mode === 'ribbons') {
