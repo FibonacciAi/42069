@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CR7 Quantum SIUUU Experience</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>CR7 Quantum SIUUU Experience (Enhanced)</title>
   <!-- Google Font -->
   <link
     rel="stylesheet"
@@ -23,7 +23,7 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.8);
       padding: 20px;
       border-radius: 10px;
       display: flex;
@@ -59,7 +59,7 @@
       font-size: 48px;
       font-weight: bold;
       color: #FFD700;
-      text-shadow: 0 0 10px rgba(255,215,0,0.5);
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
       z-index: 1000;
     }
     #stats-display {
@@ -67,7 +67,7 @@
       top: 100px;
       right: 20px;
       z-index: 1000;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.8);
       padding: 15px;
       border-radius: 5px;
       border: 2px solid #FFD700;
@@ -91,7 +91,7 @@
       top: 20px;
       left: 20px;
       color: #FFD700;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.8);
       padding: 10px;
       border-radius: 5px;
       font-size: 14px;
@@ -119,7 +119,7 @@
     <button id="loadAudio" class="btn">Load CR7 Chant</button>
   </div>
 
-  <!-- THREE.JS & ORBITCONTROLS (ES Modules) -->
+  <!-- THREE.JS + ORBITCONTROLS + POSTPROCESSING (ES Modules) -->
   <script type="importmap">
   {
     "imports": {
@@ -132,6 +132,9 @@
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
     // =========================
     // Audio Analyzer Class
@@ -144,20 +147,22 @@
         this.bufferLength = this.analyser.frequencyBinCount;
         this.dataArray = new Uint8Array(this.bufferLength);
         this.freqData = new Uint8Array(this.bufferLength);
-        this.crowdNoise = null;
         this.isCrowdPlaying = false;
+        this.crowdNoise = null;
+        this.crowdPanner = null;
+        this.panInterval = null;
       }
 
       startSIUUU() {
-        // Main SIUUU sound
+        // Main oscillator
         const mainOsc = this.audioContext.createOscillator();
         const mainGain = this.audioContext.createGain();
-        
-        // Basic pitch slide from 800Hz down to 300Hz
+
+        // Basic pitch slide: 800Hz -> 300Hz
         mainOsc.type = 'sine';
         mainOsc.frequency.setValueAtTime(800, this.audioContext.currentTime);
         mainOsc.frequency.exponentialRampToValueAtTime(300, this.audioContext.currentTime + 0.6);
-        
+
         // Volume envelope
         mainGain.gain.setValueAtTime(0, this.audioContext.currentTime);
         mainGain.gain.linearRampToValueAtTime(0.7, this.audioContext.currentTime + 0.1);
@@ -166,25 +171,36 @@
         // Vibrato
         const vibratoOsc = this.audioContext.createOscillator();
         const vibratoGain = this.audioContext.createGain();
-        vibratoOsc.frequency.value = 10; // speed of vibrato
-        vibratoGain.gain.value = 20;     // depth of vibrato
+        vibratoOsc.frequency.value = 10; // speed
+        vibratoGain.gain.value = 20;     // depth
 
         vibratoOsc.connect(vibratoGain);
         vibratoGain.connect(mainOsc.frequency);
 
+        // Add a short echo
+        const delayNode = this.audioContext.createDelay(1.0);
+        delayNode.delayTime.value = 0.2;  // echo delay
+        const feedbackGain = this.audioContext.createGain();
+        feedbackGain.gain.value = 0.25; // how much feedback
+        delayNode.connect(feedbackGain);
+        feedbackGain.connect(delayNode);
+
+        // Connect chain: mainOsc -> mainGain -> (analyser + delay) -> ...
         mainOsc.connect(mainGain);
+        mainGain.connect(delayNode);
         mainGain.connect(this.analyser);
         mainGain.connect(this.audioContext.destination);
+        delayNode.connect(this.analyser);
+        delayNode.connect(this.audioContext.destination);
 
-        // Start
-        mainOsc.start(this.audioContext.currentTime);
-        vibratoOsc.start(this.audioContext.currentTime);
+        // Start the oscillators
+        mainOsc.start();
+        vibratoOsc.start();
 
-        // Stop
+        // Stop after ~0.6s so main note doesn't linger forever
         mainOsc.stop(this.audioContext.currentTime + 0.6);
         vibratoOsc.stop(this.audioContext.currentTime + 0.6);
 
-        // Update status text
         document.getElementById('sound-status').textContent = "SIUUUUUU!!!";
         setTimeout(() => {
           document.getElementById('sound-status').textContent =
@@ -195,14 +211,15 @@
       toggleCrowdNoise() {
         if (this.isCrowdPlaying) {
           // Stop existing noise
-          if (this.crowdNoise) {
-            this.crowdNoise.stop();
-            this.crowdNoise = null;
-          }
+          if (this.crowdNoise) this.crowdNoise.stop();
+          this.crowdNoise = null;
           this.isCrowdPlaying = false;
+          // Stop random panning
+          if (this.panInterval) clearInterval(this.panInterval);
+          this.panInterval = null;
           document.getElementById('sound-status').textContent = "Crowd chant stopped";
         } else {
-          // Start a looped noise buffer
+          // Start noise
           this.startCrowdNoise();
           this.isCrowdPlaying = true;
           document.getElementById('sound-status').textContent = "Crowd chanting";
@@ -210,34 +227,44 @@
       }
 
       startCrowdNoise() {
+        // Create noise buffer
         const bufferSize = 2 * this.audioContext.sampleRate;
         const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
         const output = noiseBuffer.getChannelData(0);
-
-        // Fill buffer with random values
         for (let i = 0; i < bufferSize; i++) {
           output[i] = Math.random() * 2 - 1;
         }
         this.crowdNoise = this.audioContext.createBufferSource();
         this.crowdNoise.buffer = noiseBuffer;
-        
-        // Filter for a "crowd" bandpass effect
+        this.crowdNoise.loop = true;
+
+        // Bandpass filter
         const bandpass = this.audioContext.createBiquadFilter();
         bandpass.type = "bandpass";
         bandpass.frequency.value = 300;
         bandpass.Q.value = 0.5;
 
+        // Stereo panner
+        this.crowdPanner = this.audioContext.createStereoPanner();
+
         // Gain
         const crowdGain = this.audioContext.createGain();
-        crowdGain.gain.value = 0.15;
+        crowdGain.gain.value = 0.2;
 
-        // Hook it all up
+        // Connect chain
         this.crowdNoise.connect(bandpass);
         bandpass.connect(crowdGain);
-        crowdGain.connect(this.analyser);
-        crowdGain.connect(this.audioContext.destination);
+        crowdGain.connect(this.crowdPanner);
+        this.crowdPanner.connect(this.analyser);
+        this.crowdPanner.connect(this.audioContext.destination);
 
-        this.crowdNoise.loop = true;
+        // Randomly change panner position every second
+        this.panInterval = setInterval(() => {
+          // Pan range: -1 (full left) to +1 (full right)
+          const randomPan = Math.random() * 2 - 1;
+          this.crowdPanner.pan.setValueAtTime(randomPan, this.audioContext.currentTime);
+        }, 1000);
+
         this.crowdNoise.start();
       }
 
@@ -272,10 +299,7 @@
       getAudioData() {
         this.analyser.getByteTimeDomainData(this.dataArray);
         this.analyser.getByteFrequencyData(this.freqData);
-        return {
-          timeDomain: this.dataArray,
-          frequency: this.freqData
-        };
+        return { timeDomain: this.dataArray, frequency: this.freqData };
       }
     }
 
@@ -283,14 +307,14 @@
     // CR7 Particle System Class
     // =========================
     class CR7ParticleSystem {
-      constructor(numParticles = 7777) {
+      constructor(numParticles = 7777, soccerTexture) {
         // Create geometry for points
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(numParticles * 3);
         for (let i = 0; i < numParticles; i++) {
-          positions[i*3 + 0] = (Math.random() - 0.5) * 100; // x
-          positions[i*3 + 1] = (Math.random() - 0.5) * 100; // y
-          positions[i*3 + 2] = (Math.random() - 0.5) * 100; // z
+          positions[i * 3 + 0] = (Math.random() - 0.5) * 100; // x
+          positions[i * 3 + 1] = (Math.random() - 0.5) * 100; // y
+          positions[i * 3 + 2] = (Math.random() - 0.5) * 100; // z
         }
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
@@ -298,14 +322,20 @@
         const material = new THREE.PointsMaterial({
           color: 0xFFD700,
           size: 0.2,
+          transparent: true,
+          opacity: 0.85,
+          blending: THREE.AdditiveBlending
         });
-
-        // Particle Points
         this.points = new THREE.Points(geometry, material);
 
-        // Golden soccer ball
+        // Golden soccer ball with texture
         const soccerBallGeometry = new THREE.SphereGeometry(1, 32, 32);
-        const soccerBallMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700 });
+        const soccerBallMaterial = new THREE.MeshStandardMaterial({
+          map: soccerTexture,
+          color: 0xFFD700,
+          roughness: 0.3,
+          metalness: 0.9
+        });
         this.soccerBall = new THREE.Mesh(soccerBallGeometry, soccerBallMaterial);
         this.soccerBall.position.set(0, 0, 0);
       }
@@ -326,8 +356,17 @@
     class CR7Visualization {
       constructor() {
         this.audioAnalyzer = new AudioAnalyzer();
+        this.loader = new THREE.TextureLoader();
+        this.init();
+      }
+
+      async init() {
+        // Load a quick texture for the soccer ball (metal-ish)
+        const goldTextureURL =
+          "https://raw.githubusercontent.com/dmr-capstone/chatgpt-textures/main/dark_gold.jpg";
+        const soccerTexture = await this.loader.loadAsync(goldTextureURL);
         this.setupRenderer();
-        this.createScene();
+        this.createScene(soccerTexture);
         this.setupAudioControls();
         this.animate();
       }
@@ -337,61 +376,79 @@
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
 
-        window.addEventListener('resize', () => {
+        window.addEventListener("resize", () => {
           this.camera.aspect = window.innerWidth / window.innerHeight;
           this.camera.updateProjectionMatrix();
           this.renderer.setSize(window.innerWidth, window.innerHeight);
+          this.composer.setSize(window.innerWidth, window.innerHeight);
         });
       }
 
-      createScene() {
+      createScene(soccerTexture) {
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.FogExp2(0x000000, 0.1);
-        
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+        // Camera
+        this.camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
         this.camera.position.z = 5;
 
-        const ambientLight = new THREE.AmbientLight(0xFFD700, 0.5);
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
         this.scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
         directionalLight.position.set(5, 5, 5);
         this.scene.add(directionalLight);
 
+        // Controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
 
-        this.particleSystem = new CR7ParticleSystem(7777);
+        // Particles + Ball
+        this.particleSystem = new CR7ParticleSystem(7777, soccerTexture);
         this.scene.add(this.particleSystem.points);
         this.scene.add(this.particleSystem.soccerBall);
+
+        // Postprocessing: Bloom
+        this.composer = new EffectComposer(this.renderer);
+        const renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+
+        this.bloomPass = new UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          1.2, // strength
+          0.4, // radius
+          0.85 // threshold
+        );
+        this.composer.addPass(this.bloomPass);
       }
 
       setupAudioControls() {
-        // Start SIUUU
-        document.getElementById('startAudio').onclick = async () => {
-          // Browser policy might suspend the audio context
-          if (this.audioAnalyzer.audioContext.state === 'suspended') {
+        document.getElementById("startAudio").onclick = async () => {
+          if (this.audioAnalyzer.audioContext.state === "suspended") {
             await this.audioAnalyzer.audioContext.resume();
           }
           this.audioAnalyzer.startSIUUU();
         };
 
-        // Use Microphone
-        document.getElementById('useInput').onclick = () => {
+        document.getElementById("useInput").onclick = () => {
           this.audioAnalyzer.setupMicrophone();
         };
 
-        // Toggle Crowd Noise
-        document.getElementById('toggleCrowd').onclick = () => {
+        document.getElementById("toggleCrowd").onclick = () => {
           this.audioAnalyzer.toggleCrowdNoise();
         };
 
-        // Load Custom Audio
-        document.getElementById('loadAudio').onclick = () => {
-          document.getElementById('audioFile').click();
+        document.getElementById("loadAudio").onclick = () => {
+          document.getElementById("audioFile").click();
         };
 
-        document.getElementById('audioFile').onchange = (event) => {
+        document.getElementById("audioFile").onchange = (event) => {
           const file = event.target.files[0];
           if (file) {
             this.audioAnalyzer.loadAudioFile(file);
@@ -401,22 +458,27 @@
 
       animate() {
         requestAnimationFrame(() => this.animate());
-
-        // Get the audio data each frame
         const audioData = this.audioAnalyzer.getAudioData();
-        // Update particle system & soccer ball
-        this.particleSystem.update(Array.from(audioData.frequency), performance.now() * 0.001);
+        this.particleSystem.update(
+          Array.from(audioData.frequency),
+          performance.now() * 0.001
+        );
 
-        // Compute an average frequency to show "SIUUU Energy"
-        const avgFreq = audioData.frequency.reduce((a, b) => a + b, 0) / audioData.frequency.length;
-        document.querySelector('.stat:last-child').textContent = `SIUUU Energy: ${(avgFreq / 256 * 100).toFixed(0)}%`;
+        const avgFreq =
+          audioData.frequency.reduce((a, b) => a + b, 0) /
+          audioData.frequency.length;
+        document.querySelector(".stat:last-child").textContent = `SIUUU Energy: ${(
+          (avgFreq / 256) *
+          100
+        ).toFixed(0)}%`;
 
         this.controls.update();
-        this.renderer.render(this.scene, this.camera);
+        // Use composer instead of renderer to get bloom
+        this.composer.render();
       }
     }
 
-    // Initialize
+    // Kick off
     new CR7Visualization();
   </script>
 </body>
