@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>CR7 Quantum SIUUU Experience (Enhanced)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- Google Font -->
   <link
     rel="stylesheet"
@@ -119,22 +119,13 @@
     <button id="loadAudio" class="btn">Load CR7 Chant</button>
   </div>
 
-  <!-- THREE.JS + ORBITCONTROLS + POSTPROCESSING (ES Modules) -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
-    }
-  }
-  </script>
-
+  <!-- THREE.JS AND RELATED MODULES (CDN) -->
   <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import * as THREE from 'https://unpkg.com/three@0.159.0/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.159.0/examples/jsm/controls/OrbitControls.js';
+    import { EffectComposer } from 'https://unpkg.com/three@0.159.0/examples/jsm/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'https://unpkg.com/three@0.159.0/examples/jsm/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'https://unpkg.com/three@0.159.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 
     // =========================
     // Audio Analyzer Class
@@ -147,10 +138,11 @@
         this.bufferLength = this.analyser.frequencyBinCount;
         this.dataArray = new Uint8Array(this.bufferLength);
         this.freqData = new Uint8Array(this.bufferLength);
-        this.isCrowdPlaying = false;
+
         this.crowdNoise = null;
         this.crowdPanner = null;
         this.panInterval = null;
+        this.isCrowdPlaying = false;
       }
 
       startSIUUU() {
@@ -161,12 +153,21 @@
         // Basic pitch slide: 800Hz -> 300Hz
         mainOsc.type = 'sine';
         mainOsc.frequency.setValueAtTime(800, this.audioContext.currentTime);
-        mainOsc.frequency.exponentialRampToValueAtTime(300, this.audioContext.currentTime + 0.6);
+        mainOsc.frequency.exponentialRampToValueAtTime(
+          300,
+          this.audioContext.currentTime + 0.6
+        );
 
         // Volume envelope
         mainGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        mainGain.gain.linearRampToValueAtTime(0.7, this.audioContext.currentTime + 0.1);
-        mainGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.6);
+        mainGain.gain.linearRampToValueAtTime(
+          0.7,
+          this.audioContext.currentTime + 0.1
+        );
+        mainGain.gain.linearRampToValueAtTime(
+          0,
+          this.audioContext.currentTime + 0.6
+        );
 
         // Vibrato
         const vibratoOsc = this.audioContext.createOscillator();
@@ -181,7 +182,7 @@
         const delayNode = this.audioContext.createDelay(1.0);
         delayNode.delayTime.value = 0.2;  // echo delay
         const feedbackGain = this.audioContext.createGain();
-        feedbackGain.gain.value = 0.25; // how much feedback
+        feedbackGain.gain.value = 0.25;   // how much echo feedback
         delayNode.connect(feedbackGain);
         feedbackGain.connect(delayNode);
 
@@ -197,7 +198,7 @@
         mainOsc.start();
         vibratoOsc.start();
 
-        // Stop after ~0.6s so main note doesn't linger forever
+        // Stop after ~0.6s so main note doesn't linger
         mainOsc.stop(this.audioContext.currentTime + 0.6);
         vibratoOsc.stop(this.audioContext.currentTime + 0.6);
 
@@ -211,12 +212,16 @@
       toggleCrowdNoise() {
         if (this.isCrowdPlaying) {
           // Stop existing noise
-          if (this.crowdNoise) this.crowdNoise.stop();
+          if (this.crowdNoise) {
+            this.crowdNoise.stop();
+          }
           this.crowdNoise = null;
           this.isCrowdPlaying = false;
-          // Stop random panning
-          if (this.panInterval) clearInterval(this.panInterval);
-          this.panInterval = null;
+          // Stop random panning updates
+          if (this.panInterval) {
+            clearInterval(this.panInterval);
+            this.panInterval = null;
+          }
           document.getElementById('sound-status').textContent = "Crowd chant stopped";
         } else {
           // Start noise
@@ -229,7 +234,11 @@
       startCrowdNoise() {
         // Create noise buffer
         const bufferSize = 2 * this.audioContext.sampleRate;
-        const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const noiseBuffer = this.audioContext.createBuffer(
+          1,
+          bufferSize,
+          this.audioContext.sampleRate
+        );
         const output = noiseBuffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
           output[i] = Math.random() * 2 - 1;
@@ -260,8 +269,7 @@
 
         // Randomly change panner position every second
         this.panInterval = setInterval(() => {
-          // Pan range: -1 (full left) to +1 (full right)
-          const randomPan = Math.random() * 2 - 1;
+          const randomPan = Math.random() * 2 - 1; // -1 to +1
           this.crowdPanner.pan.setValueAtTime(randomPan, this.audioContext.currentTime);
         }, 1000);
 
@@ -328,10 +336,10 @@
         });
         this.points = new THREE.Points(geometry, material);
 
-        // Golden soccer ball with texture
+        // Gold soccer ball
         const soccerBallGeometry = new THREE.SphereGeometry(1, 32, 32);
         const soccerBallMaterial = new THREE.MeshStandardMaterial({
-          map: soccerTexture,
+          map: soccerTexture,  // gold texture
           color: 0xFFD700,
           roughness: 0.3,
           metalness: 0.9
@@ -361,10 +369,11 @@
       }
 
       async init() {
-        // Load a quick texture for the soccer ball (metal-ish)
+        // Load a gold-ish texture from GitHub (hosted image)
         const goldTextureURL =
           "https://raw.githubusercontent.com/dmr-capstone/chatgpt-textures/main/dark_gold.jpg";
         const soccerTexture = await this.loader.loadAsync(goldTextureURL);
+
         this.setupRenderer();
         this.createScene(soccerTexture);
         this.setupAudioControls();
@@ -430,6 +439,7 @@
 
       setupAudioControls() {
         document.getElementById("startAudio").onclick = async () => {
+          // Resume audio context if suspended
           if (this.audioAnalyzer.audioContext.state === "suspended") {
             await this.audioAnalyzer.audioContext.resume();
           }
@@ -458,22 +468,21 @@
 
       animate() {
         requestAnimationFrame(() => this.animate());
+        // Grab audio data
         const audioData = this.audioAnalyzer.getAudioData();
+        // Update 3D
         this.particleSystem.update(
           Array.from(audioData.frequency),
           performance.now() * 0.001
         );
 
-        const avgFreq =
-          audioData.frequency.reduce((a, b) => a + b, 0) /
-          audioData.frequency.length;
-        document.querySelector(".stat:last-child").textContent = `SIUUU Energy: ${(
-          (avgFreq / 256) *
-          100
-        ).toFixed(0)}%`;
+        // Compute average frequency for "SIUUU Energy"
+        const avgFreq = audioData.frequency.reduce((a, b) => a + b, 0) / audioData.frequency.length;
+        document.querySelector(".stat:last-child").textContent = 
+          `SIUUU Energy: ${(avgFreq / 256 * 100).toFixed(0)}%`;
 
         this.controls.update();
-        // Use composer instead of renderer to get bloom
+        // Render with post-processing
         this.composer.render();
       }
     }
