@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CR7 Minimal SIUUU Demo</title>
+  <title>CR7 Fractal SIUUU Demo</title>
   <style>
     /* Basic Reset */
     body {
       margin: 0;
       overflow: hidden;
-      background: #000;
+      background: #000; /* CR7 black background */
       font-family: sans-serif;
       color: #fff;
     }
-    /* Simple Controls & Labels */
+    /* Controls & Labels */
     #audio-controls {
       position: fixed;
       bottom: 20px;
@@ -25,13 +25,13 @@
       display: flex;
       gap: 10px;
       align-items: center;
-      border: 2px solid #FFD700;
+      border: 2px solid #FFD700; /* gold border */
     }
     .btn {
       background: #333;
-      border: 2px solid #FFD700;
+      border: 2px solid #FFD700; /* gold border */
       padding: 8px 16px;
-      color: #FFD700;
+      color: #FFD700; /* gold text */
       border-radius: 5px;
       cursor: pointer;
       transition: 0.3s;
@@ -40,7 +40,7 @@
       letter-spacing: 1px;
     }
     .btn:hover {
-      background: #FFD700;
+      background: #FFD700; /* gold hover */
       color: #000;
     }
     #sound-status {
@@ -102,7 +102,7 @@
         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
         this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
 
-        // Crowd noise toggles
+        // Crowd noise toggle
         this.crowdSource = null;
         this.isCrowdOn = false;
 
@@ -116,7 +116,7 @@
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
 
-        // Slide pitch from ~800Hz -> ~300Hz in ~0.6s
+        // Pitch slide: 800Hz -> 300Hz over ~0.6s
         osc.type = 'sine';
         osc.frequency.setValueAtTime(800, now);
         osc.frequency.exponentialRampToValueAtTime(300, now + 0.6);
@@ -139,14 +139,14 @@
         gain.connect(this.analyser);
         gain.connect(this.audioContext.destination);
 
-        // Start & Stop
+        // Start & stop
         const endTime = now + 0.6;
         osc.start(now);
         vibratoOsc.start(now);
         osc.stop(endTime);
         vibratoOsc.stop(endTime);
 
-        // Update status text
+        // Status
         document.getElementById('sound-status').textContent = "SIUUUUUU!!!";
         setTimeout(() => {
           document.getElementById('sound-status').textContent = this.isCrowdOn
@@ -167,7 +167,7 @@
           return;
         }
 
-        // Create some random noise
+        // Create random noise
         const sampleRate = this.audioContext.sampleRate;
         const bufferSize = sampleRate * 2; // 2s buffer
         const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, sampleRate);
@@ -175,12 +175,11 @@
         for (let i = 0; i < bufferSize; i++) {
           output[i] = Math.random() * 2 - 1;
         }
-
         const source = this.audioContext.createBufferSource();
         source.buffer = noiseBuffer;
         source.loop = true;
 
-        // Simple band-pass filter
+        // Band-pass
         const bandpass = this.audioContext.createBiquadFilter();
         bandpass.type = 'bandpass';
         bandpass.frequency.value = 300;
@@ -188,8 +187,9 @@
 
         // Soft gain
         const crowdGain = this.audioContext.createGain();
-        crowdGain.gain.value = 0.15; // volume
+        crowdGain.gain.value = 0.15;
 
+        // Connect
         source.connect(bandpass);
         bandpass.connect(crowdGain);
         crowdGain.connect(this.analyser);
@@ -210,7 +210,6 @@
           document.getElementById('sound-status').textContent = "Mic OFF";
           return;
         }
-
         // Turn on mic
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -254,6 +253,7 @@
     class CR7Visualization {
       constructor() {
         this.audio = new AudioAnalyzer();
+        this.fractalVertices = null;
         this.init3D();
         this.initControls();
         this.animate();
@@ -263,14 +263,14 @@
         this.scene = new THREE.Scene();
         // Minimal camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.z = 5;
+        this.camera.position.z = 7;
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
 
-        // Handle resize
+        // Resize handling
         window.addEventListener('resize', () => {
           this.camera.aspect = window.innerWidth / window.innerHeight;
           this.camera.updateProjectionMatrix();
@@ -288,25 +288,28 @@
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
 
-        // Particles
+        // Gold Particles
         this.initParticles();
 
-        // Soccer Ball
+        // White Soccer Ball
         this.initSoccerBall();
+
+        // Red Fractal Plane (sound-reactive)
+        this.initFractalPlane();
       }
 
       initParticles() {
         const geometry = new THREE.BufferGeometry();
-        const count = 1000; // fewer to keep it simple
+        const count = 1000; // fewer to keep it light
         const positions = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
-          positions[i*3 + 0] = (Math.random() - 0.5) * 50;
-          positions[i*3 + 1] = (Math.random() - 0.5) * 50;
-          positions[i*3 + 2] = (Math.random() - 0.5) * 50;
+          positions[i * 3]     = (Math.random() - 0.5) * 50;
+          positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+          positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
         }
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         const material = new THREE.PointsMaterial({
-          color: 0xFFD700,
+          color: 0xFFD700, // gold
           size: 0.3,
           blending: THREE.AdditiveBlending,
           transparent: true,
@@ -318,14 +321,70 @@
 
       initSoccerBall() {
         const geometry = new THREE.SphereGeometry(1, 32, 32);
+        // White ball
         const material = new THREE.MeshStandardMaterial({
-          color: 0xFFD700,
+          color: 0xffffff,
           roughness: 0.3,
-          metalness: 0.7
+          metalness: 0.2
         });
         this.soccerBall = new THREE.Mesh(geometry, material);
         this.soccerBall.position.set(0, 0, 0);
         this.scene.add(this.soccerBall);
+      }
+
+      initFractalPlane() {
+        // Create a plane geometry, subdivided for fractal movement
+        const segs = 50; 
+        const geometry = new THREE.PlaneGeometry(10, 10, segs, segs);
+
+        // Red fractal plane
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xff0000, // red
+          side: THREE.DoubleSide,
+          wireframe: false,
+          metalness: 0.3,
+          roughness: 0.7
+        });
+        this.fractalPlane = new THREE.Mesh(geometry, material);
+
+        // Rotate to lie flat (like a floor)
+        this.fractalPlane.rotation.x = -Math.PI / 2;
+
+        // Store original vertex positions
+        this.fractalVertices = geometry.attributes.position.array.slice();
+
+        this.scene.add(this.fractalPlane);
+      }
+
+      // Simple fractal function (4-octave sine combo)
+      fractalFunc(x, y, t) {
+        let total = 0;
+        let freq = 1.0;
+        let amp = 1.0;
+        for (let i = 0; i < 4; i++) {
+          total += Math.sin((x * freq + y * freq + t) * 2.0) * amp;
+          freq *= 2.0;
+          amp *= 0.5;
+        }
+        return total;
+      }
+
+      updateFractalPlane(freqAvg, time) {
+        // "strength" of fractal response based on freqAvg
+        const strength = (freqAvg / 255) * 0.5; 
+
+        const posAttr = this.fractalPlane.geometry.attributes.position;
+        const arr = posAttr.array;
+
+        for (let i = 0; i < arr.length; i += 3) {
+          // Original X, Y from stored positions
+          const origX = this.fractalVertices[i];
+          const origY = this.fractalVertices[i + 1];
+          // fractal offset
+          const fracVal = this.fractalFunc(origX, origY, time);
+          arr[i + 2] = fracVal * strength; // modify Z
+        }
+        posAttr.needsUpdate = true;
       }
 
       initControls() {
@@ -358,19 +417,24 @@
 
       animate() {
         requestAnimationFrame(() => this.animate());
-        // Update visuals
         const { frequency } = this.audio.getAudioData();
-        // Simple rotation
-        this.particles.rotation.y += 0.001;
-        // Soccer ball rotates more if there's frequency presence
+
+        // Average frequency => "SIUUU Energy"
         const freqAvg = frequency.reduce((a, b) => a + b, 0) / frequency.length;
+        const energy = ((freqAvg / 255) * 100).toFixed(0);
+        document.querySelector('.stat').textContent = `SIUUU Energy: ${energy}%`;
+
+        // Spin gold particles a tiny bit
+        this.particles.rotation.y += 0.001;
+
+        // Soccer ball rotates more with freq
         const rotSpeed = 0.0005 * freqAvg;
         this.soccerBall.rotation.x += rotSpeed;
         this.soccerBall.rotation.y += rotSpeed;
 
-        // Update "SIUUU Energy"
-        const energy = ((freqAvg / 255) * 100).toFixed(0);
-        document.querySelector('.stat').textContent = `SIUUU Energy: ${energy}%`;
+        // Update fractal plane
+        const time = performance.now() * 0.0002; // slow it down
+        this.updateFractalPlane(freqAvg, time);
 
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
