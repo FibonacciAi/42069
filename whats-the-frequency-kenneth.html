@@ -181,6 +181,41 @@
             border-radius: 5px;
             margin-top: 5px;
         }
+        /* Add to your existing CSS */
+.button {
+    /* ... existing styles ... */
+    transition: all 0.3s ease;
+}
+
+#visualMode-default {
+    background: linear-gradient(45deg, #00ff9d, #00ffb7);
+    border-color: #00ff9d;
+}
+
+#visualMode-wireframe {
+    background: linear-gradient(45deg, #ff00ee, #ff1493);
+    border-color: #ff00ee;
+}
+
+#visualMode-particles {
+    background: linear-gradient(45deg, #ff6b6b, #ffd700);
+    border-color: #ff6b6b;
+}
+
+#visualMode-ribbons {
+    background: linear-gradient(45deg, #4169e1, #00bfff);
+    border-color: #4169e1;
+}
+
+.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.button.active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
     </style>
 </head>
 <body>
@@ -335,19 +370,56 @@ class AudioEngine {
         this.masterGain.gain.setValueAtTime(volume, this.audioCtx.currentTime);
     }
 }
-
+// Add this BEFORE VisualizationEngine class definition
+const visualModes = {
+    default: {
+        mesh: 0x00ff9d, // Vibrant cyan-green
+        emissive: 0x005c36,
+        alternate: {
+            option1: 0x00ffb7, // Bright turquoise
+            option2: 0x39ff14, // Electric green
+            option3: 0x7fff00  // Chartreuse
+        }
+    },
+    wireframe: {
+        mesh: 0xff00ee, // Neon pink
+        emissive: 0x800077,
+        alternate: {
+            option1: 0xff1493, // Deep pink
+            option2: 0xff00ff, // Magenta
+            option3: 0xff69b4  // Hot pink
+        }
+    },
+    particles: {
+        primary: 0xff6b6b, // Coral
+        alternate: {
+            option1: 0xffd700, // Gold
+            option2: 0xff4500, // Orange red
+            option3: 0xff8c00  // Dark orange
+        }
+    },
+    ribbons: {
+        primary: 0x4169e1, // Royal blue
+        alternate: {
+            option1: 0x00bfff, // Deep sky blue
+            option2: 0x1e90ff, // Dodger blue
+            option3: 0x87ceeb  // Sky blue
+        }
+    }
+};
 // Visualization Engine Class
 class VisualizationEngine {
     constructor(audioEngine) {
-        this.audioEngine = audioEngine;
-        this.mode = 'default'; // default, wireframe, particles, ribbons
-        this.setupCanvases();
-        this.initializeThree();
-        this.createParticleSystems();
-        this.createRibbons();
-        this.setupPostProcessing();
-        this.animate();
-    }
+    this.audioEngine = audioEngine;
+    this.mode = 'default';
+    this.setupCanvases();
+    this.initializeThree();
+    this.createParticleSystems();
+    this.createRibbons();
+    this.createOrbitRings(); // Add this line
+    this.setupPostProcessing();
+    this.animate();
+}
 
     setupCanvases() {
         // [Previous canvas setup code remains the same]
@@ -411,7 +483,31 @@ class VisualizationEngine {
             this.composer.setSize(width, height);
         });
     }
+createOrbitRings() {
+    // First ring (top)
+    this.createOrbitRing(0, 2.5, 0, 0);
+    
+    // Second ring (middle-right)
+    this.createOrbitRing(1.5, 0, 45, Math.PI / 4);
+    
+    // Third ring (bottom-left)
+    this.createOrbitRing(-1.5, -1.5, -30, -Math.PI / 6);
+}
 
+createOrbitRing(x, y, rotation, tilt) {
+    const geometry = new THREE.TorusGeometry(3, 0.02, 16, 100);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xff3333,
+        transparent: true,
+        opacity: 0.6
+    });
+    const ring = new THREE.Mesh(geometry, material);
+    ring.position.set(x, y, 0);
+    ring.rotation.x = tilt;
+    ring.rotation.z = rotation * Math.PI / 180;
+    this.scene.add(ring);
+    return ring;
+}
     setupLighting() {
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(this.ambientLight);
@@ -517,17 +613,21 @@ class VisualizationEngine {
     }
 
     setVisualizationMode(mode) {
-        this.mode = mode;
-        this.vortexMesh.visible = mode === 'default' || mode === 'wireframe';
-        this.particleSystem.visible = mode === 'particles';
-        this.ribbons.forEach(ribbon => ribbon.visible = mode === 'ribbons');
+    this.mode = mode;
+    this.vortexMesh.visible = mode === 'default' || mode === 'wireframe';
+    this.particleSystem.visible = mode === 'particles';
+    this.ribbons.forEach(ribbon => ribbon.visible = mode === 'ribbons');
 
-        if (mode === 'wireframe') {
-            this.vortexMesh.material = this.materials.wireframe;
-        } else if (mode === 'default') {
-            this.vortexMesh.material = this.materials.default;
-        }
+    if (mode === 'wireframe') {
+        this.vortexMesh.material = this.materials.wireframe;
+        this.vortexMesh.material.color.setHex(visualModes.wireframe.mesh);
+        this.vortexMesh.material.emissive.setHex(visualModes.wireframe.emissive);
+    } else if (mode === 'default') {
+        this.vortexMesh.material = this.materials.default;
+        this.vortexMesh.material.color.setHex(visualModes.default.mesh);
+        this.vortexMesh.material.emissive.setHex(visualModes.default.emissive);
     }
+}
 
     updateGeometryDistortion() {
         const positions = this.baseGeometry.attributes.position.array;
