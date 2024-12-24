@@ -311,8 +311,10 @@ class CR7Visualization {
     }
 
     setupAudioControls() {
-        document.getElementById('startAudio').onclick = () => {
-            this.audioAnalyzer.audioContext.resume();
+        document.getElementById('startAudio').onclick = async () => {
+            if (this.audioAnalyzer.audioContext.state === 'suspended') {
+                await this.audioAnalyzer.audioContext.resume();
+            }
             this.audioAnalyzer.startSIUUU();
         };
 
