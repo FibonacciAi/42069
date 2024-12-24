@@ -18,11 +18,12 @@
             font-family: 'Arial', sans-serif;
         }
 
-        #container {
+        canvas {
             position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
         }
 
         .overlay {
@@ -30,34 +31,42 @@
             padding: 20px;
             background: rgba(0,0,0,0.7);
             border-radius: 10px;
-            pointer-events: auto;
-            backdrop-filter: blur(5px);
             z-index: 1000;
+            backdrop-filter: blur(5px);
+            max-width: 350px;
         }
 
         #info-panel {
             top: 20px;
             left: 20px;
-            max-width: 300px;
         }
 
         #controls {
             top: 20px;
             right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .button {
+        #audio-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .button, select {
             background: #1a1a1a;
             color: #fff;
             border: 1px solid #333;
             padding: 10px 20px;
-            margin: 5px;
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 1rem;
         }
 
-        .button:hover {
+        .button:hover, select:hover {
             background: #333;
             border-color: #88ccff;
         }
@@ -67,964 +76,482 @@
             color: #000;
         }
 
-        .analyzer-container {
-            position: fixed;
-            bottom: 80px;
+        .slider-container {
+            margin: 10px 0;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        #frequency-display {
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80%;
-            background: rgba(0,0,0,0.7);
-            border-radius: 10px;
-            padding: 15px;
-            backdrop-filter: blur(5px);
-        }
-
-        #frequency-spectrum {
-            width: 100%;
-            height: 150px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 5px;
-        }
-
-        .spectrum-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 5px;
-            font-size: 12px;
+            font-size: 24px;
             color: #88ccff;
-        }
-
-        #waveform {
-            width: 100%;
-            height: 80px;
-            margin-top: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 5px;
-        }
-
-        .filter-controls {
-            position: fixed;
-            left: 20px;
-            bottom: 20px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 10px;
-            padding: 15px;
-            backdrop-filter: blur(5px);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-width: 300px;
             z-index: 1000;
         }
 
-        .filter-slider {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .filter-slider label {
-            display: flex;
-            justify-content: space-between;
-            color: #88ccff;
-            font-size: 14px;
-        }
-
-        .filter-slider input[type="range"] {
-            width: 100%;
-            height: 20px;
-            -webkit-appearance: none;
-            background: rgba(136, 204, 255, 0.2);
+        #visualizer {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 100px;
+            background: rgba(0,0,0,0.5);
             border-radius: 10px;
-            outline: none;
+            z-index: 1000;
         }
 
-        .filter-slider input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #88ccff;
+        /* Number Grid Styling */
+        #number-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .number-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 1.5rem;
+            user-select: none;
         }
 
-        .filter-slider input[type="range"]::-webkit-slider-thumb:hover {
-            background: #aaddff;
+        .number-cell:hover {
+            background: rgba(136,204,255,0.3);
             transform: scale(1.1);
         }
 
-        .preset-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            #controls, #info-panel, #frequency-display, #visualizer {
+                max-width: 90%;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            #controls {
+                top: auto;
+                bottom: 140px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            #audio-controls {
+                grid-template-columns: 1fr;
+            }
+
+            #number-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
-
-        .preset-button {
-            background: rgba(136, 204, 255, 0.2);
-            border: 1px solid #88ccff;
-            color: #88ccff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .preset-button:hover {
-            background: rgba(136, 204, 255, 0.4);
-        }
-
-        .filter-response {
-            width: 100%;
-            height: 60px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 5px;
-            margin-top: 5px;
-        }
-        /* Add to your existing CSS */
-.button {
-    /* ... existing styles ... */
-    transition: all 0.3s ease;
-}
-
-#visualMode-default {
-    background: linear-gradient(45deg, #00ff9d, #00ffb7);
-    border-color: #00ff9d;
-}
-
-#visualMode-wireframe {
-    background: linear-gradient(45deg, #ff00ee, #ff1493);
-    border-color: #ff00ee;
-}
-
-#visualMode-particles {
-    background: linear-gradient(45deg, #ff6b6b, #ffd700);
-    border-color: #ff6b6b;
-}
-
-#visualMode-ribbons {
-    background: linear-gradient(45deg, #4169e1, #00bfff);
-    border-color: #4169e1;
-}
-
-.button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.button.active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-.control-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 10px 0;
-}
-
-.slider {
-    width: 150px;
-    height: 5px;
-    -webkit-appearance: none;
-    background: #333;
-    outline: none;
-    border-radius: 5px;
-}
-
-.slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: #4169E1;
-    cursor: pointer;
-}
-
-.slider::-moz-range-thumb {
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: #4169E1;
-    cursor: pointer;
-}
-
-#speedValue {
-    color: white;
-    font-size: 14px;
-    min-width: 80px;
-}
     </style>
+    <!-- Three.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Tone.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- OrbitControls for better interaction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.min.js"></script>
 </head>
 <body>
-    <div id="container"></div>
-    
+    <canvas id="three-canvas"></canvas>
+
     <div id="info-panel" class="overlay">
         <h2>Vortex Mathematics</h2>
         <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
+        <div id="number-grid"></div>
     </div>
 
-   <div id="controls" class="overlay">
-    <!-- Add these elements with your existing controls -->
-    <div class="control-group">
-        <button class="button" id="toggleRotation">Toggle Rotation</button>
-        <input type="range" id="rotationSpeed" min="0" max="100" value="50" class="slider">
-        <span id="speedValue">Speed: 0.01</span>
-    </div>
-</div>
-
-    <div class="analyzer-container">
-        <canvas id="frequency-spectrum"></canvas>
-        <div class="spectrum-labels">
-            <span>20 Hz</span>
-            <span>100 Hz</span>
-            <span>500 Hz</span>
-            <span>1 kHz</span>
-            <span>5 kHz</span>
-            <span>20 kHz</span>
+    <div id="controls" class="overlay">
+        <div id="audio-controls">
+            <button class="button" id="togglePlay">Start</button>
+            <button class="button" id="toggleRotation">Toggle Rotation</button>
+            <select class="button" id="waveformSelect">
+                <option value="sine">Sine</option>
+                <option value="triangle">Triangle</option>
+                <option value="square">Square</option>
+                <option value="sawtooth">Sawtooth</option>
+            </select>
+            <select class="button" id="scaleSelect">
+                <option value="pythagorean">Pythagorean</option>
+                <option value="just">Just Intonation</option>
+                <option value="equal">Equal Temperament</option>
+            </select>
         </div>
-        <canvas id="waveform"></canvas>
-    </div>
-
-    <div class="filter-controls">
-        <h3 style="color: #88ccff; margin-bottom: 10px;">Frequency Filters</h3>
-        
-        <div class="filter-slider">
-            <label>
-                <span>Low-Pass Cutoff</span>
-                <span id="lpf-value">20000 Hz</span>
-            </label>
-            <input type="range" id="lpf-frequency" min="20" max="20000" step="1" value="20000">
-            <canvas id="lpf-response" class="filter-response"></canvas>
+        <div class="slider-container">
+            <label for="masterVolume">Master Volume</label>
+            <input type="range" id="masterVolume" class="slider" min="0" max="1" step="0.01" value="0.5">
         </div>
-
-        <div class="filter-slider">
-            <label>
-                <span>High-Pass Cutoff</span>
-                <span id="hpf-value">20 Hz</span>
-            </label>
-            <input type="range" id="hpf-frequency" min="20" max="20000" step="1" value="20">
-            <canvas id="hpf-response" class="filter-response"></canvas>
-        </div>
-
-        <div class="filter-slider">
-            <label>
-                <span>Peak Frequency</span>
-                <span id="peak-value">1000 Hz</span>
-            </label>
-            <input type="range" id="peak-frequency" min="20" max="20000" step="1" value="1000">
-            <input type="range" id="peak-gain" min="-12" max="12" step="0.1" value="0">
-            <canvas id="peak-response" class="filter-response"></canvas>
-        </div>
-
-        <div class="preset-buttons">
-            <button class="preset-button" data-preset="flat">Flat</button>
-            <button class="preset-button" data-preset="bass">Bass Boost</button>
-            <button class="preset-button" data-preset="vocal">Vocal Boost</button>
-            <button class="preset-button" data-preset="air">Air Boost</button>
+        <div class="slider-container">
+            <label for="fmDepth">Frequency Modulation Depth</label>
+            <input type="range" id="fmDepth" class="slider" min="0" max="100" value="0">
         </div>
     </div>
 
-    <!-- Script tags will be added in the next parts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/FilmPass.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://unpkg.com/three@0.137.0/examples/js/shaders/FilmShader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-<script>
-// Core Audio Engine Class
-class AudioEngine {
-    constructor() {
-        this.initializeAudioContext();
-        this.setupNodes();
-        this.setupAnalyzers();
-    }
+    <canvas id="visualizer"></canvas>
+    <div id="frequency-display" class="overlay">432 Hz</div>
 
-    initializeAudioContext() {
-        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        this.started = false;
-    }
+    <script>
+        // AudioEngine Class with Corrected Frequency Modulation Implementation
+        class AudioEngine {
+            constructor() {
+                this.scales = {
+                    pythagorean: [1, 9/8, 81/64, 4/3, 3/2, 27/16, 243/128, 2],
+                    just: [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2],
+                    equal: [1, 1.059463, 1.122462, 1.189207, 1.259921, 1.334840, 1.414214, 1.498307]
+                };
 
-    setupNodes() {
-        // Oscillator
-        this.oscillator = this.audioCtx.createOscillator();
-        this.oscillator.type = 'sine';
-        this.oscillator.frequency.setValueAtTime(432, this.audioCtx.currentTime);
+                this.baseFrequency = 432;
+                this.currentScale = 'pythagorean';
+                this.waveform = 'sine';
+                this.fmDepth = 0; // Initial FM Depth
 
-        // Gain
-        this.masterGain = this.audioCtx.createGain();
-        this.masterGain.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
+                this.initTone();
+            }
 
-        // Compressor
-        this.compressor = this.audioCtx.createDynamicsCompressor();
-        this.compressor.threshold.setValueAtTime(-24, this.audioCtx.currentTime);
-        this.compressor.knee.setValueAtTime(30, this.audioCtx.currentTime);
-        this.compressor.ratio.setValueAtTime(12, this.audioCtx.currentTime);
-        this.compressor.attack.setValueAtTime(0.003, this.audioCtx.currentTime);
-        this.compressor.release.setValueAtTime(0.25, this.audioCtx.currentTime);
-    }
+            async initTone() {
+                await Tone.start();
+                Tone.Transport.bpm.value = 60;
 
-    setupAnalyzers() {
-        // FFT Analyzer
-        this.fftAnalyzer = this.audioCtx.createAnalyser();
-        this.fftAnalyzer.fftSize = 2048;
-        this.fftBufferLength = this.fftAnalyzer.frequencyBinCount;
-        this.fftDataArray = new Uint8Array(this.fftBufferLength);
+                // Create Carrier Synth
+                this.carrier = new Tone.Synth({
+                    oscillator: {
+                        type: this.waveform,
+                        frequency: this.baseFrequency
+                    },
+                    envelope: {
+                        attack: 0.05,
+                        decay: 0.2,
+                        sustain: 0.8,
+                        release: 1
+                    }
+                });
 
-        // Waveform Analyzer
-        this.waveAnalyzer = this.audioCtx.createAnalyser();
-        this.waveAnalyzer.fftSize = 1024;
-        this.waveBufferLength = this.waveAnalyzer.frequencyBinCount;
-        this.waveDataArray = new Uint8Array(this.waveBufferLength);
+                // Create Modulator Synth for FM
+                this.modulator = new Tone.Oscillator({
+                    type: this.waveform,
+                    frequency: this.baseFrequency * 2,
+                    volume: -Infinity // Initially muted
+                });
 
-        // Connect nodes
-        this.oscillator.connect(this.masterGain);
-        this.masterGain.connect(this.compressor);
-        this.compressor.connect(this.fftAnalyzer);
-        this.fftAnalyzer.connect(this.waveAnalyzer);
-        this.waveAnalyzer.connect(this.audioCtx.destination);
-    }
+                // FM Depth Control
+                this.fmGain = new Tone.Gain(0).toDestination();
 
-    start() {
-        if (!this.started) {
-            this.oscillator.start();
-            this.started = true;
-        }
-    }
+                // Connect Modulator to Carrier's frequency for FM
+                this.modulator.connect(this.fmGain);
+                this.fmGain.connect(this.carrier.frequency);
 
-    setFrequency(freq) {
-        this.oscillator.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
-    }
+                // Create Effects
+                this.chorus = new Tone.Chorus(4, 2.5, 0.5).start();
+                this.delay = new Tone.FeedbackDelay("8n", 0.2);
+                this.reverb = new Tone.Reverb({
+                    decay: 5,
+                    preDelay: 0.1
+                });
+                this.compressor = new Tone.Compressor({
+                    threshold: -24,
+                    ratio: 12,
+                    attack: 0.003,
+                    release: 0.25
+                });
+                this.masterVolume = new Tone.Volume(-12).toDestination();
 
-    setVolume(volume) {
-        this.masterGain.gain.setValueAtTime(volume, this.audioCtx.currentTime);
-    }
-}
-// Add this BEFORE VisualizationEngine class definition
-const visualModes = {
-    default: {
-        mesh: 0x00ff9d, // Vibrant cyan-green
-        emissive: 0x005c36,
-        alternate: {
-            option1: 0x00ffb7, // Bright turquoise
-            option2: 0x39ff14, // Electric green
-            option3: 0x7fff00  // Chartreuse
-        }
-    },
-    wireframe: {
-        mesh: 0xff00ee, // Neon pink
-        emissive: 0x800077,
-        alternate: {
-            option1: 0xff1493, // Deep pink
-            option2: 0xff00ff, // Magenta
-            option3: 0xff69b4  // Hot pink
-        }
-    },
-    particles: {
-        primary: 0xff6b6b, // Coral
-        alternate: {
-            option1: 0xffd700, // Gold
-            option2: 0xff4500, // Orange red
-            option3: 0xff8c00  // Dark orange
-        }
-    },
-    ribbons: {
-        primary: 0x4169e1, // Royal blue
-        alternate: {
-            option1: 0x00bfff, // Deep sky blue
-            option2: 0x1e90ff, // Dodger blue
-            option3: 0x87ceeb  // Sky blue
-        }
-    }
-};
-// Visualization Engine Class
-class VisualizationEngine {
-    constructor(audioEngine) {
-    this.audioEngine = audioEngine;
-    this.mode = 'default';
-    this.setupCanvases();
-    this.initializeThree();
-    this.createParticleSystems();
-    this.createRibbons();
-    this.createOrbitRings(); // Add this line
-    this.setupPostProcessing();
-    this.animate();
-}
+                // Connect Carrier to Effects Chain
+                this.carrier.chain(
+                    this.chorus,
+                    this.delay,
+                    this.reverb,
+                    this.compressor,
+                    this.masterVolume
+                );
 
-    setupCanvases() {
-        // [Previous canvas setup code remains the same]
-    }
+                // Analyzer for Visualizer
+                this.analyzer = new Tone.Analyser("waveform", 1024);
+                this.masterVolume.connect(this.analyzer);
+            }
 
-    initializeThree() {
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.renderer = new THREE.WebGLRenderer({ 
-            antialias: true,
-            powerPreference: "high-performance"
-        });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        document.getElementById('container').appendChild(this.renderer.domElement);
+            setWaveform(type) {
+                this.waveform = type;
+                this.carrier.oscillator.type = type;
+                this.modulator.type = type;
+            }
 
-        // Base geometry
-        this.baseGeometry = new THREE.TorusKnotGeometry(2, 0.5, 256, 64, 2, 3);
-        this.vertices = this.baseGeometry.attributes.position.array;
-        this.originalVertices = [...this.vertices];
+            setScale(scaleName) {
+                this.currentScale = scaleName;
+                this.updateFrequencies();
+            }
 
-        // Materials
-        // Update the materials section in initializeThree()
-this.materials = {
-    default: new THREE.MeshStandardMaterial({
-        color: 0x4169E1,         // Royal Blue
-        metalness: 0.8,
-        roughness: 0.2,
-        emissive: 0x1E90FF,      // Dodger Blue
-        emissiveIntensity: 0.5,
-        transparent: true,
-        opacity: 0.9
-    }),
-    wireframe: new THREE.MeshStandardMaterial({
-        color: 0x00BFFF,         // Deep Sky Blue
-        wireframe: true,
-        emissive: 0x87CEEB,      // Sky Blue
-        emissiveIntensity: 0.7
-    })
-};
-
-// Update the base geometry
-this.baseGeometry = new THREE.TorusKnotGeometry(2, 0.6, 300, 80, 2, 3);
-
-        // Main mesh
-        this.vortexMesh = new THREE.Mesh(this.baseGeometry, this.materials.default);
-        this.scene.add(this.vortexMesh);
-
-        // Lighting
-        this.setupLighting();
-
-        // Camera position
-        this.camera.position.z = 5;
-        
-        // Orbit controls
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-
-        window.addEventListener('resize', () => {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            this.camera.aspect = width / height;
-            this.camera.updateProjectionMatrix();
-            this.renderer.setSize(width, height);
-            this.composer.setSize(width, height);
-        });
-    }
-createOrbitRings() {
-    // First ring (top)
-    this.createOrbitRing(0, 2.5, 0, 0);
-    
-    // Second ring (middle-right)
-    this.createOrbitRing(1.5, 0, 45, Math.PI / 4);
-    
-    // Third ring (bottom-left)
-    this.createOrbitRing(-1.5, -1.5, -30, -Math.PI / 6);
-}
-
-createOrbitRing(x, y, rotation, tilt) {
-    const geometry = new THREE.TorusGeometry(3, 0.02, 16, 100);
-    const material = new THREE.MeshBasicMaterial({
-        color: 0xff3333,
-        transparent: true,
-        opacity: 0.6
-    });
-    const ring = new THREE.Mesh(geometry, material);
-    ring.position.set(x, y, 0);
-    ring.rotation.x = tilt;
-    ring.rotation.z = rotation * Math.PI / 180;
-    this.scene.add(ring);
-    return ring;
-}
-    setupLighting() {
-        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.scene.add(this.ambientLight);
-
-        this.pointLights = [];
-        const colors = [0x88ccff, 0xff88cc, 0xccff88];
-        
-        for (let i = 0; i < 3; i++) {
-            const light = new THREE.PointLight(colors[i], 1, 10);
-            light.position.set(
-                Math.cos(i * Math.PI * 2 / 3) * 5,
-                Math.sin(i * Math.PI * 2 / 3) * 5,
-                2
-            );
-            this.pointLights.push(light);
-            this.scene.add(light);
-        }
-    }
-
-    createParticleSystems() {
-    const particleCount = 15000;  // Increased particle count
-    const particleGeometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount; i++) {
-        const i3 = i * 3;
-        positions[i3] = (Math.random() - 0.5) * 10;
-        positions[i3 + 1] = (Math.random() - 0.5) * 10;
-        positions[i3 + 2] = (Math.random() - 0.5) * 10;
-
-        colors[i3] = Math.random();
-        colors[i3 + 1] = Math.random();
-        colors[i3 + 2] = Math.random();
-    }
-
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const particleMaterial = new THREE.PointsMaterial({
-        size: 0.05,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending
-    });
-
-    this.particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-    this.scene.add(this.particleSystem);
-    this.particleSystem.visible = false;
-}
-
-    createRibbons() {
-        this.ribbons = [];
-        const ribbonCount = 12;
-        
-        for (let i = 0; i < ribbonCount; i++) {
-            const curve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-5, 0, 0),
-                new THREE.Vector3(0, 2, 2),
-                new THREE.Vector3(5, 0, 0),
-                new THREE.Vector3(0, -2, -2)
-            ]);
-
-            const geometry = new THREE.TubeGeometry(curve, 100, 0.1, 8, false);
-            const material = new THREE.MeshStandardMaterial({
-                color: new THREE.Color().setHSL(i / ribbonCount, 0.8, 0.5),
-                metalness: 0.8,
-                roughness: 0.2
-            });
-
-            const ribbon = new THREE.Mesh(geometry, material);
-            ribbon.rotation.z = (i / ribbonCount) * Math.PI * 2;
-            this.ribbons.push(ribbon);
-            this.scene.add(ribbon);
-            ribbon.visible = false;
-        }
-    }
-
-    setupPostProcessing() {
-        this.composer = new THREE.EffectComposer(this.renderer);
-        
-        // Render pass
-        const renderPass = new THREE.RenderPass(this.scene, this.camera);
-        this.composer.addPass(renderPass);
-
-        // Bloom pass
-        this.bloomPass = new THREE.UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.5,  // strength
-            0.4,  // radius
-            0.85  // threshold
-        );
-        this.composer.addPass(this.bloomPass);
-
-        // Film pass for grain effect
-        this.filmPass = new THREE.FilmPass(
-            0.35,  // noise intensity
-            0.025, // scanline intensity
-            648,   // scanline count
-            false  // grayscale
-        );
-        this.composer.addPass(this.filmPass);
-    }
-
-    setVisualizationMode(mode) {
-    this.mode = mode;
-    this.vortexMesh.visible = mode === 'default' || mode === 'wireframe';
-    this.particleSystem.visible = mode === 'particles';
-    this.ribbons.forEach(ribbon => ribbon.visible = mode === 'ribbons');
-
-    if (mode === 'wireframe') {
-        this.vortexMesh.material = this.materials.wireframe;
-        this.vortexMesh.material.color.setHex(visualModes.wireframe.mesh);
-        this.vortexMesh.material.emissive.setHex(visualModes.wireframe.emissive);
-    } else if (mode === 'default') {
-        this.vortexMesh.material = this.materials.default;
-        this.vortexMesh.material.color.setHex(visualModes.default.mesh);
-        this.vortexMesh.material.emissive.setHex(visualModes.default.emissive);
-    }
-}
-
-    updateGeometryDistortion() {
-        const positions = this.baseGeometry.attributes.position.array;
-        const frequency = this.audioEngine.oscillator.frequency.value;
-        const analyser = this.audioEngine.fftAnalyzer;
-        const dataArray = this.audioEngine.fftDataArray;
-        analyser.getByteFrequencyData(dataArray);
-
-        // Calculate average frequency intensity
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
-        }
-        const average = sum / dataArray.length;
-        const intensity = average / 255;
-
-        // Apply distortion
-        for (let i = 0; i < positions.length; i += 3) {
-            const offset = Math.sin(this.originalVertices[i] * frequency * 0.01 + Date.now() * 0.001);
-            positions[i] = this.originalVertices[i] + offset * intensity * 0.2;
-            positions[i + 1] = this.originalVertices[i + 1] + offset * intensity * 0.2;
-            positions[i + 2] = this.originalVertices[i + 2] + offset * intensity * 0.2;
-        }
-
-        this.baseGeometry.attributes.position.needsUpdate = true;
-
-        // Update color based on frequency
-        const hue = (frequency % 1000) / 1000;
-        this.vortexMesh.material.color.setHSL(hue, 0.8, 0.5);
-        this.vortexMesh.material.emissive.setHSL(hue, 0.8, 0.3);
-    }
-
-    updateParticles() {
-    if (this.mode === 'particles') {
-        const positions = this.particleSystem.geometry.attributes.position.array;
-        const colors = this.particleSystem.geometry.attributes.color.array;
-        const time = Date.now() * 0.001;
-        
-        for (let i = 0; i < positions.length; i += 3) {
-            // Slower movement and larger radius
-            const radius = 5;
-            const speed = 0.2;
-            const offset = i * 0.0001;
-            
-            // Spiral motion pattern
-            positions[i] = Math.cos(time * speed + offset) * radius * (1 + Math.sin(time * 0.1));
-            positions[i + 1] = Math.sin(time * speed + offset) * radius * (1 + Math.cos(time * 0.1));
-            positions[i + 2] = Math.cos(time * speed + offset + Math.PI) * radius * 0.5;
-
-            // Color cycling with better persistence
-            const hue = (Math.sin(time * 0.1 + i * 0.001) + 1) * 0.5;
-            const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
-            colors[i] = color.r;
-            colors[i + 1] = color.g;
-            colors[i + 2] = color.b;
-        }
-
-        this.particleSystem.geometry.attributes.position.needsUpdate = true;
-        this.particleSystem.geometry.attributes.color.needsUpdate = true;
-    }
-}
-
-    updateRibbons() {
-        if (this.mode === 'ribbons') {
-            const time = Date.now() * 0.001;
-            this.ribbons.forEach((ribbon, i) => {
-                ribbon.rotation.x = Math.sin(time * 0.5 + i) * 0.3;
-                ribbon.rotation.y = Math.cos(time * 0.3 + i) * 0.2;
+            updateFrequencies() {
+                const frequencies = this.scales[this.currentScale].map(ratio => 
+                    this.baseFrequency * ratio
+                );
                 
-                const hue = (i / this.ribbons.length + time * 0.1) % 1;
-                ribbon.material.color.setHSL(hue, 0.8, 0.5);
-            });
-        }
-    }
-
-    animate() {
-    requestAnimationFrame(() => this.animate());
-    
-    this.updateGeometryDistortion();
-    this.updateParticles();
-    this.updateRibbons();
-    this.controls.update();
-    this.composer.render();
-}
-</script>
-<script>
-// Frequency Filter System
-class FrequencyFilter {
-    constructor(audioEngine) {
-        this.audioEngine = audioEngine;
-        this.setupFilters();
-        this.setupControls();
-        this.setupPresets();
-        this.setupResponseVisualizers();
-    }
-
-    setupFilters() {
-        const ctx = this.audioEngine.audioCtx;
-
-        // Low-pass filter
-        this.lowPassFilter = ctx.createBiquadFilter();
-        this.lowPassFilter.type = 'lowpass';
-        this.lowPassFilter.frequency.value = 20000;
-        this.lowPassFilter.Q.value = 0.707;
-
-        // High-pass filter
-        this.highPassFilter = ctx.createBiquadFilter();
-        this.highPassFilter.type = 'highpass';
-        this.highPassFilter.frequency.value = 20;
-        this.highPassFilter.Q.value = 0.707;
-
-        // Peak filter
-        this.peakFilter = ctx.createBiquadFilter();
-        this.peakFilter.type = 'peaking';
-        this.peakFilter.frequency.value = 1000;
-        this.peakFilter.gain.value = 0;
-        this.peakFilter.Q.value = 1;
-
-        // Reconnect audio chain
-        this.audioEngine.compressor.disconnect();
-        this.audioEngine.compressor.connect(this.highPassFilter);
-        this.highPassFilter.connect(this.lowPassFilter);
-        this.lowPassFilter.connect(this.peakFilter);
-        this.peakFilter.connect(this.audioEngine.fftAnalyzer);
-    }
-
-    setupControls() {
-        // Low-pass filter controls
-        const lpfSlider = document.getElementById('lpf-frequency');
-        const lpfValue = document.getElementById('lpf-value');
-        
-        lpfSlider.addEventListener('input', (e) => {
-            const frequency = this.logScale(e.target.value);
-            this.lowPassFilter.frequency.setValueAtTime(frequency, this.audioEngine.audioCtx.currentTime);
-            lpfValue.textContent = `${Math.round(frequency)} Hz`;
-            this.updateFilterResponses();
-        });
-
-        // High-pass filter controls
-        const hpfSlider = document.getElementById('hpf-frequency');
-        const hpfValue = document.getElementById('hpf-value');
-        
-        hpfSlider.addEventListener('input', (e) => {
-            const frequency = this.logScale(e.target.value);
-            this.highPassFilter.frequency.setValueAtTime(frequency, this.audioEngine.audioCtx.currentTime);
-            hpfValue.textContent = `${Math.round(frequency)} Hz`;
-            this.updateFilterResponses();
-        });
-
-        // Peak filter controls
-        const peakFreqSlider = document.getElementById('peak-frequency');
-        const peakGainSlider = document.getElementById('peak-gain');
-        const peakValue = document.getElementById('peak-value');
-        
-        peakFreqSlider.addEventListener('input', (e) => {
-            const frequency = this.logScale(e.target.value);
-            this.peakFilter.frequency.setValueAtTime(frequency, this.audioEngine.audioCtx.currentTime);
-            peakValue.textContent = `${Math.round(frequency)} Hz`;
-            this.updateFilterResponses();
-        });
-
-        peakGainSlider.addEventListener('input', (e) => {
-            this.peakFilter.gain.setValueAtTime(parseFloat(e.target.value), this.audioEngine.audioCtx.currentTime);
-            this.updateFilterResponses();
-        });
-    }
-
-    setupPresets() {
-        const presets = {
-            flat: {
-                lowPass: 20000,
-                highPass: 20,
-                peakFreq: 1000,
-                peakGain: 0
-            },
-            bass: {
-                lowPass: 20000,
-                highPass: 20,
-                peakFreq: 60,
-                peakGain: 6
-            },
-            vocal: {
-                lowPass: 20000,
-                highPass: 100,
-                peakFreq: 3000,
-                peakGain: 3
-            },
-            air: {
-                lowPass: 20000,
-                highPass: 20,
-                peakFreq: 12000,
-                peakGain: 6
+                // Update carrier frequency
+                this.carrier.oscillator.frequency.value = frequencies[0];
+                // Update modulator frequency
+                this.modulator.frequency.value = frequencies[1];
             }
-        };
 
-        document.querySelectorAll('.preset-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const preset = presets[button.dataset.preset];
-                this.applyPreset(preset);
-            });
-        });
-    }
+            setMasterVolume(value) {
+                this.masterVolume.volume.value = Tone.gainToDb(value);
+            }
 
-    applyPreset(preset) {
-        const ctx = this.audioEngine.audioCtx;
-        
-        // Update filter values
-        this.lowPassFilter.frequency.setValueAtTime(preset.lowPass, ctx.currentTime);
-        this.highPassFilter.frequency.setValueAtTime(preset.highPass, ctx.currentTime);
-        this.peakFilter.frequency.setValueAtTime(preset.peakFreq, ctx.currentTime);
-        this.peakFilter.gain.setValueAtTime(preset.peakGain, ctx.currentTime);
+            setFMDepth(depth) {
+                this.fmDepth = depth;
+                const normalizedDepth = depth / 100; // 0 to 1
+                this.fmGain.gain.value = normalizedDepth * 100; // Scale appropriately
+            }
 
-        // Update UI
-        document.getElementById('lpf-frequency').value = this.inverseLogScale(preset.lowPass);
-        document.getElementById('hpf-frequency').value = this.inverseLogScale(preset.highPass);
-        document.getElementById('peak-frequency').value = this.inverseLogScale(preset.peakFreq);
-        document.getElementById('peak-gain').value = preset.peakGain;
+            start() {
+                this.carrier.triggerAttack();
+                this.modulator.start();
+            }
 
-        document.getElementById('lpf-value').textContent = `${Math.round(preset.lowPass)} Hz`;
-        document.getElementById('hpf-value').textContent = `${Math.round(preset.highPass)} Hz`;
-        document.getElementById('peak-value').textContent = `${Math.round(preset.peakFreq)} Hz`;
-
-        this.updateFilterResponses();
-    }
-
-    setupResponseVisualizers() {
-        this.responseCanvases = {
-            lpf: document.getElementById('lpf-response'),
-            hpf: document.getElementById('hpf-response'),
-            peak: document.getElementById('peak-response')
-        };
-
-        Object.values(this.responseCanvases).forEach(canvas => {
-            canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-            canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-            const ctx = canvas.getContext('2d');
-            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        });
-
-        this.updateFilterResponses();
-    }
-
-    updateFilterResponses() {
-        this.drawFilterResponse(this.responseCanvases.lpf, this.lowPassFilter);
-        this.drawFilterResponse(this.responseCanvases.hpf, this.highPassFilter);
-        this.drawFilterResponse(this.responseCanvases.peak, this.peakFilter);
-    }
-
-    drawFilterResponse(canvas, filter) {
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width / window.devicePixelRatio;
-        const height = canvas.height / window.devicePixelRatio;
-
-        ctx.clearRect(0, 0, width, height);
-        ctx.beginPath();
-        ctx.strokeStyle = '#88ccff';
-        ctx.lineWidth = 2;
-
-        for (let x = 0; x < width; x++) {
-            const frequency = this.logScale(x / width * 20000);
-            const response = this.getFilterResponse(filter, frequency);
-            const y = height / 2 - (response * height / 4);
-            
-            if (x === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+            stop() {
+                this.carrier.triggerRelease();
+                this.modulator.stop();
             }
         }
 
-        ctx.stroke();
-    }
+        // Visualizer Class to Draw Audio Waveform
+        class Visualizer {
+            constructor(canvas, analyzer) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.analyzer = analyzer;
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
 
-    getFilterResponse(filter, frequency) {
-        const resonance = filter.Q ? filter.Q.value : 1;
-        const filterFreq = filter.frequency.value;
-        
-        if (filter.type === 'lowpass') {
-            return 1 / (1 + Math.pow(frequency / filterFreq, 2 * resonance));
-        } else if (filter.type === 'highpass') {
-            return 1 / (1 + Math.pow(filterFreq / frequency, 2 * resonance));
-        } else if (filter.type === 'peaking') {
-            const gain = filter.gain.value;
-            const bandwidth = 2 / resonance;
-            return 1 + (gain / 20) * (1 / (1 + Math.pow((frequency - filterFreq) / (bandwidth * filterFreq), 2)));
+            resize() {
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+            }
+
+            draw() {
+                requestAnimationFrame(() => this.draw());
+
+                const waveform = this.analyzer.getValue();
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = '#88ccff';
+                this.ctx.lineWidth = 2;
+
+                const sliceWidth = this.canvas.width / waveform.length;
+                let x = 0;
+
+                for (let i = 0; i < waveform.length; i++) {
+                    const y = (waveform[i] + 1) / 2 * this.canvas.height;
+
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+
+                    x += sliceWidth;
+                }
+
+                this.ctx.stroke();
+            }
         }
-        return 1;
-    }
 
-    logScale(value) {
-        return Math.exp(Math.log(20) + (Math.log(20000) - Math.log(20)) * value / 20000);
-    }
+        // Three.js Visualization Class
+        class ThreeVisualizer {
+            constructor() {
+                this.initThreeJS();
+                this.animate();
+            }
 
-    inverseLogScale(value) {
-        return 20000 * (Math.log(value) - Math.log(20)) / (Math.log(20000) - Math.log(20));
-    }
-}
+            initThreeJS() {
+                // Scene
+                this.scene = new THREE.Scene();
 
-// Main Application Class
-class VortexApp {
-    constructor() {
-        this.audioEngine = new AudioEngine();
-        this.visualizer = new VisualizationEngine(this.audioEngine);
-        this.filter = new FrequencyFilter(this.audioEngine);
-        this.setupControls();
-    }
+                // Camera
+                const aspect = window.innerWidth / window.innerHeight;
+                this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+                this.camera.position.z = 5;
 
-    setupControls() {
-    // Store rotation state and speed as class properties
-    this.isRotating = true;
-    this.rotationSpeed = 0.01;
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
 
-    const toggleRotation = document.getElementById('toggleRotation');
-    const rotationSpeedSlider = document.getElementById('rotationSpeed');
-    const speedValue = document.getElementById('speedValue');
+                // Controls
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.enablePan = false;
 
-    // Toggle rotation
-    toggleRotation.addEventListener('click', () => {
-        this.isRotating = !this.isRotating;
-        toggleRotation.classList.toggle('active');
-    });
+                // Geometry
+                const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
+                const material = new THREE.MeshStandardMaterial({ color: 0x88ccff, metalness: 0.5, roughness: 0.5, emissive: 0x005577, emissiveIntensity: 0.5 });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.scene.add(this.mesh);
 
-    // Update rotation speed
-    rotationSpeedSlider.addEventListener('input', (e) => {
-        this.rotationSpeed = (e.target.value / 2500); // Convert slider value to reasonable speed
-        speedValue.textContent = `Speed: ${this.rotationSpeed.toFixed(4)}`;
-    });
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                this.scene.add(ambientLight);
 
-    // Update the visualizer's animate method to use these controls
-    const originalAnimate = this.visualizer.animate.bind(this.visualizer);
-    this.visualizer.animate = () => {
-        if (this.isRotating) {
-            this.visualizer.vortexMesh.rotation.x += this.rotationSpeed;
-            this.visualizer.vortexMesh.rotation.y += this.rotationSpeed;
+                const pointLight = new THREE.PointLight(0xffffff, 1);
+                pointLight.position.set(5, 5, 5);
+                this.scene.add(pointLight);
+
+                // Handle resize
+                window.addEventListener('resize', () => this.handleResize());
+            }
+
+            handleResize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                this.renderer.setSize(width, height);
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                // Rotate the mesh if rotation is enabled
+                if (this.rotationEnabled) {
+                    this.mesh.rotation.x += 0.01;
+                    this.mesh.rotation.y += 0.01;
+                }
+
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            toggleRotation() {
+                this.rotationEnabled = !this.rotationEnabled;
+            }
         }
-        originalAnimate();
-    };
 
-    // Add your other existing control setup code here
-    ['default', 'wireframe', 'particles', 'ribbons'].forEach(mode => {
-        document.getElementById(`visualMode-${mode}`).addEventListener('click', () => {
-            this.visualizer.setVisualizationMode(mode);
-            document.querySelectorAll('#controls .button').forEach(btn => 
-                btn.classList.remove('active'));
-            document.getElementById(`visualMode-${mode}`).classList.add('active');
+        // VortexMatrix Class to Integrate All Components
+        class VortexMatrix {
+            constructor() {
+                this.audio = new AudioEngine();
+                this.visualizer = new Visualizer(document.getElementById('visualizer'), this.audio.analyzer);
+                this.threeVisualizer = new ThreeVisualizer();
+                this.setupUI();
+                this.setupNumberGrid();
+                this.visualizer.draw();
+            }
+
+            setupUI() {
+                // Toggle Play Button
+                const togglePlayBtn = document.getElementById('togglePlay');
+                togglePlayBtn.addEventListener('click', async () => {
+                    if (Tone.context.state !== 'running') {
+                        await Tone.start();
+                    }
+
+                    if (togglePlayBtn.classList.contains('active')) {
+                        this.audio.stop();
+                        togglePlayBtn.classList.remove('active');
+                        togglePlayBtn.textContent = 'Start';
+                    } else {
+                        this.audio.start();
+                        togglePlayBtn.classList.add('active');
+                        togglePlayBtn.textContent = 'Stop';
+                    }
+                });
+
+                // Toggle Rotation Button
+                const toggleRotationBtn = document.getElementById('toggleRotation');
+                toggleRotationBtn.addEventListener('click', () => {
+                    this.threeVisualizer.toggleRotation();
+                });
+
+                // Waveform Select
+                const waveformSelect = document.getElementById('waveformSelect');
+                waveformSelect.addEventListener('change', (e) => {
+                    this.audio.setWaveform(e.target.value);
+                });
+
+                // Scale Select
+                const scaleSelect = document.getElementById('scaleSelect');
+                scaleSelect.addEventListener('change', (e) => {
+                    this.audio.setScale(e.target.value);
+                });
+
+                // Master Volume Slider
+                const masterVolumeSlider = document.getElementById('masterVolume');
+                masterVolumeSlider.addEventListener('input', (e) => {
+                    this.audio.setMasterVolume(parseFloat(e.target.value));
+                });
+
+                // FM Depth Slider
+                const fmDepthSlider = document.getElementById('fmDepth');
+                fmDepthSlider.addEventListener('input', (e) => {
+                    this.audio.setFMDepth(parseFloat(e.target.value));
+                });
+
+                // Update Frequency Display
+                const frequencyDisplay = document.getElementById('frequency-display');
+                setInterval(() => {
+                    const freq = this.audio.carrier.oscillator.frequency.value.toFixed(2);
+                    frequencyDisplay.textContent = `${freq} Hz`;
+                }, 100);
+            }
+
+            setupNumberGrid() {
+                const grid = document.getElementById('number-grid');
+                for (let i = 1; i <= 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'number-cell';
+                    cell.textContent = i;
+                    cell.style.backgroundColor = this.getColorForNumber(i);
+                    cell.addEventListener('click', () => this.activateFrequency(i));
+                    grid.appendChild(cell);
+                }
+            }
+
+            getColorForNumber(num) {
+                const colors = {
+                    1: '#ff0000',
+                    2: '#ff7700',
+                    3: '#ffff00',
+                    4: '#00ff00',
+                    5: '#0000ff',
+                    6: '#4b0082',
+                    7: '#9400d3',
+                    8: '#ffffff',
+                    9: '#000000'
+                };
+                return colors[num] || '#ffffff';
+            }
+
+            activateFrequency(number) {
+                // Map number to frequency based on current scale
+                const ratio = this.audio.scales[this.audio.currentScale][number - 1] || 1;
+                const frequency = this.audio.baseFrequency * ratio;
+                this.audio.carrier.oscillator.frequency.value = frequency;
+                this.audio.modulator.frequency.value = frequency * 2;
+            }
+        }
+
+        // Initialize Application on Window Load
+        window.addEventListener('load', () => {
+            new VortexMatrix();
         });
-    });
-}
-
-// Initialize the application
-window.addEventListener('DOMContentLoaded', () => {
-    window.vortexApp = new VortexApp();
-});
-</script>
+    </script>
 </body>
 </html>
