@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vortex Mathematics Matrix</title>
     <style>
+        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -18,29 +19,47 @@
             font-family: 'Arial', sans-serif;
         }
 
-        canvas {
+        /* Three.js Canvas */
+        #three-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            z-index: -1; /* Behind all overlays */
         }
 
+        /* Visualizer Canvas */
+        #visualizer {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 100px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            z-index: 1001; /* Above Three.js canvas */
+        }
+
+        /* Overlay Styles */
         .overlay {
             position: fixed;
             padding: 20px;
             background: rgba(0,0,0,0.7);
             border-radius: 10px;
-            z-index: 1001; /* Ensure overlays are above Three.js canvas */
+            z-index: 1001; /* Above Three.js canvas */
             backdrop-filter: blur(5px);
             max-width: 350px;
         }
 
+        /* Info Panel Positioning */
         #info-panel {
             top: 20px;
             left: 20px;
         }
 
+        /* Controls Panel Positioning */
         #controls {
             top: 20px;
             right: 20px;
@@ -49,12 +68,14 @@
             gap: 10px;
         }
 
+        /* Audio Controls Grid */
         #audio-controls {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
         }
 
+        /* Button and Select Styles */
         .button, select {
             background: #1a1a1a;
             color: #fff;
@@ -76,6 +97,7 @@
             color: #000;
         }
 
+        /* Slider Container */
         .slider-container {
             margin: 10px 0;
         }
@@ -86,11 +108,13 @@
             font-size: 0.9rem;
         }
 
+        /* Slider Styles */
         .slider {
             width: 100%;
             margin: 5px 0;
         }
 
+        /* Frequency Display */
         #frequency-display {
             bottom: 20px;
             left: 50%;
@@ -100,22 +124,10 @@
             z-index: 1001;
         }
 
-        #visualizer {
-            position: fixed;
-            bottom: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 100px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 10px;
-            z-index: 1001;
-        }
-
         /* Number Grid Styling */
         #number-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-top: 20px;
         }
@@ -159,26 +171,29 @@
             }
 
             #number-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(4, 1fr);
             }
         }
     </style>
-    <!-- Three.js library -->
+    <!-- Three.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Tone.js library -->
+    <!-- Tone.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- OrbitControls for better interaction -->
+    <!-- OrbitControls for Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.min.js"></script>
 </head>
 <body>
+    <!-- Three.js Visualization Canvas -->
     <canvas id="three-canvas"></canvas>
 
+    <!-- Info Panel with Number Grid -->
     <div id="info-panel" class="overlay">
         <h2>Vortex Mathematics</h2>
         <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
         <div id="number-grid"></div>
     </div>
 
+    <!-- Controls Panel -->
     <div id="controls" class="overlay">
         <div id="audio-controls">
             <button class="button" id="togglePlay">Start</button>
@@ -205,11 +220,16 @@
         </div>
     </div>
 
+    <!-- Audio Waveform Visualizer Canvas -->
     <canvas id="visualizer"></canvas>
+    <!-- Frequency Display -->
     <div id="frequency-display" class="overlay">432 Hz</div>
 
     <script>
-        // AudioEngine Class with Corrected Frequency Modulation Implementation
+        /**
+         * AudioEngine Class
+         * Handles audio synthesis, effects, and frequency modulation using Tone.js
+         */
         class AudioEngine {
             constructor() {
                 this.scales = {
@@ -226,26 +246,37 @@
                 this.initTone();
             }
 
+            /**
+             * Initializes Tone.js components
+             */
             async initTone() {
-                await Tone.start();
-                Tone.Transport.bpm.value = 60;
+                // Initialize Tone.js context on user interaction
+                // This is required by modern browsers to start audio
+                // We'll wait for the first user interaction to initialize
 
-                // Create Carrier Oscillator
-                this.carrier = new Tone.Oscillator(this.baseFrequency, this.waveform);
-                this.carrier.start();
-
-                // Create Modulator Oscillator
-                this.modulator = new Tone.Oscillator(this.baseFrequency * 2, this.waveform);
-                this.modulator.start();
-
-                // FM Depth Control via Gain node
-                this.fmGain = new Tone.Gain(0).toDestination();
-
-                // Connect Modulator to FM Gain
-                this.modulator.connect(this.fmGain);
-
-                // Connect FM Gain to Carrier's frequency for FM
-                this.fmGain.connect(this.carrier.frequency);
+                // Create FM Synth
+                this.fmSynth = new Tone.FMSynth({
+                    harmonicity: 3,
+                    modulationIndex: 10,
+                    oscillator: {
+                        type: this.waveform,
+                    },
+                    modulation: {
+                        type: 'square'
+                    },
+                    envelope: {
+                        attack: 0.05,
+                        decay: 0.2,
+                        sustain: 0.8,
+                        release: 1
+                    },
+                    modulationEnvelope: {
+                        attack: 0.01,
+                        decay: 0.1,
+                        sustain: 1,
+                        release: 0.5
+                    }
+                }).toDestination();
 
                 // Create Effects
                 this.chorus = new Tone.Chorus(4, 2.5, 0.5).start();
@@ -262,8 +293,8 @@
                 }).toDestination();
                 this.masterVolume = new Tone.Volume(-12).toDestination();
 
-                // Connect Carrier to Effects Chain
-                this.carrier.chain(
+                // Connect FM Synth to Effects Chain
+                this.fmSynth.chain(
                     this.chorus,
                     this.delay,
                     this.reverb,
@@ -279,49 +310,78 @@
                 this.masterVolume.mute = true;
             }
 
+            /**
+             * Sets the oscillator waveform type
+             * @param {string} type - Waveform type (sine, triangle, square, sawtooth)
+             */
             setWaveform(type) {
                 this.waveform = type;
-                this.carrier.type = type;
-                this.modulator.type = type;
+                this.fmSynth.oscillator.type = type;
             }
 
+            /**
+             * Sets the musical scale
+             * @param {string} scaleName - Scale name (pythagorean, just, equal)
+             */
             setScale(scaleName) {
                 this.currentScale = scaleName;
                 this.updateFrequencies();
             }
 
+            /**
+             * Updates the frequencies based on the selected scale
+             */
             updateFrequencies() {
                 const frequencies = this.scales[this.currentScale].map(ratio => 
                     this.baseFrequency * ratio
                 );
 
                 // Update carrier frequency
-                this.carrier.frequency.value = frequencies[0];
+                this.fmSynth.frequency.value = frequencies[0];
 
-                // Update modulator frequency
-                this.modulator.frequency.value = frequencies[1];
+                // Update modulation frequency
+                this.fmSynth.modulation.frequency.value = frequencies[1];
             }
 
+            /**
+             * Sets the master volume
+             * @param {number} value - Volume value between 0 and 1
+             */
             setMasterVolume(value) {
                 this.masterVolume.volume.value = Tone.gainToDb(value);
             }
 
+            /**
+             * Sets the frequency modulation depth
+             * @param {number} depth - Depth value between 0 and 100
+             */
             setFMDepth(depth) {
                 this.fmDepth = depth;
-                const normalizedDepth = depth / 100; // 0 to 1
-                this.fmGain.gain.value = normalizedDepth * 100; // Adjust scaling as needed
+                const normalizedDepth = depth / 100;
+                this.fmSynth.modulationIndex.value = normalizedDepth * 100; // Adjust scaling as needed
             }
 
+            /**
+             * Starts the audio synthesis
+             */
             start() {
+                this.fmSynth.triggerAttack();
                 this.masterVolume.mute = false;
             }
 
+            /**
+             * Stops the audio synthesis
+             */
             stop() {
+                this.fmSynth.triggerRelease();
                 this.masterVolume.mute = true;
             }
         }
 
-        // Visualizer Class to Draw Audio Waveform
+        /**
+         * Visualizer Class
+         * Handles drawing the audio waveform on the canvas
+         */
         class Visualizer {
             constructor(canvas, analyzer) {
                 this.canvas = canvas;
@@ -331,11 +391,17 @@
                 window.addEventListener('resize', () => this.resize());
             }
 
+            /**
+             * Resizes the canvas to fit its container
+             */
             resize() {
                 this.canvas.width = this.canvas.offsetWidth;
                 this.canvas.height = this.canvas.offsetHeight;
             }
 
+            /**
+             * Continuously draws the waveform
+             */
             draw() {
                 requestAnimationFrame(() => this.draw());
 
@@ -364,14 +430,20 @@
             }
         }
 
-        // Three.js Visualization Class
+        /**
+         * ThreeVisualizer Class
+         * Handles the Three.js 3D visualization
+         */
         class ThreeVisualizer {
             constructor() {
                 this.initThreeJS();
-                this.rotationEnabled = true; // Initialize rotationEnabled
+                this.rotationEnabled = true; // Initialize rotation state
                 this.animate();
             }
 
+            /**
+             * Initializes the Three.js scene, camera, renderer, and objects
+             */
             initThreeJS() {
                 // Scene
                 this.scene = new THREE.Scene();
@@ -392,13 +464,19 @@
                 this.controls.dampingFactor = 0.05;
                 this.controls.enablePan = false;
 
-                // Geometry
+                // Geometry and Material
                 const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
-                const material = new THREE.MeshStandardMaterial({ color: 0x88ccff, metalness: 0.5, roughness: 0.5, emissive: 0x005577, emissiveIntensity: 0.5 });
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: 0x88ccff, 
+                    metalness: 0.5, 
+                    roughness: 0.5, 
+                    emissive: 0x005577, 
+                    emissiveIntensity: 0.5 
+                });
                 this.mesh = new THREE.Mesh(geometry, material);
                 this.scene.add(this.mesh);
 
-                // Lights
+                // Lighting
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
                 this.scene.add(ambientLight);
 
@@ -406,10 +484,13 @@
                 pointLight.position.set(5, 5, 5);
                 this.scene.add(pointLight);
 
-                // Handle resize
+                // Handle window resize
                 window.addEventListener('resize', () => this.handleResize());
             }
 
+            /**
+             * Adjusts the renderer and camera on window resize
+             */
             handleResize() {
                 const width = window.innerWidth;
                 const height = window.innerHeight;
@@ -418,6 +499,9 @@
                 this.camera.updateProjectionMatrix();
             }
 
+            /**
+             * Animation loop for Three.js
+             */
             animate() {
                 requestAnimationFrame(() => this.animate());
 
@@ -431,12 +515,18 @@
                 this.renderer.render(this.scene, this.camera);
             }
 
+            /**
+             * Toggles the automatic rotation of the mesh
+             */
             toggleRotation() {
                 this.rotationEnabled = !this.rotationEnabled;
             }
         }
 
-        // VortexMatrix Class to Integrate All Components
+        /**
+         * VortexMatrix Class
+         * Integrates AudioEngine, Visualizer, and ThreeVisualizer
+         */
         class VortexMatrix {
             constructor() {
                 this.audio = new AudioEngine();
@@ -447,22 +537,29 @@
                 this.visualizer.draw();
             }
 
+            /**
+             * Sets up UI event listeners
+             */
             setupUI() {
                 // Toggle Play Button
                 const togglePlayBtn = document.getElementById('togglePlay');
                 togglePlayBtn.addEventListener('click', async () => {
+                    // Start Tone.js context on user interaction
                     if (Tone.context.state !== 'running') {
                         await Tone.start();
+                        console.log('Tone.js started');
                     }
 
                     if (togglePlayBtn.classList.contains('active')) {
                         this.audio.stop();
                         togglePlayBtn.classList.remove('active');
                         togglePlayBtn.textContent = 'Start';
+                        console.log('Audio stopped');
                     } else {
                         this.audio.start();
                         togglePlayBtn.classList.add('active');
                         togglePlayBtn.textContent = 'Stop';
+                        console.log('Audio started');
                     }
                 });
 
@@ -470,43 +567,51 @@
                 const toggleRotationBtn = document.getElementById('toggleRotation');
                 toggleRotationBtn.addEventListener('click', () => {
                     this.threeVisualizer.toggleRotation();
+                    console.log('Rotation toggled');
                 });
 
                 // Waveform Select
                 const waveformSelect = document.getElementById('waveformSelect');
                 waveformSelect.addEventListener('change', (e) => {
                     this.audio.setWaveform(e.target.value);
+                    console.log(`Waveform set to ${e.target.value}`);
                 });
 
                 // Scale Select
                 const scaleSelect = document.getElementById('scaleSelect');
                 scaleSelect.addEventListener('change', (e) => {
                     this.audio.setScale(e.target.value);
+                    console.log(`Scale set to ${e.target.value}`);
                 });
 
                 // Master Volume Slider
                 const masterVolumeSlider = document.getElementById('masterVolume');
                 masterVolumeSlider.addEventListener('input', (e) => {
                     this.audio.setMasterVolume(parseFloat(e.target.value));
+                    console.log(`Master volume set to ${e.target.value}`);
                 });
 
                 // FM Depth Slider
                 const fmDepthSlider = document.getElementById('fmDepth');
                 fmDepthSlider.addEventListener('input', (e) => {
                     this.audio.setFMDepth(parseFloat(e.target.value));
+                    console.log(`FM depth set to ${e.target.value}`);
                 });
 
                 // Update Frequency Display
                 const frequencyDisplay = document.getElementById('frequency-display');
                 setInterval(() => {
-                    const freq = this.audio.carrier.frequency.value.toFixed(2);
+                    const freq = this.audio.fmSynth.frequency.value.toFixed(2);
                     frequencyDisplay.textContent = `${freq} Hz`;
                 }, 100);
             }
 
+            /**
+             * Sets up the number grid with interactive frequency activation
+             */
             setupNumberGrid() {
                 const grid = document.getElementById('number-grid');
-                for (let i = 1; i <= 9; i++) {
+                for (let i = 1; i <= 8; i++) { // Adjusted to 8 to match scale arrays
                     const cell = document.createElement('div');
                     cell.className = 'number-cell';
                     cell.textContent = i;
@@ -516,6 +621,11 @@
                 }
             }
 
+            /**
+             * Returns the color associated with a number
+             * @param {number} num - Number (1-8)
+             * @returns {string} - Hex color code
+             */
             getColorForNumber(num) {
                 const colors = {
                     1: '#ff0000',
@@ -525,22 +635,30 @@
                     5: '#0000ff',
                     6: '#4b0082',
                     7: '#9400d3',
-                    8: '#ffffff',
-                    9: '#000000'
+                    8: '#ffffff'
                 };
                 return colors[num] || '#ffffff';
             }
 
+            /**
+             * Activates a specific frequency based on the number clicked
+             * @param {number} number - Number from the grid (1-8)
+             */
             activateFrequency(number) {
                 // Map number to frequency based on current scale
-                const ratio = this.audio.scales[this.audio.currentScale][number - 1] || 1;
+                if (number < 1 || number > 8) return;
+                const scaleArray = this.audio.scales[this.audio.currentScale];
+                const ratio = scaleArray[number - 1];
                 const frequency = this.audio.baseFrequency * ratio;
-                this.audio.carrier.frequency.value = frequency;
-                this.audio.modulator.frequency.value = frequency * 2;
+                this.audio.fmSynth.frequency.value = frequency;
+                this.audio.fmSynth.modulation.frequency.value = frequency * 2;
+                console.log(`Activated frequency: ${frequency} Hz`);
             }
         }
 
-        // Initialize Application on Window Load
+        /**
+         * Initializes the VortexMatrix application once the window loads
+         */
         window.addEventListener('load', () => {
             new VortexMatrix();
         });
