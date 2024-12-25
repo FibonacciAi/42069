@@ -1,156 +1,367 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOASS Reports</title>
+    <title>MOASS Reports & Visualizations</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body {
-            background-color: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
+        :root {
+            --color-background: #000000;
+            --color-card: #16181c;
+            --color-card-hover: #1d1f23;
+            --color-text: #e7e9ea;
+            --color-text-secondary: #71767b;
+            --color-accent: #1d9bf0;
+            --color-accent-hover: #1a8cd8;
+            --color-border: #2f3336;
+            --color-feature: #202327;
+        }
+
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--color-background);
+            color: var(--color-text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
         .container {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 20px;
+            position: relative;
+            z-index: 1;
         }
 
         header {
             text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3em;
             margin-bottom: 20px;
+            background: linear-gradient(45deg, var(--color-accent), #8e24aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(29, 155, 240, 0.2);
         }
 
         .tagline {
+            color: var(--color-text-secondary);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .category-card {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .category-card:hover {
+            background: var(--color-card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .category-card h3 {
+            color: var(--color-accent);
+            margin-bottom: 15px;
             font-size: 1.2em;
-            color: #888;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
         }
 
-        .report-links a, .section-group a {
-            color: #1E90FF;
+        .link-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .link-list a {
+            color: var(--color-text);
             text-decoration: none;
-            display: block;
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #333;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            padding: 12px 16px;
+            background: var(--color-feature);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
         }
 
-        .report-links a:hover, .section-group a:hover {
-            background-color: #555;
+        .link-list a::before {
+            content: '›';
+            margin-right: 8px;
+            color: var(--color-accent);
+            font-size: 1.2em;
         }
 
-        .section-group {
+        .link-list a:hover {
+            background: var(--color-card-hover);
+            color: var(--color-accent);
+            padding-left: 20px;
+        }
+
+        .featured-reports {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+
+        .featured-reports h2 {
+            color: var(--color-accent);
             margin-bottom: 20px;
+            font-size: 1.5em;
         }
 
-        .section-group h2 {
-            margin-bottom: 10px;
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
         }
 
-        .section-group ul {
-            list-style: none;
-            padding: 0;
+        .report-card {
+            background: var(--color-feature);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            color: var(--color-text);
+            text-decoration: none;
+            border: 1px solid var(--color-border);
         }
 
-        .section-group ul li {
-            margin: 5px 0;
+        .report-card:hover {
+            transform: scale(1.02);
+            background: var(--color-card-hover);
+            border-color: var(--color-accent);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            opacity: 0.2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
-
 <body>
     <div class="container">
-        <!-- Header -->
         <header>
-            <h1>MOASS Reports</h1>
+            <h1 class="floating">MOASS Reports & Visualizations</h1>
             <p class="tagline">Read our reports while you watch Bitcoin, ETH, Litecoin, XRP, Stellar, Doge, GME, SIRI, and TSLA reach their goals. Follow @_D_741Stef on X! 😉</p>
         </header>
 
-        <!-- Report Links -->
-        <nav class="report-links" aria-label="Report Links">
-            <a href="SVMH.html" aria-label="View SVMH Report">SVMH Report</a>
-            <a href="UAVS.html" aria-label="View UAVS Report">UAVS Report</a>
-            <a href="SIRI.html" aria-label="View SIRI Report">SIRI Report</a>
-            <a href="GME.html" aria-label="View GME Report">GME Report</a>
-        </nav>
+        <section class="featured-reports">
+            <h2>Featured Reports</h2>
+            <div class="report-grid">
+                <a href="SVMH.html" class="report-card">SVMH Report</a>
+                <a href="UAVS.html" class="report-card">UAVS Report</a>
+                <a href="SIRI.html" class="report-card">SIRI Report</a>
+                <a href="GME.html" class="report-card">GME Report</a>
+            </div>
+        </section>
 
-        <!-- Main Content -->
-        <main>
-            <!-- Cryptocurrency Trackers -->
-            <section class="section-group">
-                <h2>Cryptocurrency Trackers</h2>
-                <div class="trackers">
-                    <!-- existing cryptocurrency tracker content -->
+        <div class="content-grid">
+            <!-- Visualization Category -->
+            <div class="category-card">
+                <h3>3D & Visual Experiences</h3>
+                <div class="link-list">
+                    <a href="3dmediauniverse.html">3D Media Universe</a>
+                    <a href="3dspheres.html">3D Spheres</a>
+                    <a href="metatron3d.html">Metatron 3D</a>
+                    <a href="vortex.html">Vortex</a>
                 </div>
-            </section>
+            </div>
 
-            <!-- Files in Main Branch -->
-            <section class="section-group">
-                <h2>Files in Main Branch</h2>
-                <ul>
-                    <li><a href="3dmediauniverse.html">3dmediauniverse.html</a></li>
-                    <li><a href="3dspheres.html">3dspheres.html</a></li>
-                    <li><a href="432-quest.html">432-quest.html</a></li>
-                    <li><a href="432.html">432.html</a></li>
-                    <li><a href="432hz.html">432hz.html</a></li>
-                    <li><a href="432hzfx.html">432hzfx.html</a></li>
-                    <li><a href="6174.html">6174.html</a></li>
-                    <li><a href="GME.html">GME.html</a></li>
-                    <li><a href="README.md">README.md</a></li>
-                    <li><a href="SIRI.html">SIRI.html</a></li>
-                    <li><a href="SVMH.html">SVMH.html</a></li>
-                    <li><a href="Sierpiński-gasket.html">Sierpiński-gasket.html</a></li>
-                    <li><a href="UAVS.html">UAVS.html</a></li>
-                    <li><a href="anothercreativespark.html">anothercreativespark.html</a></li>
-                    <li><a href="audiocercei.html">audiocercei.html</a></li>
-                    <li><a href="cantorsacredgeometry.html">cantorsacredgeometry.html</a></li>
-                    <li><a href="cantorsacredgeometrydmt.html">cantorsacredgeometrydmt.html</a></li>
-                    <li><a href="cercei.html">cercei.html</a></li>
-                    <li><a href="cia-ares.html">cia-ares.html</a></li>
-                    <li><a href="creativespark.html">creativespark.html</a></li>
-                    <li><a href="easteregg.html">easteregg.html</a></li>
-                    <li><a href="egg.html">egg.html</a></li>
-                    <li><a href="ethicsgaetz.html">ethicsgaetz.html</a></li>
-                    <li><a href="field-fluid-quantum.html">field-fluid-quantum.html</a></li>
-                    <li><a href="frequency.html">frequency.html</a></li>
-                    <li><a href="grokko">grokko</a></li>
-                    <li><a href="grokko.html">grokko.html</a></li>
-                    <li><a href="houseweaponizationreportanalysis.html">houseweaponizationreportanalysis.html</a></li>
-                    <li><a href="index.html">index.html</a></li>
-                    <li><a href="iso.html">iso.html</a></li>
-                    <li><a href="iso2-mobile.html">iso2-mobile.html</a></li>
-                    <li><a href="iso2.html">iso2.html</a></li>
-                    <li><a href="isometricgrid.html">isometricgrid.html</a></li>
-                    <li><a href="kaprekar.html">kaprekar.html</a></li>
-                    <li><a href="law-of-time.html">law-of-time.html</a></li>
-                    <li><a href="madeupandtotallyfakecompanyimaginedbychatgptoimini.html">madeupandtotallyfakecompanyimaginedbychatgptoimini.html</a></li>
-                    <li><a href="metatron-enhanced.html">metatron-enhanced.html</a></li>
-                    <li><a href="metatron.html">metatron.html</a></li>
-                    <li><a href="metatron3d.html">metatron3d.html</a></li>
-                    <li><a href="nasastranded.html">nasastranded.html</a></li>
-                    <li><a href="poofjustlikethat.html">poofjustlikethat.html</a></li>
-                    <li><a href="projectstargate.html">projectstargate.html</a></li>
-                    <li><a href="quantumconsciousness.html">quantumconsciousness.html</a></li>
-                    <li><a href="quantumneural.html">quantumneural.html</a></li>
-                    <li><a href="quantumspin.html">quantumspin.html</a></li>
-                    <li><a href="ratios.html">ratios.html</a></li>
-                    <li><a href="ratiosenhanced.html">ratiosenhanced.html</a></li>
-                    <li><a href="space-policy-insights-q424.html">space-policy-insights-q424.html</a></li>
-                    <li><a href="sui.html">sui.html</a></li>
-                    <li><a href="triads.html">triads.html</a></li>
-                    <li><a href="triadsofanotherflavor.html">triadsofanotherflavor.html</a></li>
-                    <li><a href="vortex.html">vortex.html</a></li>
-                    <li><a href="whats-the-frequency-kenneth.html">whats-the-frequency-kenneth.html</a></li>
-                </ul>
-            </section>
-        </main>
+            <!-- Audio & Frequency Category -->
+            <div class="category-card">
+                <h3>Audio & Frequency</h3>
+                <div class="link-list">
+                    <a href="432hz.html">432 Hz Experience</a>
+                    <a href="432hzfx.html">432 Hz Effects</a>
+                    <a href="frequency.html">Frequency</a>
+                    <a href="whats-the-frequency-kenneth.html">What's the Frequency</a>
+                </div>
+            </div>
 
-        <!-- existing footer content -->
+            <!-- Sacred Geometry Category -->
+            <div class="category-card">
+                <h3>Sacred Geometry</h3>
+                <div class="link-list">
+                    <a href="Sierpiński-gasket.html">Sierpiński Gasket</a>
+                    <a href="cantorsacredgeometry.html">Cantor Sacred Geometry</a>
+                    <a href="metatron.html">Metatron</a>
+                    <a href="metatron-enhanced.html">Metatron Enhanced</a>
+                </div>
+            </div>
+
+            <!-- Quantum & Consciousness -->
+            <div class="category-card">
+                <h3>Quantum & Consciousness</h3>
+                <div class="link-list">
+                    <a href="quantumconsciousness.html">Quantum Consciousness</a>
+                    <a href="quantumneural.html">Quantum Neural</a>
+                    <a href="quantumspin.html">Quantum Spin</a>
+                    <a href="field-fluid-quantum.html">Field Fluid Quantum</a>
+                </div>
+            </div>
+
+            <!-- Reports & Analysis -->
+            <div class="category-card">
+                <h3>Reports & Analysis</h3>
+                <div class="link-list">
+                    <a href="space-policy-insights-q424.html">Space Policy Insights Q4'24</a>
+                    <a href="houseweaponizationreportanalysis.html">House Weaponization Report</a>
+                    <a href="projectstargate.html">Project Stargate</a>
+                    <a href="nasastranded.html">NASA Stranded</a>
+                </div>
+            </div>
+
+            <!-- Experimental -->
+            <div class="category-card">
+                <h3>Experimental</h3>
+                <div class="link-list">
+                    <a href="creativespark.html">Creative Spark</a>
+                    <a href="easteregg.html">Easter Egg</a>
+                    <a href="grokko.html">Grokko</a>
+                    <a href="poofjustlikethat.html">Poof Just Like That</a>
+                </div>
+            </div>
+        </div>
     </div>
-</body>
 
+    <script>
+        class BackgroundEffect {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.canvas = document.createElement('canvas');
+                this.canvas.id = 'background-canvas';
+                document.body.insertBefore(this.canvas, document.body.firstChild);
+                
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvas,
+                    alpha: true
+                });
+                
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.z = 5;
+                
+                this.createParticles();
+                this.handleResize();
+                this.animate();
+                
+                window.addEventListener('resize', () => this.handleResize());
+            }
+
+            createParticles() {
+                const geometry = new THREE.BufferGeometry();
+                const particles = 1000;
+                const positions = new Float32Array(particles * 3);
+                const colors = new Float32Array(particles * 3);
+
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i] = (Math.random() - 0.5) * 10;
+                    positions[i + 1] = (Math.random() - 0.5) * 10;
+                    positions[i + 2] = (Math.random() - 0.5) * 10;
+
+                    colors[i] = 0.5;
+                    colors[i + 1] = 0.7;
+                    colors[i + 2] = 1;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const material = new THREE.PointsMaterial({
+                    size: 0.02,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.5
+                });
+
+                this.particles = new THREE.Points(geometry, material);
+                this.scene.add(this.particles);
+            }
+
+            handleResize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                
+                this.renderer.setSize(width, height);
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                if (this.particles) {
+                    this.particles.rotation.x += 0.0002;
+                    this.particles.rotation.y += 0.0002;
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Initialize after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const effect = new BackgroundEffect();
+        });
+    </script>
+</body>
 </html>
