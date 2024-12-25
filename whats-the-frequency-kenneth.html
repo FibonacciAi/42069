@@ -31,7 +31,7 @@
             padding: 20px;
             background: rgba(0,0,0,0.7);
             border-radius: 10px;
-            z-index: 1000;
+            z-index: 1001; /* Ensure overlays are above Three.js canvas */
             backdrop-filter: blur(5px);
             max-width: 350px;
         }
@@ -97,7 +97,7 @@
             transform: translateX(-50%);
             font-size: 24px;
             color: #88ccff;
-            z-index: 1000;
+            z-index: 1001;
         }
 
         #visualizer {
@@ -109,7 +109,7 @@
             height: 100px;
             background: rgba(0,0,0,0.5);
             border-radius: 10px;
-            z-index: 1000;
+            z-index: 1001;
         }
 
         /* Number Grid Styling */
@@ -230,32 +230,21 @@
                 await Tone.start();
                 Tone.Transport.bpm.value = 60;
 
-                // Create Carrier Synth
-                this.carrier = new Tone.Synth({
-                    oscillator: {
-                        type: this.waveform,
-                        frequency: this.baseFrequency
-                    },
-                    envelope: {
-                        attack: 0.05,
-                        decay: 0.2,
-                        sustain: 0.8,
-                        release: 1
-                    }
-                });
+                // Create Carrier Oscillator
+                this.carrier = new Tone.Oscillator(this.baseFrequency, this.waveform);
+                this.carrier.start();
 
-                // Create Modulator Synth for FM
-                this.modulator = new Tone.Oscillator({
-                    type: this.waveform,
-                    frequency: this.baseFrequency * 2,
-                    volume: -Infinity // Initially muted
-                });
+                // Create Modulator Oscillator
+                this.modulator = new Tone.Oscillator(this.baseFrequency * 2, this.waveform);
+                this.modulator.start();
 
-                // FM Depth Control
+                // FM Depth Control via Gain node
                 this.fmGain = new Tone.Gain(0).toDestination();
 
-                // Connect Modulator to Carrier's frequency for FM
+                // Connect Modulator to FM Gain
                 this.modulator.connect(this.fmGain);
+
+                // Connect FM Gain to Carrier's frequency for FM
                 this.fmGain.connect(this.carrier.frequency);
 
                 // Create Effects
@@ -264,13 +253,13 @@
                 this.reverb = new Tone.Reverb({
                     decay: 5,
                     preDelay: 0.1
-                });
+                }).toDestination();
                 this.compressor = new Tone.Compressor({
                     threshold: -24,
                     ratio: 12,
                     attack: 0.003,
                     release: 0.25
-                });
+                }).toDestination();
                 this.masterVolume = new Tone.Volume(-12).toDestination();
 
                 // Connect Carrier to Effects Chain
@@ -282,14 +271,17 @@
                     this.masterVolume
                 );
 
-                // Analyzer for Visualizer
+                // Create Analyzer for Visualizer
                 this.analyzer = new Tone.Analyser("waveform", 1024);
                 this.masterVolume.connect(this.analyzer);
+
+                // Initially mute the audio
+                this.masterVolume.mute = true;
             }
 
             setWaveform(type) {
                 this.waveform = type;
-                this.carrier.oscillator.type = type;
+                this.carrier.type = type;
                 this.modulator.type = type;
             }
 
@@ -302,9 +294,10 @@
                 const frequencies = this.scales[this.currentScale].map(ratio => 
                     this.baseFrequency * ratio
                 );
-                
+
                 // Update carrier frequency
-                this.carrier.oscillator.frequency.value = frequencies[0];
+                this.carrier.frequency.value = frequencies[0];
+
                 // Update modulator frequency
                 this.modulator.frequency.value = frequencies[1];
             }
@@ -316,17 +309,15 @@
             setFMDepth(depth) {
                 this.fmDepth = depth;
                 const normalizedDepth = depth / 100; // 0 to 1
-                this.fmGain.gain.value = normalizedDepth * 100; // Scale appropriately
+                this.fmGain.gain.value = normalizedDepth * 100; // Adjust scaling as needed
             }
 
             start() {
-                this.carrier.triggerAttack();
-                this.modulator.start();
+                this.masterVolume.mute = false;
             }
 
             stop() {
-                this.carrier.triggerRelease();
-                this.modulator.stop();
+                this.masterVolume.mute = true;
             }
         }
 
@@ -377,6 +368,7 @@
         class ThreeVisualizer {
             constructor() {
                 this.initThreeJS();
+                this.rotationEnabled = true; // Initialize rotationEnabled
                 this.animate();
             }
 
@@ -507,7 +499,7 @@
                 // Update Frequency Display
                 const frequencyDisplay = document.getElementById('frequency-display');
                 setInterval(() => {
-                    const freq = this.audio.carrier.oscillator.frequency.value.toFixed(2);
+                    const freq = this.audio.carrier.frequency.value.toFixed(2);
                     frequencyDisplay.textContent = `${freq} Hz`;
                 }, 100);
             }
@@ -543,7 +535,7 @@
                 // Map number to frequency based on current scale
                 const ratio = this.audio.scales[this.audio.currentScale][number - 1] || 1;
                 const frequency = this.audio.baseFrequency * ratio;
-                this.audio.carrier.oscillator.frequency.value = frequency;
+                this.audio.carrier.frequency.value = frequency;
                 this.audio.modulator.frequency.value = frequency * 2;
             }
         }
