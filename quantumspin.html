@@ -285,86 +285,119 @@
 
         // Particle System Class
         class ParticleSystem {
-            constructor(initialCount) {
-                this.count = initialCount;
-                this.geometry = null;
-                this.material = null;
-                this.points = null;
-                this.initializeParticles();
-            }
+    constructor(initialCount) {
+        this.count = initialCount;
+        this.geometry = null;
+        this.material = null;
+        this.points = null;
+        this.time = 0;
+        this.initializeParticles();
+    }
 
-            initializeParticles() {
-                this.geometry = new THREE.BufferGeometry();
-                this.updateParticleCount(this.count);
-                
-                this.material = new THREE.PointsMaterial({
-                    color: quantumPalette.wavePink,
-                    size: 0.1,
-                    transparent: true,
-                    opacity: 0.8,
-                    blending: THREE.AdditiveBlending,
-                    vertexColors: true
-                });
+    initializeParticles() {
+        this.geometry = new THREE.BufferGeometry();
+        this.updateParticleCount(this.count);
+        
+        this.material = new THREE.PointsMaterial({
+            size: 0.15,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            vertexColors: true,
+            depthWrite: false
+        });
 
-                this.points = new THREE.Points(this.geometry, this.material);
-            }
+        this.points = new THREE.Points(this.geometry, this.material);
+    }
 
-            updateParticleCount(newCount) {
-                this.count = newCount;
-                const positions = new Float32Array(newCount * 3);
-                const velocities = new Float32Array(newCount * 3);
-                const colors = new Float32Array(newCount * 3);
-                const sizes = new Float32Array(newCount);
+    updateParticleCount(newCount) {
+        this.count = newCount;
+        const positions = new Float32Array(newCount * 3);
+        const velocities = new Float32Array(newCount * 3);
+        const colors = new Float32Array(newCount * 3);
+        const sizes = new Float32Array(newCount);
 
-                for (let i = 0; i < newCount; i++) {
-                    // Position
-                    positions[i * 3] = (Math.random() - 0.5) * 10;
-                    positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-                    positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+        const baseColors = [
+            new THREE.Color(0x00ffff),  // Cyan
+            new THREE.Color(0xff1e8f),  // Pink
+            new THREE.Color(0x8a2be2),  // Blue Violet
+            new THREE.Color(0x00ff7f),  // Spring Green
+            new THREE.Color(0xff4500)   // Orange Red
+        ];
 
-                    // Velocity
-                    velocities[i * 3] = (Math.random() - 0.5) * 0.02;
-                    velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
-                    velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
+        for (let i = 0; i < newCount; i++) {
+            // Position
+            positions[i * 3] = (Math.random() - 0.5) * 10;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
 
-                    // Color
-                    const hue = Math.random();
-                    const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
-                    colors[i * 3] = color.r;
-                    colors[i * 3 + 1] = color.g;
-                    colors[i * 3 + 2] = color.b;
+            // Velocity
+            velocities[i * 3] = (Math.random() - 0.5) * 0.02;
+            velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
+            velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
 
-                    // Size
-                    sizes[i] = Math.random() * 0.1 + 0.05;
+            // Color
+            const colorIndex = Math.floor(Math.random() * baseColors.length);
+            const color = baseColors[colorIndex];
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+
+            // Size
+            sizes[i] = Math.random() * 0.2 + 0.1;
+        }
+
+        this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        this.geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    }
+
+    update() {
+        this.time += 0.005;
+        const positions = this.geometry.attributes.position.array;
+        const velocities = this.geometry.attributes.velocity.array;
+        const colors = this.geometry.attributes.color.array;
+
+        for (let i = 0; i < this.count; i++) {
+            // Update positions with velocities
+            positions[i * 3] += velocities[i * 3];
+            positions[i * 3 + 1] += velocities[i * 3 + 1];
+            positions[i * 3 + 2] += velocities[i * 3 + 2];
+
+            // Add slight color animation
+            const hue = (this.time + i * 0.0001) % 1;
+            const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+            colors[i * 3] = colors[i * 3] * 0.95 + color.r * 0.05;
+            colors[i * 3 + 1] = colors[i * 3 + 1] * 0.95 + color.g * 0.05;
+            colors[i * 3 + 2] = colors[i * 3 + 2] * 0.95 + color.b * 0.05;
+
+            // Enhanced bounce effect with dampening
+            for (let j = 0; j < 3; j++) {
+                if (Math.abs(positions[i * 3 + j]) > 5) {
+                    velocities[i * 3 + j] *= -0.8;
+                    positions[i * 3 + j] = Math.sign(positions[i * 3 + j]) * 5;
                 }
-
-                this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                this.geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-                this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-                this.geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
             }
 
-            update() {
-                const positions = this.geometry.attributes.position.array;
-                const velocities = this.geometry.attributes.velocity.array;
-
-                for (let i = 0; i < this.count; i++) {
-                    positions[i * 3] += velocities[i * 3];
-                    positions[i * 3 + 1] += velocities[i * 3 + 1];
-                    positions[i * 3 + 2] += velocities[i * 3 + 2];
-
-                    // Enhanced bounce effect
-                    for (let j = 0; j < 3; j++) {
-                        if (Math.abs(positions[i * 3 + j]) > 5) {
-                            velocities[i * 3 + j] *= -0.95;
-                            positions[i * 3 + j] = Math.sign(positions[i * 3 + j]) * 5;
-                        }
-                    }
+            // Add slight acceleration towards center
+            const distance = Math.sqrt(
+                positions[i * 3] * positions[i * 3] +
+                positions[i * 3 + 1] * positions[i * 3 + 1] +
+                positions[i * 3 + 2] * positions[i * 3 + 2]
+            );
+            
+            if (distance > 0.1) {
+                for (let j = 0; j < 3; j++) {
+                    velocities[i * 3 + j] -= positions[i * 3 + j] * 0.0001;
                 }
-
-                this.geometry.attributes.position.needsUpdate = true;
             }
         }
+
+        this.geometry.attributes.position.needsUpdate = true;
+        this.geometry.attributes.color.needsUpdate = true;
+    }
+}
 
         // Initialize particle system
         const particleSystem = new ParticleSystem(3000);
