@@ -190,7 +190,17 @@
     <div id="info-panel" class="overlay">
         <h2>Vortex Mathematics</h2>
         <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
-        <div id="number-grid"></div>
+        <div id="number-grid">
+            <!-- Number Cells (1-8) -->
+            <div class="number-cell">1</div>
+            <div class="number-cell">2</div>
+            <div class="number-cell">3</div>
+            <div class="number-cell">4</div>
+            <div class="number-cell">5</div>
+            <div class="number-cell">6</div>
+            <div class="number-cell">7</div>
+            <div class="number-cell">8</div>
+        </div>
     </div>
 
     <!-- Controls Panel -->
@@ -250,10 +260,6 @@
              * Initializes Tone.js components
              */
             async initTone() {
-                // Initialize Tone.js context on user interaction
-                // This is required by modern browsers to start audio
-                // We'll wait for the first user interaction to initialize
-
                 // Create FM Synth
                 this.fmSynth = new Tone.FMSynth({
                     harmonicity: 3,
@@ -308,6 +314,9 @@
 
                 // Initially mute the audio
                 this.masterVolume.mute = true;
+
+                // Update frequencies based on the initial scale
+                this.updateFrequencies();
             }
 
             /**
@@ -357,7 +366,7 @@
              */
             setFMDepth(depth) {
                 this.fmDepth = depth;
-                const normalizedDepth = depth / 100;
+                const normalizedDepth = depth / 100; // 0 to 1
                 this.fmSynth.modulationIndex.value = normalizedDepth * 100; // Adjust scaling as needed
             }
 
@@ -389,6 +398,7 @@
                 this.analyzer = analyzer;
                 this.resize();
                 window.addEventListener('resize', () => this.resize());
+                this.draw(); // Start drawing
             }
 
             /**
@@ -520,6 +530,7 @@
              */
             toggleRotation() {
                 this.rotationEnabled = !this.rotationEnabled;
+                console.log(`Rotation Enabled: ${this.rotationEnabled}`);
             }
         }
 
@@ -534,7 +545,6 @@
                 this.threeVisualizer = new ThreeVisualizer();
                 this.setupUI();
                 this.setupNumberGrid();
-                this.visualizer.draw();
             }
 
             /**
@@ -544,22 +554,26 @@
                 // Toggle Play Button
                 const togglePlayBtn = document.getElementById('togglePlay');
                 togglePlayBtn.addEventListener('click', async () => {
-                    // Start Tone.js context on user interaction
-                    if (Tone.context.state !== 'running') {
-                        await Tone.start();
-                        console.log('Tone.js started');
-                    }
+                    try {
+                        // Start Tone.js context on user interaction
+                        if (Tone.context.state !== 'running') {
+                            await Tone.start();
+                            console.log('Tone.js started');
+                        }
 
-                    if (togglePlayBtn.classList.contains('active')) {
-                        this.audio.stop();
-                        togglePlayBtn.classList.remove('active');
-                        togglePlayBtn.textContent = 'Start';
-                        console.log('Audio stopped');
-                    } else {
-                        this.audio.start();
-                        togglePlayBtn.classList.add('active');
-                        togglePlayBtn.textContent = 'Stop';
-                        console.log('Audio started');
+                        if (togglePlayBtn.classList.contains('active')) {
+                            this.audio.stop();
+                            togglePlayBtn.classList.remove('active');
+                            togglePlayBtn.textContent = 'Start';
+                            console.log('Audio stopped');
+                        } else {
+                            this.audio.start();
+                            togglePlayBtn.classList.add('active');
+                            togglePlayBtn.textContent = 'Stop';
+                            console.log('Audio started');
+                        }
+                    } catch (error) {
+                        console.error('Error starting Tone.js:', error);
                     }
                 });
 
@@ -567,35 +581,30 @@
                 const toggleRotationBtn = document.getElementById('toggleRotation');
                 toggleRotationBtn.addEventListener('click', () => {
                     this.threeVisualizer.toggleRotation();
-                    console.log('Rotation toggled');
                 });
 
                 // Waveform Select
                 const waveformSelect = document.getElementById('waveformSelect');
                 waveformSelect.addEventListener('change', (e) => {
                     this.audio.setWaveform(e.target.value);
-                    console.log(`Waveform set to ${e.target.value}`);
                 });
 
                 // Scale Select
                 const scaleSelect = document.getElementById('scaleSelect');
                 scaleSelect.addEventListener('change', (e) => {
                     this.audio.setScale(e.target.value);
-                    console.log(`Scale set to ${e.target.value}`);
                 });
 
                 // Master Volume Slider
                 const masterVolumeSlider = document.getElementById('masterVolume');
                 masterVolumeSlider.addEventListener('input', (e) => {
                     this.audio.setMasterVolume(parseFloat(e.target.value));
-                    console.log(`Master volume set to ${e.target.value}`);
                 });
 
                 // FM Depth Slider
                 const fmDepthSlider = document.getElementById('fmDepth');
                 fmDepthSlider.addEventListener('input', (e) => {
                     this.audio.setFMDepth(parseFloat(e.target.value));
-                    console.log(`FM depth set to ${e.target.value}`);
                 });
 
                 // Update Frequency Display
@@ -611,33 +620,11 @@
              */
             setupNumberGrid() {
                 const grid = document.getElementById('number-grid');
-                for (let i = 1; i <= 8; i++) { // Adjusted to 8 to match scale arrays
-                    const cell = document.createElement('div');
-                    cell.className = 'number-cell';
-                    cell.textContent = i;
-                    cell.style.backgroundColor = this.getColorForNumber(i);
-                    cell.addEventListener('click', () => this.activateFrequency(i));
-                    grid.appendChild(cell);
-                }
-            }
+                const numberCells = grid.querySelectorAll('.number-cell');
 
-            /**
-             * Returns the color associated with a number
-             * @param {number} num - Number (1-8)
-             * @returns {string} - Hex color code
-             */
-            getColorForNumber(num) {
-                const colors = {
-                    1: '#ff0000',
-                    2: '#ff7700',
-                    3: '#ffff00',
-                    4: '#00ff00',
-                    5: '#0000ff',
-                    6: '#4b0082',
-                    7: '#9400d3',
-                    8: '#ffffff'
-                };
-                return colors[num] || '#ffffff';
+                numberCells.forEach((cell, index) => {
+                    cell.addEventListener('click', () => this.activateFrequency(index + 1));
+                });
             }
 
             /**
