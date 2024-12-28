@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Fractal Growth</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Animation variables
+        let time = 0;
+        let maxDepth = 1;
+        const maxPossibleDepth = 12;
+        const baseLen = Math.min(canvas.width, canvas.height) / 4;
+
+        function drawBranch(x, y, len, angle, depth) {
+            if (depth > maxDepth) return;
+
+            // Calculate end point
+            const endX = x + len * Math.cos(angle);
+            const endY = y + len * Math.sin(angle);
+
+            // Draw line with color based on depth
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = `hsl(${(depth * 30 + time * 2) % 360}, 70%, 50%)`;
+            ctx.lineWidth = Math.max(1, len / 10);
+            ctx.stroke();
+
+            // Recursive calls for branches
+            if (depth < maxDepth) {
+                const newLen = len * 0.67;
+                const angleOffset = Math.PI / 4 + Math.sin(time * 0.002 + depth) * 0.2;
+                drawBranch(endX, endY, newLen, angle - angleOffset, depth + 1);
+                drawBranch(endX, endY, newLen, angle + angleOffset, depth + 1);
+            }
+        }
+
+        function animate() {
+            // Clear canvas with fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Increment time
+            time++;
+
+            // Gradually increase depth
+            if (time % 60 === 0 && maxDepth < maxPossibleDepth) {
+                maxDepth++;
+            }
+
+            // Draw fractal from bottom center
+            const startX = canvas.width / 2;
+            const startY = canvas.height * 0.8;
+            drawBranch(startX, startY, baseLen, -Math.PI/2, 0);
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
