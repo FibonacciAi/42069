@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GameStop vs Hedge Funds</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: black; touch-action: none; font-family: 'Courier New', monospace; }
+        canvas { display: block; }
+        #info { position: absolute; top: 20px; left: 20px; color: #00FF00; font-size: 24px; text-shadow: 2px 2px 4px rgba(0,255,0,0.5); }
+        #controls { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; }
+        .control-btn { width: 80px; height: 80px; background-color: rgba(0,255,0,0.2); border-radius: 10px; border: 2px solid rgba(0,255,0,0.5); }
+        #title { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #00FF00; font-size: 36px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,255,0,0.5); }
+        #fireBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100px; height: 100px; background-color: rgba(255,0,0,0.5); border-radius: 10px; border: 2px solid rgba(255,0,0,0.5); }
+        #levelInfo { position: absolute; top: 60px; left: 20px; color: #00FF00; font-size: 20px; text-shadow: 2px 2px 4px rgba(0,255,0,0.5); }
+        #levelUpMessage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #FFFF00; font-size: 48px; font-weight: bold; text-shadow: 2px 2px 4px rgba(255,255,0,0.5); display: none; }
+        #powerUpStatus { position: absolute; top: 100px; left: 20px; color: #00FF00; font-size: 20px; text-shadow: 2px 2px 4px rgba(0,255,0,0.5); }
+        #shieldStatus { position: absolute; top: 140px; left: 20px; color: #00FF00; font-size: 20px; text-shadow: 2px 2px 4px rgba(0,255,0,0.5); }
+        #multiplierStatus { position: absolute; top: 180px; left: 20px; color: #00FF00; font-size: 20px; text-shadow: 2px 2px 4px rgba(0,255,0,0.5); }
+        #weaponStatus { position: absolute; top: 220px; left: 20px; color: #00FF00; font-size: 20px; text-shadow: 2px 2px 4px rgba(0,255,0,0.5); }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="title">GameStop vs Hedge Funds</div>
+    <div id="info">Score: <span id="score">0</span></div>
+    <div id="levelInfo">Level: <span id="level">1</span></div>
+    <div id="powerUpStatus">Power-up: <span id="powerUpStatusText">None</span></div>
+    <div id="shieldStatus">Shield: <span id="shieldStatusText">Inactive</span></div>
+    <div id="multiplierStatus">Multiplier: <span id="multiplierStatusText">x1</span></div>
+    <div id="weaponStatus">Weapon: <span id="weaponStatusText">Standard</span></div>
+    <div id="controls">
+        <div id="leftBtn" class="control-btn"></div>
+        <div id="rightBtn" class="control-btn"></div>
+    </div>
+    <div id="fireBtn"></div>
+    <div id="levelUpMessage">Level Up!</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const levelUpMessage = document.getElementById('levelUpMessage');
+        const powerUpStatusText = document.getElementById('powerUpStatusText');
+        const shieldStatusText = document.getElementById('shieldStatusText');
+        const multiplierStatusText = document.getElementById('multiplierStatusText');
+        const weaponStatusText = document.getElementById('weaponStatusText');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const fireBtn = document.getElementById('fireBtn');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let score = 0;
+        let level = 1;
+        let levelUpScore = 1000;
+        const stars = [];
+        const particles = [];
+        const bullets = [];
+        const missiles = [];
+        let powerUpActive = false;
+        let powerUpType = '';
+        let powerUpTimer = 0;
+        let shieldActive = false;
+        let shieldTimer = 0;
+        let scoreMultiplier = 1;
+        let multiplierTimer = 0;
+        let currentWeapon = 'standard';
+        let weaponTimer = 0;
+
+        const ship = {
+            x: canvas.width / 2,
+            y: canvas.height - 80,
+            width: 60,
+            height: 80,
+            speed: 5,
+            dx: 0
+        };
+
+        const hedgeFunds = [];
+        const hedgeFundTypes = [
+            { name: 'Melvin Capital', size: 1.2, color: '#FF4136' },
+            { name: 'Citron Research', size: 1, color: '#FF851B' },
+            { name: 'Point72', size: 0.9, color: '#FFDC00' },
+            { name: 'D1 Capital', size: 0.8, color: '#2ECC40' },
+            { name: 'Maplelane Capital', size: 0.7, color: '#0074D9' }
+        ];
+
+        const powerUps = [];
+        const powerUpTypes = [
+            { name: 'Shill Destroyer', color: '#00FFFF', duration: 10000 },
+            { name: 'Shield', color: '#FFA500', duration: 8000 },
+            { name: 'Score Boost', color: '#FF00FF', duration: 15000 },
+            { name: 'Spread Shot', color: '#FFFF00', duration: 12000 }
+        ];
+
+        // Create stars
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
+
+        function drawPixel(x, y, size, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(Math.floor(x), Math.floor(y), size, size);
+        }
+
+        function drawBackground() {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(star => {
+                drawPixel(star.x, star.y, star.radius, "#00FF00");
+            });
+        }
+
+        function moveStars() {
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+        }
+
+        function drawShip() {
+            const pixelSize = 4;
+            const shipPixels = [
+                [0,0,0,0,1,1,1,1,0,0,0,0],
+                [0,0,0,1,1,1,1,1,1,0,0,0],
+                [0,0,1,1,1,1,1,1,1,1,0,0],
+                [0,1,1,1,1,1,1,1,1,1,1,0],
+                [1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,0,0,1,1,0,0,1,1,1],
+                [1,1,0,0,0,1,1,0,0,0,1,1],
+                [1,0,0,0,0,1,1,0,0,0,0,1]
+            ];
+
+            const shipX = Math.floor(ship.x - (shipPixels[0].length * pixelSize) / 2);
+            const shipY = Math.floor(ship.y - (shipPixels.length * pixelSize) / 2);
+
+            for (let y = 0; y < shipPixels.length; y++) {
+                for (let x = 0; x < shipPixels[y].length; x++) {
+                    if (shipPixels[y][x] === 1) {
+                        drawPixel(shipX + x * pixelSize, shipY + y * pixelSize, pixelSize, "#00FF00");
+                    }
+                }
+            }
+
+            if (shieldActive) {
+                ctx.strokeStyle = '#FFA500';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(ship.x, ship.y, ship.width / 2 + 10, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        function drawHedgeFunds() {
+            hedgeFunds.forEach(fund => {
+                const pixelSize = 4;
+                const fundPixels = [
+                    [0,1,1,1,1,0],
+                    [1,1,1,1,1,1],
+                    [1,1,0,0,1,1],
+                    [1,1,0,0,1,1],
+                    [1,1,1,1,1,1],
+                    [0,1,1,1,1,0]
+                ];
+
+                const fundX = Math.floor(fund.x - (fundPixels[0].length * pixelSize) / 2);
+                const fundY = Math.floor(fund.y - (fundPixels.length * pixelSize) / 2);
+
+                for (let y = 0; y < fundPixels.length; y++) {
+                    for (let x = 0; x < fundPixels[y].length; x++) {
+                        if (fundPixels[y][x] === 1) {
+                            drawPixel(fundX + x * pixelSize, fundY + y * pixelSize, pixelSize, fund.color);
+                        }
+                    }
+                }
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = `${10 * fund.size}px 'Courier New'`;
+                ctx.textAlign = 'center';
+                ctx.fillText(fund.name, fund.x, fund.y + 30 * fund.size);
+            });
+        }
+
+        function createHedgeFund() {
+            if (Math.random() < 0.02 * (1 + level * 0.1)) {
+                const fundType = hedgeFundTypes[Math.floor(Math.random() * hedgeFundTypes.length)];
+                hedgeFunds.push({
+                    x: Math.random() * (canvas.width - 80) + 40,
+                    y: -50,
+                    speed: 2 + level * 0.5,
+                    ...fundType
+                });
+            }
+        }
+
+        function moveHedgeFunds() {
+            hedgeFunds.forEach(fund => {
+                fund.y += fund.speed;
+            });
+            hedgeFunds.splice(0, hedgeFunds.findIndex(fund => fund.y > canvas.height));
+        }
+
+        function createPowerUp() {
+            if (Math.random() < 0.005) {
+                const powerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+                powerUps.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: -30,
+                    speed: 2,
+                    size: 30,
+                    ...powerUpType
+                });
+            }
+        }
+
+        function movePowerUps() {
+            powerUps.forEach(powerUp => {
+                powerUp.y += powerUp.speed;
+            });
+            powerUps.splice(0, powerUps.findIndex(powerUp => powerUp.y > canvas.height));
+        }
+
+        function drawPowerUps() {
+            powerUps.forEach(powerUp => {
+                const pixelSize = 3;
+                const powerUpPixels = [
+                    [0,1,1,1,1,0],
+                    [1,1,1,1,1,1],
+                    [1,1,0,0,1,1],
+                    [1,1,0,0,1,1],
+                    [1,1,1,1,1,1],
+                    [0,1,1,1,1,0]
+                ];
+
+                const powerUpX = Math.floor(powerUp.x - (powerUpPixels[0].length * pixelSize) / 2);
+                const powerUpY = Math.floor(powerUp.y - (powerUpPixels.length * pixelSize) / 2);
+
+                for (let y = 0; y < powerUpPixels.length; y++) {
+                    for (let x = 0; x < powerUpPixels[y].length; x++) {
+                        if (powerUpPixels[y][x] === 1) {
+                            drawPixel(powerUpX + x * pixelSize, powerUpY + y * pixelSize, pixelSize, powerUp.color);
+                        }
+                    }
+                }
+
+                ctx.fillStyle = '#000000';
+                ctx.font = '10px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText(powerUp.name[0], powerUp.x, powerUp.y + 3);
+            });
+        }
+
+        function checkCollisions() {
+            hedgeFunds.forEach((fund, index) => {
+                const dx = ship.x - fund.x;
+                const dy = ship.y - fund.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < (ship.width / 2 + 20 * fund.size)) {
+                    if (shieldActive) {
+                        hedgeFunds.splice(index, 1);
+                        createParticles(fund.x, fund.y, fund.color);
+                    } else {
+                        hedgeFunds.splice(index, 1);
+                        score += Math.round(100 * fund.size * scoreMultiplier);
+                        updateScore();
+                        createParticles(fund.x, fund.y, fund.color);
+                    }
+                }
+            });
+
+            bullets.forEach((bullet, bulletIndex) => {
+                hedgeFunds.forEach((fund, fundIndex) => {
+                    const dx = bullet.x - fund.x;
+                    const dy = bullet.y - fund.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < (5 + 20 * fund.size)) {
+                        hedgeFunds.splice(fundIndex, 1);
+                        bullets.splice(bulletIndex, 1);
+                        score += Math.round(50 * fund.size * scoreMultiplier);
+                        updateScore();
+                        createParticles(fund.x, fund.y, fund.color);
+                    }
+                });
+            });
+
+            missiles.forEach((missile, missileIndex) => {
+                hedgeFunds.forEach((fund, fundIndex) => {
+                    const dx = missile.x - fund.x;
+                    const dy = missile.y - fund.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < (10 + 20 * fund.size)) {
+                        hedgeFunds.splice(fundIndex, 1);
+                        missiles.splice(missileIndex, 1);
+                        score += Math.round(200 * fund.size * scoreMultiplier);
+                        updateScore();
+                        createParticles(fund.x, fund.y, fund.color);
+                    }
+                });
+            });
+
+            powerUps.forEach((powerUp, index) => {
+                const dx = ship.x - powerUp.x;
+                const dy = ship.y - powerUp.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < (ship.width / 2 + powerUp.size / 2)) {
+                    powerUps.splice(index, 1);
+                    activatePowerUp(powerUp);
+                }
+            });
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    dx: (Math.random() - 0.5) * 5,
+                    dy: (Math.random() - 0.5) * 5,
+                    size: Math.random() * 3 + 1,
+                    color: color,
+                    life: 30
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.dx;
+                p.y += p.dy;
+                p.life--;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    drawPixel(p.x, p.y, p.size, p.color);
+                }
+            }
+        }
+
+        function moveShip() {
+            ship.x += ship.dx;
+            if (ship.x < ship.width / 2) ship.x = ship.width / 2;
+            if (ship.x > canvas.width - ship.width / 2) ship.x = canvas.width - ship.width / 2;
+        }
+
+        function fireBullet() {
+            switch (currentWeapon) {
+                case 'standard':
+                    bullets.push({ x: ship.x, y: ship.y, speed: 10 + level, color: '#FFFF00' });
+                    break;
+                case 'spread':
+                    bullets.push(
+                        { x: ship.x - 20, y: ship.y, speed: 10 + level, color: '#FF00FF' },
+                        { x: ship.x, y: ship.y, speed: 10 + level, color: '#FF00FF' },
+                        { x: ship.x + 20, y: ship.y, speed: 10 + level, color: '#FF00FF' }
+                    );
+                    break;
+            }
+        }
+
+        function fireMissile() {
+            missiles.push({ x: ship.x, y: ship.y, speed: 8 + level * 0.5, target: getRandomTarget() });
+        }
+
+        function getRandomTarget() {
+            return hedgeFunds.length > 0 ? hedgeFunds[Math.floor(Math.random() * hedgeFunds.length)] : null;
+        }
+
+        function updateBullets() {
+            bullets.forEach(bullet => {
+                bullet.y -= bullet.speed;
+            });
+            bullets.splice(0, bullets.findIndex(bullet => bullet.y < 0));
+
+            bullets.forEach(bullet => {
+                drawPixel(bullet.x, bullet.y, 4, bullet.color);
+            });
+        }
+
+        function updateMissiles() {
+            missiles.forEach(missile => {
+                if (missile.target && missile.target.y < canvas.height) {
+                    const dx = missile.target.x - missile.x;
+                    const dy = missile.target.y - missile.y;
+                    const angle = Math.atan2(dy, dx);
+                    missile.x += Math.cos(angle) * missile.speed;
+                    missile.y += Math.sin(angle) * missile.speed;
+                } else {
+                    missile.y -= missile.speed;
+                }
+            });
+            missiles.splice(0, missiles.findIndex(missile => missile.y < 0));
+
+            missiles.forEach(missile => {
+                drawPixel(missile.x, missile.y, 5, '#FF0000');
+                drawPixel(missile.x, missile.y + 5, 4, '#FF0000');
+                drawPixel(missile.x, missile.y + 9, 3, '#FF0000');
+            });
+        }
+
+        function updateScore() {
+            scoreElement.textContent = score;
+            if (score >= levelUpScore) {
+                levelUp();
+            }
+        }
+
+        function levelUp() {
+            level++;
+            levelElement.textContent = level;
+            levelUpScore = Math.round(levelUpScore * 1.5);
+            showLevelUpMessage();
+        }
+
+        function showLevelUpMessage() {
+            levelUpMessage.style.display = 'block';
+            setTimeout(() => {
+                levelUpMessage.style.display = 'none';
+            }, 2000);
+        }
+
+        function activatePowerUp(powerUp) {
+            switch (powerUp.name) {
+                case 'Shill Destroyer':
+                    powerUpActive = true;
+                    powerUpType = 'Shill Destroyer';
+                    powerUpTimer = powerUp.duration;
+                    break;
+                case 'Shield':
+                    shieldActive = true;
+                    shieldTimer = powerUp.duration;
+                    break;
+                case 'Score Boost':
+                    scoreMultiplier = 2;
+                    multiplierTimer = powerUp.duration;
+                    break;
+                case 'Spread Shot':
+                    currentWeapon = 'spread';
+                    weaponTimer = powerUp.duration;
+                    break;
+            }
+            updatePowerUpStatus();
+        }
+
+        function updatePowerUps() {
+            if (powerUpActive) {
+                powerUpTimer -= 16; // Assuming 60 FPS
+                if (powerUpTimer <= 0) {
+                    powerUpActive = false;
+                    powerUpType = '';
+                }
+            }
+
+            if (shieldActive) {
+                shieldTimer -= 16;
+                if (shieldTimer <= 0) {
+                    shieldActive = false;
+                }
+            }
+
+            if (scoreMultiplier > 1) {
+                multiplierTimer -= 16;
+                if (multiplierTimer <= 0) {
+                    scoreMultiplier = 1;
+                }
+            }
+
+            if (currentWeapon !== 'standard') {
+                weaponTimer -= 16;
+                if (weaponTimer <= 0) {
+                    currentWeapon = 'standard';
+                }
+            }
+
+            updatePowerUpStatus();
+        }
+
+        function updatePowerUpStatus() {
+            powerUpStatusText.textContent = powerUpActive ? `${powerUpType} (${Math.ceil(powerUpTimer / 1000)}s)` : 'None';
+            shieldStatusText.textContent = shieldActive ? `Active (${Math.ceil(shieldTimer / 1000)}s)` : 'Inactive';
+            multiplierStatusText.textContent = `x${scoreMultiplier}${scoreMultiplier > 1 ? ` (${Math.ceil(multiplierTimer / 1000)}s)` : ''}`;
+            weaponStatusText.textContent = `${currentWeapon.charAt(0).toUpperCase() + currentWeapon.slice(1)}${currentWeapon !== 'standard' ? ` (${Math.ceil(weaponTimer / 1000)}s)` : ''}`;
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            moveStars();
+            moveShip();
+            createHedgeFund();
+            moveHedgeFunds();
+            createPowerUp();
+            movePowerUps();
+            checkCollisions();
+            
+            drawHedgeFunds();
+            drawPowerUps();
+            drawShip();
+            updateParticles();
+            updateBullets();
+            updateMissiles();
+            updatePowerUps();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        leftBtn.addEventListener('touchstart', () => { ship.dx = -ship.speed; });
+        leftBtn.addEventListener('touchend', () => { ship.dx = 0; });
+        rightBtn.addEventListener('touchstart', () => { ship.dx = ship.speed; });
+        rightBtn.addEventListener('touchend', () => { ship.dx = 0; });
+        fireBtn.addEventListener('touchstart', () => { fireBullet(); });
+
+        // Add keyboard controls for testing on desktop
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') ship.dx = -ship.speed;
+            if (e.key === 'ArrowRight') ship.dx = ship.speed;
+            if (e.key === ' ') fireBullet();
+            if (e.key === 'Shift') fireMissile();
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') ship.dx = 0;
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ship.y = canvas.height - 80;
+        });
+
+        gameLoop();
+    </script>
+</body>
+</html>
