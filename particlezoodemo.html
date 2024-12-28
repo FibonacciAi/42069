@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Zoo ⚛</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #000000, #1a0033);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #bf00ff;
+            text-shadow: 0 0 10px #bf00ff;
+            font-size: 3em;
+        }
+        
+        h2 {
+            color: #8000ff;
+            text-shadow: 0 0 5px #8000ff;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(191, 0, 255, 0.3);
+            border: 1px solid #bf00ff;
+        }
+        
+        .particle-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .particle-list li {
+            background: rgba(25, 0, 51, 0.8);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #4d0099;
+            transition: all 0.3s ease;
+        }
+        
+        .particle-list li:hover {
+            transform: translateX(10px);
+            box-shadow: 0 0 15px rgba(191, 0, 255, 0.5);
+        }
+        
+        .particle-canvas {
+            width: 100px;
+            height: 100px;
+            margin-right: 20px;
+        }
+        
+        .boson {
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(45deg, #bf00ff, #8000ff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(45deg, #8000ff, #bf00ff);
+            box-shadow: 0 0 20px rgba(191, 0, 255, 0.5);
+        }
+        
+        #particle-detail {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #bf00ff;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Particle Zoo ⚛</h1>
+        <p>The Standard Model accounts for three families of fundamental particles. It includes:</p>
+
+        <h2>Quarks</h2>
+        <ul class="particle-list" id="quark-list"></ul>
+
+        <h2>Leptons</h2>
+        <ul class="particle-list" id="lepton-list"></ul>
+
+        <h2>Force-Carrying Bosons</h2>
+        <ul class="particle-list" id="boson-list"></ul>
+
+        <button class="btn" onclick="showMessage()">Learn More</button>
+    </div>
+
+    <div id="particle-detail"></div>
+
+    <script>
+        const particles = {
+            quarks: [
+                {name: 'Up', color: '#ff3366'},
+                {name: 'Down', color: '#3366ff'},
+                {name: 'Charm', color: '#33ff66'},
+                {name: 'Strange', color: '#ff6633'},
+                {name: 'Top', color: '#6633ff'},
+                {name: 'Bottom', color: '#ff3366'}
+            ],
+            leptons: [
+                {name: 'Electron', color: '#33ffcc'},
+                {name: 'Electron Neutrino', color: '#cc33ff'},
+                {name: 'Muon', color: '#ffcc33'},
+                {name: 'Muon Neutrino', color: '#33ccff'},
+                {name: 'Tau', color: '#ff33cc'},
+                {name: 'Tau Neutrino', color: '#33ffcc'}
+            ],
+            bosons: [
+                {name: 'Photons', description: 'Electromagnetism', color: '#ffff33'},
+                {name: 'Gluons', description: 'Strong Nuclear Force', color: '#ff3333'},
+                {name: 'W and Z Bosons', description: 'Weak Nuclear Force', color: '#33ff33'}
+            ]
+        };
+
+        function createParticleAnimation(container, color) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({alpha: true});
+            renderer.setSize(100, 100);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.5
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+
+            const light = new THREE.PointLight(0xffffff, 1);
+            light.position.set(2, 2, 2);
+            scene.add(light);
+
+            camera.position.z = 2;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                sphere.rotation.x += 0.01;
+                sphere.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        function createParticleList(particleType, containerId) {
+            const container = document.getElementById(containerId);
+            particles[particleType].forEach(particle => {
+                const li = document.createElement('li');
+                const canvas = document.createElement('div');
+                canvas.className = 'particle-canvas';
+                li.appendChild(canvas);
+                li.appendChild(document.createTextNode(
+                    particle.description ? 
+                    `${particle.name} ↦ ${particle.description}` : 
+                    particle.name
+                ));
+                createParticleAnimation(canvas, particle.color);
+                container.appendChild(li);
+            });
+        }
+
+        createParticleList('quarks', 'quark-list');
+        createParticleList('leptons', 'lepton-list');
+        createParticleList('bosons', 'boson-list');
+
+        function showMessage() {
+            const detail = document.getElementById('particle-detail');
+            detail.style.display = 'block';
+            detail.innerHTML = `
+                <h2>The Standard Model</h2>
+                <p>A sophisticated framework describing the fundamental particles and forces of our universe.</p>
+                <button class="btn" onclick="document.getElementById('particle-detail').style.display='none'">Close</button>
+            `;
+        }
+    </script>
+</body>
+</html>
