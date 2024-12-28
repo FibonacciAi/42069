@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Enhanced Low Poly Fractal Wormhole</title>
+    <title>Enhanced Fractal Wormhole</title>
     <style>
         body {
             margin: 0;
@@ -11,31 +11,26 @@
             font-family: Arial, sans-serif;
         }
         canvas {
+            display: block;
             width: 100vw;
             height: 100vh;
-            display: block;
         }
-        /* Additional styles omitted for brevity */
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <div id="cursor"></div>
-    <div id="controls">
-        <!-- Control elements omitted for brevity -->
-    </div>
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let width, height, centerX, centerY;
         let time = 0;
-        let mouseX = width / 2;
-        let mouseY = height / 2;
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
         let speed = 1;
         let segments = [];
-        const numSegments = 30; // Increased number for more detail
+        const numSegments = 30; // Increased for more detail
         const segmentSpacing = 50;
-        const tunnelRadius = 200; // Reduced for better fractal visibility
+        const tunnelRadius = 200; // Adjusted for better fractal visibility
 
         class Segment {
             constructor(z) {
@@ -48,6 +43,7 @@
 
             generatePoints() {
                 const sides = 6; // Increased sides for more fractal branches
+                this.points = []; // Reset points
                 for (let i = 0; i < sides; i++) {
                     const angle = (i / sides) * Math.PI * 2;
                     const radius = tunnelRadius * (0.7 + Math.random() * 0.3);
@@ -72,7 +68,7 @@
                 this.offset.x = Math.sin(time * 0.001 + zFactor * Math.PI * 2) * 50;
                 this.offset.y = Math.cos(time * 0.002 + zFactor * Math.PI * 2) * 50;
 
-                // Distort points based on mouse position
+                // Distort points based on time
                 this.points.forEach(point => {
                     point.radius = point.originalRadius * (1 + 
                         Math.sin(point.angle + time * 0.01) * 0.2);
@@ -83,6 +79,9 @@
                 const perspective = 800;
                 const scale = perspective / (perspective + this.z);
                 
+                // Skip drawing if scale is too low to ensure visibility
+                if (scale < 0.3) return;
+
                 ctx.beginPath();
                 this.points.forEach((point, i) => {
                     const nextPoint = this.points[(i + 1) % this.points.length];
@@ -117,7 +116,7 @@
                 ctx.stroke();
 
                 // Add fractal branches
-                if (scale > 0.7) { // Increased scale threshold for visibility
+                if (scale > 0.3) { // Reduced scale threshold for visibility
                     this.drawFractalBranches(scale);
                 }
             }
@@ -167,7 +166,7 @@
         function animateFrame() {
             time += 1;
             
-            // Clear canvas with fade effect
+            // Clear canvas with semi-transparent fill for trail effect
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(0, 0, width, height);
 
@@ -188,12 +187,14 @@
             requestAnimationFrame(animateFrame);
         }
 
+        // Event listeners
         window.addEventListener('resize', init);
         canvas.addEventListener('mousemove', (e) => {
             mouseX = e.clientX;
             mouseY = e.clientY;
         });
 
+        // Initialize and start animation
         init();
         animateFrame();
     </script>
