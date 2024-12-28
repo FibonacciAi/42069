@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enhanced Low Poly Fractal Wormhole</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            cursor: none;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        /* Additional styles omitted for brevity */
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="cursor"></div>
+    <div id="controls">
+        <!-- Control elements omitted for brevity -->
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, centerX, centerY;
+        let time = 0;
+        let mouseX = width / 2;
+        let mouseY = height / 2;
+        let speed = 1;
+        let segments = [];
+        const numSegments = 30; // Increased number for more detail
+        const segmentSpacing = 50;
+        const tunnelRadius = 200; // Reduced for better fractal visibility
+
+        class Segment {
+            constructor(z) {
+                this.z = z;
+                this.points = [];
+                this.rotation = 0;
+                this.offset = {x: 0, y: 0};
+                this.generatePoints();
+            }
+
+            generatePoints() {
+                const sides = 6; // Increased sides for more fractal branches
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i / sides) * Math.PI * 2;
+                    const radius = tunnelRadius * (0.7 + Math.random() * 0.3);
+                    this.points.push({
+                        angle,
+                        radius,
+                        originalRadius: radius
+                    });
+                }
+            }
+
+            update(deltaZ) {
+                this.z += deltaZ;
+                if (this.z > 0) {
+                    this.z = -numSegments * segmentSpacing;
+                    this.generatePoints();
+                }
+
+                // Rotate and distort the segment
+                this.rotation += 0.002 * speed;
+                const zFactor = (this.z / (segmentSpacing * numSegments));
+                this.offset.x = Math.sin(time * 0.001 + zFactor * Math.PI * 2) * 50;
+                this.offset.y = Math.cos(time * 0.002 + zFactor * Math.PI * 2) * 50;
+
+                // Distort points based on mouse position
+                this.points.forEach(point => {
+                    point.radius = point.originalRadius * (1 + 
+                        Math.sin(point.angle + time * 0.01) * 0.2);
+                });
+            }
+
+            draw() {
+                const perspective = 800;
+                const scale = perspective / (perspective + this.z);
+                
+                ctx.beginPath();
+                this.points.forEach((point, i) => {
+                    const nextPoint = this.points[(i + 1) % this.points.length];
+                    
+                    // Calculate current point
+                    const x1 = point.radius * Math.cos(point.angle + this.rotation);
+                    const y1 = point.radius * Math.sin(point.angle + this.rotation);
+                    const projectedX1 = (x1 + this.offset.x) * scale + centerX;
+                    const projectedY1 = (y1 + this.offset.y) * scale + centerY;
+
+                    // Calculate next point
+                    const x2 = nextPoint.radius * Math.cos(nextPoint.angle + this.rotation);
+                    const y2 = nextPoint.radius * Math.sin(nextPoint.angle + this.rotation);
+                    const projectedX2 = (x2 + this.offset.x) * scale + centerX;
+                    const projectedY2 = (y2 + this.offset.y) * scale + centerY;
+
+                    if (i === 0) {
+                        ctx.moveTo(projectedX1, projectedY1);
+                    }
+                    ctx.lineTo(projectedX2, projectedY2);
+                });
+                ctx.closePath();
+
+                // Create gradient based on depth
+                const gradientColor = Math.abs(Math.sin(this.z * 0.01 + time * 0.001));
+                const hue = (time * 0.1 + this.z) % 360;
+                ctx.fillStyle = `hsla(${hue}, 70%, ${50 + gradientColor * 20}%, ${0.5 + scale * 0.5})`;
+                ctx.strokeStyle = `hsla(${(hue + 180) % 360}, 70%, 60%, ${0.8 + scale * 0.2})`;
+                ctx.lineWidth = 2 * scale;
+
+                ctx.fill();
+                ctx.stroke();
+
+                // Add fractal branches
+                if (scale > 0.7) { // Increased scale threshold for visibility
+                    this.drawFractalBranches(scale);
+                }
+            }
+
+            drawFractalBranches(scale) {
+                const branchCount = 6; // Increased branch count for complexity
+                const branchLength = 100 * scale;
+                
+                this.points.forEach((point, i) => {
+                    const angle = point.angle + this.rotation;
+                    const x = point.radius * Math.cos(angle);
+                    const y = point.radius * Math.sin(angle);
+                    const projectedX = (x + this.offset.x) * scale + centerX;
+                    const projectedY = (y + this.offset.y) * scale + centerY;
+
+                    for (let j = 0; j < branchCount; j++) {
+                        const branchAngle = angle + (Math.PI * 2 * j / branchCount) + Math.sin(time * 0.01 + j) * 0.1;
+                        const endX = projectedX + Math.cos(branchAngle) * branchLength;
+                        const endY = projectedY + Math.sin(branchAngle) * branchLength;
+
+                        ctx.beginPath();
+                        ctx.moveTo(projectedX, projectedY);
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = `hsla(${(time * 0.2 + this.z + j * 30) % 360}, 70%, 60%, ${0.3 + scale * 0.2})`;
+                        ctx.lineWidth = 1 * scale;
+                        ctx.stroke();
+                    }
+                });
+            }
+        }
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+
+        function init() {
+            initCanvas();
+            segments = [];
+            for (let i = 0; i < numSegments; i++) {
+                segments.push(new Segment(-i * segmentSpacing));
+            }
+        }
+
+        function animateFrame() {
+            time += 1;
+            
+            // Clear canvas with fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Update speed based on mouse position
+            const mouseXNorm = (mouseX / width - 0.5) * 2;
+            const mouseYNorm = (mouseY / height - 0.5) * 2;
+            speed = 1 + Math.hypot(mouseXNorm, mouseYNorm) * 2;
+
+            // Sort segments by z-depth for proper rendering
+            segments.sort((a, b) => b.z - a.z);
+
+            // Update and draw segments
+            segments.forEach(segment => {
+                segment.update(speed * 2);
+                segment.draw();
+            });
+
+            requestAnimationFrame(animateFrame);
+        }
+
+        window.addEventListener('resize', init);
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        init();
+        animateFrame();
+    </script>
+</body>
+</html>
