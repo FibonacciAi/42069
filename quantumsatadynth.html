@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced Geometry and Market Cycles Visualizer</title>
+<style>
+  body {
+    margin: 0;
+    background-color: #1d1d1d;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    overflow: hidden;
+  }
+  #controls {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(30, 30, 30, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 10;
+  }
+  #controls label {
+    display: block;
+    margin-top: 10px;
+  }
+  #controls input, #controls select {
+    width: 150px;
+  }
+  #info {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(30, 30, 30, 0.7);
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 300px;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <label for="waveType">Wave Type:</label>
+  <select id="waveType">
+    <option value="sine">Sine Wave</option>
+    <option value="cosine">Cosine Wave</option>
+    <option value="square">Square Wave</option>
+    <option value="triangle">Triangle Wave</option>
+    <option value="sawtooth">Sawtooth Wave</option>
+  </select>
+
+  <label for="frequency">Frequency:</label>
+  <input type="range" id="frequency" min="0.1" max="10" step="0.1" value="1">
+
+  <label for="amplitude">Amplitude:</label>
+  <input type="range" id="amplitude" min="0.1" max="5" step="0.1" value="1">
+
+  <label for="phase">Phase Shift:</label>
+  <input type="range" id="phase" min="0" max="360" step="1" value="0">
+
+  <label for="geometry">Geometry:</label>
+  <select id="geometry">
+    <option value="circle">Circle</option>
+    <option value="flower">Flower of Life</option>
+    <option value="spiral">Golden Spiral</option>
+    <option value="metatron">Metatron's Cube</option>
+  </select>
+
+  <label for="marketData">Market Data:</label>
+  <select id="marketData">
+    <option value="none">None</option>
+    <option value="s&p500">S&P 500</option>
+    <option value="nasdaq">NASDAQ</option>
+    <option value="dowjones">Dow Jones</option>
+  </select>
+
+  <button id="toggleCalculus">Toggle Calculus Visualization</button>
+</div>
+
+<div id="info">
+  <p id="description">Use the controls to interact with the visualization.</p>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+  // Setup
+  const canvas = document.getElementById('canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1d1d1d);
+  const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 1, 5);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
+  const pointLight = new THREE.PointLight(0xffffff, 1);
+  camera.add(pointLight);
+  scene.add(camera);
+
+  // Resize Handler
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  window.addEventListener('resize', onWindowResize, false);
+  onWindowResize();
+
+  // Variables
+  let amplitude = 1;
+  let frequency = 1;
+  let phase = 0;
+  let waveType = 'sine';
+  let geometryType = 'circle';
+  let marketDataType = 'none';
+  let calculusVisible = false;
+
+  // Waveform Material
+  const waveMaterial = new THREE.LineBasicMaterial({ color: 0xff0066 });
+  let waveMesh;
+
+  // Geometry Material
+  const geometryMaterial = new THREE.LineBasicMaterial({ color: 0x00aaff });
+  let geometryMesh;
+
+  // Calculus Visualization
+  let derivativeMesh;
+  const derivativeMaterial = new THREE.LineDashedMaterial({
+    color: 0xffff00,
+    dashSize: 0.1,
+    gapSize: 0.1,
+  });
+
+  // Market Data
+  let marketData = [];
+  let marketMesh;
+
+  // Controls
+  const waveTypeSelect = document.getElementById('waveType');
+  const frequencySlider = document.getElementById('frequency');
+  const amplitudeSlider = document.getElementById('amplitude');
+  const phaseSlider = document.getElementById('phase');
+  const geometrySelect = document.getElementById('geometry');
+  const marketDataSelect = document.getElementById('marketData');
+  const toggleCalculusBtn = document.getElementById('toggleCalculus');
+  const description = document.getElementById('description');
+
+  // Event Listeners
+  waveTypeSelect.addEventListener('change', () => {
+    waveType = waveTypeSelect.value;
+    updateWaveform();
+  });
+  frequencySlider.addEventListener('input', () => {
+    frequency = frequencySlider.value;
+    updateWaveform();
+  });
+  amplitudeSlider.addEventListener('input', () => {
+    amplitude = amplitudeSlider.value;
+    updateWaveform();
+  });
+  phaseSlider.addEventListener('input', () => {
+    phase = phaseSlider.value;
+    updateWaveform();
+  });
+  geometrySelect.addEventListener('change', () => {
+    geometryType = geometrySelect.value;
+    updateGeometry();
+  });
+  marketDataSelect.addEventListener('change', () => {
+    marketDataType = marketDataSelect.value;
+    updateMarketData();
+  });
+  toggleCalculusBtn.addEventListener('click', () => {
+    calculusVisible = !calculusVisible;
+    updateCalculus();
+  });
+
+  // Functions
+  function generateWaveform() {
+    const points = [];
+    for (let x = -Math.PI * 2; x <= Math.PI * 2; x += 0.01) {
+      let y = 0;
+      const phi = (phase * Math.PI) / 180;
+      switch (waveType) {
+        case 'sine':
+          y = amplitude * Math.sin(frequency * x + phi);
+          break;
+        case 'cosine':
+          y = amplitude * Math.cos(frequency * x + phi);
+          break;
+        case 'square':
+          y = amplitude * Math.sign(Math.sin(frequency * x + phi));
+          break;
+        case 'triangle':
+          y = (
+            (2 * amplitude) /
+            Math.PI
+          ) * Math.asin(Math.sin(frequency * x + phi));
+          break;
+        case 'sawtooth':
+          y =
+            ((2 * amplitude) / Math.PI) *
+            (frequency * (x + phi) - Math.PI * Math.floor((frequency * x + phi) / Math.PI + 0.5));
+          break;
+      }
+      points.push(new THREE.Vector3(x, y, 0));
+    }
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    return new THREE.Line(geometry, waveMaterial);
+  }
+
+  function updateWaveform() {
+    if (waveMesh) {
+      scene.remove(waveMesh);
+      waveMesh.geometry.dispose();
+    }
+    waveMesh = generateWaveform();
+    scene.add(waveMesh);
+    updateCalculus();
+  }
+
+  function generateGeometry() {
+    let points = [];
+    switch (geometryType) {
+      case 'circle':
+        for (let theta = 0; theta <= Math.PI * 2; theta += 0.01) {
+          points.push(
+            new THREE.Vector3(Math.cos(theta), Math.sin(theta), 0)
+          );
+        }
+        break;
+      case 'flower':
+        for (let theta = 0; theta <= Math.PI * 2; theta += 0.01) {
+          const r = Math.sin(6 * theta);
+          points.push(
+            new THREE.Vector3(r * Math.cos(theta), r * Math.sin(theta), 0)
+          );
+        }
+        break;
+      case 'spiral':
+        for (let theta = 0; theta <= Math.PI * 4; theta += 0.01) {
+          const r = theta;
+          points.push(
+            new THREE.Vector3(r * Math.cos(theta), r * Math.sin(theta), 0)
+          );
+        }
+        break;
+      case 'metatron':
+        // Simplified Metatron's Cube
+        const metatronPoints = [
+          new THREE.Vector3(-1, -1, 0),
+          new THREE.Vector3(1, -1, 0),
+          new THREE.Vector3(1, 1, 0),
+          new THREE.Vector3(-1, 1, 0),
+          new THREE.Vector3(-1, -1, 0),
+        ];
+        points = metatronPoints;
+        break;
+    }
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    return new THREE.LineLoop(geometry, geometryMaterial);
+  }
+
+  function updateGeometry() {
+    if (geometryMesh) {
+      scene.remove(geometryMesh);
+      geometryMesh.geometry.dispose();
+    }
+    geometryMesh = generateGeometry();
+    scene.add(geometryMesh);
+  }
+
+  function updateCalculus() {
+    if (derivativeMesh) {
+      scene.remove(derivativeMesh);
+      derivativeMesh.geometry.dispose();
+    }
+    if (calculusVisible) {
+      const points = [];
+      for (let x = -Math.PI * 2; x <= Math.PI * 2; x += 0.1) {
+        let y = 0;
+        let dy = 0;
+        const phi = (phase * Math.PI) / 180;
+        switch (waveType) {
+          case 'sine':
+            y = amplitude * Math.sin(frequency * x + phi);
+            dy = amplitude * frequency * Math.cos(frequency * x + phi);
+            break;
+          case 'cosine':
+            y = amplitude * Math.cos(frequency * x + phi);
+            dy = -amplitude * frequency * Math.sin(frequency * x + phi);
+            break;
+          // Other wave types can have their derivatives added similarly
+        }
+        points.push(new THREE.Vector3(x, dy, 0));
+      }
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      derivativeMesh = new THREE.Line(geometry, derivativeMaterial);
+      derivativeMesh.computeLineDistances();
+      scene.add(derivativeMesh);
+      description.textContent =
+        'Yellow dashed line represents the derivative of the wave.';
+    } else {
+      description.textContent = 'Use the controls to interact with the visualization.';
+    }
+  }
+
+  async function updateMarketData() {
+    if (marketMesh) {
+      scene.remove(marketMesh);
+      marketMesh.geometry.dispose();
+    }
+    if (marketDataType !== 'none') {
+      marketData = await fetchMarketData(marketDataType);
+      const points = [];
+      const scaleX = 0.01;
+      const scaleY = 0.001;
+      marketData.forEach((price, index) => {
+        points.push(
+          new THREE.Vector3(index * scaleX - 5, price * scaleY - 1, 0)
+        );
+      });
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+      marketMesh = new THREE.Line(geometry, material);
+      scene.add(marketMesh);
+    }
+  }
+
+  async function fetchMarketData(type) {
+    const apiKey = 'demo'; // Replace with your API key
+    let symbol = '';
+    switch (type) {
+      case 's&p500':
+        symbol = 'SPY';
+        break;
+      case 'nasdaq':
+        symbol = 'QQQ';
+        break;
+      case 'dowjones':
+        symbol = 'DIA';
+        break;
+    }
+    const response = await fetch(
+      `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&apikey=${apiKey}`
+    );
+    const data = await response.json();
+    const timeSeries = data['Time Series (Daily)'];
+    const prices = Object.values(timeSeries).map((day) => parseFloat(day['4. close']));
+    return prices.reverse();
+  }
+
+  // Initial Calls
+  updateWaveform();
+  updateGeometry();
+
+  // Animation Loop
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+</script>
+
+<!-- Include Three.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Include OrbitControls -->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+</body>
+</html>
