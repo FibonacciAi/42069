@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthwave Piano</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #000428, #004e92);
+            font-family: Arial, sans-serif;
+            overflow-x: auto;
+            overflow-y: hidden;
+            color: #fff;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+        }
+
+        .controls {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        select, input {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #ff00ff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        select:hover, input:hover {
+            border-color: #00ffff;
+        }
+
+        label {
+            font-size: 0.9em;
+            color: #ff00ff;
+            text-shadow: 0 0 5px #ff00ff;
+        }
+
+        .piano {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            margin: 20px auto;
+            min-width: min-content;
+        }
+
+        .key {
+            width: 60px;
+            height: 200px;
+            border: 1px solid #000;
+            box-sizing: border-box;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.1s;
+        }
+
+        .white {
+            background: linear-gradient(180deg, #fff, #e6e6e6);
+            border-radius: 0 0 5px 5px;
+        }
+
+        .black {
+            background: linear-gradient(180deg, #333, #000);
+            width: 40px;
+            height: 120px;
+            margin-left: -20px;
+            margin-right: -20px;
+            z-index: 2;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .key.active {
+            background: linear-gradient(180deg, #ff00ff, #00ffff);
+            box-shadow: 0 0 20px #ff00ff;
+        }
+
+        .glow {
+            position: absolute;
+            width: 100%;
+            height: 10px;
+            bottom: -10px;
+            background: #ff00ff;
+            filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .key.active .glow {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .key {
+                width: 40px;
+                height: 150px;
+            }
+            
+            .black {
+                width: 30px;
+                height: 90px;
+                margin-left: -15px;
+                margin-right: -15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .key {
+                width: 30px;
+                height: 120px;
+            }
+            
+            .black {
+                width: 20px;
+                height: 70px;
+                margin-left: -10px;
+                margin-right: -10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label for="waveform">Waveform</label>
+                <select id="waveform">
+                    <option value="sawtooth">Sawtooth</option>
+                    <option value="sine">Sine</option>
+                    <option value="square">Square</option>
+                    <option value="triangle">Triangle</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="reverb">Reverb</label>
+                <input type="range" id="reverb" min="0" max="1" step="0.1" value="0.3">
+            </div>
+            <div class="control-group">
+                <label for="attack">Attack</label>
+                <input type="range" id="attack" min="0" max="0.5" step="0.01" value="0.01">
+            </div>
+            <div class="control-group">
+                <label for="release">Release</label>
+                <input type="range" id="release" min="0.1" max="2" step="0.1" value="0.5">
+            </div>
+            <div class="control-group">
+                <label for="volume">Volume</label>
+                <input type="range" id="volume" min="0" max="1" step="0.1" value="0.3">
+            </div>
+        </div>
+        <div class="piano" id="piano"></div>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const octaveRange = [3, 4, 5];
+
+        // Create reverb
+        let convolver = audioContext.createConvolver();
+        
+        // Generate impulse response for reverb
+        function createReverb() {
+            const sampleRate = audioContext.sampleRate;
+            const length = sampleRate * 2; // 2 seconds
+            const impulse = audioContext.createBuffer(2, length, sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+
+            for (let i = 0; i < length; i++) {
+                const decay = Math.exp(-i / (sampleRate * 0.5));
+                left[i] = (Math.random() * 2 - 1) * decay;
+                right[i] = (Math.random() * 2 - 1) * decay;
+            }
+
+            convolver.buffer = impulse;
+        }
+
+        createReverb();
+
+        function createKey(note, isBlack) {
+            const key = document.createElement('div');
+            key.className = `key ${isBlack ? 'black' : 'white'}`;
+            key.dataset.note = note;
+            
+            const glow = document.createElement('div');
+            glow.className = 'glow';
+            key.appendChild(glow);
+            
+            return key;
+        }
+
+        function createPiano() {
+            const piano = document.getElementById('piano');
+            octaveRange.forEach(octave => {
+                notes.forEach((note) => {
+                    const isBlack = note.includes('#');
+                    const key = createKey(note + octave, isBlack);
+                    piano.appendChild(key);
+                });
+            });
+        }
+
+        function playNote(frequency) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const reverbGain = audioContext.createGain();
+            
+            // Get control values
+            const waveform = document.getElementById('waveform').value;
+            const reverbLevel = parseFloat(document.getElementById('reverb').value);
+            const attackTime = parseFloat(document.getElementById('attack').value);
+            const releaseTime = parseFloat(document.getElementById('release').value);
+            const volume = parseFloat(document.getElementById('volume').value);
+
+            // Set oscillator type and frequency
+            oscillator.type = waveform;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            
+            // Set up gain envelope
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + attackTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + releaseTime);
+            
+            // Set up reverb level
+            reverbGain.gain.setValueAtTime(reverbLevel, audioContext.currentTime);
+
+            // Connect nodes
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Reverb path
+            gainNode.connect(convolver);
+            convolver.connect(reverbGain);
+            reverbGain.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + releaseTime);
+        }
+
+        function getNoteFrequency(note) {
+            const baseFrequencies = {
+                'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13,
+                'E': 329.63, 'F': 349.23, 'F#': 369.99, 'G': 392.00,
+                'G#': 415.30, 'A': 440.00, 'A#': 466.16, 'B': 493.88
+            };
+
+            const noteWithoutOctave = note.slice(0, -1);
+            const octave = parseInt(note.slice(-1));
+            const baseFreq = baseFrequencies[noteWithoutOctave];
+            
+            return baseFreq * Math.pow(2, octave - 4);
+        }
+
+        function handleInput(event, active) {
+            const key = event.target.closest('.key');
+            if (!key) return;
+            
+            if (active) {
+                key.classList.add('active');
+                const note = key.dataset.note;
+                playNote(getNoteFrequency(note));
+            } else {
+                key.classList.remove('active');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            createPiano();
+            
+            const piano = document.getElementById('piano');
+            
+            // Mouse events
+            piano.addEventListener('mousedown', e => handleInput(e, true));
+            piano.addEventListener('mouseup', e => handleInput(e, false));
+            piano.addEventListener('mouseleave', e => handleInput(e, false));
+            
+            // Touch events
+            piano.addEventListener('touchstart', e => {
+                e.preventDefault();
+                handleInput(e, true);
+            });
+            piano.addEventListener('touchend', e => {
+                e.preventDefault();
+                handleInput(e, false);
+            });
+        });
+    </script>
+</body>
+</html>
