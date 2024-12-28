@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schumann Resonance Detector</title>
+    <style>
+        body {
+            margin: 0; padding: 20px; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; min-height: 100vh;
+            background: #000; color: #fff; font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #fff; margin-top: 20px;
+        }
+        #status {
+            margin-bottom: 20px;
+        }
+        table {
+            margin-top: 20px; border-collapse: collapse;
+        }
+        td, th {
+            border: 1px solid #fff; padding: 5px 10px; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">Click to start the Schumann Resonance Detector</div>
+    <button id="startButton">Start Detector</button>
+    <canvas id="visualizer"></canvas>
+    <table id="frequencyTable">
+        <tr>
+            <th>Frequency (Hz)</th>
+            <th>Magnitude (dB)</th>
+        </tr>
+    </table>
+    <script>
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        const statusDiv = document.getElementById('status');
+        const startButton = document.getElementById('startButton');
+        const frequencyTable = document.getElementById('frequencyTable');
+
+        canvas.width = window.innerWidth - 40;
+        canvas.height = 200;
+
+        let audioContext, analyser, dataArray;
+
+        startButton.onclick = async function() {
+            statusDiv.textContent = "Requesting microphone access...";
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                statusDiv.textContent = "Microphone access granted. Setting up audio context...";
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 16384; // Reduced fftSize for stability
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Float32Array(bufferLength); // Use Float32Array for getFloatFrequencyData
+
+                statusDiv.textContent = "Schumann Resonance Detector is running!";
+                startButton.style.display = 'none';
+                draw();
+            } catch (err) {
+                console.error('Error:', err);
+                statusDiv.textContent = `Error: ${err.message}. Please check the console for details.`;
+            }
+        };
+
+        function draw() {
+            requestAnimationFrame(draw);
+
+            if (!analyser) return;
+
+            analyser.getFloatFrequencyData(dataArray);
+            ctx.fillStyle = 'rgb(0, 0, 0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Schumann Resonance frequencies
+            const schumannFrequencies = [7.83, 14.3, 20.8, 27.3, 33.8, 39.8, 45.8];
+            const sampleRate = audioContext.sampleRate;
+            const binWidth = sampleRate / analyser.fftSize;
+
+            // Validate bin indices to prevent out-of-bounds crashes
+            const schumannBins = schumannFrequencies.map(f => {
+                const binIndex = Math.round(f / binWidth);
+                return binIndex < dataArray.length ? binIndex : null;
+            }).filter(bin => bin !== null);
+
+            // Clear previous table rows
+            while (frequencyTable.rows.length > 1) {
+                frequencyTable.deleteRow(1);
+            }
+
+            schumannBins.forEach((binIndex, i) => {
+                const magnitude = dataArray[binIndex];
+                const frequency = binIndex * binWidth;
+
+                // Add to table
+                const row = frequencyTable.insertRow();
+                const cellFreq = row.insertCell(0);
+                const cellMag = row.insertCell(1);
+                cellFreq.textContent = frequency.toFixed(2);
+                cellMag.textContent = magnitude.toFixed(2);
+
+                // Visualize
+                const barWidth = (canvas.width / schumannBins.length) - 10;
+                const barHeight = ((magnitude + 140) / 70) * canvas.height; // Normalize dB values
+                ctx.fillStyle = `rgb(50, 150, 200)`;
+                ctx.fillRect(i * (barWidth + 10) + 20, canvas.height - barHeight, barWidth, barHeight);
+            });
+        }
+    </script>
+</body>
+</html>
