@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complex Fractal Wormhole</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            cursor: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, centerX, centerY;
+        let time = 0;
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let speed = 1;
+        let segments = [];
+        const numSegments = 50;
+        const segmentSpacing = 35;
+        const tunnelRadius = 180;
+        const maxRecursionDepth = 3;
+        
+        class FractalPattern {
+            constructor(x, y, size, angle, depth) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.angle = angle;
+                this.depth = depth;
+            }
+
+            drawMandelbrotBranch(scale, hue) {
+                if (this.depth <= 0 || this.size < 2) return;
+
+                const branches = 5;
+                const reductionFactor = 0.7;
+
+                for (let i = 0; i < branches; i++) {
+                    const newSize = this.size * reductionFactor;
+                    const branchAngle = this.angle + (i * Math.PI * 2 / branches) + time * 0.01;
+                    const distance = this.size * 0.8;
+                    
+                    const endX = this.x + Math.cos(branchAngle) * distance * scale;
+                    const endY = this.y + Math.sin(branchAngle) * distance * scale;
+
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    
+                    // Create spiral effect
+                    const ctrl1X = this.x + Math.cos(branchAngle + 0.3) * distance * 0.5;
+                    const ctrl1Y = this.y + Math.sin(branchAngle + 0.3) * distance * 0.5;
+                    const ctrl2X = endX + Math.cos(branchAngle - 0.3) * distance * 0.5;
+                    const ctrl2Y = endY + Math.sin(branchAngle - 0.3) * distance * 0.5;
+                    
+                    ctx.bezierCurveTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, endX, endY);
+                    
+                    const brightness = 60 + (maxRecursionDepth - this.depth) * 10;
+                    ctx.strokeStyle = `hsla(${hue + i * 30}, 100%, ${brightness}%, ${0.6 * scale})`;
+                    ctx.lineWidth = (this.depth * 0.5 + 0.5) * scale;
+                    ctx.stroke();
+
+                    // Draw geometric shape at branch end
+                    this.drawGeometricShape(endX, endY, newSize * scale, branchAngle, hue + i * 30);
+
+                    // Recursive call
+                    const newPattern = new FractalPattern(endX, endY, newSize, branchAngle, this.depth - 1);
+                    newPattern.drawMandelbrotBranch(scale * 0.8, hue + 20);
+                }
+            }
+
+            drawGeometricShape(x, y, size, angle, hue) {
+                const sides = Math.floor(time * 0.1) % 3 + 3; // Alternates between triangle, square, and pentagon
+                ctx.beginPath();
+                for (let i = 0; i < sides; i++) {
+                    const pointAngle = angle + (i * Math.PI * 2 / sides);
+                    const pointX = x + Math.cos(pointAngle) * size;
+                    const pointY = y + Math.sin(pointAngle) * size;
+                    if (i === 0) ctx.moveTo(pointX, pointY);
+                    else ctx.lineTo(pointX, pointY);
+                }
+                ctx.closePath();
+                ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.3)`;
+                ctx.fill();
+            }
+        }
+
+        class Segment {
+            constructor(z) {
+                this.z = z;
+                this.points = this.generatePoints();
+            }
+
+            generatePoints() {
+                const points = [];
+                const numPoints = 16;
+                for (let i = 0; i < numPoints; i++) {
+                    const angle = (i / numPoints) * Math.PI * 2;
+                    const wobble = Math.sin(time * 0.02 + this.z * 0.1) * 20;
+                    const x = Math.cos(angle) * (tunnelRadius + wobble);
+                    const y = Math.sin(angle) * (tunnelRadius + wobble);
+                    points.push({ x, y });
+                }
+                return points;
+            }
+
+            update(speed) {
+                this.z -= speed;
+                if (this.z < -500) {
+                    this.z += numSegments * segmentSpacing;
+                }
+                this.points = this.generatePoints();
+            }
+
+            draw() {
+                const perspective = 800;
+                const scale = perspective / (perspective + this.z);
+                
+                if (scale < 0.1) return;
+
+                // Draw main tunnel
+                ctx.beginPath();
+                this.points.forEach((point, i) => {
+                    const projectedX = centerX + point.x * scale;
+                    const projectedY = centerY + point.y * scale;
+                    if (i === 0) ctx.moveTo(projectedX, projectedY);
+                    else ctx.lineTo(projectedX, projectedY);
+                });
+                ctx.closePath();
+
+                const depth = (this.z + 500) / (numSegments * segmentSpacing);
+                const hue = (time * 0.2 + this.z * 0.8) % 360;
+                
+                ctx.fillStyle = `hsla(${hue}, 90%, 50%, ${0.4 + scale * 0.6})`;
+                ctx.strokeStyle = `hsla(${hue + 30}, 90%, 70%, ${0.6 + scale * 0.4})`;
+                ctx.lineWidth = 4 * scale;
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw complex fractal patterns
+                if (scale > 0.2) {
+                    this.points.forEach((point, i) => {
+                        if (i % 2 === 0) { // Reduce density of patterns
+                            const projectedX = centerX + point.x * scale;
+                            const projectedY = centerY + point.y * scale;
+                            const pattern = new FractalPattern(
+                                projectedX,
+                                projectedY,
+                                40 * scale,
+                                (i / this.points.length) * Math.PI * 2 + time * 0.01,
+                                maxRecursionDepth
+                            );
+                            pattern.drawMandelbrotBranch(scale, hue + i * 20);
+                        }
+                    });
+                }
+            }
+        }
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+
+        function init() {
+            resizeCanvas();
+            segments = [];
+            for (let i = 0; i < numSegments; i++) {
+                segments.push(new Segment(i * segmentSpacing));
+            }
+            animateFrame();
+        }
+
+        function animateFrame() {
+            time += 1;
+
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width / 2);
+            gradient.addColorStop(0, 'rgba(0,0,0,0.3)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0.1)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            speed = 2 + Math.sin(time * 0.01) * 1;
+
+            segments.forEach(segment => {
+                segment.update(speed * 2);
+                segment.draw();
+            });
+
+            requestAnimationFrame(animateFrame);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        init();
+    </script>
+</body>
+</html>
