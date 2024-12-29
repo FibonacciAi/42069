@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synthwave Piano</title>
+    <title>7-Octave Synthwave Piano</title>
     <style>
         body {
             margin: 0;
@@ -22,7 +22,7 @@
         .container {
             position: relative;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1800px;
             padding: 20px;
         }
 
@@ -35,6 +35,8 @@
             flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
+            position: sticky;
+            left: 0;
         }
 
         .control-group {
@@ -72,8 +74,8 @@
         }
 
         .key {
-            width: 60px;
-            height: 200px;
+            width: 45px; /* Reduced key width */
+            height: 180px;
             border: 1px solid #000;
             box-sizing: border-box;
             position: relative;
@@ -89,10 +91,10 @@
 
         .black {
             background: linear-gradient(180deg, #333, #000);
-            width: 40px;
-            height: 120px;
-            margin-left: -20px;
-            margin-right: -20px;
+            width: 30px; /* Reduced black key width */
+            height: 110px;
+            margin-left: -15px;
+            margin-right: -15px;
             z-index: 2;
             border-radius: 0 0 3px 3px;
         }
@@ -117,31 +119,41 @@
             opacity: 1;
         }
 
+        .octave-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff00ff;
+            font-size: 12px;
+            text-shadow: 0 0 5px #ff00ff;
+        }
+
         @media (max-width: 768px) {
             .key {
-                width: 40px;
-                height: 150px;
+                width: 35px;
+                height: 140px;
             }
             
             .black {
-                width: 30px;
-                height: 90px;
-                margin-left: -15px;
-                margin-right: -15px;
+                width: 25px;
+                height: 85px;
+                margin-left: -12.5px;
+                margin-right: -12.5px;
             }
         }
 
         @media (max-width: 480px) {
             .key {
-                width: 30px;
+                width: 25px;
                 height: 120px;
             }
             
             .black {
-                width: 20px;
+                width: 18px;
                 height: 70px;
-                margin-left: -10px;
-                margin-right: -10px;
+                margin-left: -9px;
+                margin-right: -9px;
             }
         }
     </style>
@@ -181,15 +193,13 @@
     <script>
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        const octaveRange = [3, 4, 5];
+        const octaveRange = [1, 2, 3, 4, 5, 6, 7]; // 7-octave range
 
-        // Create reverb
         let convolver = audioContext.createConvolver();
         
-        // Generate impulse response for reverb
         function createReverb() {
             const sampleRate = audioContext.sampleRate;
-            const length = sampleRate * 2; // 2 seconds
+            const length = sampleRate * 2;
             const impulse = audioContext.createBuffer(2, length, sampleRate);
             const left = impulse.getChannelData(0);
             const right = impulse.getChannelData(1);
@@ -205,7 +215,7 @@
 
         createReverb();
 
-        function createKey(note, isBlack) {
+        function createKey(note, isBlack, octave) {
             const key = document.createElement('div');
             key.className = `key ${isBlack ? 'black' : 'white'}`;
             key.dataset.note = note;
@@ -213,6 +223,14 @@
             const glow = document.createElement('div');
             glow.className = 'glow';
             key.appendChild(glow);
+
+            // Add octave label to C keys
+            if (note.startsWith('C') && !isBlack) {
+                const label = document.createElement('div');
+                label.className = 'octave-label';
+                label.textContent = octave;
+                key.appendChild(label);
+            }
             
             return key;
         }
@@ -222,7 +240,7 @@
             octaveRange.forEach(octave => {
                 notes.forEach((note) => {
                     const isBlack = note.includes('#');
-                    const key = createKey(note + octave, isBlack);
+                    const key = createKey(note + octave, isBlack, octave);
                     piano.appendChild(key);
                 });
             });
@@ -233,30 +251,24 @@
             const gainNode = audioContext.createGain();
             const reverbGain = audioContext.createGain();
             
-            // Get control values
             const waveform = document.getElementById('waveform').value;
             const reverbLevel = parseFloat(document.getElementById('reverb').value);
             const attackTime = parseFloat(document.getElementById('attack').value);
             const releaseTime = parseFloat(document.getElementById('release').value);
             const volume = parseFloat(document.getElementById('volume').value);
 
-            // Set oscillator type and frequency
             oscillator.type = waveform;
             oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
             
-            // Set up gain envelope
             gainNode.gain.setValueAtTime(0, audioContext.currentTime);
             gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + attackTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + releaseTime);
             
-            // Set up reverb level
             reverbGain.gain.setValueAtTime(reverbLevel, audioContext.currentTime);
 
-            // Connect nodes
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            // Reverb path
             gainNode.connect(convolver);
             convolver.connect(reverbGain);
             reverbGain.connect(audioContext.destination);
@@ -266,17 +278,17 @@
         }
 
         function getNoteFrequency(note) {
-            const baseFrequencies = {
-                'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13,
-                'E': 329.63, 'F': 349.23, 'F#': 369.99, 'G': 392.00,
-                'G#': 415.30, 'A': 440.00, 'A#': 466.16, 'B': 493.88
-            };
-
             const noteWithoutOctave = note.slice(0, -1);
             const octave = parseInt(note.slice(-1));
-            const baseFreq = baseFrequencies[noteWithoutOctave];
             
-            return baseFreq * Math.pow(2, octave - 4);
+            // A4 is 440Hz
+            const A4 = 440;
+            const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const A4Index = notes.indexOf('A') + (4 * 12);
+            const noteIndex = notes.indexOf(noteWithoutOctave) + (octave * 12);
+            const halfSteps = noteIndex - A4Index;
+            
+            return A4 * Math.pow(2, halfSteps / 12);
         }
 
         function handleInput(event, active) {
@@ -294,15 +306,12 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             createPiano();
-            
             const piano = document.getElementById('piano');
             
-            // Mouse events
             piano.addEventListener('mousedown', e => handleInput(e, true));
             piano.addEventListener('mouseup', e => handleInput(e, false));
             piano.addEventListener('mouseleave', e => handleInput(e, false));
             
-            // Touch events
             piano.addEventListener('touchstart', e => {
                 e.preventDefault();
                 handleInput(e, true);
