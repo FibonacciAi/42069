@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Enhanced 3D Fractal Explorer</title>
+    <style>
+        /* Your existing styles */
+    </style>
+</head>
+<body>
+    <div id="ui-container">
+        <!-- Your existing UI elements -->
+    </div>
+    <div id="stats"></div>
+
+    <!-- Three.js and additional libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/shaders/CopyShader.js"></script>
+
+    <script>
+    // Core setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    // Post-processing setup
+    const composer = new THREE.EffectComposer(renderer);
+    const renderPass = new THREE.RenderPass(scene, camera);
+    const bloomPass = new THREE.UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        1.5, // intensity
+        0.4, // radius
+        0.85  // threshold
+    );
+    const copyPass = new THREE.ShaderPass(THREE.CopyShader);
+    copyPass.renderToScreen = true;
+
+    composer.addPass(renderPass);
+    composer.addPass(bloomPass);
+    composer.addPass(copyPass);
+
+    // Your existing custom shader and fractal generation code
+
+    // Animation and render loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if(currentFractal && isAnimating) {
+            currentFractal.rotation.y += 0.001 * rotationSpeed;
+            currentFractal.rotation.x += 0.0005 * rotationSpeed;
+        }
+
+        composer.render();
+    }
+
+    // Initialize
+    let lastFrame = Date.now();
+    camera.position.z = 5;
+    setupControls();
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+    });
+    </script>
+</body>
+</html>
