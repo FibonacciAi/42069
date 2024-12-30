@@ -133,6 +133,9 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
+        .hidden {
+    display: none;
+}
     </style>
 </head>
 <body>
@@ -310,6 +313,12 @@ let currentFractal = null;
 let isAnimating = true;
 let rotationSpeed = 1.0;
 
+// Add this function before the fractalGenerators object
+function boxFold(x) {
+    if (x > 1) return 2 - x;
+    if (x < -1) return -2 - x;
+    return x;
+}
 // Fractal generation functions
 const fractalGenerators = {
     mandelbulb: (x, y, z, power, detail) => {
