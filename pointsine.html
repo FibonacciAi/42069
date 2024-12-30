@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2196F3;
+            --accent: #E91E63;
+            --background: #f8f9fa;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #1a1a1a;
+                --card: #2d2d2d;
+                --text: #e0e0e0;
+                --shadow: 0 4px 6px rgba(0,0,0,0.3);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            background: var(--card);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            aspect-ratio: 1;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .controls {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .speed-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .speed-control label {
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .values {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .values {
+                background: rgba(255,255,255,0.05);
+            }
+        }
+
+        .touch-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .touch-hint.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-wrapper">
+            <canvas id="unitCircle"></canvas>
+            <div class="touch-hint">Drag to move point</div>
+        </div>
+        <div class="controls">
+            <div class="button-group">
+                <button id="playPause">▶ Play/Pause</button>
+                <button id="reset">Reset</button>
+            </div>
+            <div class="speed-control">
+                <label>Speed:</label>
+                <input type="range" id="speed" min="1" max="100" value="50">
+            </div>
+            <div class="checkbox-group">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="showGrid" checked>
+                    <label for="showGrid">Show Grid</label>
+                </div>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="showProjections" checked>
+                    <label for="showProjections">Show Projections</label>
+                </div>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="showSpecialAngles" checked>
+                    <label for="showSpecialAngles">Show Special Angles</label>
+                </div>
+            </div>
+            <div class="values">
+                <div>Angle (deg): <span id="angleDeg">0.0</span>°</div>
+                <div>Angle (rad): <span id="angleRad">0.000</span></div>
+                <div>sin(θ): <span id="sinValue">0.000</span></div>
+                <div>cos(θ): <span id="cosValue">1.000</span></div>
+                <div>tan(θ): <span id="tanValue">0.000</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('unitCircle');
+        const ctx = canvas.getContext('2d');
+        let scale = Math.min(canvas.width, canvas.height) * 0.4;
+        let angle = 0;
+        let isPlaying = false;
+        let isDragging = false;
+        let animationId;
+
+        const specialAngles = [
+            0, Math.PI/6, Math.PI/4, Math.PI/3, Math.PI/2,
+            2*Math.PI/3, 3*Math.PI/4, 5*Math.PI/6, Math.PI,
+            7*Math.PI/6, 5*Math.PI/4, 4*Math.PI/3, 3*Math.PI/2,
+            5*Math.PI/3, 7*Math.PI/4, 11*Math.PI/6
+        ];
+
+        function drawGrid() {
+            if (!document.getElementById('showGrid').checked) return;
+            
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
+            ctx.globalAlpha = 0.1;
+            ctx.lineWidth = 1;
+            
+            for (let i = -scale; i <= scale; i += scale/4) {
+                ctx.beginPath();
+                ctx.moveTo(i, -scale);
+                ctx.lineTo(i, scale);
+                ctx.moveTo(-scale, i);
+                ctx.lineTo(scale, i);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawAxes() {
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(-scale, 0);
+            ctx.lineTo(scale, 0);
+            ctx.moveTo(0, -scale);
+            ctx.lineTo(0, scale);
+            ctx.stroke();
+        }
+
+        function drawUnitCircle() {
+            ctx.clearRect(-canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+            
+            drawGrid();
+            drawAxes();
+
+            // Unit circle
+            ctx.beginPath();
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--text');
+            ctx.lineWidth = 2;
+            ctx.arc(0, 0, scale, 0, Math.PI * 2);
+            ctx.stroke();
+
+            if (document.getElementById('showSpecialAngles').checked) {
+                drawSpecialAngles();
+            }
+
+            const x = scale * Math.cos(angle);
+            const y = scale * Math.sin(angle);
+
+            // Angle arc
+            ctx.beginPath();
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--primary');
+            ctx.lineWidth = 2;
+            ctx.arc(0, 0, scale/4, 0, angle);
+            ctx.stroke();
+
+            // Radius line
+            ctx.beginPath();
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--primary');
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, 0);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Projections
+            if (document.getElementById('showProjections').checked) {
+                ctx.setLineDash([5, 5]);
+                ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--secondary');
+                
+                // Cosine projection
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                // Sine projection
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                ctx.setLineDash([]);
+            }
+
+            // Point
+            ctx.beginPath();
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            updateValues();
+        }
+
+        function drawSpecialAngles() {
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+            
+            specialAngles.forEach(specialAngle => {
+                const x = scale * Math.cos(specialAngle);
+                const y = scale * Math.sin(specialAngle);
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function updateValues() {
+            document.getElementById('angleDeg').textContent = (angle * 180 / Math.PI).toFixed(1);
+            document.getElementById('angleRad').textContent = angle.toFixed(3);
+            document.getElementById('sinValue').textContent = Math.sin(angle).toFixed(3);
+            document.getElementById('cosValue').textContent = Math.cos(angle).toFixed(3);
+            document.getElementById('tanValue').textContent = Math.tan(angle).toFixed(3);
+        }
+
+        function animate() {
+            if (isPlaying) {
+                const speed = document.getElementById('speed').value;
+                angle += (speed/1000) * (2 * Math.PI/60);
+                if (angle > 2 * Math.PI) angle -= 2 * Math.PI;
+                drawUnitCircle();
+                animationId = requestAnimationFrame(animate);
+            }
+        }
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (evt.clientX - rect.left) * scaleX - canvas.width/2,
+                y: -((evt.clientY - rect.top) * scaleY - canvas.height/2)
+            };
+        }
+
+        function updateAngle(evt) {
+            const pos = getMousePos(evt);
+            angle = Math.atan2(pos.y, pos.x);
+            if (angle < 0) angle += 2 * Math.PI;
+            drawUnitCircle();
+        }
+
+        function updateAngleFromTouch(evt) {
+            const touch = evt.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const pos = {
+                x: (touch.clientX - rect.left) * scaleX - canvas.width/2,
+                y: -((touch.clientY - rect.top) * scaleY - canvas.height/2)
+            };
+            angle = Math.atan2(pos.y, pos.x);
+            if (angle < 0) angle += 2 * Math.PI;
+            drawUnitCircle();
+        }
+
+        canvas.addEventListener('mousedown', (evt) => {
+            isPlaying = false;
+            isDragging = true;
+            cancelAnimationFrame(animationId);
+            updateAngle(evt);
+        });
+
+        canvas.addEventListener('mousemove', (evt) => {
+            if (isDragging) {
+                updateAngle(evt);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('touchstart', (evt) => {
+            evt.preventDefault();
+            isPlaying = false;
+            isDragging = true;
+            cancelAnimationFrame(animationId);
+            updateAngleFromTouch(evt);
+            document.querySelector('.touch-hint').classList.remove('show');
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (evt) => {
+            evt.preventDefault();
+            if (isDragging) {
+                updateAngleFromTouch(evt);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        document.getElementById('playPause').addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) animate();
+        });
+
+        document.getElementById('reset').addEventListener('click', () => {
+            angle = 0;
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+            drawUnitCircle();
+        });
+
+        document.getElementById('showGrid').addEventListener('change', drawUnitCircle);
+        document.getElementById('showProjections').addEventListener('change', drawUnitCircle);
+        document.getElementById('showSpecialAngles').addEventListener('change', drawUnitCircle);
+
+        function resizeCanvas() {
+            const wrapper = canvas.parentElement;
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.scale(1, -1);
+            scale = Math.min(canvas.width, canvas.height) * 0.4;
+            drawUnitCircle();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        if ('ontouchstart' in window) {
+            setTimeout(() => {
+                document.querySelector('.touch-hint').classList.add('show');
+                setTimeout(() => {
+                    document.querySelector('.touch-hint').classList.remove('show');
+                }, 3000);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
