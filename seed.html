@@ -10,14 +10,13 @@
       overflow: hidden;
     }
     #canvas3d {
-      display: block; /* ensures the canvas fills the window */
+      display: block;
     }
   </style>
 </head>
 <body>
 <canvas id="canvas3d"></canvas>
 
-<!-- All imports from valid CDN URLs -->
 <script type="module">
   import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
   import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js';
@@ -25,41 +24,40 @@
   import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/RenderPass.js';
   import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js';
 
-  // Renderer, Camera, and Scene setup
+  // Renderer and Canvas
   const canvas = document.getElementById('canvas3d');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
 
+  // Scene and Camera
   const scene = new THREE.Scene();
-
-  const camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0, 3);
 
+  // Orbit Controls
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
-  controls.enablePan = false;
-  controls.minDistance = 1.5;
-  controls.maxDistance = 6;
 
   // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
   scene.add(ambientLight);
 
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  dirLight.position.set(5, 5, 5);
-  scene.add(dirLight);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(5, 5, 5);
+  scene.add(directionalLight);
 
-  // Flower-of-Life Sphere
+  // Flower-of-Life Texture
   const textureLoader = new THREE.TextureLoader();
-  const flowerTexture = textureLoader.load('flower_of_life.jpg'); // Ensure this file exists in the same directory
+  const flowerTexture = textureLoader.load(
+    'https://fibonacciai.github.io/42069/flower_of_life.jpg', // Ensure this matches your texture URL
+    () => console.log('Texture loaded successfully.'),
+    undefined,
+    (error) => console.error('Texture failed to load:', error)
+  );
 
+  // Sphere Material and Geometry
   const sphereMaterial = new THREE.MeshPhysicalMaterial({
     map: flowerTexture,
     metalness: 0,
@@ -74,30 +72,21 @@
   const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
   scene.add(sphere);
 
-  // Post-processing for Bloom
+  // Post-processing (Bloom)
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
 
-  const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.0, // strength
-    0.4, // radius
-    0.05 // threshold
-  );
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.4, 0.05);
   composer.addPass(bloomPass);
 
   // Animation Loop
-  const clock = new THREE.Clock();
-
   function animate() {
     requestAnimationFrame(animate);
-
-    const delta = clock.getDelta();
-    sphere.rotation.y += delta * 0.3; // Rotate the sphere
-
+    sphere.rotation.y += 0.005; // Rotate the sphere
     controls.update();
     composer.render();
   }
+
   animate();
 
   // Handle Window Resize
