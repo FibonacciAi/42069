@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { margin:0; background:#000; overflow:hidden; }
+</style>
+<title>Flower-of-Life Sphere</title>
+</head>
+<body>
+<canvas id="canvas3d"></canvas>
+<script type="module">
+
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js';
+// If using bloom effect:
+// import { EffectComposer } from '...';
+// import { RenderPass } from '...';
+// import { UnrealBloomPass } from '...';
+
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+
+const scene = new THREE.Scene();
+
+// Camera
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(0,0,4);
+
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// Lights
+const ambientLight = new THREE.AmbientLight(0x444444);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(5,5,5);
+scene.add(directionalLight);
+
+// Load Texture
+const loader = new THREE.TextureLoader();
+const flowerTexture = loader.load('path/to/flower_of_life_texture.jpg'); // Replace with your texture
+
+// Material
+// Start simple: 
+const material = new THREE.MeshStandardMaterial({
+  map: flowerTexture,
+  metalness: 0.0,
+  roughness: 0.5,
+  emissive: new THREE.Color(0x222222),
+  emissiveIntensity: 0.5
+});
+
+// For more glow, you can increase emissive intensity or add bloom in post-processing.
+
+// Geometry
+const sphereGeom = new THREE.SphereGeometry(1, 64, 64); // High detail for smooth patterns
+const sphere = new THREE.Mesh(sphereGeom, material);
+scene.add(sphere);
+
+// Optional: Post-processing bloom effect
+/*
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.5, 0.0);
+composer.addPass(bloomPass);
+*/
+
+// Animation
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+
+  // Rotate the sphere slowly
+  sphere.rotation.y += 0.005;
+
+  // If not using post-processing:
+  renderer.render(scene, camera);
+
+  // If using composer:
+  // composer.render();
+}
+
+animate();
+
+// Handle resizing
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+</script>
+</body>
+</html>
