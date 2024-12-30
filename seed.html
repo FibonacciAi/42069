@@ -1,141 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Flower-of-Life Sphere</title>
-  <style>
-    body {
-      margin: 0;
-      background: #000;
-      overflow: hidden;
-    }
-    #canvas3d {
-      display: block;
-    }
-  </style>
+    <title>Seed of Life Sphere - Enhanced Visibility</title>
+    <style>
+        body { margin: 0; background: #000; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-<canvas id="canvas3d"></canvas>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        camera.position.z = 2.5;
 
-<script type="module">
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
-  import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js';
-  import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/EffectComposer.js';
-  import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/RenderPass.js';
-  import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js';
+        // Create high-res texture canvas
+        const textureCanvas = document.createElement('canvas');
+        textureCanvas.width = 4096;
+        textureCanvas.height = 4096;
+        const ctx = textureCanvas.getContext('2d');
 
-  // Create procedural Flower of Life texture
-  function createFlowerOfLifeTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    
-    // Fill background
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Set circle style
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    
-    // Calculate radius and center positions
-    const radius = canvas.width / 8;
-    const centers = [];
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    
-    // Create center points for circles
-    for (let angle = 0; angle < 2 * Math.PI; angle += Math.PI / 3) {
-      centers.push({
-        x: centerX + Math.cos(angle) * radius * 2,
-        y: centerY + Math.sin(angle) * radius * 2
-      });
-    }
-    centers.push({ x: centerX, y: centerY });
+        // Darker background for better contrast
+        ctx.fillStyle = '#000033';
+        ctx.fillRect(0, 0, 4096, 4096);
+        
+        // Brighter lines and stronger glow
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 6;  // Thicker lines
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 30;  // Increased glow
 
-    // Draw circles
-    function drawCircle(x, y, r) {
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 2 * Math.PI);
-      ctx.stroke();
-    }
+        const centerX = 2048;
+        const centerY = 2048;
+        const radius = 600;  // Larger radius
 
-    // Draw the pattern
-    centers.forEach(center => {
-      drawCircle(center.x, center.y, radius);
-    });
+        function drawSeedOfLife() {
+            // Center circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Enhanced center gradient
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+            gradient.addColorStop(0, 'rgba(0, 255, 255, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(0, 102, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(0, 0, 255, 0.1)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
 
-    return new THREE.CanvasTexture(canvas);
-  }
+            // Surrounding circles
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI * 2) / 6;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Enhanced individual gradients
+                const circleGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                circleGradient.addColorStop(0, 'rgba(0, 255, 255, 0.3)');
+                circleGradient.addColorStop(0.5, 'rgba(0, 102, 255, 0.2)');
+                circleGradient.addColorStop(1, 'rgba(0, 0, 255, 0.1)');
+                ctx.fillStyle = circleGradient;
+                ctx.fill();
+            }
+        }
 
-  // Renderer and Canvas
-  const canvas = document.getElementById('canvas3d');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+        drawSeedOfLife();
 
-  // Scene and Camera
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 0, 3);
+        // Create sphere with enhanced visibility
+        const texture = new THREE.CanvasTexture(textureCanvas);
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-  // Orbit Controls
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
+        const geometry = new THREE.SphereGeometry(1, 128, 128);
+        const material = new THREE.MeshPhysicalMaterial({
+            map: texture,
+            metalness: 0.7,  // Reduced metalness
+            roughness: 0.1,  // Increased roughness slightly
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            reflectivity: 0.8,  // Adjusted reflectivity
+            envMapIntensity: 1.0,
+            emissive: new THREE.Color(0x001133),  // Slight emissive glow
+            emissiveIntensity: 0.2
+        });
 
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-  scene.add(ambientLight);
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(5, 5, 5);
-  scene.add(directionalLight);
+        // Adjusted lighting
+        const lights = [];
+        for (let i = 0; i < 3; i++) {
+            const light = new THREE.PointLight(0x00ffff, 1.5, 10);  // Reduced intensity
+            lights.push(light);
+            scene.add(light);
+        }
 
-  // Create procedural texture
-  const flowerTexture = createFlowerOfLifeTexture();
+        // Added directional light for better overall illumination
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(1, 1, 1);
+        scene.add(dirLight);
 
-  // Sphere Material and Geometry
-  const sphereMaterial = new THREE.MeshPhysicalMaterial({
-    map: flowerTexture,
-    color: 0xffffff,
-    metalness: 0,
-    roughness: 0.4,
-    emissive: new THREE.Color(0x222222),
-    emissiveIntensity: 0.4,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.3,
-  });
+        const ambientLight = new THREE.AmbientLight(0x000066, 0.8);  // Increased ambient light
+        scene.add(ambientLight);
 
-  const sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
-  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-  scene.add(sphere);
+        // Animation
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+            
+            sphere.rotation.y += 0.003;
+            sphere.rotation.x = Math.sin(time * 0.3) * 0.1;
+            
+            lights.forEach((light, i) => {
+                const offset = (i * Math.PI * 2) / lights.length;
+                light.position.x = Math.sin(time + offset) * 2;
+                light.position.y = Math.cos(time * 0.5 + offset);
+                light.position.z = Math.cos(time + offset) * 2;
+            });
+            
+            renderer.render(scene, camera);
+        }
+        animate();
 
-  // Post-processing (Bloom)
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.4, 0.05);
-  composer.addPass(bloomPass);
-
-  // Animation Loop
-  function animate() {
-    requestAnimationFrame(animate);
-    sphere.rotation.y += 0.005;
-    controls.update();
-    composer.render();
-  }
-
-  animate();
-
-  // Handle Window Resize
-  window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    composer.setSize(window.innerWidth, window.innerHeight);
-  });
-</script>
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
 </html>
