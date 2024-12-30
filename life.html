@@ -2,41 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Flower-of-Life Sphere with Bloom</title>
+  <title>Flower-of-Life Sphere</title>
   <style>
     body {
-      margin: 0;
+      margin: 0; 
+      background: #000; 
       overflow: hidden;
-      background: #000; /* Keep background dark to emphasize glow */
+    }
+    #canvas3d {
+      display: block; /* ensures the canvas fills the window */
     }
   </style>
 </head>
 <body>
 <canvas id="canvas3d"></canvas>
 
-<!-- Three.js and dependencies (ES Module) -->
+<!-- Load Three.js and example modules from a CDN as ES modules -->
 <script type="module">
   import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
   import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js';
   import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/EffectComposer.js';
   import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/RenderPass.js';
   import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js';
-
-  // -------------------------------------------------------
-  // 1. Renderer & Basic Setup
-  // -------------------------------------------------------
+  
+  // --------------------------------------------------
+  // 1. Setup basic Renderer, Camera, and Scene
+  // --------------------------------------------------
   const canvas = document.getElementById('canvas3d');
-  const renderer = new THREE.WebGLRenderer({ 
-    canvas, 
-    antialias: true 
-  });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
-  // Create a scene
   const scene = new THREE.Scene();
 
-  // Camera
   const camera = new THREE.PerspectiveCamera(
     60, 
     window.innerWidth / window.innerHeight, 
@@ -45,41 +43,34 @@
   );
   camera.position.set(0, 0, 3);
 
-  // -------------------------------------------------------
-  // 2. Controls for User Interaction
-  // -------------------------------------------------------
+  // Add user controls to orbit around the sphere
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;   // smooth easing
+  controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.enablePan = false;
   controls.minDistance = 1.5;
   controls.maxDistance = 6;
 
-  // -------------------------------------------------------
-  // 3. Lights
-  // -------------------------------------------------------
-  // A soft ambient light
+  // --------------------------------------------------
+  // 2. Lights
+  // --------------------------------------------------
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
   scene.add(ambientLight);
 
-  // A directional light to create highlights
   const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
   dirLight.position.set(5, 5, 5);
   scene.add(dirLight);
 
-  // -------------------------------------------------------
-  // 4. Sphere with Flower-of-Life Texture
-  // -------------------------------------------------------
+  // --------------------------------------------------
+  // 3. Create Sphere with Flower-of-Life texture
+  // --------------------------------------------------
   const textureLoader = new THREE.TextureLoader();
-
-  // Update this path to your actual texture image:
+  // Replace this with your own image path if needed:
   const flowerTexture = textureLoader.load('flower_of_life.jpg');
 
-  // For a more vivid glow effect, you can also map this texture to emissiveMap
-  // and play with emissive / emissiveIntensity in the material.
   const sphereMaterial = new THREE.MeshPhysicalMaterial({
     map: flowerTexture,
-    metalness: 0.0,
+    metalness: 0,
     roughness: 0.4,
     emissive: new THREE.Color(0x222222),
     emissiveIntensity: 0.4,
@@ -91,18 +82,13 @@
   const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
   scene.add(sphere);
 
-  // -------------------------------------------------------
-  // 5. Post-Processing (Bloom)
-  // -------------------------------------------------------
+  // --------------------------------------------------
+  // 4. Post-processing (Bloom)
+  // --------------------------------------------------
   const composer = new EffectComposer(renderer);
-  // Primary render pass
-  const renderPass = new RenderPass(scene, camera);
-  composer.addPass(renderPass);
+  composer.addPass(new RenderPass(scene, camera));
 
-  // Bloom settings
-  // strength: how bright the bloom is
-  // radius: size of the bloom “halo”
-  // threshold: brightness threshold at which bloom starts
+  // Bloom pass: tweak values for more/less glow
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
     1.0,   // strength
@@ -111,38 +97,32 @@
   );
   composer.addPass(bloomPass);
 
-  // -------------------------------------------------------
-  // 6. Animation & Render Loop
-  // -------------------------------------------------------
+  // --------------------------------------------------
+  // 5. Animation loop
+  // --------------------------------------------------
   let clock = new THREE.Clock();
 
   function animate() {
     requestAnimationFrame(animate);
 
-    // Slowly rotate the sphere
-    let delta = clock.getDelta();
+    // Slowly rotate sphere
+    const delta = clock.getDelta();
     sphere.rotation.y += delta * 0.3;
 
-    // Update controls
     controls.update();
-
-    // Render scene via composer for bloom
     composer.render();
   }
   animate();
 
-  // -------------------------------------------------------
-  // 7. Handle Resizing
-  // -------------------------------------------------------
-  window.addEventListener('resize', onWindowResize, false);
-  function onWindowResize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    camera.aspect = w / h;
+  // --------------------------------------------------
+  // 6. Handle Window Resize
+  // --------------------------------------------------
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
-    composer.setSize(w, h);
-  }
+    composer.setSize(window.innerWidth, window.innerHeight);
+  });
 </script>
 </body>
 </html>
