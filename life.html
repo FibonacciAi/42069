@@ -333,8 +333,88 @@ const fractalGenerators = {
         }
         return [true, Math.sqrt(zx*zx + zy*zy + zz*zz), 15];
     },
-    // ... (other fractal implementations from Part 1)
-};
+julia3d: (x, y, z, power, detail) => {
+        let zx = x, zy = y, zz = z;
+        const cx = 0.3, cy = 0.5, cz = 0.4;
+        
+        for(let i = 0; i < 15; i++) {
+            const r = Math.sqrt(zx*zx + zy*zy + zz*zz);
+            if(r > 2) return [false, r, i];
+            
+            const theta = Math.acos(zz/r);
+            const phi = Math.atan2(zy, zx);
+            
+            const zr = Math.pow(r, power);
+            const thetar = theta * power;
+            const phir = phi * power;
+            
+            zx = zr * Math.sin(thetar) * Math.cos(phir) + cx;
+            zy = zr * Math.sin(thetar) * Math.sin(phir) + cy;
+            zz = zr * Math.cos(thetar) + cz;
+        }
+        return [true, Math.sqrt(zx*zx + zy*zy + zz*zz), 15];
+    },
+    
+    mandelbox: (x, y, z, power, detail) => {
+        let zx = x, zy = y, zz = z;
+        const scale = 2;
+        let minR2 = 0.5;
+        let fixedR2 = 1;
+        
+        for(let i = 0; i < 15; i++) {
+            zx = boxFold(zx);
+            zy = boxFold(zy);
+            zz = boxFold(zz);
+            
+            const r2 = zx*zx + zy*zy + zz*zz;
+            if(r2 < minR2) {
+                const temp = fixedR2/minR2;
+                zx *= temp; zy *= temp; zz *= temp;
+            } else if(r2 < fixedR2) {
+                const temp = fixedR2/r2;
+                zx *= temp; zy *= temp; zz *= temp;
+            }
+            
+            zx = scale * zx + x;
+            zy = scale * zy + y;
+            zz = scale * zz + z;
+            
+            if(zx*zx + zy*zy + zz*zz > 4) return [false, Math.sqrt(zx*zx + zy*zy + zz*zz), i];
+        }
+        return [true, Math.sqrt(zx*zx + zy*zy + zz*zz), 15];
+    },
+    
+    sierpinski: (x, y, z, power, detail) => {
+        const scale = Math.pow(2, power);
+        let px = Math.abs(x * scale);
+        let py = Math.abs(y * scale);
+        let pz = Math.abs(z * scale);
+        
+        for(let i = 0; i < power; i++) {
+            if(px + py + pz <= 1) return [true, 0, i];
+            if(px >= py && px >= pz) px -= 1;
+            else if(py >= px && py >= pz) py -= 1;
+            else pz -= 1;
+        }
+        return [false, Math.sqrt(px*px + py*py + pz*pz), power];
+    },
+    
+    menger: (x, y, z, power, detail) => {
+        const scale = Math.pow(3, power);
+        let px = Math.abs(x * scale);
+        let py = Math.abs(y * scale);
+        let pz = Math.abs(z * scale);
+        
+        for(let i = 0; i < power; i++) {
+            if((px % 3 == 1 && py % 3 == 1) ||
+               (py % 3 == 1 && pz % 3 == 1) ||
+               (pz % 3 == 1 && px % 3 == 1)) {
+                return [false, 1, i];
+            }
+            px /= 3; py /= 3; pz /= 3;
+        }
+        return [true, 0, power];
+    }};
 
 function generateFractal(type, params) {
     if(currentFractal) scene.remove(currentFractal);
@@ -426,8 +506,68 @@ function setupControls() {
         updateFractal();
     });
 
-    // ... Add event listeners for all sliders and controls ...
+document.getElementById('power-slider').addEventListener('input', e => {
+        params.power = parseFloat(e.target.value);
+        document.getElementById('power-value').textContent = params.power;
+        updateFractal();
+    });
 
+    document.getElementById('detail-slider').addEventListener('input', e => {
+        params.detail = parseFloat(e.target.value);
+        document.getElementById('detail-value').textContent = params.detail;
+        updateFractal();
+    });
+
+    document.getElementById('color-primary').addEventListener('input', e => {
+        params.color = e.target.value;
+        updateFractal();
+    });
+
+    document.getElementById('saturation-slider').addEventListener('input', e => {
+        params.saturation = parseFloat(e.target.value);
+        document.getElementById('saturation-value').textContent = params.saturation.toFixed(1);
+        updateFractal();
+    });
+
+    document.getElementById('brightness-slider').addEventListener('input', e => {
+        params.brightness = parseFloat(e.target.value);
+        document.getElementById('brightness-value').textContent = params.brightness.toFixed(1);
+        updateFractal();
+    });
+
+    document.getElementById('size-slider').addEventListener('input', e => {
+        params.size = parseFloat(e.target.value);
+        document.getElementById('size-value').textContent = params.size.toFixed(1);
+        updateFractal();
+    });
+
+    document.getElementById('opacity-slider').addEventListener('input', e => {
+        params.opacity = parseFloat(e.target.value);
+        document.getElementById('opacity-value').textContent = params.opacity.toFixed(1);
+        updateFractal();
+    });
+
+    document.getElementById('bloom-slider').addEventListener('input', e => {
+        params.bloomIntensity = parseFloat(e.target.value);
+        document.getElementById('bloom-value').textContent = params.bloomIntensity.toFixed(1);
+        bloomPass.strength = params.bloomIntensity;
+    });
+
+    document.getElementById('rotation-slider').addEventListener('input', e => {
+        rotationSpeed = parseFloat(e.target.value);
+        document.getElementById('rotation-value').textContent = rotationSpeed.toFixed(1);
+    });
+
+    document.getElementById('animate-btn').addEventListener('click', () => {
+        isAnimating = !isAnimating;
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        camera.position.set(0, 0, 5);
+        if(currentFractal) {
+            currentFractal.rotation.set(0, 0, 0);
+        }
+    });
     function updateFractal() {
         generateFractal(params.type, params);
     }
@@ -479,7 +619,38 @@ function hslToRgb(h, s, l) {
     }
     return [r, g, b];
 }
+// Mouse/Touch controls
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
 
+renderer.domElement.addEventListener('mousedown', e => {
+    isDragging = true;
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+});
+
+renderer.domElement.addEventListener('mousemove', e => {
+    if(isDragging && currentFractal) {
+        const deltaMove = {
+            x: e.clientX - previousMousePosition.x,
+            y: e.clientY - previousMousePosition.y
+        };
+
+        currentFractal.rotation.y += deltaMove.x * 0.005;
+        currentFractal.rotation.x += deltaMove.y * 0.005;
+
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+    }
+});
+
+renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+renderer.domElement.addEventListener('mouseleave', () => isDragging = false);
+
+// Zoom control
+renderer.domElement.addEventListener('wheel', e => {
+    e.preventDefault();
+    camera.position.z += e.deltaY * 0.001;
+    camera.position.z = Math.max(2, Math.min(10, camera.position.z));
+});
 // Initialize
 let lastFrame = Date.now();
 camera.position.z = 5;
