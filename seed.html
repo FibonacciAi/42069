@@ -24,6 +24,51 @@
   import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/RenderPass.js';
   import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js';
 
+  // Create procedural Flower of Life texture
+  function createFlowerOfLifeTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Set circle style
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    
+    // Calculate radius and center positions
+    const radius = canvas.width / 8;
+    const centers = [];
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    // Create center points for circles
+    for (let angle = 0; angle < 2 * Math.PI; angle += Math.PI / 3) {
+      centers.push({
+        x: centerX + Math.cos(angle) * radius * 2,
+        y: centerY + Math.sin(angle) * radius * 2
+      });
+    }
+    centers.push({ x: centerX, y: centerY });
+
+    // Draw circles
+    function drawCircle(x, y, r) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+
+    // Draw the pattern
+    centers.forEach(center => {
+      drawCircle(center.x, center.y, radius);
+    });
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
   // Renderer and Canvas
   const canvas = document.getElementById('canvas3d');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -48,19 +93,13 @@
   directionalLight.position.set(5, 5, 5);
   scene.add(directionalLight);
 
-  // Texture Loader and Flower of Life Texture
-  const textureLoader = new THREE.TextureLoader();
-  const flowerTexture = textureLoader.load(
-    'https://fibonacciai.github.io/42069/flower_of_life.jpg',
-    () => console.log('Texture loaded successfully.'),
-    undefined,
-    (error) => console.error('Texture failed to load:', error)
-  );
+  // Create procedural texture
+  const flowerTexture = createFlowerOfLifeTexture();
 
   // Sphere Material and Geometry
   const sphereMaterial = new THREE.MeshPhysicalMaterial({
     map: flowerTexture,
-    color: 0xffffff, // Added color for visibility if texture fails
+    color: 0xffffff,
     metalness: 0,
     roughness: 0.4,
     emissive: new THREE.Color(0x222222),
@@ -83,7 +122,7 @@
   // Animation Loop
   function animate() {
     requestAnimationFrame(animate);
-    sphere.rotation.y += 0.005; // Rotate the sphere
+    sphere.rotation.y += 0.005;
     controls.update();
     composer.render();
   }
