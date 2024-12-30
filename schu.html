@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Source Schumann Resonance Monitor</title>
+    <style>
+        /* Previous styles remain the same */
+        
+        .source-card {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .source-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-active {
+            background: #0f0;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        .status-inactive {
+            background: #f00;
+        }
+
+        .source-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .data-table td {
+            padding: 5px;
+            border: 1px solid #333;
+        }
+
+        .graph-container {
+            position: relative;
+            height: 200px;
+            margin: 10px 0;
+        }
+
+        .overlay-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Multi-Source Schumann Resonance Monitor</h1>
+
+        <div class="source-grid">
+            <div class="source-card" id="gciSource">
+                <div class="source-header">
+                    <h2><span class="source-status"></span>GCI Lithuania</h2>
+                    <button class="toggle-btn">Connect</button>
+                </div>
+                <canvas class="spectrogram"></canvas>
+                <div class="data-table"></div>
+            </div>
+
+            <div class="source-card" id="caSource">
+                <div class="source-header">
+                    <h2><span class="source-status"></span>California</h2>
+                    <button class="toggle-btn">Connect</button>
+                </div>
+                <canvas class="spectrogram"></canvas>
+                <div class="data-table"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>Global Settings</h3>
+                <label>Update Rate (s):
+                    <input type="range" id="updateRate" min="1" max="10" value="2">
+                    <span id="updateRateValue">2</span>
+                </label>
+                <label>Display Duration (min):
+                    <input type="range" id="displayDuration" min="1" max="60" value="5">
+                    <span id="displayDurationValue">5</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+class DataSource {
+    constructor(id, name, apiEndpoint) {
+        this.id = id;
+        this.name = name;
+        this.apiEndpoint = apiEndpoint;
+        this.isConnected = false;
+        this.dataBuffer = [];
+        this.canvas = document.querySelector(`#${id} canvas`);
+        this.ctx = this.canvas.getContext('2d');
+        this.lastUpdate = null;
+        this.init();
+    }
+
+    init() {
+        this.canvas.width = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        const toggleBtn = document.querySelector(`#${this.id} .toggle-btn`);
+        toggleBtn.addEventListener('click', () => this.toggleConnection());
+    }
+
+    async toggleConnection() {
+        if (this.isConnected) {
+            this.disconnect();
+        } else {
+            await this.connect();
+        }
+    }
+
+    async connect() {
+        this.isConnected = true;
+        this.updateStatus(true);
+        this.startDataFetch();
+    }
+
+    disconnect() {
+        this.isConnected = false;
+        this.updateStatus(false);
+    }
+
+    updateStatus(active) {
+        const statusEl = document.querySelector(`#${this.id} .source-status`);
+        statusEl.className = `source-status status-${active ? 'active' : 'inactive'}`;
+        
+        const toggleBtn = document.querySelector(`#${this.id} .toggle-btn`);
+        toggleBtn.textContent = active ? 'Disconnect' : 'Connect';
+    }
+
+    async fetchData() {
+        try {
+            // Simulate data fetch - replace with actual API call
+            const response = await this.simulateDataFetch();
+            this.processData(response);
+        } catch (error) {
+            console.error(`Error fetching data from ${this.name}:`, error);
+            this.disconnect();
+        }
+    }
+
+    async simulateDataFetch() {
+        // Simulate real Schumann resonance data
+        const fundamentals = [7.83, 14.3, 20.8, 27.3, 33.8];
+        const timeStamp = new Date();
+        
+        const frequencies = new Array(100).fill(0).map((_, i) => {
+            const freq = i * 0.5; // 0-50 Hz range
+            let amplitude = 0;
+            
+            fundamentals.forEach((f, index) => {
+                const distance = Math.abs(freq - f);
+                amplitude += Math.exp(-distance * distance / 2) * (1 - index * 0.15);
+            });
+            
+            // Add some noise
+            amplitude += Math.random() * 0.1;
+            
+            return { frequency: freq, amplitude };
+        });
+
+        return {
+            timestamp: timeStamp,
+            frequencies,
+            peakFrequency: 7.83 + Math.random() * 0.1,
+            signalStrength: 0.5 + Math.random() * 0.5
+        };
+    }
+
+    processData(data) {
+        this.lastUpdate = data.timestamp;
+        this.dataBuffer.push(data);
+        
+        // Keep only last N minutes of data based on displayDuration setting
+        const duration = document.getElementById('displayDuration').value * 60;
+        while (this.dataBuffer.length > duration) {
+            this.dataBuffer.shift();
+        }
+        
+        this.updateDisplay(data);
+        this.drawSpectrogram();
+    }
+
+    updateDisplay(data) {
+        const tableEl = document.querySelector(`#${this.id} .data-table`);
+        tableEl.innerHTML = `
+            <table>
+                <tr>
+                    <td>Peak Frequency:</td>
+                    <td>${data.peakFrequency.toFixed(2)} Hz</td>
+                </tr>
+                <tr>
+                    <td>Signal Strength:</td>
+                    <td>${data.signalStrength.toFixed(2)} pT</td>
+                </tr>
+                <tr>
+                    <td>Last Update:</td>
+                    <td>${data.timestamp.toLocaleTimeString()}</td>
+                </tr>
+            </table>
+        `;
+    }
+
+    drawSpectrogram() {
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        
+        // Shift existing image
+        const imageData = this.ctx.getImageData(1, 0, width - 1, height);
+        this.ctx.putImageData(imageData, 0, 0);
+        
+        // Draw new column
+        if (this.dataBuffer.length > 0) {
+            const latestData = this.dataBuffer[this.dataBuffer.length - 1];
+            const frequencies = latestData.frequencies;
+            
+            frequencies.forEach((freq, i) => {
+                const y = height - (i / frequencies.length) * height;
+                const intensity = freq.amplitude;
+                this.ctx.fillStyle = this.getColor(intensity);
+                this.ctx.fillRect(width - 1, y, 1, height / frequencies.length);
+            });
+        }
+    }
+
+    getColor(value) {
+        // Normalize value to 0-1 range
+        value = Math.min(Math.max(value, 0), 1);
+        
+        // Create color gradient: blue -> green -> yellow -> red -> white
+        if (value < 0.25) {
+            return `rgb(0, 0, ${Math.round(value * 4 * 255)})`;
+        } else if (value < 0.5) {
+            return `rgb(0, ${Math.round((value - 0.25) * 4 * 255)}, 255)`;
+        } else if (value < 0.75) {
+            return `rgb(${Math.round((value - 0.5) * 4 * 255)}, 255, 0)`;
+        } else {
+            return `rgb(255, ${Math.round((1 - value) * 4 * 255)}, 0)`;
+        }
+    }
+
+    async startDataFetch() {
+        while (this.isConnected) {
+            await this.fetchData();
+            await new Promise(resolve => 
+                setTimeout(resolve, 1000 / document.getElementById('updateRate').value)
+            );
+        }
+    }
+}
+
+// Initialize data sources
+const sources = {
+    gci: new DataSource('gciSource', 'GCI Lithuania', 'https://api.heartmath.org/gci/lithuania'),
+    ca: new DataSource('caSource', 'California', 'https://api.heartmath.org/gci/california')
+};
+
+// Update display values for range inputs
+document.querySelectorAll('input[type="range"]').forEach(input => {
+    input.addEventListener('input', (e) => {
+        document.getElementById(`${e.target.id}Value`).textContent = e.target.value;
+    });
+});
+    </script>
+</body>
+</html>
