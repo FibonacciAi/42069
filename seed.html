@@ -51,7 +51,7 @@
   // Texture Loader and Flower of Life Texture
   const textureLoader = new THREE.TextureLoader();
   const flowerTexture = textureLoader.load(
-    'https://fibonacciai.github.io/42069/flower_of_life.jpg', // Correctly referencing the hosted texture
+    'https://fibonacciai.github.io/42069/flower_of_life.jpg',
     () => console.log('Texture loaded successfully.'),
     undefined,
     (error) => console.error('Texture failed to load:', error)
@@ -60,6 +60,7 @@
   // Sphere Material and Geometry
   const sphereMaterial = new THREE.MeshPhysicalMaterial({
     map: flowerTexture,
+    color: 0xffffff, // Added color for visibility if texture fails
     metalness: 0,
     roughness: 0.4,
     emissive: new THREE.Color(0x222222),
