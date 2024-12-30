@@ -48,10 +48,10 @@
   directionalLight.position.set(5, 5, 5);
   scene.add(directionalLight);
 
-  // Flower-of-Life Texture
+  // Texture Loader and Flower of Life Texture
   const textureLoader = new THREE.TextureLoader();
   const flowerTexture = textureLoader.load(
-    'https://fibonacciai.github.io/42069/flower_of_life.jpg', // Ensure this matches your texture URL
+    'https://fibonacciai.github.io/42069/flower_of_life.jpg', // Correctly referencing the hosted texture
     () => console.log('Texture loaded successfully.'),
     undefined,
     (error) => console.error('Texture failed to load:', error)
