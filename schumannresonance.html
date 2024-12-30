@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Schumann Resonance Monitor</title>
+    <style>
+        :root {
+            --primary-color: #00aaff;
+            --secondary-color: #0066cc;
+            --background-dark: #0a0a0a;
+            --card-background: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --success-color: #00ff00;
+            --warning-color: #ffaa00;
+            --error-color: #ff0000;
+            --grid-gap: 20px;
+            --card-padding: 20px;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .dashboard-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-right: auto;
+        }
+
+        .global-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .range-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 0.9em;
+        }
+
+        .source-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr));
+            gap: var(--grid-gap);
+            margin-bottom: var(--grid-gap);
+        }
+
+        .source-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: var(--card-padding);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .source-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .source-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .source-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .status-active {
+            background: var(--success-color);
+            box-shadow: 0 0 10px var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .status-inactive {
+            background: var(--error-color);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .source-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .spectrogram-container {
+            position: relative;
+            margin: 15px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        canvas.spectrogram {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            border-radius: 8px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .data-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .data-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .overlay-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-group {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+
+        .control-group h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .range-value {
+            min-width: 40px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .global-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .source-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .data-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .source-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <h1 class="dashboard-title">Global Schumann Resonance Monitor</h1>
+            <div class="global-controls">
+                <!-- Update Rate range control -->
+                <div class="range-control">
+                    <label>Update Rate</label>
+                    <input type="range" id="updateRate" min="1" max="10" value="2">
+                    <span class="range-value" id="updateRateValue">2s</span>
+                </div>
+                <!-- Duration range control -->
+                <div class="range-control">
+                    <label>Duration</label>
+                    <input type="range" id="displayDuration" min="1" max="60" value="5">
+                    <span class="range-value" id="displayDurationValue">5m</span>
+                </div>
+                <!-- New Pause/Resume All controls -->
+                <div class="range-control">
+                    <button class="btn btn-secondary" id="pauseAllBtn">Pause All</button>
+                    <button class="btn btn-secondary" id="resumeAllBtn">Resume All</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="source-grid" id="sourceGrid">
+            <!-- Source cards will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <template id="sourceCardTemplate">
+        <div class="source-card">
+            <div class="source-header">
+                <div class="source-title">
+                    <span class="source-status"></span>
+                    <h2></h2>
+                </div>
+                <div class="source-controls">
+                    <button class="btn btn-primary toggle-btn">Connect</button>
+                    <button class="btn btn-secondary export-btn">
+                        Export Data
+                    </button>
+                </div>
+            </div>
+            <div class="spectrogram-container">
+                <canvas class="spectrogram"></canvas>
+                <div class="overlay-controls">
+                    <button class="btn btn-secondary zoom-in">+</button>
+                    <button class="btn btn-secondary zoom-out">-</button>
+                </div>
+            </div>
+            <div class="data-grid">
+                <div class="data-item">
+                    <div class="data-label">Peak Frequency</div>
+                    <div class="data-value peak-freq">-.-- Hz</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label">Signal Strength</div>
+                    <div class="data-value signal-strength">-.-- pT</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label">Last Update</div>
+                    <div class="data-value last-update">--:--:--</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label">Quality</div>
+                    <div class="data-value signal-quality">--%</div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+    class SchulmannDataSource {
+        constructor(config) {
+            this.id = config.id;
+            this.name = config.name;
+            this.location = config.location;
+            this.apiEndpoint = config.apiEndpoint;
+            this.coordinates = config.coordinates;
+            this.timezone = config.timezone;
+
+            this.isConnected = false;
+            this.dataBuffer = [];
+            this.zoomLevel = 1;
+            this.element = this.createSourceElement();
+            this.canvas = this.element.querySelector('canvas');
+            this.ctx = this.canvas.getContext('2d');
+
+            this.analysisWorker = null;
+            this.lastUpdate = null;
+            this.qualityScore = 0;
+
+            this.initializeSource();
+        }
+
+        createSourceElement() {
+            const template = document.getElementById('sourceCardTemplate');
+            const element = template.content.cloneNode(true).children[0];
+
+            // Set source-specific information
+            element.id = this.id;
+            element.querySelector('h2').textContent = `${this.name} (${this.location})`;
+
+            // Add to grid
+            document.getElementById('sourceGrid').appendChild(element);
+            return element;
+        }
+
+        initializeSource() {
+            this.setupCanvas();
+            this.setupEventListeners();
+            this.initializeAnalysisWorker();
+        }
+
+        setupCanvas() {
+            this.canvas.width = this.canvas.offsetWidth * window.devicePixelRatio;
+            this.canvas.height = this.canvas.offsetHeight * window.devicePixelRatio;
+            this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        setupEventListeners() {
+            // Connect/Disconnect button
+            this.element.querySelector('.toggle-btn').addEventListener('click', () => {
+                this.toggleConnection();
+            });
+
+            // Export button
+            this.element.querySelector('.export-btn').addEventListener('click', () => {
+                this.exportData();
+            });
+
+            // Zoom controls
+            this.element.querySelector('.zoom-in').addEventListener('click', () => {
+                this.adjustZoom(0.2);
+            });
+
+            this.element.querySelector('.zoom-out').addEventListener('click', () => {
+                this.adjustZoom(-0.2);
+            });
+
+            // Canvas resize handling
+            new ResizeObserver(() => this.setupCanvas()).observe(this.canvas);
+        }
+
+        initializeAnalysisWorker() {
+            this.analysisWorker = new Worker(URL.createObjectURL(new Blob([`
+                ${this.getWorkerCode()}
+            `], { type: 'text/javascript' })));
+
+            this.analysisWorker.onmessage = (e) => {
+                const { type, data } = e.data;
+                switch (type) {
+                    case 'analysis':
+                        this.updateAnalysis(data);
+                        break;
+                    case 'quality':
+                        this.updateQuality(data);
+                        break;
+                }
+            };
+        }
+
+        getWorkerCode() {
+            return `
+                // Schumann resonance analysis worker
+                function analyzeSpectrum(frequencies) {
+                    const fundamentals = [7.83, 14.3, 20.8, 27.3, 33.8];
+                    let peaks = [];
+                    let quality = 0;
+
+                    fundamentals.forEach(fundamental => {
+                        const range = frequencies.filter(f => 
+                            Math.abs(f.frequency - fundamental) < 0.5
+                        );
+                        
+                        if (range.length > 0) {
+                            const peak = range.reduce((max, curr) => 
+                                curr.amplitude > max.amplitude ? curr : max
+                            );
+                            peaks.push(peak);
+                            
+                            // Calculate quality based on peak clarity
+                            const clarity = peak.amplitude / 
+                                range.reduce((sum, curr) => sum + curr.amplitude, 0);
+                            quality += clarity;
+                        }
+                    });
+
+                    quality = (quality / fundamentals.length) * 100;
+
+                    return {
+                        peaks,
+                        quality: Math.round(quality)
+                    };
+                }
+
+                self.onmessage = function(e) {
+                    const analysis = analyzeSpectrum(e.data);
+                    self.postMessage({ type: 'analysis', data: analysis });
+                };
+            `;
+        }
+
+        async toggleConnection() {
+            if (this.isConnected) {
+                this.disconnect();
+            } else {
+                await this.connect();
+            }
+        }
+
+        async connect() {
+            this.isConnected = true;
+            this.updateStatus(true);
+            this.startDataFetch();
+        }
+
+        disconnect() {
+            this.isConnected = false;
+            this.updateStatus(false);
+        }
+
+        updateStatus(active) {
+            const statusEl = this.element.querySelector('.source-status');
+            statusEl.className = `source-status status-${active ? 'active' : 'inactive'}`;
+
+            const toggleBtn = this.element.querySelector('.toggle-btn');
+            toggleBtn.textContent = active ? 'Disconnect' : 'Connect';
+            toggleBtn.className = `btn ${active ? 'btn-secondary' : 'btn-primary'} toggle-btn`;
+        }
+
+        async fetchData() {
+            try {
+                // Simulated data fetch - replace with actual API call if needed
+                const data = await this.simulateDataFetch();
+                this.processData(data);
+            } catch (error) {
+                console.error(`Error fetching data from ${this.name}:`, error);
+                this.handleError(error);
+            }
+        }
+
+        simulateDataFetch() {
+            const fundamentals = [7.83, 14.3, 20.8, 27.3, 33.8];
+            const timeStamp = new Date();
+
+            // Generate data based on location and time
+            const frequencies = new Array(200).fill(0).map((_, i) => {
+                const freq = i * 0.25; // 0-50 Hz range with finer resolution
+                let amplitude = 0;
+
+                // Add fundamental frequencies with location/time variations
+                fundamentals.forEach((f, index) => {
+                    const locationVariance = Math.sin(this.coordinates.lat) * 0.1;
+                    const timeVariance = Math.sin(timeStamp.getHours() / 24 * Math.PI) * 0.2;
+
+                    const adjustedFreq = f + locationVariance + timeVariance;
+                    const distance = Math.abs(freq - adjustedFreq);
+                    amplitude += Math.exp(-distance * distance / 0.5) * (1 - index * 0.15);
+                });
+
+                // Add noise and daily rhythmic variations
+                amplitude += Math.random() * 0.1;
+                amplitude *= 1 + Math.sin(timeStamp.getHours() / 24 * Math.PI) * 0.3;
+
+                return {
+                    frequency: freq,
+                    amplitude: Math.max(0, amplitude)
+                };
+            });
+
+            return {
+                timestamp: timeStamp,
+                frequencies,
+                metadata: {
+                    location: this.location,
+                    coordinates: this.coordinates,
+                    timezone: this.timezone
+                }
+            };
+        }
+
+        processData(data) {
+            this.lastUpdate = data.timestamp;
+            this.dataBuffer.push(data);
+
+            // Limit buffer to (duration in minutes * 60)
+            const duration = document.getElementById('displayDuration').value * 60;
+            while (this.dataBuffer.length > duration) {
+                this.dataBuffer.shift();
+            }
+
+            // Send data to worker for analysis
+            this.analysisWorker.postMessage(data.frequencies);
+
+            this.updateDisplay(data);
+            this.drawSpectrogram();
+        }
+
+        updateDisplay(data) {
+            // Update time
+            this.element.querySelector('.last-update').textContent = 
+                data.timestamp.toLocaleTimeString();
+        }
+
+        updateAnalysis(analysis) {
+            if (analysis.peaks.length > 0) {
+                const primaryPeak = analysis.peaks[0];
+                this.element.querySelector('.peak-freq').textContent = 
+                    \`\${primaryPeak.frequency.toFixed(2)} Hz\`;
+                this.element.querySelector('.signal-strength').textContent = 
+                    \`\${(primaryPeak.amplitude * 100).toFixed(1)} pT\`;
+            }
+
+            this.element.querySelector('.signal-quality').textContent = 
+                \`\${analysis.quality}%\`;
+        }
+
+        drawSpectrogram() {
+            const width = this.canvas.width / window.devicePixelRatio;
+            const height = this.canvas.height / window.devicePixelRatio;
+
+            // Shift existing data left by 1 pixel
+            this.ctx.globalCompositeOperation = 'copy';
+            this.ctx.drawImage(
+                this.canvas, 
+                1, 0, width - 1, height,
+                0, 0, width - 1, height
+            );
+
+            // Draw new data column
+            if (this.dataBuffer.length > 0) {
+                const latestData = this.dataBuffer[this.dataBuffer.length - 1];
+                this.drawDataColumn(latestData.frequencies, width - 1, height);
+            }
+        }
+
+        drawDataColumn(frequencies, x, height) {
+            const maxFreq = 50; // Maximum frequency to display
+
+            frequencies.forEach((freq) => {
+                if (freq.frequency > maxFreq) return;
+
+                const y = height - (freq.frequency / maxFreq * height);
+                const intensity = freq.amplitude * this.zoomLevel;
+
+                this.ctx.fillStyle = this.getColor(intensity);
+                this.ctx.fillRect(x, y, 1, height / frequencies.length);
+            });
+        }
+
+        getColor(value) {
+            // Cap and floor
+            value = Math.min(Math.max(value, 0), 1);
+
+            // Color ramp
+            const colors = [
+                { point: 0,   color: [0, 0, 0] },
+                { point: 0.2, color: [0, 0, 255] },
+                { point: 0.4, color: [0, 255, 255] },
+                { point: 0.6, color: [0, 255, 0] },
+                { point: 0.8, color: [255, 255, 0] },
+                { point: 1,   color: [255, 0, 0] }
+            ];
+
+            for (let i = 1; i < colors.length; i++) {
+                if (value <= colors[i].point) {
+                    const t = (value - colors[i-1].point) / (colors[i].point - colors[i-1].point);
+                    const rgb = colors[i-1].color.map((c, j) => 
+                        Math.round(c + t * (colors[i].color[j] - c))
+                    );
+                    return \`rgb(\${rgb[0]}, \${rgb[1]}, \${rgb[2]})\`;
+                }
+            }
+            return 'rgb(255, 0, 0)';
+        }
+
+        adjustZoom(delta) {
+            this.zoomLevel = Math.max(0.2, Math.min(5, this.zoomLevel + delta));
+        }
+
+        async exportData() {
+            const data = {
+                source: this.name,
+                location: this.location,
+                coordinates: this.coordinates,
+                timestamp: new Date().toISOString(),
+                data: this.dataBuffer
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = \`schumann_data_\${this.id}_\${new Date().toISOString()}.json\`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        handleError(error) {
+            this.disconnect();
+            // Could add more sophisticated error handling here
+        }
+
+        async startDataFetch() {
+            while (this.isConnected) {
+                await this.fetchData();
+                // Wait for next update
+                await new Promise(resolve => 
+                    setTimeout(resolve, 1000 / document.getElementById('updateRate').value)
+                );
+            }
+        }
+    }
+
+    // Initialize data sources
+    const sources = {
+        gci: new SchulmannDataSource({
+            id: 'gciSource',
+            name: 'GCI Monitor',
+            location: 'Lithuania',
+            apiEndpoint: 'https://api.heartmath.org/gci/lithuania',
+            coordinates: { lat: 54.8985, lng: 23.9036 },
+            timezone: 'Europe/Vilnius'
+        }),
+        
+        california: new SchulmannDataSource({
+            id: 'caSource',
+            name: 'HeartMath',
+            location: 'California',
+            apiEndpoint: 'https://api.heartmath.org/gci/california',
+            coordinates: { lat: 37.0902, lng: -95.7129 },
+            timezone: 'America/Los_Angeles'
+        }),
+        
+        newYork: new SchulmannDataSource({
+            id: 'nySource',
+            name: 'Earth Monitor',
+            location: 'New York',
+            apiEndpoint: 'https://api.heartmath.org/gci/newyork',
+            coordinates: { lat: 40.7128, lng: -74.0060 },
+            timezone: 'America/New_York'
+        })
+    };
+
+    // Update display values for range inputs
+    document.querySelectorAll('input[type="range"]').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const suffix = e.target.id === 'updateRate' ? 's' : 'm';
+            document.getElementById(\`\${e.target.id}Value\`).textContent = 
+                \`\${e.target.value}\${suffix}\`;
+        });
+    });
+
+    // Handle Pause All & Resume All
+    document.getElementById('pauseAllBtn').addEventListener('click', () => {
+        Object.values(sources).forEach(source => {
+            if (source.isConnected) {
+                source.disconnect();
+            }
+        });
+    });
+
+    document.getElementById('resumeAllBtn').addEventListener('click', () => {
+        Object.values(sources).forEach(async (source) => {
+            if (!source.isConnected) {
+                await source.connect();
+            }
+        });
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        Object.values(sources).forEach(source => source.setupCanvas());
+    });
+    </script>
+</body>
+</html>
