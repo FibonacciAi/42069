@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOASS Meter ENHANCED</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        :root {
+            --glow-color: #ff0000;
+            --warning-color: #ff4444;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        .background-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, 
+                rgba(255, 0, 0, 0.2) 0%,
+                rgba(0, 0, 0, 1) 70%);
+            animation: backgroundPulse 4s infinite;
+            z-index: -1;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 0, 0, 0.3);
+            max-width: 90%;
+            width: 400px;
+            position: relative;
+            animation: containerShake 0.2s infinite, containerRotate 10s infinite;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: var(--warning-color);
+            text-shadow: 0 0 10px var(--glow-color),
+                         0 0 20px var(--glow-color),
+                         0 0 30px var(--glow-color);
+            margin-bottom: 1.5rem;
+            animation: titleGlitch 0.3s infinite, titleScale 2s infinite;
+            position: relative;
+        }
+
+        .meter {
+            width: 100%;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            overflow: visible;
+            margin: 20px auto;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .meter::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid var(--warning-color);
+            border-radius: 25px;
+            animation: borderGlow 1s infinite;
+            box-shadow: 0 0 20px var(--glow-color);
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 140%;
+            background: linear-gradient(90deg, 
+                #ff0000 0%, 
+                #ff8800 25%,
+                #ff0000 50%, 
+                #ff8800 75%,
+                #ff0000 100%);
+            position: relative;
+            border-radius: 20px;
+            animation: overflow 1s infinite, meterGlow 0.5s infinite;
+            transform-origin: left center;
+            box-shadow: 0 0 50px var(--glow-color);
+        }
+
+        .crack {
+            position: absolute;
+            background: var(--warning-color);
+            box-shadow: 0 0 20px var(--glow-color);
+        }
+
+        .crack1 {
+            top: 50%;
+            right: -30px;
+            width: 60px;
+            height: 4px;
+            transform: rotate(45deg);
+            animation: crackGlow 0.5s infinite;
+        }
+
+        .crack2 {
+            top: 30%;
+            right: -20px;
+            width: 40px;
+            height: 4px;
+            transform: rotate(-30deg);
+            animation: crackGlow 0.7s infinite;
+        }
+
+        .crack3 {
+            top: 70%;
+            right: -25px;
+            width: 50px;
+            height: 4px;
+            transform: rotate(20deg);
+            animation: crackGlow 0.6s infinite;
+        }
+
+        .status {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: var(--warning-color);
+            margin-top: 1rem;
+            text-shadow: 0 0 15px var(--glow-color);
+            animation: statusPulse 0.3s infinite;
+            letter-spacing: 2px;
+        }
+
+        .rating {
+            font-size: 4em;
+            color: var(--warning-color);
+            margin-top: 1rem;
+            text-shadow: 0 0 20px var(--glow-color);
+            animation: ratingPulse 1s infinite;
+            transform-style: preserve-3d;
+        }
+
+        .warning {
+            color: var(--warning-color);
+            font-size: 1.4em;
+            margin-top: 1rem;
+            text-shadow: 0 0 15px var(--glow-color);
+            animation: warningBlink 0.2s infinite;
+            font-weight: bold;
+        }
+
+        .sparks {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .spark {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff,
+                       0 0 20px #ff0,
+                       0 0 30px #f00;
+            animation: sparkFloat 1s infinite linear;
+        }
+
+        .energy-field {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            border-radius: 25px;
+            background: radial-gradient(circle at center,
+                rgba(255, 0, 0, 0.1) 0%,
+                rgba(255, 0, 0, 0) 70%);
+            animation: energyPulse 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes containerShake {
+            0%, 100% { transform: translate(0) rotate(0deg); }
+            25% { transform: translate(-3px, 2px) rotate(-1deg); }
+            75% { transform: translate(3px, -2px) rotate(1deg); }
+        }
+
+        @keyframes containerRotate {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(0.5deg); }
+            75% { transform: rotate(-0.5deg); }
+        }
+
+        @keyframes titleGlitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-4px, 4px) skew(3deg); }
+            40% { transform: translate(4px, -4px) skew(-3deg); }
+            60% { transform: translate(-4px, -4px) skew(3deg); }
+            80% { transform: translate(4px, 4px) skew(-3deg); }
+        }
+
+        @keyframes overflow {
+            0% { transform: scaleX(1) skewX(0deg); }
+            50% { transform: scaleX(1.4) skewX(3deg); }
+            100% { transform: scaleX(1) skewX(0deg); }
+        }
+
+        @keyframes sparkFloat {
+            0% { 
+                transform: translateY(0) translateX(0) rotate(0deg); 
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-100px) translateX(50px) rotate(360deg); 
+                opacity: 0;
+            }
+        }
+
+        @keyframes energyPulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes ratingPulse {
+            0%, 100% { transform: translateZ(0) rotate(0deg); }
+            50% { transform: translateZ(50px) rotate(5deg); }
+        }
+
+        .glitch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.1);
+            mix-blend-mode: overlay;
+            animation: glitchOverlay 0.2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes glitchOverlay {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(2px, 2px); }
+            100% { transform: translate(0); }
+        }
+
+        .warning-icons {
+            font-size: 1.5em;
+            animation: iconRotate 1s infinite;
+        }
+
+        @keyframes iconRotate {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="background-effect"></div>
+    <div class="container">
+        <div class="energy-field"></div>
+        <div class="glitch-overlay"></div>
+        <h1>MOASS METER</h1>
+        <div class="meter">
+            <div class="meter-fill">
+                <div class="crack crack1"></div>
+                <div class="crack crack2"></div>
+                <div class="crack crack3"></div>
+            </div>
+        </div>
+        <div class="rating">∞</div>
+        <div class="status">CRITICAL OVERLOAD</div>
+        <div class="warning">
+            <span class="warning-icons">⚠️</span>
+            SYSTEM MELTDOWN
+            <span class="warning-icons">⚠️</span>
+        </div>
+    </div>
+
+    <script>
+        function createSparks() {
+            const container = document.querySelector('.container');
+            const sparks = document.createElement('div');
+            sparks.className = 'sparks';
+            
+            for (let i = 0; i < 30; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.style.left = Math.random() * 100 + '%';
+                spark.style.animationDelay = Math.random() * 2 + 's';
+                spark.style.animationDuration = (Math.random() * 1 + 0.5) + 's';
+                sparks.appendChild(spark);
+            }
+            
+            container.appendChild(sparks);
+            setTimeout(() => sparks.remove(), 2000);
+        }
+
+        setInterval(createSparks, 100);
+
+        // Add glitch effect to text
+        function glitchText() {
+            const status = document.querySelector('.status');
+            const originalText = status.textContent;
+            const glitchChars = '!@#$%^&*()_+';
+            
+            let glitched = '';
+            for(let i = 0; i < originalText.length; i++) {
+                if(Math.random() > 0.8) {
+                    glitched += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                } else {
+                    glitched += originalText[i];
+                }
+            }
+            status.textContent = glitched;
+            
+            setTimeout(() => status.textContent = originalText, 50);
+        }
+
+        setInterval(glitchText, 200);
+    </script>
+</body>
+</html>
