@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quantum Pendulum Orchestra</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            user-select: none;
+        }
+        .slider {
+            width: 200px;
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 160px;
+        }
+        button {
+            margin: 10px 5px;
+            padding: 8px 16px;
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #666;
+        }
+        #frequencyDisplay {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-family: monospace;
+        }
+        #harmonicDisplay {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            color: white;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+    <div id="controls">
+        <h3>Quantum Pendulum Orchestra</h3>
+        <div>
+            <label>Pendulums (2-12):</label>
+            <input type="range" min="2" max="12" step="1" value="6" class="slider" id="numBobs">
+        </div>
+        <div>
+            <label>Time Flow:</label>
+            <input type="range" min="0.1" max="1" step="0.1" value="0.3" class="slider" id="speed">
+        </div>
+        <div>
+            <label>Quantum Uncertainty:</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.3" class="slider" id="uncertainty">
+        </div>
+        <div>
+            <label>Harmonic Resonance:</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.5" class="slider" id="resonance">
+        </div>
+        <button id="resetBtn">Reset System</button>
+        <button id="toggleSound">Toggle Sound</button>
+        <button id="toggleQuantum">Toggle Quantum Effects</button>
+    </div>
+    <div id="frequencyDisplay"></div>
+    <div id="harmonicDisplay"></div>
+
+    <script>
+        let scene, camera, renderer;
+        let pendulums = [];
+        let probabilityClouds = [];
+        let audioContext;
+        let oscillators = [];
+        let soundEnabled = false;
+        let quantumEnabled = true;
+        let uncertainty = 0.3;
+        let resonance = 0.5;
+
+        // Musical scale frequencies (pentatonic scale)
+        const baseFrequencies = [
+            261.63, // C4
+            293.66, // D4
+            329.63, // E4
+            392.00, // G4
+            440.00, // A4
+            523.25  // C5
+        ];
+
+        class QuantumPendulum {
+            constructor(length, mass, index) {
+                this.length = length;
+                this.mass = mass;
+                this.index = index;
+                this.angle = Math.PI/4 + (Math.random() * 0.2 - 0.1);
+                this.angleVelocity = 0;
+                this.angleAcceleration = 0;
+                this.quantumStates = [];
+                this.baseFreq = baseFrequencies[index % baseFrequencies.length];
+                
+                // Create main pendulum
+                const bobGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+                const armGeometry = new THREE.CylinderGeometry(0.05, 0.05, length, 16);
+                
+                this.bob = new THREE.Mesh(bobGeometry);
+                this.arm = new THREE.Mesh(armGeometry);
+                
+                // Create probability cloud
+                this.cloudParticles = new THREE.Points(
+                    new THREE.BufferGeometry(),
+                    new THREE.PointsMaterial({
+                        size: 0.05,
+                        transparent: true,
+                        opacity: 0.6,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+
+                scene.add(this.bob);
+                scene.add(this.arm);
+                scene.add(this.cloudParticles);
+
+                // Initialize quantum states
+                for(let i = 0; i < 100; i++) {
+                    this.quantumStates.push({
+                        angle: this.angle + (Math.random() - 0.5) * uncertainty,
+                        velocity: this.angleVelocity + (Math.random() - 0.5) * uncertainty
+                    });
+                }
+            }
+
+            updateQuantumStates() {
+                if (!quantumEnabled) return;
+
+                this.quantumStates.forEach(state => {
+                    const force = -gravity * Math.sin(state.angle);
+                    state.velocity += force * timeScale;
+                    state.velocity *= (1 - damping);
+                    state.angle += state.velocity * timeScale;
+                    
+                    // Add quantum uncertainty
+                    state.angle += (Math.random() - 0.5) * uncertainty * 0.1;
+                    state.velocity += (Math.random() - 0.5) * uncertainty * 0.1;
+                });
+
+                // Update probability cloud visualization
+                const positions = new Float32Array(this.quantumStates.length * 3);
+                this.quantumStates.forEach((state, i) => {
+                    const x = this.length * Math.sin(state.angle);
+                    const y = -this.length * Math.cos(state.angle);
+                    positions[i * 3] = x;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = 0;
+                });
+
+                this.cloudParticles.geometry.setAttribute(
+                    'position',
+                    new THREE.BufferAttribute(positions, 3)
+                );
+
+                // Update color based on velocity
+                const hue = (Math.abs(this.angleVelocity) * 2) % 1;
+                this.cloudParticles.material.color.setHSL(hue, 1, 0.5);
+            }
+
+            updateSound() {
+                if (!soundEnabled || !audioContext) return;
+
+                // Calculate frequency based on pendulum motion
+                const velocity = Math.abs(this.angleVelocity);
+                const freqMod = 1 + velocity * 2;
+                const frequency = this.baseFreq * freqMod;
+
+                // Update oscillator
+                if (!oscillators[this.index]) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    gain.gain.value = 0.1 / pendulums.length;
+                    osc.start();
+                    oscillators[this.index] = { osc, gain };
+                }
+
+                oscillators[this.index].osc.frequency.setValueAtTime(
+                    frequency,
+                    audioContext.currentTime
+                );
+
+                // Modulate volume based on motion
+                const volume = Math.min(Math.abs(this.angleVelocity) * 0.2, 0.1);
+                oscillators[this.index].gain.gain.setValueAtTime(
+                    volume / pendulums.length,
+                    audioContext.currentTime
+                );
+            }
+
+            cleanup() {
+                scene.remove(this.bob);
+                scene.remove(this.arm);
+                scene.remove(this.cloudParticles);
+                if (oscillators[this.index]) {
+                    oscillators[this.index].osc.stop();
+                    oscillators[this.index] = null;
+                }
+            }
+        }
+
+        // Physics parameters
+        let gravity = 5;
+        let damping = 0.001;
+        let timeScale = 0.3;
+        let numPendulums = 6;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000);
+            document.getElementById('canvas').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+
+            camera.position.z = 15;
+            camera.position.y = 2;
+
+            createPendulums();
+            setupEventListeners();
+        }
+
+        function createPendulums() {
+            pendulums.forEach(p => p.cleanup());
+            pendulums = [];
+            oscillators = [];
+
+            for(let i = 0; i < numPendulums; i++) {
+                const length = 2 - (i * 0.1);
+                const mass = 1 - (i * 0.05);
+                const pendulum = new QuantumPendulum(length, mass, i);
+                
+                const hue = (i / numPendulums) * 0.8;
+                pendulum.bob.material = new THREE.MeshPhongMaterial({
+                    color: new THREE.Color().setHSL(hue, 1, 0.5),
+                    emissive: new THREE.Color().setHSL(hue, 1, 0.2)
+                });
+                pendulum.arm.material = new THREE.MeshPhongMaterial({
+                    color: 0x888888,
+                    metalness: 0.5,
+                    roughness: 0.5
+                });
+                
+                pendulums.push(pendulum);
+            }
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('resize', onWindowResize);
+            
+            document.getElementById('numBobs').addEventListener('input', (e) => {
+                numPendulums = parseInt(e.target.value);
+                createPendulums();
+            });
+
+            document.getElementById('speed').addEventListener('input', (e) => {
+                timeScale = parseFloat(e.target.value);
+            });
+
+            document.getElementById('uncertainty').addEventListener('input', (e) => {
+                uncertainty = parseFloat(e.target.value);
+            });
+
+            document.getElementById('resonance').addEventListener('input', (e) => {
+                resonance = parseFloat(e.target.value);
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', createPendulums);
+
+            document.getElementById('toggleSound').addEventListener('click', () => {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                soundEnabled = !soundEnabled;
+                if (!soundEnabled) {
+                    oscillators.forEach(osc => osc && osc.gain.gain.setValueAtTime(0, audioContext.currentTime));
+                }
+            });
+
+            document.getElementById('toggleQuantum').addEventListener('click', () => {
+                quantumEnabled = !quantumEnabled;
+            });
+        }
+
+        function updatePendulums() {
+            let prevX = 0;
+            let prevY = 4;
+
+            pendulums.forEach((pendulum, i) => {
+                // Calculate classical motion
+                let force = -gravity * Math.sin(pendulum.angle);
+                
+                // Add harmonic coupling between pendulums
+                if (i > 0) {
+                    const prevPendulum = pendulums[i-1];
+                    force += resonance * (prevPendulum.angle - pendulum.angle);
+                }
+                if (i < pendulums.length - 1) {
+                    const nextPendulum = pendulums[i+1];
+                    force += resonance * (nextPendulum.angle - pendulum.angle);
+                }
+
+                pendulum.angleAcceleration = force / (pendulum.mass * pendulum.length);
+                pendulum.angleVelocity += pendulum.angleAcceleration * timeScale;
+                pendulum.angleVelocity *= (1 - damping);
+                pendulum.angle += pendulum.angleVelocity * timeScale;
+
+                // Update position
+                const x = prevX + pendulum.length * Math.sin(pendulum.angle);
+                const y = prevY - pendulum.length * Math.cos(pendulum.angle);
+
+                pendulum.bob.position.set(x, y, 0);
+                pendulum.arm.position.set((prevX + x)/2, (prevY + y)/2, 0);
+                pendulum.arm.rotation.z = pendulum.angle;
+
+                // Update quantum effects and sound
+                pendulum.updateQuantumStates();
+                pendulum.updateSound();
+
+                prevX = x;
+                prevY = y;
+            });
+
+            // Update displays
+            updateDisplays();
+        }
+
+        function updateDisplays() {
+            const freqDisplay = document.getElementById('frequencyDisplay');
+            const harmDisplay = document.getElementById('harmonicDisplay');
+            
+            let freqText = 'Frequencies:\n';
+            pendulums.forEach((p, i) => {
+                const freq = p.baseFreq * (1 + Math.abs(p.angleVelocity) * 2);
+                freqText += `P${i+1}: ${freq.toFixed(1)} Hz\n`;
+            });
+            freqDisplay.textContent = freqText;
+
+            let harmText = 'Harmonic Energy:\n';
+            pendulums.forEach((p, i) => {
+                const energy = 0.5 * p.mass * p.length * p.length * p.angleVelocity * p.angleVelocity;
+                harmText += `P${i+1}: ${energy.toFixed(3)} J\n`;
+            });
+            harmDisplay.textContent = harmText;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePendulums();
+            renderer.render(scene, camera);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
