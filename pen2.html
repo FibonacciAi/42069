@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quantum Fractal Pendulum Orchestra</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        }
+        #fractalCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 1;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            user-select: none;
+            z-index: 1000;
+        }
+        .slider {
+            width: 200px;
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 160px;
+        }
+        button {
+            margin: 10px 5px;
+            padding: 8px 16px;
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #666;
+        }
+        #frequencyDisplay, #harmonicDisplay {
+            position: fixed;
+            color: white;
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #frequencyDisplay {
+            bottom: 20px;
+            left: 20px;
+        }
+        #harmonicDisplay {
+            top: 20px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fractalCanvas"></canvas>
+    <div id="canvas"></div>
+    <div id="controls">
+        <h3>Quantum Fractal Pendulum Orchestra</h3>
+        <div>
+            <label>Pendulums (2-12):</label>
+            <input type="range" min="2" max="12" step="1" value="6" class="slider" id="numBobs">
+        </div>
+        <div>
+            <label>Time Flow:</label>
+            <input type="range" min="0.1" max="1" step="0.1" value="0.3" class="slider" id="speed">
+        </div>
+        <div>
+            <label>Quantum Complexity:</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.3" class="slider" id="uncertainty">
+        </div>
+        <div>
+            <label>Fractal Detail:</label>
+            <input type="range" min="1" max="5" step="0.1" value="2" class="slider" id="fractalDepth">
+        </div>
+        <div>
+            <label>Resonance:</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.5" class="slider" id="resonance">
+        </div>
+        <button id="resetBtn">Reset System</button>
+        <button id="toggleSound">Toggle Sound</button>
+        <button id="toggleQuantum">Toggle Quantum Effects</button>
+    </div>
+    <div id="frequencyDisplay"></div>
+    <div id="harmonicDisplay"></div>
+
+    <script>
+        let scene, camera, renderer;
+        let pendulums = [];
+        let audioContext;
+        let oscillators = [];
+        let soundEnabled = false;
+        let quantumEnabled = true;
+        
+        // System parameters
+        let uncertainty = 0.3;
+        let resonance = 0.5;
+        let fractalDepth = 2;
+        let gravity = 5;
+        let damping = 0.001;
+        let timeScale = 0.3;
+        let numPendulums = 6;
+
+        // Musical scale frequencies (harmonic series)
+        const baseFrequencies = [
+            261.63, // C4
+            329.63, // E4
+            392.00, // G4
+            440.00, // A4
+            523.25, // C5
+            659.26  // E5
+        ];
+
+        // Fractal rendering
+        let fractalCanvas, fractalCtx;
+        const fractalWorkers = [];
+        const MAX_WORKERS = 4;
+
+        function initFractal() {
+            fractalCanvas = document.getElementById('fractalCanvas');
+            fractalCtx = fractalCanvas.getContext('2d');
+            resizeFractalCanvas();
+
+            // Initialize Web Workers for fractal computation
+            for (let i = 0; i < MAX_WORKERS; i++) {
+                const worker = new Worker(URL.createObjectURL(new Blob([`
+                    function computeFractalSection(data) {
+                        const {width, height, startY, endY, maxIter, zoom, offsetX, offsetY} = data;
+                        const result = new Uint8ClampedArray((endY - startY) * width * 4);
+                        
+                        for (let y = startY; y < endY; y++) {
+                            for (let x = 0; x < width; x++) {
+                                const a = (x - width/2) / (zoom * width) + offsetX;
+                                const b = (y - height/2) / (zoom * height) + offsetY;
+                                
+                                let ca = a;
+                                let cb = b;
+                                let n = 0;
+                                
+                                while (n < maxIter && (ca * ca + cb * cb) <= 4) {
+                                    const aa = ca * ca - cb * cb + a;
+                                    const bb = 2 * ca * cb + b;
+                                    ca = aa;
+                                    cb = bb;
+                                    n++;
+                                }
+
+                                const idx = ((y - startY) * width + x) * 4;
+                                const brightness = n === maxIter ? 0 : n / maxIter;
+                                const hue = (brightness * 360 + 200) % 360;
+                                
+                                // HSL to RGB conversion
+                                const h = hue / 360;
+                                const s = 0.8;
+                                const l = brightness * 0.5;
+                                
+                                let r, g, b;
+                                if (s === 0) {
+                                    r = g = b = l;
+                                } else {
+                                    const hue2rgb = (p, q, t) => {
+                                        if (t < 0) t += 1;
+                                        if (t > 1) t -= 1;
+                                        if (t < 1/6) return p + (q - p) * 6 * t;
+                                        if (t < 1/2) return q;
+                                        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                                        return p;
+                                    };
+                                    
+                                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                                    const p = 2 * l - q;
+                                    
+                                    r = hue2rgb(p, q, h + 1/3);
+                                    g = hue2rgb(p, q, h);
+                                    b = hue2rgb(p, q, h - 1/3);
+                                }
+
+                                result[idx] = r * 255;
+                                result[idx + 1] = g * 255;
+                                result[idx + 2] = b * 255;
+                                result[idx + 3] = 255;
+                            }
+                        }
+                        return result;
+                    }
+
+                    self.onmessage = function(e) {
+                        const result = computeFractalSection(e.data);
+                        self.postMessage({result, startY: e.data.startY}, [result.buffer]);
+                    };
+                `])));
+                fractalWorkers.push(worker);
+            }
+        }
+
+        function resizeFractalCanvas() {
+            fractalCanvas.width = window.innerWidth;
+            fractalCanvas.height = window.innerHeight;
+        }
+
+        function renderFractal(offsetX, offsetY, zoom) {
+            const width = fractalCanvas.width;
+            const height = fractalCanvas.height;
+            const maxIter = 100;
+            const chunkSize = Math.ceil(height / MAX_WORKERS);
+            let completedChunks = 0;
+            
+            const imageData = fractalCtx.createImageData(width, height);
+            
+            for (let i = 0; i < MAX_WORKERS; i++) {
+                const startY = i * chunkSize;
+                const endY = Math.min(startY + chunkSize, height);
+                
+                fractalWorkers[i].onmessage = function(e) {
+                    const {result, startY} = e.data;
+                    const array = new Uint8ClampedArray(result);
+                    for (let y = 0; y < array.length / 4 / width; y++) {
+                        const offset = y * width * 4;
+                        imageData.data.set(array.slice(offset, offset + width * 4), 
+                            (startY + y) * width * 4);
+                    }
+                    
+                    completedChunks++;
+                    if (completedChunks === MAX_WORKERS) {
+                        fractalCtx.putImageData(imageData, 0, 0);
+                    }
+                };
+                
+                fractalWorkers[i].postMessage({
+                    width, height, startY, endY, maxIter, zoom,
+                    offsetX, offsetY
+                });
+            }
+        }
+
+        class QuantumPendulum {
+            constructor(length, mass, index) {
+                this.length = length;
+                this.mass = mass;
+                this.index = index;
+                this.angle = Math.PI/4 + (Math.random() * 0.2 - 0.1);
+                this.angleVelocity = 0;
+                this.angleAcceleration = 0;
+                this.quantumState = {
+                    phase: 0,
+                    amplitude: 1,
+                    energy: 0
+                };
+                this.baseFreq = baseFrequencies[index % baseFrequencies.length];
+
+                const bobGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+                const armGeometry = new THREE.CylinderGeometry(0.05, 0.05, length, 16);
+                
+                this.bob = new THREE.Mesh(bobGeometry);
+                this.arm = new THREE.Mesh(armGeometry);
+
+                const hue = (index / numPendulums) * 0.8;
+                this.bob.material = new THREE.MeshPhongMaterial({
+                    color: new THREE.Color().setHSL(hue, 1, 0.5),
+                    emissive: new THREE.Color().setHSL(hue, 1, 0.2)
+                });
+                this.arm.material = new THREE.MeshPhongMaterial({
+                    color: 0x888888,
+                    metalness: 0.5,
+                    roughness: 0.5
+                });
+
+                scene.add(this.bob);
+                scene.add(this.arm);
+            }
+
+            update() {
+                // Classical mechanics update
+                let force = -gravity * Math.sin(this.angle);
+                
+                // Add harmonic coupling
+                if (this.index > 0) {
+                    force += resonance * (pendulums[this.index-1].angle - this.angle);
+                }
+                if (this.index < pendulums.length - 1) {
+                    force += resonance * (pendulums[this.index+1].angle - this.angle);
+                }
+
+                this.angleAcceleration = force / (this.mass * this.length);
+                this.angleVelocity += this.angleAcceleration * timeScale;
+                this.angleVelocity *= (1 - damping);
+                this.angle += this.angleVelocity * timeScale;
+
+                // Quantum state update
+                if (quantumEnabled) {
+                    this.quantumState.phase += this.angleVelocity * timeScale;
+                    this.quantumState.amplitude = Math.max(0.2, Math.min(1, 
+                        this.quantumState.amplitude + (Math.random() - 0.5) * uncertainty));
+                    this.quantumState.energy = 0.5 * this.mass * this.length * this.length * 
+                        this.angleVelocity * this.angleVelocity;
+                }
+
+                // Sound update
+                this.updateSound();
+            }
+
+            updateSound() {
+                if (!soundEnabled || !audioContext) return;
+
+                const velocity = Math.abs(this.angleVelocity);
+                const freqMod = 1 + velocity * 2;
+                const frequency = this.baseFreq * freqMod;
+
+                if (!oscillators[this.index]) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    gain.gain.value = 0.1 / pendulums.length;
+                    osc.start();
+                    oscillators[this.index] = { osc, gain };
+                }
+
+                oscillators[this.index].osc.frequency.setValueAtTime(
+                    frequency, audioContext.currentTime
+                );
+
+                const volume = Math.min(Math.abs(this.angleVelocity) * 0.2, 0.1);
+                oscillators[this.index].gain.gain.setValueAtTime(
+                    volume / pendulums.length, audioContext.currentTime
+                );
+            }
+
+            cleanup() {
+                scene.remove(this.bob);
+                scene.remove(this.arm);
+                if (oscillators[this.index]) {
+                    oscillators[this.index].osc.stop();
+                    oscillators[this.index] = null;
+                }
+            }
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000);
+            document.getElementById('canvas').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+
+            camera.position.z = 15;
+            camera.position.y = 2;
+
+            initFractal();
+            createPendulums();
+            setupEventListeners();
+        }
+
+        function createPendulums() {
+            pendulums.forEach(p => p.cleanup());
+            pendulums = [];
+            oscillators = [];
+
+            for(let i = 0; i < numPendulums; i++) {
+                const length = 2 - (i * 0.1);
+                const mass = 1 - (i * 0.05);
+                pendulums.push(new QuantumPendulum(length, mass, i));
+            }
+        }
+
+        function updatePendulums() {
+            let prevX = 0;
+            let prevY = 4;
+            let totalEnergy = 0;
+
+            pendulums.forEach((pendulum, i) => {
+                pendulum.update();
+
+                const x = prevX + pendulum.length * Math.sin(pendulum.angle);
+                const y = prevY - pendulum.length * Math.cos(pendulum.angle);
+
+                pendulum.bob.position.set(x, y, 0);
+                pendulum.arm.position.set((prevX + x)/2, (prevY + y)/2, 0);
+                pendulum.arm.rotation.z = pendulum.angle;
+
+                totalEnergy += pendulum.quantumState.energy;
+                prevX = x;
+                prevY = y;
+            });
+
+            if (quantumEnabled) {
+                const fractalX = Math.cos(totalEnergy * timeScale) * 0.5;
+                const fractalY = Math.sin(totalEnergy * timeScale) * 0.5;
+                renderFractal(fractalX, fractalY, 0.5 + fractalDepth * (totalEnergy * 0.1));
+            }
+
+            updateDisplays();
+        }
+
+        function updateDisplays() {
+            const freqDisplay = document.getElementById('frequencyDisplay');
+            const harmDisplay = document.getElementById('harmonicDisplay');
+            
+            let freqText = 'Frequencies:\n';
+            let harmText = 'Quantum States:\n';
+            
+            pendulums.forEach((p, i) => {
+                const freq = p.baseFreq * (1 + Math.abs(p.angleVelocity) * 2);
+                freqText += `P${i+1}: ${freq.toFixed(1)} Hz\n`;
+                harmText += `P${i+1}: E=${p.quantumState.energy.toFixed(3)} φ=${p.quantumState.phase.toFixed(2)}\n`;
+            });
+            
+            freqDisplay.textContent = freqText;
+            harmDisplay.textContent = harmText;
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                resizeFractalCanvas();
+            });
+            
+            document.getElementById('numBobs').addEventListener('input', (e) => {
+                numPendulums = parseInt(e.target.value);
+                createPendulums();
+            });
+
+            document.getElementById('speed').addEventListener('input', (e) => {
+                timeScale = parseFloat(e.target.value);
+            });
+
+            document.getElementById('uncertainty').addEventListener('input', (e) => {
+                uncertainty = parseFloat(e.target.value);
+            });
+
+            document.getElementById('fractalDepth').addEventListener('input', (e) => {
+                fractalDepth = parseFloat(e.target.value);
+            });
+
+            document.getElementById('resonance').addEventListener('input', (e) => {
+                resonance = parseFloat(e.target.value);
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', createPendulums);
+
+            document.getElementById('toggleSound').addEventListener('click', () => {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                soundEnabled = !soundEnabled;
+                if (!soundEnabled) {
+                    oscillators.forEach(osc => osc && osc.gain.gain.setValueAtTime(0, audioContext.currentTime));
+                }
+            });
+
+            document.getElementById('toggleQuantum').addEventListener('click', () => {
+                quantumEnabled = !quantumEnabled;
+                if (!quantumEnabled) {
+                    fractalCtx.clearRect(0, 0, fractalCanvas.width, fractalCanvas.height);
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePendulums();
+            renderer.render(scene, camera);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
