@@ -1,254 +1,278 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Fractal Dynamics Explorer</title>
+    <title>Optimized Fractal Wormhole with Glowing Particles</title>
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-            --text-color: #ecf0f1;
-            --background-color: #1a1a1a;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            padding: 2rem 0;
-            position: relative;
+            margin: 0;
             overflow: hidden;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: clamp(2rem, 5vw, 4rem);
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            padding: 2rem 0;
-        }
-
-        .card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 15px;
-            padding: 1.5rem;
-            transition: transform 0.3s ease;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card h2 {
-            color: var(--secondary-color);
-            margin-bottom: 1rem;
-        }
-
-        .interactive-fractal {
-            width: 100%;
-            height: 400px;
             background: #000;
-            border-radius: 15px;
-            margin: 2rem 0;
-            position: relative;
-            overflow: hidden;
+            cursor: none;
         }
-
         canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .card {
-                margin: 1rem 0;
-            }
-        }
-
-        /* Animation keyframes */
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Interactive elements */
-        .interactive-button {
-            background: var(--secondary-color);
-            color: var(--text-color);
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .interactive-button:hover {
-            background: var(--accent-color);
-            transform: scale(1.05);
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--background-color);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--secondary-color);
-            border-radius: 5px;
+            display: block;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <h1>Quantum Fractal Dynamics Explorer</h1>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="interactive-fractal">
-            <canvas id="fractalCanvas"></canvas>
-        </div>
-
-        <div class="grid-container">
-            <div class="card">
-                <h2>Fractal Patterns in Quantum Materials</h2>
-                <p>Discover the fascinating world of fractal patterns in materials like neodymium nickel oxide (NdNiO3), exhibiting unique conductor-insulator behavior based on temperature variations.</p>
-                <button class="interactive-button" onclick="showDetails('quantum-materials')">Learn More</button>
-            </div>
-
-            <div class="card">
-                <h2>Quantum Transport Phenomena</h2>
-                <p>Explore anomalous transport phenomena in fractal photonic lattices, including Sierpinski gaskets and carpets, revealing complex quantum behaviors.</p>
-                <button class="interactive-button" onclick="showDetails('quantum-transport')">Explore</button>
-            </div>
-
-            <div class="card">
-                <h2>Applications & Technology</h2>
-                <p>Learn about practical applications in neuromorphic devices, quantum computing, and advanced data storage systems.</p>
-                <button class="interactive-button" onclick="showDetails('applications')">Discover</button>
-            </div>
-        </div>
-    </main>
-
+    <canvas id="canvas"></canvas>
     <script>
-        // Interactive Mandelbrot Set visualization
-        const canvas = document.getElementById('fractalCanvas');
+        const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        let width, height, centerX, centerY;
+        let time = 0;
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let speed = 1;
+        let segments = [];
+        const numSegments = 40;      // Number of segments in the tunnel
+        const segmentSpacing = 40;   // Spacing between segments
+        const tunnelRadius = 150;    // Radius of the tunnel
+        const branchLength = 150;    // Length of fractal branches
+        const branchTaper = 0.5;     // Tapering factor for branches
 
-        function resizeCanvas() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+        // Particle system variables
+        const particles = [];
+        const maxParticles = 100;    // Reduced number for better performance
+        const particleSpeed = 1.5;   // Base speed of particles
+
+        // Initialize canvas size
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        // Particle class definition
+        class Particle {
+            constructor() {
+                this.reset();
+            }
 
-        function drawMandelbrot() {
-            const width = canvas.width;
-            const height = canvas.height;
-            const imageData = ctx.createImageData(width, height);
-            const data = imageData.data;
+            reset() {
+                // Start position at random point within the tunnel
+                this.angle = Math.random() * Math.PI * 2;
+                this.radius = Math.random() * tunnelRadius;
+                this.z = Math.random() * numSegments * segmentSpacing - numSegments * segmentSpacing;
+                this.speed = particleSpeed + Math.random();
+                this.size = Math.random() * 2 + 1;
+                this.hue = Math.random() * 360;
+                this.opacity = Math.random() * 0.5 + 0.5;
+                this.updatePosition();
+            }
 
-            const maxIter = 100;
-            const zoom = 250;
-            const offsetX = width / 2;
-            const offsetY = height / 2;
+            updatePosition() {
+                // Move the particle forward along the z-axis
+                this.z += this.speed;
 
-            for (let x = 0; x < width; x++) {
-                for (let y = 0; y < height; y++) {
-                    let a = (x - offsetX) / zoom;
-                    let b = (y - offsetY) / zoom;
-                    let ca = a;
-                    let cb = b;
-                    let n = 0;
-
-                    while (n < maxIter) {
-                        let aa = a * a - b * b;
-                        let bb = 2 * a * b;
-                        a = aa + ca;
-                        b = bb + cb;
-                        if (a * a + b * b > 4) break;
-                        n++;
-                    }
-
-                    let bright = n === maxIter ? 0 : n * 2.55;
-                    let pos = (x + y * width) * 4;
-                    
-                    data[pos] = bright;
-                    data[pos + 1] = bright * 2;
-                    data[pos + 2] = bright * 3;
-                    data[pos + 3] = 255;
+                // Reset if it goes past the camera
+                if (this.z > 0) {
+                    this.reset();
                 }
             }
 
-            ctx.putImageData(imageData, 0, 0);
+            draw() {
+                const perspective = 800;
+                const scale = perspective / (perspective + this.z);
+
+                if (scale < 0.05) return; // Skip drawing very small particles
+
+                const x = this.radius * Math.cos(this.angle);
+                const y = this.radius * Math.sin(this.angle);
+                const projectedX = x * scale + centerX;
+                const projectedY = y * scale + centerY;
+
+                // Draw glowing particle
+                ctx.beginPath();
+                ctx.arc(projectedX, projectedY, this.size * scale, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${this.opacity * scale})`;
+                ctx.shadowColor = `hsla(${this.hue}, 100%, 70%, ${this.opacity * scale})`;
+                ctx.shadowBlur = 15 * scale;
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset shadowBlur after drawing
+            }
         }
 
-        drawMandelbrot();
+        // Segment class definition
+        class Segment {
+            constructor(z) {
+                this.z = z;
+                this.points = [];
+                this.rotation = 0;
+                this.offset = {x: 0, y: 0};
+                this.generatePoints();
+            }
 
-        function showDetails(topic) {
-            // Implement modal or slide-out panel for detailed information
-            console.log(`Showing details for: ${topic}`);
+            generatePoints() {
+                const sides = 6; // Number of sides for fractal branches
+                this.points = []; // Reset points
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i / sides) * Math.PI * 2;
+                    const radius = tunnelRadius * (0.7 + Math.random() * 0.3);
+                    this.points.push({
+                        angle,
+                        radius,
+                        originalRadius: radius
+                    });
+                }
+            }
+
+            update(deltaZ) {
+                this.z += deltaZ;
+                if (this.z > 0) {
+                    this.z = -numSegments * segmentSpacing;
+                    this.generatePoints();
+                }
+
+                // Rotate and distort the segment
+                this.rotation += 0.002 * speed;
+                const zFactor = (this.z / (segmentSpacing * numSegments));
+                this.offset.x = Math.sin(time * 0.001 + zFactor * Math.PI * 2) * 50;
+                this.offset.y = Math.cos(time * 0.002 + zFactor * Math.PI * 2) * 50;
+
+                // Distort points based on time
+                this.points.forEach(point => {
+                    point.radius = point.originalRadius * (1 + 
+                        Math.sin(point.angle + time * 0.01) * 0.2);
+                });
+            }
+
+            draw() {
+                const perspective = 800;
+                const scale = perspective / (perspective + this.z);
+                
+                // Skip drawing if scale is too low to ensure visibility
+                if (scale < 0.1) return;
+
+                ctx.beginPath();
+                this.points.forEach((point, i) => {
+                    const nextPoint = this.points[(i + 1) % this.points.length];
+                    
+                    // Calculate current point
+                    const x1 = point.radius * Math.cos(point.angle + this.rotation);
+                    const y1 = point.radius * Math.sin(point.angle + this.rotation);
+                    const projectedX1 = (x1 + this.offset.x) * scale + centerX;
+                    const projectedY1 = (y1 + this.offset.y) * scale + centerY;
+
+                    // Calculate next point
+                    const x2 = nextPoint.radius * Math.cos(nextPoint.angle + this.rotation);
+                    const y2 = nextPoint.radius * Math.sin(nextPoint.angle + this.rotation);
+                    const projectedX2 = (x2 + this.offset.x) * scale + centerX;
+                    const projectedY2 = (y2 + this.offset.y) * scale + centerY;
+
+                    if (i === 0) {
+                        ctx.moveTo(projectedX1, projectedY1);
+                    }
+                    ctx.lineTo(projectedX2, projectedY2);
+                });
+                ctx.closePath();
+
+                // Enhanced color based on depth and time
+                const hue = (time * 0.1 + this.z * 0.5) % 360; // More dynamic hue shift
+                ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${0.3 + scale * 0.7})`; // Brighter, more opaque
+                ctx.strokeStyle = `hsla(${(hue + 180) % 360}, 100%, 70%, ${0.5 + scale * 0.5})`; // Brighter stroke
+                ctx.lineWidth = 3 * scale; // Thicker stroke
+                ctx.fill();
+                ctx.stroke();
+
+                if (scale > 0.2) { // Draw branches at a larger scale
+                    this.drawFractalBranches(scale);
+                }
+            }
+
+            drawFractalBranches(scale) {
+                const branchCount = 8; // More branches
+                this.points.forEach(point => {
+                    const angle = point.angle + this.rotation;
+                    const x = point.radius * Math.cos(angle);
+                    const y = point.radius * Math.sin(angle);
+                    const projectedX = (x + this.offset.x) * scale + centerX;
+                    const projectedY = (y + this.offset.y) * scale + centerY;
+
+                    for (let j = 0; j < branchCount; j++) {
+                        const branchAngle = angle + (Math.PI * 2 * j / branchCount) + Math.sin(time * 0.01 + j) * 0.1;
+                        
+                        // Tapered branch length
+                        const currentBranchLength = branchLength * scale * (1 - (j / branchCount) * branchTaper);
+                        const endX = projectedX + Math.cos(branchAngle) * currentBranchLength;
+                        const endY = projectedY + Math.sin(branchAngle) * currentBranchLength;
+
+                        ctx.beginPath();
+                        ctx.moveTo(projectedX, projectedY);
+                        ctx.lineTo(endX, endY);
+                        // More vibrant branch color
+                        ctx.strokeStyle = `hsla(${(time * 0.2 + this.z + j * 30) % 360}, 100%, 70%, 0.4)`;
+                        ctx.lineWidth = 1.5 * scale * (1 - (j / branchCount) * branchTaper); // Tapered line width
+                        ctx.stroke();
+                    }
+                });
+            }
         }
 
-        // Add touch support for mobile devices
-        let touchStartX = 0;
-        let touchStartY = 0;
+        // Initialize the canvas and segments
+        function init() {
+            initCanvas();
+            segments = [];
+            for (let i = 0; i < numSegments; i++) {
+                segments.push(new Segment(-i * segmentSpacing));
+            }
 
-        canvas.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
+            // Initialize particles
+            for (let i = 0; i < maxParticles; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // Animation loop
+        function animateFrame() {
+            time += 1;
+
+            // Clear canvas with radial gradient for wormhole effect
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width / 2);
+            gradient.addColorStop(0, 'rgba(0,0,0,0.2)');  // Darker center
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');     // Transparent edges
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // Update speed based on mouse position
+            const mouseXNorm = (mouseX / width - 0.5) * 2;
+            const mouseYNorm = (mouseY / height - 0.5) * 2;
+            speed = 1 + Math.hypot(mouseXNorm, mouseYNorm) * 2;
+
+            // Sort segments by z-depth for proper rendering
+            segments.sort((a, b) => b.z - a.z);
+
+            // Update and draw segments
+            segments.forEach(segment => {
+                segment.update(speed * 2);
+                segment.draw();
+            });
+
+            // Update and draw particles
+            particles.forEach(particle => {
+                particle.updatePosition();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animateFrame);
+        }
+
+        // Event listeners
+        window.addEventListener('resize', () => {
+            initCanvas();
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
         });
 
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const touchX = e.touches[0].clientX;
-            const touchY = e.touches[0].clientY;
-            // Implement touch-based fractal navigation
-        });
+        // Initialize and start animation
+        init();
+        animateFrame();
+
     </script>
 </body>
 </html>
