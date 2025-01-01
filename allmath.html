@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quantum Fractal Dynamics</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: monospace; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .slider { width: 200px; margin: 5px 0; }
+        label { display: inline-block; width: 120px; }
+        #quantum-state {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fractalCanvas"></canvas>
+    <div id="controls">
+        <div>
+            <label>Quantum Phase:</label>
+            <input type="range" id="phase" class="slider" min="0" max="6.28" step="0.01" value="0">
+        </div>
+        <div>
+            <label>Wave Function:</label>
+            <input type="range" id="waveform" class="slider" min="0" max="1" step="0.01" value="0.5">
+        </div>
+        <div>
+            <label>Iteration Depth:</label>
+            <input type="range" id="iterations" class="slider" min="50" max="1000" step="10" value="500">
+        </div>
+        <div>
+            <label>Julia Seed:</label>
+            <input type="range" id="seed" class="slider" min="0" max="1" step="0.01" value="0.5">
+        </div>
+    </div>
+    <div id="quantum-state"></div>
+
+<script type="x-shader/x-vertex" id="vertexShader">
+    attribute vec2 a_position;
+    void main() {
+        gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+    precision highp float;
+    
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform float u_phase;
+    uniform float u_waveform;
+    uniform float u_iterations;
+    uniform float u_seed;
+
+    // Complex number operations
+    vec2 cmul(vec2 a, vec2 b) {
+        return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+    }
+
+    vec2 cdiv(vec2 a, vec2 b) {
+        float denom = dot(b, b);
+        return vec2(dot(a, b), a.y * b.x - a.x * b.y) / denom;
+    }
+
+    // Quantum wave function
+    vec2 psi(vec2 z) {
+        float r = length(z);
+        float theta = u_phase * atan(z.y, z.x);
+        return vec2(cos(r + theta), sin(r + theta)) * exp(-r * u_waveform);
+    }
+
+    vec3 hsv2rgb(vec3 c) {
+        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    }
+
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.y, u_resolution.x);
+        uv *= 3.0; // Zoom level
+
+        // Dynamic Julia set with quantum influence
+        vec2 c = vec2(cos(u_time * 0.1), sin(u_time * 0.1)) * u_seed;
+        vec2 z = uv;
+        vec2 dz = vec2(1.0, 0.0); // For orbit trapping
+        float n = 0.0;
+        
+        // Apply quantum field
+        vec2 qField = psi(z);
+        z = cmul(z, qField);
+        
+        // Main iteration loop
+        for(float i = 0.0; i < 1000.0; i++) {
+            if(i >= u_iterations || dot(z,z) > 4.0) {
+                n = i;
+                break;
+            }
+
+            // Derivative computation
+            dz = 2.0 * cmul(z, dz);
+            
+            // Next iteration with quantum modification
+            z = cmul(z, z) + c;
+            z = cmul(z, psi(z));
+        }
+
+        // Quantum-influenced coloring
+        float orbit = 1.0 / length(dz); // Orbit trap
+        float smooth_n = n - log2(log2(dot(z,z))) + 4.0;
+        
+        // Color mapping with quantum interference
+        vec3 col = hsv2rgb(vec3(
+            mod(smooth_n * 0.1 + u_time * 0.05, 1.0),
+            0.8 + 0.2 * sin(orbit * 10.0),
+            1.0 - exp(-smooth_n * 0.1)
+        ));
+        
+        // Add quantum interference patterns
+        float interference = length(qField);
+        col *= 1.0 + 0.2 * sin(interference * 10.0 + u_time);
+        
+        gl_FragColor = vec4(col, 1.0);
+    }
+</script>
+
+<script>
+class QuantumFractalRenderer {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.gl = canvas.getContext('webgl', {
+            preserveDrawingBuffer: false,
+            antialias: false
+        });
+        
+        if (!this.gl) throw new Error('WebGL not supported');
+        
+        this.initGL();
+        this.resize();
+        this.setupEventListeners();
+        this.startTime = performance.now();
+    }
+    
+    initGL() {
+        const gl = this.gl;
+        
+        // Create shader program
+        const vertexShader = this.createShader(gl.VERTEX_SHADER, 'vertexShader');
+        const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, 'fragmentShader');
+        this.program = this.createProgram(vertexShader, fragmentShader);
+        
+        // Create geometry
+        const positions = new Float32Array([-1,-1, 1,-1, -1,1, 1,1]);
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+        
+        // Get locations
+        this.locations = {
+            position: gl.getAttribLocation(this.program, 'a_position'),
+            resolution: gl.getUniformLocation(this.program, 'u_resolution'),
+            time: gl.getUniformLocation(this.program, 'u_time'),
+            phase: gl.getUniformLocation(this.program, 'u_phase'),
+            waveform: gl.getUniformLocation(this.program, 'u_waveform'),
+            iterations: gl.getUniformLocation(this.program, 'u_iterations'),
+            seed: gl.getUniformLocation(this.program, 'u_seed')
+        };
+        
+        // Enable attributes
+        gl.enableVertexAttribArray(this.locations.position);
+        gl.vertexAttribPointer(this.locations.position, 2, gl.FLOAT, false, 0, 0);
+    }
+    
+    createShader(type, id) {
+        const gl = this.gl;
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, document.getElementById(id).text);
+        gl.compileShader(shader);
+        
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            throw new Error(gl.getShaderInfoLog(shader));
+        }
+        
+        return shader;
+    }
+    
+    createProgram(vertexShader, fragmentShader) {
+        const gl = this.gl;
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            throw new Error(gl.getProgramInfoLog(program));
+        }
+        
+        return program;
+    }
+    
+    resize() {
+        const dpr = window.devicePixelRatio || 1;
+        const width = this.canvas.clientWidth * dpr;
+        const height = this.canvas.clientHeight * dpr;
+        
+        if (this.canvas.width !== width || this.canvas.height !== height) {
+            this.canvas.width = width;
+            this.canvas.height = height;
+            this.gl.viewport(0, 0, width, height);
+        }
+    }
+    
+    setupEventListeners() {
+        window.addEventListener('resize', () => this.resize());
+    }
+    
+    updateQuantumState() {
+        const phase = document.getElementById('phase').value;
+        const waveform = document.getElementById('waveform').value;
+        document.getElementById('quantum-state').textContent = 
+            `Quantum State: φ=${(phase/6.28).toFixed(3)}π, ψ=${waveform}`;
+    }
+    
+    render(now) {
+        const gl = this.gl;
+        const time = (now - this.startTime) * 0.001; // Convert to seconds
+        
+        gl.useProgram(this.program);
+        
+        // Update uniforms
+        gl.uniform2f(this.locations.resolution, gl.canvas.width, gl.canvas.height);
+        gl.uniform1f(this.locations.time, time);
+        gl.uniform1f(this.locations.phase, parseFloat(document.getElementById('phase').value));
+        gl.uniform1f(this.locations.waveform, parseFloat(document.getElementById('waveform').value));
+        gl.uniform1f(this.locations.iterations, parseFloat(document.getElementById('iterations').value));
+        gl.uniform1f(this.locations.seed, parseFloat(document.getElementById('seed').value));
+        
+        // Draw
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        
+        this.updateQuantumState();
+        requestAnimationFrame((now) => this.render(now));
+    }
+}
+
+// Start the application
+try {
+    const canvas = document.getElementById('fractalCanvas');
+    const renderer = new QuantumFractalRenderer(canvas);
+    requestAnimationFrame((now) => renderer.render(now));
+} catch (error) {
+    console.error('Application failed to start:', error);
+    document.body.innerHTML = `
+        <div style="color: white; padding: 20px;">
+            Error: ${error.message}<br>
+            Please ensure your browser supports WebGL.
+        </div>
+    `;
+}
+</script>
+</body>
+</html>
