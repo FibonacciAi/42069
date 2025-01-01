@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fibonacci Generator</title>
+    <title>Enhanced Fibonacci Generator</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -11,20 +11,29 @@
             padding: 20px;
             background: #1a1a2e;
             color: #e6e6e6;
+            min-height: 100vh;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
         }
         .controls {
             background: #232342;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
         }
         .visualization {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 20px;
         }
         .panel {
@@ -34,18 +43,29 @@
         }
         canvas {
             width: 100%;
-            height: 300px;
+            height: 350px;
             background: #16162a;
             border-radius: 8px;
+            cursor: pointer;
+        }
+        .sequence-container {
+            position: relative;
         }
         .sequence {
-            max-height: 200px;
+            max-height: 350px;
             overflow-y: auto;
-            padding: 10px;
+            padding: 15px;
             background: #16162a;
             border-radius: 8px;
             font-family: monospace;
-            line-height: 1.5;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #16162a;
+            border-radius: 8px;
         }
         button {
             background: #4CAF50;
@@ -54,59 +74,127 @@
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            margin-right: 10px;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            font-weight: bold;
         }
         button:hover {
             background: #45a049;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         input[type="number"] {
             padding: 8px;
             border-radius: 5px;
             border: none;
-            margin-right: 10px;
             width: 100px;
+            background: #16162a;
+            color: #fff;
+            font-size: 14px;
+        }
+        input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
         .number {
             display: inline-block;
-            padding: 2px 6px;
+            padding: 4px 8px;
             margin: 2px;
             border-radius: 3px;
             background: #2a2a4a;
+            transition: background 0.3s;
         }
-        .highlight {
+        .number.highlight {
             background: #4CAF50;
             color: white;
         }
-        ::-webkit-scrollbar {
-            width: 8px;
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
         }
-        ::-webkit-scrollbar-track {
-            background: #16162a;
+        .stat-item {
+            background: #2a2a4a;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #4CAF50;
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
             border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="header">
+            <h1>Fibonacci Sequence Visualizer</h1>
+        </div>
+        
         <div class="controls">
-            <input type="number" id="terms" value="20" min="1" max="100">
-            <button onclick="generateSequence()">Generate</button>
-            <button onclick="animateSpiral()">Animate Spiral</button>
-            <button onclick="reset()">Reset</button>
+            <div class="control-group">
+                <label>Terms:</label>
+                <input type="number" id="terms" value="20" min="1" max="100">
+            </div>
+            <div class="control-group">
+                <label>Speed:</label>
+                <input type="number" id="speed" value="1" min="0.1" max="5" step="0.1">
+            </div>
+            <div class="control-group">
+                <label>Spiral Color:</label>
+                <input type="color" id="spiralColor" value="#4CAF50">
+            </div>
+            <div class="control-group">
+                <button onclick="generateSequence()">Generate</button>
+                <button onclick="toggleAnimation()">Toggle Animation</button>
+                <button onclick="reset()">Reset</button>
+            </div>
         </div>
         
         <div class="visualization">
             <div class="panel">
                 <h3>Fibonacci Spiral</h3>
                 <canvas id="spiralCanvas"></canvas>
+                <div class="info-panel">
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div>Golden Ratio (φ)</div>
+                            <div id="goldenRatio">1.618033989</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>Latest Ratio</div>
+                            <div id="currentRatio">-</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="panel">
+            <div class="panel sequence-container">
                 <h3>Sequence</h3>
                 <div id="sequence" class="sequence"></div>
+                <div class="tooltip" id="tooltip"></div>
             </div>
         </div>
     </div>
@@ -115,19 +203,24 @@
         const canvas = document.getElementById('spiralCanvas');
         const ctx = canvas.getContext('2d');
         const sequence = document.getElementById('sequence');
+        const tooltip = document.getElementById('tooltip');
+        
+        let fibNumbers = [];
+        let animationFrame;
+        let currentAngle = 0;
+        let isAnimating = false;
+        let lastTime = 0;
 
-        // Set canvas size with proper scaling
         function resizeCanvas() {
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
+            if (fibNumbers.length > 0) {
+                drawSpiral();
+            }
         }
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
-
-        let fibNumbers = [];
-        let animationFrame;
-        let currentAngle = 0;
 
         function fibonacci(n) {
             let sequence = [1n, 1n];
@@ -137,10 +230,39 @@
             return sequence;
         }
 
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
         function displaySequence(numbers) {
             sequence.innerHTML = numbers.map((num, index) => 
-                `<span class="number">${num.toString()}</span>`
+                `<span class="number" data-index="${index}">${formatNumber(num.toString())}</span>`
             ).join(' ');
+
+            // Update ratios
+            if (numbers.length >= 2) {
+                const lastIndex = numbers.length - 1;
+                const ratio = Number(numbers[lastIndex]) / Number(numbers[lastIndex - 1]);
+                document.getElementById('currentRatio').textContent = ratio.toFixed(9);
+            }
+
+            // Add hover effects
+            const numberElements = sequence.getElementsByClassName('number');
+            Array.from(numberElements).forEach(elem => {
+                elem.addEventListener('mouseover', (e) => {
+                    const index = parseInt(elem.dataset.index);
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = e.pageX + 10 + 'px';
+                    tooltip.style.top = e.pageY + 10 + 'px';
+                    tooltip.textContent = `Position: ${index + 1}`;
+                    elem.classList.add('highlight');
+                });
+
+                elem.addEventListener('mouseout', () => {
+                    tooltip.style.display = 'none';
+                    elem.classList.remove('highlight');
+                });
+            });
         }
 
         function reset() {
@@ -151,21 +273,22 @@
             sequence.innerHTML = '';
             currentAngle = 0;
             fibNumbers = [];
+            isAnimating = false;
+            document.getElementById('currentRatio').textContent = '-';
         }
 
-        function drawSpiral(progress) {
+        function drawSpiral() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Center the spiral
-            const scale = Math.min(canvas.width, canvas.height) / 
-                         (Math.max(...fibNumbers.slice(0, 15).map(n => Number(n))) * 2);
+            const maxFib = Math.max(...fibNumbers.slice(0, 15).map(n => Number(n)));
+            const scale = Math.min(canvas.width, canvas.height) / (maxFib * 2.5);
             
             ctx.save();
             ctx.translate(canvas.width/2, canvas.height/2);
             
             // Draw spiral
             ctx.beginPath();
-            ctx.strokeStyle = '#4CAF50';
+            ctx.strokeStyle = document.getElementById('spiralColor').value;
             ctx.lineWidth = 2;
             
             let x = 0;
@@ -191,44 +314,59 @@
                     }
                 }
                 
-                // Update position for next quarter turn
-                const endAngle = angle + quarterTurn;
-                x += Math.cos(endAngle) * radius;
-                y += Math.sin(endAngle) * radius;
-                angle = endAngle;
+                angle += quarterTurn;
+                x += Math.cos(angle) * radius;
+                y += Math.sin(angle) * radius;
             }
             
             ctx.stroke();
             
-            // Draw squares
+            // Draw squares with gradient
             angle = 0;
             x = 0;
             y = 0;
             
             for (let i = 0; i < fibNumbers.length; i++) {
                 const size = Number(fibNumbers[i]) * scale;
-                ctx.strokeStyle = `hsl(${i * 20}, 70%, 60%)`;
-                ctx.strokeRect(x, y, size, size);
+                const hue = (i * 20) % 360;
+                ctx.strokeStyle = `hsla(${hue}, 70%, 60%, 0.5)`;
+                ctx.fillStyle = `hsla(${hue}, 70%, 60%, 0.1)`;
                 
-                // Move to next position
-                const r = size;
+                ctx.beginPath();
+                ctx.rect(x, y, size, size);
+                ctx.stroke();
+                ctx.fill();
+                
                 switch (i % 4) {
-                    case 0: x += r; break;
-                    case 1: y += r; break;
-                    case 2: x -= r; break;
-                    case 3: y -= r; break;
+                    case 0: x += size; break;
+                    case 1: y += size; break;
+                    case 2: x -= size; break;
+                    case 3: y -= size; break;
                 }
             }
             
             ctx.restore();
         }
 
-        function animateSpiral() {
-            currentAngle += 0.05;
-            drawSpiral();
+        function animate(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const speed = parseFloat(document.getElementById('speed').value);
+            const deltaTime = (timestamp - lastTime) * 0.001 * speed;
             
-            if (currentAngle < Math.PI * 4) {
-                animationFrame = requestAnimationFrame(animateSpiral);
+            currentAngle += deltaTime;
+            drawSpiral();
+            lastTime = timestamp;
+            
+            if (isAnimating) {
+                animationFrame = requestAnimationFrame(animate);
+            }
+        }
+
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            if (isAnimating) {
+                lastTime = 0;
+                animate(0);
             }
         }
 
@@ -242,6 +380,9 @@
 
         // Initial generation
         generateSequence();
+
+        // Add canvas interaction
+        canvas.addEventListener('click', toggleAnimation);
     </script>
 </body>
 </html>
