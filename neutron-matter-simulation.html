@@ -119,72 +119,75 @@
         </div>
     </div>
 
-    <script>
-        const canvas = document.getElementById('simulationCanvas');
-        const ctx = canvas.getContext('2d');
-        const particles = [];
-        const NUM_PARTICLES = 100;
-        let baseVelocities = []; // Store initial velocities
+    // ... (HTML and CSS remain the same) ...
 
-        // Initialize particles
-        for (let i = 0; i < NUM_PARTICLES; i++) {
-            const baseVx = (Math.random() - 0.5) * 2;
-            const baseVy = (Math.random() - 0.5) * 2;
-            baseVelocities.push({ vx: baseVx, vy: baseVy });
-            
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                vx: baseVx,
-                vy: baseVy,
-                paired: false
-            });
-        }
+<script>
+    const canvas = document.getElementById('simulationCanvas');
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const NUM_PARTICLES = 100;
+    const BASE_SPEED = 0.5;  // Base speed for particles
 
-        function updateParticles() {
-            const density = parseFloat(document.getElementById('densitySlider').value) / 1000;
-            const temp = parseFloat(document.getElementById('tempSlider').value) / 10;
-            const velocityFactor = 1 + (temp / 20); // Temperature affects velocity
-            const pairingThreshold = density / (1 + temp/20); // Temperature affects pairing
+    // Initialize particles
+    for (let i = 0; i < NUM_PARTICLES; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            angle: Math.random() * Math.PI * 2, // Random direction
+            paired: false
+        });
+    }
 
-            particles.forEach((p, index) => {
-                // Update velocity based on temperature
-                p.vx = baseVelocities[index].vx * velocityFactor;
-                p.vy = baseVelocities[index].vy * velocityFactor;
+    function updateParticles() {
+        const density = parseFloat(document.getElementById('densitySlider').value) / 1000;
+        const temperature = parseFloat(document.getElementById('tempSlider').value);
+        
+        // Temperature directly affects speed and pairing
+        const speedMultiplier = BASE_SPEED * (1 + temperature/25);
+        const pairingProbability = Math.max(0, 0.8 - (temperature/100));
 
-                // Update position
-                p.x += p.vx;
-                p.y += p.vy;
+        particles.forEach(p => {
+            // Update position based on temperature-dependent speed
+            p.x += Math.cos(p.angle) * speedMultiplier;
+            p.y += Math.sin(p.angle) * speedMultiplier;
 
-                // Periodic boundary conditions
-                if (p.x < 0) p.x += canvas.width;
-                if (p.x > canvas.width) p.x -= canvas.width;
-                if (p.y < 0) p.y += canvas.height;
-                if (p.y > canvas.height) p.y -= canvas.height;
+            // Randomly change direction occasionally
+            if (Math.random() < 0.02) {
+                p.angle += (Math.random() - 0.5) * Math.PI/2;
+            }
 
-                // Pairing probability based on density and temperature
-                p.paired = Math.random() < pairingThreshold;
-            });
-        }
+            // Periodic boundary conditions
+            if (p.x < 0) p.x += canvas.width;
+            if (p.x > canvas.width) p.x -= canvas.width;
+            if (p.y < 0) p.y += canvas.height;
+            if (p.y > canvas.height) p.y -= canvas.height;
 
-        function drawParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Pairing probability affected by both density and temperature
+            p.paired = Math.random() < (density * pairingProbability);
+        });
+    }
 
-            // Draw density heat map
-            const gridSize = 40;
-            const grid = Array(Math.ceil(canvas.width/gridSize)).fill()
-                .map(() => Array(Math.ceil(canvas.height/gridSize)).fill(0));
+    function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Calculate density grid
-            particles.forEach(p => {
-                const gx = Math.floor(p.x/gridSize);
-                const gy = Math.floor(p.y/gridSize);
-                if (grid[gx]) grid[gx][gy]++;
-            });
+        // Draw density heat map
+        const gridSize = 40;
+        const grid = Array(Math.ceil(canvas.width/gridSize)).fill()
+            .map(() => Array(Math.ceil(canvas.height/gridSize)).fill(0));
 
-            // Draw density heat map
-            for (let x = 0; x < grid.length; x++) {
-                for (let y = 0; y < grid[0].length; y++) {
+        // Calculate density grid
+        particles.forEach(p => {
+            const gx = Math.floor(p.x/gridSize);
+            const gy = Math.floor(p.y/gridSize);
+            if (grid[gx] && grid[gx][gy] !== undefined) {
+                grid[gx][gy]++;
+            }
+        });
+
+        // Draw density heat map
+        for (let x = 0; x < grid.length; x++) {
+            for (let y = 0; y < grid[0].length; y++) {
+                if (grid[x] && grid[x][y]) {
                     const density = grid[x][y] / 5;
                     if (density > 0) {
                         ctx.fillStyle = `rgba(255,0,0,${Math.min(density/10, 0.2)})`;
@@ -192,47 +195,51 @@
                     }
                 }
             }
+        }
 
-            // Draw particles and pairing lines
-            particles.forEach((p, i) => {
-                // Draw particle
+        // Draw particles with temperature-dependent behavior
+        const temperature = parseFloat(document.getElementById('tempSlider').value);
+        const particleSize = Math.max(2, 4 - (temperature/50)); // Particles shrink with temperature
+
+        particles.forEach((p, i) => {
+            // Draw particle
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, particleSize, 0, Math.PI * 2);
+            ctx.fillStyle = '#4488ff';
+            ctx.fill();
+
+            // Draw pairing lines (less likely at higher temperatures)
+            if (p.paired && i < particles.length - 1) {
+                const next = particles[i + 1];
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-                ctx.fillStyle = '#4488ff';
-                ctx.fill();
-
-                // Draw pairing lines
-                if (p.paired && i < particles.length - 1) {
-                    const next = particles[i + 1];
-                    ctx.beginPath();
-                    ctx.moveTo(p.x, p.y);
-                    ctx.lineTo(next.x, next.y);
-                    ctx.strokeStyle = '#4CAF50';
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                }
-            });
-        }
-
-        function animate() {
-            updateParticles();
-            drawParticles();
-            requestAnimationFrame(animate);
-        }
-
-        // Update display values
-        document.getElementById('densitySlider').addEventListener('input', function() {
-            document.getElementById('densityValue').textContent = 
-                (this.value/1000).toFixed(3);
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(next.x, next.y);
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
         });
+    }
 
-        document.getElementById('tempSlider').addEventListener('input', function() {
-            document.getElementById('tempValue').textContent = 
-                (this.value/10).toFixed(1) + '×10⁸';
-        });
+    function animate() {
+        updateParticles();
+        drawParticles();
+        requestAnimationFrame(animate);
+    }
 
-        // Start animation
-        animate();
-    </script>
+    // Update display values
+    document.getElementById('densitySlider').addEventListener('input', function() {
+        document.getElementById('densityValue').textContent = 
+            (this.value/1000).toFixed(3);
+    });
+
+    document.getElementById('tempSlider').addEventListener('input', function() {
+        document.getElementById('tempValue').textContent = 
+            (this.value/10).toFixed(1) + '×10⁸';
+    });
+
+    // Start animation
+    animate();
+</script>
 </body>
 </html>
