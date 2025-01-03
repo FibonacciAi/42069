@@ -11,27 +11,32 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Arial', sans-serif;
+        body.light-mode {
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        body.dark-mode {
             background: #121212;
             color: #e0e0e0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
         }
 
         .container {
-            background: #1e1e1e;
+            background: var(--container-bg, white);
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            max-width: 1200px;
+            max-width: 1600px;
             width: 100%;
             display: flex;
             flex-direction: column;
             gap: 20px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode .container {
+            --container-bg: #1e1e1e;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
         }
 
         .canvas-container {
@@ -40,9 +45,14 @@
             aspect-ratio: 1;
             max-width: 800px;
             margin: 0 auto;
-            background: #2c2c2c;
+            background: var(--canvas-bg, #ffffff);
             border-radius: 10px;
             overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-mode .canvas-container {
+            --canvas-bg: #2c2c2c;
         }
 
         canvas {
@@ -51,7 +61,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #2c2c2c;
+            background: transparent;
         }
 
         .controls {
@@ -59,8 +69,13 @@
             flex-direction: column;
             gap: 20px;
             padding: 15px;
-            background: #2c2c2c;
+            background: var(--controls-bg, #f8f9fa);
             border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-mode .controls {
+            --controls-bg: #2c2c2c;
         }
 
         .control-group {
@@ -71,7 +86,7 @@
             justify-content: center;
         }
 
-        .slider-container, .color-picker, .thickness-picker {
+        .slider-container, .color-picker, .thickness-picker, .gradient-picker, .preset-palette {
             flex: 1;
             min-width: 200px;
             display: flex;
@@ -81,17 +96,28 @@
 
         label {
             font-size: 14px;
-            color: #e0e0e0;
             font-weight: 600;
+        }
+
+        body.light-mode label {
+            color: #333;
+        }
+
+        body.dark-mode label {
+            color: #e0e0e0;
         }
 
         input[type="range"] {
             width: 100%;
             height: 6px;
-            background: #444;
+            background: #ddd;
             border-radius: 3px;
             outline: none;
             -webkit-appearance: none;
+        }
+
+        body.dark-mode input[type="range"] {
+            background: #444;
         }
 
         input[type="range"]::-webkit-slider-thumb {
@@ -114,7 +140,6 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            background: none;
         }
 
         .button-grid {
@@ -128,20 +153,33 @@
             padding: 12px 20px;
             border: none;
             border-radius: 8px;
-            background: #333;
-            color: #e0e0e0;
+            background: #f0f0f0;
+            color: #333;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
+        body.dark-mode button {
+            background: #333;
+            color: #e0e0e0;
+        }
+
         button:hover {
-            background: #444;
+            background: #e0e0e0;
             transform: translateY(-2px);
+        }
+
+        body.dark-mode button:hover {
+            background: #444;
         }
 
         button.active {
             background: #00bf63;
+            color: white;
+        }
+
+        body.dark-mode button.active {
             color: #1e1e1e;
         }
 
@@ -158,7 +196,7 @@
                 grid-template-columns: 1fr;
             }
 
-            .slider-container, .color-picker, .thickness-picker {
+            .slider-container, .color-picker, .thickness-picker, .gradient-picker, .preset-palette {
                 min-width: 100%;
             }
         }
@@ -196,15 +234,119 @@
             display: none;
             z-index: 10;
         }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-switch {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-switch {
+            background-color: #00bf63;
+        }
+
+        input:checked + .slider-switch:before {
+            transform: translateX(26px);
+        }
+
+        /* Preset Color Palettes */
+        .preset-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preset-palette button {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            cursor: pointer;
+        }
+
+        .preset-palette button:hover {
+            border-color: #00bf63;
+        }
+
+        /* Gradient Picker */
+        .gradient-picker label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gradient-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gradient-controls input {
+            width: 45%;
+        }
     </style>
 </head>
-<body>
+<body class="light-mode">
     <div class="container">
         <div class="canvas-container">
             <canvas id="geometryCanvas" width="800" height="800"></canvas>
             <div class="tooltip" id="tooltip"></div>
         </div>
         <div class="controls">
+            <!-- Theme Toggle -->
+            <div class="control-group">
+                <div class="toggle-switch">
+                    <label for="themeToggle">Dark Mode</label>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+            </div>
+            <!-- Other Controls -->
             <div class="control-group">
                 <div class="slider-container">
                     <label for="radiusSlider">Radius: <span id="radiusValue">40</span>px</label>
@@ -214,10 +356,26 @@
                     <label for="colorPicker">Pattern Color</label>
                     <input type="color" id="colorPicker" value="#00bf63">
                 </div>
-                <!-- New Line Thickness Control -->
+                <!-- Line Thickness Control -->
                 <div class="thickness-picker">
                     <label for="thicknessSlider">Line Thickness: <span id="thicknessValue">2</span>px</label>
                     <input type="range" id="thicknessSlider" min="1" max="10" value="2">
+                </div>
+                <!-- Gradient Picker -->
+                <div class="gradient-picker">
+                    <label for="gradientToggle">Gradient Mode</label>
+                    <input type="checkbox" id="gradientToggle">
+                </div>
+            </div>
+            <!-- Preset Color Palettes -->
+            <div class="control-group">
+                <div class="preset-palette">
+                    <label>Preset Colors:</label>
+                    <button style="background: #00bf63;" onclick="setPresetColor('#00bf63')"></button>
+                    <button style="background: #ff4081;" onclick="setPresetColor('#ff4081')"></button>
+                    <button style="background: #3f51b5;" onclick="setPresetColor('#3f51b5')"></button>
+                    <button style="background: #ff5722;" onclick="setPresetColor('#ff5722')"></button>
+                    <button style="background: #9c27b0;" onclick="setPresetColor('#9c27b0')"></button>
                 </div>
             </div>
             <div class="button-grid">
@@ -229,6 +387,7 @@
             <div class="animation-controls">
                 <button onclick="toggleAnimation()" class="animation-button" id="animateBtn">Start Animation</button>
                 <button onclick="resetAnimation()" class="animation-button">Reset</button>
+                <button onclick="exportCanvas()" class="animation-button">Export as PNG</button>
             </div>
         </div>
     </div>
@@ -240,7 +399,10 @@
         const colorPicker = document.getElementById('colorPicker');
         const thicknessSlider = document.getElementById('thicknessSlider');
         const thicknessValue = document.getElementById('thicknessValue');
+        const gradientToggle = document.getElementById('gradientToggle');
         const tooltip = document.getElementById('tooltip');
+        const themeToggle = document.getElementById('themeToggle');
+
         let currentPattern = 'combined';
         let animationId = null;
         let isAnimating = false;
@@ -248,6 +410,16 @@
 
         // Initialize line thickness
         let lineThickness = parseInt(thicknessSlider.value);
+
+        // Gradient settings
+        let gradientMode = false;
+        let gradientStartColor = '#00bf63';
+        let gradientEndColor = '#ff4081';
+
+        // Store drawing history for undo/redo
+        const drawingHistory = [];
+        const maxHistory = 20;
+        let historyStep = -1;
 
         function resizeCanvas() {
             const container = canvas.parentElement;
@@ -322,21 +494,107 @@
 
         radiusSlider.addEventListener('input', function() {
             radiusValue.textContent = this.value;
+            saveDrawingState();
             redrawCurrentPattern();
         });
 
         colorPicker.addEventListener('input', function() {
-            redrawCurrentPattern();
+            if (!gradientMode) {
+                saveDrawingState();
+                redrawCurrentPattern();
+            }
         });
 
-        // Event listener for Line Thickness Slider
         thicknessSlider.addEventListener('input', function() {
             lineThickness = parseInt(this.value);
             thicknessValue.textContent = this.value;
+            saveDrawingState();
             redrawCurrentPattern();
         });
 
+        gradientToggle.addEventListener('change', function() {
+            gradientMode = this.checked;
+            if (gradientMode) {
+                saveDrawingState();
+                applyGradient();
+            } else {
+                saveDrawingState();
+                redrawCurrentPattern();
+            }
+        });
+
+        themeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+            }
+            redrawCurrentPattern();
+        });
+
+        function setPresetColor(color) {
+            colorPicker.value = color;
+            if (!gradientMode) {
+                saveDrawingState();
+                redrawCurrentPattern();
+            }
+        }
+
+        function applyGradient() {
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, gradientStartColor);
+            gradient.addColorStop(1, gradientEndColor);
+            ctx.strokeStyle = gradient;
+            redrawCurrentPattern();
+        }
+
+        // Export Canvas as PNG
+        function exportCanvas() {
+            const link = document.createElement('a');
+            link.download = 'geometric_pattern.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Save Drawing State for Undo/Redo
+        function saveDrawingState() {
+            if (historyStep < maxHistory - 1) {
+                historyStep++;
+                drawingHistory.length = historyStep;
+                drawingHistory.push(canvas.toDataURL());
+            }
+        }
+
+        // Function to Load Drawing State
+        function loadDrawingState(index) {
+            const img = new Image();
+            img.src = drawingHistory[index];
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Undo Functionality
+        function undo() {
+            if (historyStep > 0) {
+                historyStep--;
+                loadDrawingState(historyStep);
+            }
+        }
+
+        // Redo Functionality
+        function redo() {
+            if (historyStep < drawingHistory.length - 1) {
+                historyStep++;
+                loadDrawingState(historyStep);
+            }
+        }
+
         function redrawCurrentPattern() {
+            clearCanvas();
             switch(currentPattern) {
                 case 'combined':
                     drawCombinedPattern();
@@ -361,7 +619,14 @@
 
         function drawCircle(x, y, radius) {
             ctx.beginPath();
-            ctx.strokeStyle = colorPicker.value;
+            if (gradientMode) {
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, gradientStartColor);
+                gradient.addColorStop(1, gradientEndColor);
+                ctx.strokeStyle = gradient;
+            } else {
+                ctx.strokeStyle = colorPicker.value;
+            }
             ctx.lineWidth = lineThickness;
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.stroke();
@@ -369,7 +634,14 @@
 
         function drawLine(x1, y1, x2, y2) {
             ctx.beginPath();
-            ctx.strokeStyle = colorPicker.value;
+            if (gradientMode) {
+                const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+                gradient.addColorStop(0, gradientStartColor);
+                gradient.addColorStop(1, gradientEndColor);
+                ctx.strokeStyle = gradient;
+            } else {
+                ctx.strokeStyle = colorPicker.value;
+            }
             ctx.lineWidth = lineThickness;
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
@@ -414,16 +686,16 @@
             
             const points = drawFlowerOfLifeBase(centerX, centerY, radius);
             
-            // Draw Metatron's Cube lines
-            ctx.strokeStyle = colorPicker.value;
-            ctx.lineWidth = lineThickness * 0.75; // Slightly thinner lines for connections
-            
-            // Draw inner connections
+            // Draw Metatron's Cube lines with slightly thinner lines
+            ctx.lineWidth = lineThickness * 0.75;
+            ctx.strokeStyle = gradientMode ? null : colorPicker.value;
             for (let i = 0; i < points.length; i++) {
                 for (let j = i + 1; j < points.length; j++) {
                     drawLine(points[i].x, points[i].y, points[j].x, points[j].y);
                 }
             }
+
+            saveDrawingState();
         }
 
         function drawBlossomOfLife() {
@@ -458,6 +730,8 @@
                 const y = centerY + r * Math.sin(angle);
                 drawCircle(x, y, radius);
             }
+
+            saveDrawingState();
         }
 
         function drawFlowerOfLife() {
@@ -470,6 +744,8 @@
             const radius = parseInt(radiusSlider.value);
             
             drawFlowerOfLifeBase(centerX, centerY, radius);
+
+            saveDrawingState();
         }
 
         function drawMetatronsCube() {
@@ -495,14 +771,45 @@
             // Draw circles
             points.forEach(point => drawCircle(point.x, point.y, radius));
             
-            // Draw connecting lines
-            ctx.strokeStyle = colorPicker.value;
-            ctx.lineWidth = lineThickness * 0.75; // Slightly thinner lines for connections
+            // Draw connecting lines with slightly thinner lines
+            ctx.lineWidth = lineThickness * 0.75;
+            ctx.strokeStyle = gradientMode ? null : colorPicker.value;
             for (let i = 0; i < points.length; i++) {
                 for (let j = i + 1; j < points.length; j++) {
                     drawLine(points[i].x, points[i].y, points[j].x, points[j].y);
                 }
             }
+
+            saveDrawingState();
+        }
+
+        // Export Canvas as PNG
+        function exportCanvas() {
+            const link = document.createElement('a');
+            link.download = `${currentPattern}_pattern.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Preset Color Function
+        function setPresetColor(color) {
+            colorPicker.value = color;
+            if (!gradientMode) {
+                saveDrawingState();
+                redrawCurrentPattern();
+            }
+        }
+
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            if (themeToggle.checked) {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+            }
+            redrawCurrentPattern();
         }
 
         // Initial drawing
