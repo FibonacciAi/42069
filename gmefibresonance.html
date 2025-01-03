@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cycle Resonance - Enhanced Scrubbing</title>
+    <title>Cycle Resonance - Enhanced with Touch</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: Arial, sans-serif; }
-        canvas { width: 100%; height: 100%; }
+        canvas { width: 100%; height: 100%; touch-action: none; }
         #date-display {
             position: absolute;
             top: 10px;
@@ -38,23 +38,13 @@
         button:hover {
             background: rgba(255, 255, 255, 0.2);
         }
-        #scrub-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            display: none;
-        }
     </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <div id="date-display"></div>
-<div id="scrub-indicator">Scrubbing...</div>
 <div id="controls">
-    <button id="play-btn">Play</button>
+    <button id="pause-btn">Pause</button>
     <button id="reset-btn">Reset</button>
     <button id="speed-down-btn">Slower</button>
     <button id="speed-up-btn">Faster</button>
@@ -64,18 +54,19 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const dateDisplay = document.getElementById('date-display');
-    const playBtn = document.getElementById('play-btn');
+    const pauseBtn = document.getElementById('pause-btn');
     const resetBtn = document.getElementById('reset-btn');
     const speedDownBtn = document.getElementById('speed-down-btn');
     const speedUpBtn = document.getElementById('speed-up-btn');
-    const scrubIndicator = document.getElementById('scrub-indicator');
 
-    let isPaused = true; // Start in paused mode
-    let speedMultiplier = 0.25;
-    let isScrubbing = false;
-    let scrubStartX = 0;
-    let scrubbedTimeDelta = 0;
+    let isPaused = false;
+    let speedMultiplier = 0.25; // Slow down the animation for clarity
 
+    // Touch variables
+    let touchStartX = 0;
+    let touchStartTime = 0;
+
+    // Cycle constants
     const CYCLES = {
         MAIN: 1461,  // 4 years in days
         FIRST: 741,
@@ -86,9 +77,10 @@
     const START_DATE = new Date(2021, 0, 28); // MOASS origin (Jan 28, 2021)
     const CRUCIAL_DATES = [
         new Date(2025, 0, 9),  // Jan 9, 2025
+        new Date(2025, 0, 12), // Jan 12, 2025
         new Date(2025, 0, 28), // Jan 28, 2025
     ];
-    let time = (Date.now() - START_DATE) / (1000 * 60 * 60 * 24);
+    let time = (Date.now() - START_DATE) / (1000 * 60 * 60 * 24); // Calculate days since start
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -150,42 +142,25 @@
         drawCycle(centerX, centerY, radius * 0.6, secondProgress, 'rgba(135, 206, 250, 0.8)');
         drawCycle(centerX, centerY, radius * 0.4, thirdProgress, 'rgba(50, 205, 50, 0.8)');
 
+        // Check for resonances
         drawResonance(centerX, centerY, radius, mainProgress, firstProgress, new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000));
+        drawResonance(centerX, centerY, radius * 0.8, mainProgress, secondProgress, new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000));
+        drawResonance(centerX, centerY, radius * 0.6, firstProgress, thirdProgress, new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000));
 
         const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
         dateDisplay.textContent = `Current: ${formatDate(currentDate)}`;
 
-        if (!isPaused && !isScrubbing) {
+        if (!isPaused) {
             time += speedMultiplier;
         }
 
         requestAnimationFrame(animate);
     }
 
-    // Touch scrubbing
-    canvas.addEventListener('touchstart', (e) => {
-        isScrubbing = true;
-        scrubIndicator.style.display = 'block';
-        scrubStartX = e.touches[0].clientX;
-    });
-
-    canvas.addEventListener('touchmove', (e) => {
-        const currentX = e.touches[0].clientX;
-        const deltaX = currentX - scrubStartX;
-        scrubbedTimeDelta = deltaX / 10; // Adjust sensitivity
-        time += scrubbedTimeDelta;
-        scrubStartX = currentX;
-    });
-
-    canvas.addEventListener('touchend', () => {
-        isScrubbing = false;
-        scrubIndicator.style.display = 'none';
-    });
-
-    // Button events
-    playBtn.addEventListener('click', () => {
+    // Event listeners
+    pauseBtn.addEventListener('click', () => {
         isPaused = !isPaused;
-        playBtn.textContent = isPaused ? 'Play' : 'Pause';
+        pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
     });
 
     resetBtn.addEventListener('click', () => {
@@ -198,6 +173,17 @@
 
     speedUpBtn.addEventListener('click', () => {
         speedMultiplier = Math.min(speedMultiplier * 2, 8);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartTime = time;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        const touchX = e.touches[0].clientX;
+        const deltaX = (touchX - touchStartX) / canvas.width;
+        time = touchStartTime + deltaX * CYCLES.MAIN;
     });
 
     window.addEventListener('resize', resizeCanvas);
