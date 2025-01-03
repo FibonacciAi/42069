@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neutron Matter Simulation Demo</title>
+    <style>
+        /* Previous CSS remains the same */
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        canvas {
+            background: #2a2a2a;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .controls {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            margin-right: 10px;
+        }
+        input[type="range"] {
+            width: 200px;
+            vertical-align: middle;
+        }
+        .value-display {
+            display: inline-block;
+            width: 60px;
+            text-align: right;
+            margin-left: 10px;
+        }
+        .info-panel {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        h2 {
+            color: #4CAF50;
+            margin: 0 0 15px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #888;
+        }
+        .footer a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .source-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Neutron Matter Simulation</h2>
+        <canvas id="simulationCanvas" width="800" height="400"></canvas>
+        
+        <div class="controls">
+            <div class="slider-container">
+                <label>Density (fm⁻³):</label>
+                <input type="range" id="densitySlider" min="1" max="80" value="40">
+                <span class="value-display" id="densityValue">0.04</span>
+            </div>
+            <div class="slider-container">
+                <label>Temperature (K):</label>
+                <input type="range" id="tempSlider" min="0" max="100" value="20">
+                <span class="value-display" id="tempValue">2.0×10⁸</span>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <p>This simulation demonstrates:</p>
+            <ul>
+                <li>Blue particles: neutrons</li>
+                <li>Green lines: pairing correlations</li>
+                <li>Red areas: regions of high density</li>
+            </ul>
+            <p>Higher temperature increases particle velocity and reduces pairing probability.</p>
+        </div>
+
+        <div class="footer">
+            <div class="source-links">
+                <a href="https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.5.033062" target="_blank">📄 Source Paper</a>
+                <a href="https://twitter.com/_d_741S" target="_blank">🐦 Follow @_d_741S</a>
+            </div>
+            <p>Based on "Dilute neutron star matter from neural-network quantum states" (2023)</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const particles = [];
+        const NUM_PARTICLES = 100;
+        let baseVelocities = []; // Store initial velocities
+
+        // Initialize particles
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            const baseVx = (Math.random() - 0.5) * 2;
+            const baseVy = (Math.random() - 0.5) * 2;
+            baseVelocities.push({ vx: baseVx, vy: baseVy });
+            
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: baseVx,
+                vy: baseVy,
+                paired: false
+            });
+        }
+
+        function updateParticles() {
+            const density = parseFloat(document.getElementById('densitySlider').value) / 1000;
+            const temp = parseFloat(document.getElementById('tempSlider').value) / 10;
+            const velocityFactor = 1 + (temp / 20); // Temperature affects velocity
+            const pairingThreshold = density / (1 + temp/20); // Temperature affects pairing
+
+            particles.forEach((p, index) => {
+                // Update velocity based on temperature
+                p.vx = baseVelocities[index].vx * velocityFactor;
+                p.vy = baseVelocities[index].vy * velocityFactor;
+
+                // Update position
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Periodic boundary conditions
+                if (p.x < 0) p.x += canvas.width;
+                if (p.x > canvas.width) p.x -= canvas.width;
+                if (p.y < 0) p.y += canvas.height;
+                if (p.y > canvas.height) p.y -= canvas.height;
+
+                // Pairing probability based on density and temperature
+                p.paired = Math.random() < pairingThreshold;
+            });
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw density heat map
+            const gridSize = 40;
+            const grid = Array(Math.ceil(canvas.width/gridSize)).fill()
+                .map(() => Array(Math.ceil(canvas.height/gridSize)).fill(0));
+
+            // Calculate density grid
+            particles.forEach(p => {
+                const gx = Math.floor(p.x/gridSize);
+                const gy = Math.floor(p.y/gridSize);
+                if (grid[gx]) grid[gx][gy]++;
+            });
+
+            // Draw density heat map
+            for (let x = 0; x < grid.length; x++) {
+                for (let y = 0; y < grid[0].length; y++) {
+                    const density = grid[x][y] / 5;
+                    if (density > 0) {
+                        ctx.fillStyle = `rgba(255,0,0,${Math.min(density/10, 0.2)})`;
+                        ctx.fillRect(x*gridSize, y*gridSize, gridSize, gridSize);
+                    }
+                }
+            }
+
+            // Draw particles and pairing lines
+            particles.forEach((p, i) => {
+                // Draw particle
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#4488ff';
+                ctx.fill();
+
+                // Draw pairing lines
+                if (p.paired && i < particles.length - 1) {
+                    const next = particles[i + 1];
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(next.x, next.y);
+                    ctx.strokeStyle = '#4CAF50';
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function animate() {
+            updateParticles();
+            drawParticles();
+            requestAnimationFrame(animate);
+        }
+
+        // Update display values
+        document.getElementById('densitySlider').addEventListener('input', function() {
+            document.getElementById('densityValue').textContent = 
+                (this.value/1000).toFixed(3);
+        });
+
+        document.getElementById('tempSlider').addEventListener('input', function() {
+            document.getElementById('tempValue').textContent = 
+                (this.value/10).toFixed(1) + '×10⁸';
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
