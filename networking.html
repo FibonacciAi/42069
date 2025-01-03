@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expanded Network Diagram</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: black;
+      color: white;
+    }
+    svg {
+      width: 100%;
+      height: 100vh;
+    }
+    .node circle {
+      stroke: white;
+      stroke-width: 1.5px;
+    }
+    .link {
+      stroke: #999;
+      stroke-opacity: 0.6;
+    }
+    text {
+      font-size: 10px;
+      fill: white;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      border: none;
+      background: #444;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #666;
+    }
+    .tooltip {
+      position: absolute;
+      background: white;
+      color: black;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+      box-shadow: 0 0 5px gray;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="tooltip"></div>
+  <div>
+    <button onclick="resetFilter()">Reset</button>
+    <button onclick="filterNodes('Technology')">Technology</button>
+    <button onclick="filterNodes('Religion')">Religion</button>
+    <button onclick="filterNodes('Conflict')">Conflict</button>
+    <button onclick="filterNodes('Conspiracy')">Conspiracy</button>
+    <button onclick="filterNodes('Science')">Science</button>
+  </div>
+  <svg></svg>
+
+  <script>
+    const nodes = [
+      { id: "Technology/Spirituality", group: "Technology" },
+      { id: "The Vatican", group: "Religion" },
+      { id: "War/Violence", group: "Conflict" },
+      { id: "NASA", group: "Technology" },
+      { id: "The Pentagon", group: "Conflict" },
+      { id: "MK-ULTRA", group: "Conspiracy" },
+      { id: "Illuminati", group: "Conspiracy" },
+      { id: "CIA", group: "Conflict" },
+      { id: "Eugenics", group: "Science" },
+      { id: "The Great Awakening", group: "Spirituality" },
+      { id: "9/11", group: "Conflict" },
+      { id: "Area 51", group: "Conspiracy" },
+      { id: "New World Order", group: "Conspiracy" },
+      { id: "Vaccines", group: "Science" },
+      { id: "Bill Gates", group: "Technology" },
+      { id: "Moon Landing", group: "Technology" },
+      { id: "Chemtrails", group: "Conspiracy" },
+      { id: "Deep State", group: "Politics" },
+      { id: "HAARP", group: "Conspiracy" },
+      { id: "Black Budget", group: "Politics" },
+      { id: "Freemasons", group: "Conspiracy" },
+      { id: "Zionism", group: "Religion" },
+      { id: "Big Pharma", group: "Science" },
+      { id: "COVID-19", group: "Science" },
+      { id: "5G", group: "Technology" },
+      { id: "Transhumanism", group: "Technology" },
+      { id: "Artificial Intelligence", group: "Technology" },
+      { id: "The Rothschilds", group: "Politics" },
+      { id: "Bohemian Grove", group: "Conspiracy" },
+      { id: "Epstein Island", group: "Conspiracy" },
+      { id: "Antarctica Secrets", group: "Conspiracy" },
+      { id: "FEMA Camps", group: "Politics" },
+      { id: "Weather Manipulation", group: "Conspiracy" },
+      { id: "Elon Musk", group: "Technology" },
+      { id: "DARPA", group: "Technology" },
+      { id: "World Economic Forum", group: "Politics" },
+      { id: "George Soros", group: "Politics" },
+      { id: "Blockchain", group: "Technology" },
+      { id: "Quantum Computing", group: "Technology" },
+      { id: "Mind Control", group: "Conspiracy" },
+    ];
+
+    const links = [
+      { source: "Technology/Spirituality", target: "The Vatican", weight: 2 },
+      { source: "The Vatican", target: "War/Violence", weight: 3 },
+      { source: "NASA", target: "Technology/Spirituality", weight: 1 },
+      { source: "MK-ULTRA", target: "CIA", weight: 4 },
+      { source: "Illuminati", target: "The Vatican", weight: 5 },
+      { source: "Eugenics", target: "NASA", weight: 2 },
+      { source: "The Great Awakening", target: "Technology/Spirituality", weight: 3 },
+      { source: "Bohemian Grove", target: "Illuminati", weight: 4 },
+      { source: "Vaccines", target: "Big Pharma", weight: 2 },
+      { source: "Moon Landing", target: "NASA", weight: 3 },
+      { source: "Chemtrails", target: "Weather Manipulation", weight: 1 },
+      { source: "Deep State", target: "New World Order", weight: 3 },
+      { source: "Artificial Intelligence", target: "Technology/Spirituality", weight: 4 },
+      { source: "The Rothschilds", target: "Freemasons", weight: 2 },
+      { source: "Epstein Island", target: "Bohemian Grove", weight: 5 },
+      { source: "Antarctica Secrets", target: "Area 51", weight: 2 },
+      { source: "FEMA Camps", target: "Deep State", weight: 3 },
+      { source: "Elon Musk", target: "DARPA", weight: 3 },
+      { source: "Blockchain", target: "Quantum Computing", weight: 4 },
+      { source: "Mind Control", target: "MK-ULTRA", weight: 5 },
+      { source: "George Soros", target: "World Economic Forum", weight: 3 },
+    ];
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const svg = d3.select("svg")
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .call(d3.zoom().on("zoom", ({ transform }) => g.attr("transform", transform)))
+      .append("g");
+
+    const g = svg.append("g");
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.weight * 50))
+      .force("charge", d3.forceManyBody().strength(-500))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collision", d3.forceCollide().radius(20)) // Avoid overlaps
+      .on("tick", ticked);
+
+    const link = g.append("g")
+      .attr("stroke", "#999")
+      .attr("stroke-opacity", 0.6)
+      .selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("stroke-width", d => d.weight);
+
+    const node = g.append("g")
+      .selectAll("g")
+      .data(nodes)
+      .join("g")
+      .call(drag(simulation));
+
+    node.append("circle")
+      .attr("r", 10)
+      .attr("fill", d => color(d.group));
+
+    node.append("text")
+      .text(d => d.id)
+      .attr("x", 12)
+      .attr("y", 3);
+
+    const tooltip = d3.select(".tooltip");
+
+    node.on("mouseover", (event, d) => {
+      tooltip.style("display", "block")
+        .html(`<strong>${d.id}</strong><br>Group: ${d.group}`);
+    })
+    .on("mousemove", event => {
+      tooltip.style("left", event.pageX + "px").style("top", event.pageY - 28 + "px");
+    })
+    .on("mouseout", () => tooltip.style("display", "none"));
+
+    function ticked() {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      node.attr("transform", d => `translate(${d.x}, ${d.y})`);
+    }
+
+    function drag(simulation) {
+      return d3.drag()
+        .on("start", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        });
+    }
+
+    function filterNodes(group) {
+      node.style("opacity", d => d.group === group ? 1 : 0.1);
+      link.style("opacity", d => d.source.group === group || d.target.group === group ? 1 : 0.1);
+    }
+
+    function resetFilter() {
+      node.style("opacity", 1);
+      link.style("opacity", 1);
+    }
+  </script>
+</body>
+</html>
