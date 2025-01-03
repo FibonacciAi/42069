@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometric Patterns Drawer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #121212;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #1e1e1e;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2c2c2c;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #2c2c2c;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 15px;
+            background: #2c2c2c;
+            border-radius: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-container, .color-picker, .thickness-picker {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #e0e0e0;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00bf63;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: none;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            width: 100%;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #333;
+            color: #e0e0e0;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: #00bf63;
+            color: #1e1e1e;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .controls {
+                padding: 10px;
+            }
+
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .slider-container, .color-picker, .thickness-picker {
+                min-width: 100%;
+            }
+        }
+
+        .animation-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .animation-button {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            border: none;
+            background: #00bf63;
+            color: #1e1e1e;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .animation-button:hover {
+            background: #009e50;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="geometryCanvas" width="800" height="800"></canvas>
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+        <div class="controls">
+            <div class="control-group">
+                <div class="slider-container">
+                    <label for="radiusSlider">Radius: <span id="radiusValue">40</span>px</label>
+                    <input type="range" id="radiusSlider" min="20" max="100" value="40">
+                </div>
+                <div class="color-picker">
+                    <label for="colorPicker">Pattern Color</label>
+                    <input type="color" id="colorPicker" value="#00bf63">
+                </div>
+                <!-- New Line Thickness Control -->
+                <div class="thickness-picker">
+                    <label for="thicknessSlider">Line Thickness: <span id="thicknessValue">2</span>px</label>
+                    <input type="range" id="thicknessSlider" min="1" max="10" value="2">
+                </div>
+            </div>
+            <div class="button-grid">
+                <button onclick="drawCombinedPattern()" class="active">Combined Pattern</button>
+                <button onclick="drawBlossomOfLife()">Blossom of Life</button>
+                <button onclick="drawFlowerOfLife()">Flower of Life</button>
+                <button onclick="drawMetatronsCube()">Metatron's Cube</button>
+            </div>
+            <div class="animation-controls">
+                <button onclick="toggleAnimation()" class="animation-button" id="animateBtn">Start Animation</button>
+                <button onclick="resetAnimation()" class="animation-button">Reset</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('geometryCanvas');
+        const ctx = canvas.getContext('2d');
+        const radiusSlider = document.getElementById('radiusSlider');
+        const radiusValue = document.getElementById('radiusValue');
+        const colorPicker = document.getElementById('colorPicker');
+        const thicknessSlider = document.getElementById('thicknessSlider');
+        const thicknessValue = document.getElementById('thicknessValue');
+        const tooltip = document.getElementById('tooltip');
+        let currentPattern = 'combined';
+        let animationId = null;
+        let isAnimating = false;
+        let rotation = 0;
+
+        // Initialize line thickness
+        let lineThickness = parseInt(thicknessSlider.value);
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            redrawCurrentPattern();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function updateActiveButton(pattern) {
+            document.querySelectorAll('.button-grid button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(pattern)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            const animateBtn = document.getElementById('animateBtn');
+            animateBtn.textContent = isAnimating ? 'Stop Animation' : 'Start Animation';
+            
+            if (isAnimating) {
+                animate();
+            } else {
+                cancelAnimationFrame(animationId);
+            }
+        }
+
+        function resetAnimation() {
+            rotation = 0;
+            isAnimating = false;
+            document.getElementById('animateBtn').textContent = 'Start Animation';
+            cancelAnimationFrame(animationId);
+            redrawCurrentPattern();
+        }
+
+        function animate() {
+            if (!isAnimating) return;
+            
+            rotation += 0.01;
+            ctx.save();
+            clearCanvas();
+
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(rotation);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            redrawCurrentPattern();
+            ctx.restore();
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        canvas.addEventListener('mousemove', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            tooltip.style.left = (e.clientX + 10) + 'px';
+            tooltip.style.top = (e.clientY + 10) + 'px';
+            tooltip.style.display = 'block';
+            tooltip.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+        });
+
+        canvas.addEventListener('mouseout', function() {
+            tooltip.style.display = 'none';
+        });
+
+        radiusSlider.addEventListener('input', function() {
+            radiusValue.textContent = this.value;
+            redrawCurrentPattern();
+        });
+
+        colorPicker.addEventListener('input', function() {
+            redrawCurrentPattern();
+        });
+
+        // Event listener for Line Thickness Slider
+        thicknessSlider.addEventListener('input', function() {
+            lineThickness = parseInt(this.value);
+            thicknessValue.textContent = this.value;
+            redrawCurrentPattern();
+        });
+
+        function redrawCurrentPattern() {
+            switch(currentPattern) {
+                case 'combined':
+                    drawCombinedPattern();
+                    break;
+                case 'blossom':
+                    drawBlossomOfLife();
+                    break;
+                case 'flower':
+                    drawFlowerOfLife();
+                    break;
+                case 'metatron':
+                    drawMetatronsCube();
+                    break;
+                default:
+                    drawCombinedPattern();
+            }
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawCircle(x, y, radius) {
+            ctx.beginPath();
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = lineThickness;
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function drawLine(x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = lineThickness;
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        function drawFlowerOfLifeBase(centerX, centerY, radius) {
+            const points = [];
+            
+            // Center circle
+            drawCircle(centerX, centerY, radius);
+            points.push({x: centerX, y: centerY});
+            
+            // First ring (Seed of Life)
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                const x = centerX + radius * Math.sqrt(3) * Math.cos(angle);
+                const y = centerY + radius * Math.sqrt(3) * Math.sin(angle);
+                drawCircle(x, y, radius);
+                points.push({x, y});
+            }
+            
+            // Second ring
+            for (let i = 0; i < 12; i++) {
+                const angle = i * Math.PI / 6;
+                const x = centerX + radius * 2 * Math.sqrt(3) * Math.cos(angle);
+                const y = centerY + radius * 2 * Math.sqrt(3) * Math.sin(angle);
+                drawCircle(x, y, radius);
+            }
+            
+            return points;
+        }
+
+        function drawCombinedPattern() {
+            currentPattern = 'combined';
+            updateActiveButton('combined');
+            clearCanvas();
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
+            
+            const points = drawFlowerOfLifeBase(centerX, centerY, radius);
+            
+            // Draw Metatron's Cube lines
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = lineThickness * 0.75; // Slightly thinner lines for connections
+            
+            // Draw inner connections
+            for (let i = 0; i < points.length; i++) {
+                for (let j = i + 1; j < points.length; j++) {
+                    drawLine(points[i].x, points[i].y, points[j].x, points[j].y);
+                }
+            }
+        }
+
+        function drawBlossomOfLife() {
+            currentPattern = 'blossom';
+            updateActiveButton('blossom');
+            clearCanvas();
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
+            
+            // Initial circles array
+            const circles = [{x: centerX, y: centerY, r: radius}];
+            
+            // Create Seed of Life base
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                const x = centerX + radius * Math.sqrt(3) * Math.cos(angle);
+                const y = centerY + radius * Math.sqrt(3) * Math.sin(angle);
+                circles.push({x, y, r: radius});
+                drawCircle(x, y, radius);
+            }
+            
+            // Draw center circle
+            drawCircle(centerX, centerY, radius);
+            
+            // Draw outer circles
+            for (let i = 0; i < 24; i++) {
+                const angle = i * Math.PI / 12;
+                const r = radius * 2;
+                const x = centerX + r * Math.cos(angle);
+                const y = centerY + r * Math.sin(angle);
+                drawCircle(x, y, radius);
+            }
+        }
+
+        function drawFlowerOfLife() {
+            currentPattern = 'flower';
+            updateActiveButton('flower');
+            clearCanvas();
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
+            
+            drawFlowerOfLifeBase(centerX, centerY, radius);
+        }
+
+        function drawMetatronsCube() {
+            currentPattern = 'metatron';
+            updateActiveButton('metatron');
+            clearCanvas();
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
+            
+            const points = [];
+            points.push({x: centerX, y: centerY}); // Center point
+            
+            // Create outer points
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                const x = centerX + radius * Math.sqrt(3) * Math.cos(angle);
+                const y = centerY + radius * Math.sqrt(3) * Math.sin(angle);
+                points.push({x, y});
+            }
+
+            // Draw circles
+            points.forEach(point => drawCircle(point.x, point.y, radius));
+            
+            // Draw connecting lines
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = lineThickness * 0.75; // Slightly thinner lines for connections
+            for (let i = 0; i < points.length; i++) {
+                for (let j = i + 1; j < points.length; j++) {
+                    drawLine(points[i].x, points[i].y, points[j].x, points[j].y);
+                }
+            }
+        }
+
+        // Initial drawing
+        drawCombinedPattern();
+    </script>
+</body>
+</html>
