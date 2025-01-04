@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unified Calendar System</title>
+
+  <style>
+    :root {
+      --bg-color: #000;
+      --text-color: #fff;
+      --accent-color: #00ffcc;
+      --accent2-color: #ff00cc;
+      --card-bg: #1a1a1a;
+      --secondary-text-color: #ccc;
+      --transition-speed: 0.3s;
+      --border-radius: 10px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Courier New', monospace;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #111;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 2px solid var(--accent-color);
+    }
+
+    main {
+      flex: 1;
+      padding: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 95%;
+    }
+
+    .system-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .calendar-system {
+      background: var(--card-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+    }
+
+    .calendar-system h2 {
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .cycle-info {
+      margin: 1rem 0;
+      padding: 0.5rem;
+      background: rgba(0, 255, 204, 0.1);
+      border-radius: 5px;
+    }
+
+    .date-converter {
+      background: var(--card-bg);
+      padding: 1rem;
+      margin: 2rem 0;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--accent2-color);
+    }
+
+    input, select {
+      background: #333;
+      border: 1px solid var(--accent-color);
+      color: var(--text-color);
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border-radius: 5px;
+      width: 100%;
+    }
+
+    button {
+      background: var(--accent-color);
+      color: var(--bg-color);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 0.5rem 0;
+    }
+
+    .result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(0, 255, 204, 0.1);
+      border-radius: 5px;
+    }
+
+    .key-date {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--accent-color);
+    }
+
+    @media (max-width: 768px) {
+      .system-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Unified Calendar System</h1>
+  </header>
+
+  <main>
+    <div class="system-grid">
+      <!-- Base Calendar System -->
+      <div class="calendar-system">
+        <h2>Primary Cycle (16-Month)</h2>
+        <div class="cycle-info">
+          <p>Start Date: 4/16/24</p>
+          <p>Cycle Length: 16 months</p>
+          <p>Key Intervals: 741, 767 days</p>
+        </div>
+        <div id="primaryDates"></div>
+      </div>
+
+      <!-- Overlay System -->
+      <div class="calendar-system">
+        <h2>Overlay System</h2>
+        <div class="cycle-info">
+          <p>Reference Points:</p>
+          <ul id="referencePoints"></ul>
+        </div>
+      </div>
+
+      <!-- Date Converter -->
+      <div class="date-converter">
+        <h2>Universal Converter</h2>
+        <input type="date" id="dateInput">
+        <select id="systemSelect">
+          <option value="primary">Primary System</option>
+          <option value="overlay">Overlay System</option>
+          <option value="unified">Unified View</option>
+        </select>
+        <button onclick="convertDate()">Convert</button>
+        <div id="conversionResult" class="result"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Core system parameters
+    const systems = {
+      primary: {
+        startDate: '2024-04-16',
+        cycleLength: 16,
+        keyIntervals: [741, 767]
+      },
+      overlay: {
+        startDates: [
+          '2022-04-06', // First reference
+          '2024-05-12'  // Secondary reference
+        ],
+        intervals: [741, 767, 312]
+      }
+    };
+
+    // Initialize reference points
+    function initializeReferences() {
+      const refList = document.getElementById('referencePoints');
+      const points = [
+        '4/6/22 → Initial Reference',
+        '4/16/24 → Primary Cycle Start (+741)',
+        '5/12/24 → Secondary Cycle Start',
+        '3/20/25 → Convergence Point'
+      ];
+      
+      refList.innerHTML = points.map(point => 
+        `<li>${point}</li>`
+      ).join('');
+    }
+
+    // Date conversion system
+    function convertDate() {
+      const date = new Date(document.getElementById('dateInput').value);
+      const system = document.getElementById('systemSelect').value;
+      const result = document.getElementById('conversionResult');
+
+      const primaryStart = new Date(systems.primary.startDate);
+      const daysSincePrimary = Math.floor((date - primaryStart) / (1000 * 60 * 60 * 24));
+      
+      let output = '';
+      if (system === 'primary') {
+        const cycleMonth = (daysSincePrimary % (systems.primary.cycleLength * 30)) / 30;
+        output = `Cycle Month: ${Math.floor(cycleMonth) + 1}\n`;
+        output += `Days in Cycle: ${daysSincePrimary % (systems.primary.cycleLength * 30)}`;
+      } else if (system === 'overlay') {
+        const overlayStart = new Date(systems.overlay.startDates[0]);
+        const daysSinceOverlay = Math.floor((date - overlayStart) / (1000 * 60 * 60 * 24));
+        output = `Days from Reference: ${daysSinceOverlay}\n`;
+        output += `Interval Position: ${daysSinceOverlay % systems.overlay.intervals[0]}`;
+      } else {
+        output = `Primary: Day ${daysSincePrimary}\n`;
+        systems.overlay.intervals.forEach(interval => {
+          output += `${interval} cycle: Day ${daysSincePrimary % interval}\n`;
+        });
+      }
+
+      result.innerText = output;
+    }
+
+    // Initialize on load
+    window.onload = function() {
+      initializeReferences();
+    };
+  </script>
+</body>
+</html>
