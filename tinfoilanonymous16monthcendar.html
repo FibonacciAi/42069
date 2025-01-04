@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>16-Month Tinfoil Calendar</title>
+
+  <style>
+    :root {
+      --bg-color: #000;
+      --text-color: #fff; 
+      --accent-color: #00ffcc;
+      --card-bg: #1a1a1a;
+      --secondary-text-color: #ccc;
+      --transition-speed: 0.3s;
+      --border-radius: 10px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #111;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 2px solid var(--accent-color);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+    header h1 {
+      color: var(--accent-color);
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+    }
+
+    .search-container {
+      margin: 1rem auto;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .search-bar {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      font-size: 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--accent-color);
+      color: var(--text-color);
+      border-radius: var(--border-radius);
+      transition: box-shadow var(--transition-speed);
+    }
+
+    .search-bar:focus {
+      outline: none;
+      box-shadow: 0 0 5px var(--accent-color);
+    }
+
+    main {
+      flex: 1;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    section.calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    article.month-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: var(--border-radius);
+      text-align: center;
+      padding: 1rem;
+      transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+      cursor: pointer;
+    }
+    article.month-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 10px var(--accent-color);
+    }
+    article.month-card h2 {
+      color: var(--accent-color);
+      margin-bottom: 0.5rem;
+    }
+    article.month-card p {
+      color: var(--secondary-text-color);
+      margin: 0.3rem 0;
+    }
+    
+    article.month-card .sequence {
+      font-size: 1.2em;
+      color: var(--accent-color);
+    }
+
+    .month-card.hidden {
+      display: none;
+    }
+
+    footer {
+      background: #111;
+      text-align: center;
+      padding: 1rem;
+      border-top: 2px solid var(--accent-color);
+    }
+    footer p {
+      font-size: 0.85rem;
+      color: var(--secondary-text-color);
+    }
+
+    @media (max-width: 480px) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+      article.month-card {
+        padding: 0.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>16-Month "Tinfoil" Calendar</h1>
+  </header>
+
+  <main>
+    <div class="search-container">
+      <input type="text" class="search-bar" placeholder="Search months..." id="searchBar">
+    </div>
+    
+    <section class="calendar-grid" id="calendarGrid"></section>
+  </main>
+
+  <footer>
+    <p>&copy; 2023 Tinfoil Anonymous – Advanced HTML5 Edition</p>
+  </footer>
+
+  <script>
+    const calendarData = {
+      "March 2024":    [1, 16],
+      "April 2024":    [2, 15],
+      "May 2024":      [3, 14],
+      "June 2024":     [4, 13],
+      "July 2024":     [5, 12],
+      "August 2024":   [6, 11],
+      "September 2024":[7, 10],
+      "October 2024":  [8, 9],
+      "November 2024": [9, 8],
+      "December 2024": [10, 7],
+      "January 2025":  [11, 6],
+      "February 2025": [12, 5],
+      "March 2025":    [13, 4],
+      "April 2025":    [14, 3],
+      "May 2025":      [15, 2],
+      "June 2025":     [16, 1],
+    };
+
+    const calendarGrid = document.getElementById('calendarGrid');
+    const searchBar = document.getElementById('searchBar');
+
+    // Build the cards
+    Object.entries(calendarData).forEach(([month, [ascending, descending]]) => {
+      const card = document.createElement('article');
+      card.className = 'month-card';
+
+      const h2 = document.createElement('h2');
+      h2.textContent = month;
+
+      const sequence = document.createElement('p');
+      sequence.className = 'sequence';
+      // Create the combined numbers (e.g., "710, 107" for December)
+      const combined1 = `${descending}${ascending}`;
+      const combined2 = `${ascending}${descending}`;
+      sequence.textContent = `${ascending} ; ${descending} — ${combined1}, ${combined2}`;
+
+      card.appendChild(h2);
+      card.appendChild(sequence);
+      calendarGrid.appendChild(card);
+    });
+
+    // Search functionality
+    searchBar.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const cards = document.querySelectorAll('.month-card');
+      
+      cards.forEach(card => {
+        const monthText = card.textContent.toLowerCase();
+        if (monthText.includes(searchTerm)) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
