@@ -9,7 +9,7 @@
             --primary: #bb86fc;
             --secondary: #03dac5;
             --background: #121212;
-            --surface: #1c1c1c; /* Updated to match dark mode */
+            --surface: #1c1c1c;
             --on-surface: #e0e0e0;
             --accent: #64b5f6;
         }
@@ -35,11 +35,34 @@
             text-align: center;
         }
 
+        .social-links {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin: 1rem auto;
+            max-width: 600px;
+        }
+
+        .social-links a {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            background: rgba(100,181,246,0.1);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: rgba(100,181,246,0.2);
+            transform: translateY(-2px);
+        }
+
         main {
             max-width: 800px;
             margin: 2rem auto;
             padding: 2rem;
-            background: var(--surface); /* Ensures consistency with dark mode */
+            background: var(--surface);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
@@ -68,6 +91,19 @@
             padding: 1rem;
             background: rgba(100,181,246,0.1);
             border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline-item {
+            padding: 1rem;
+            margin: 1rem 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
         }
 
         footer {
@@ -81,21 +117,34 @@
 <body>
     <header>
         <h1>The Historical Playbook of Squeezes</h1>
+        <div class="social-links">
+            <a href="https://x.com/_D_741Stef" target="_blank">Follow @_D_741Stef</a>
+            <a href="https://x.com/itsalwaysrains" target="_blank">Follow @itsalwaysrains (OG DD Contributor)</a>
+        </div>
     </header>
     <main>
         <h2>🔍 Fails-to-Deliver: The Smoking Gun</h2>
         <p>The SEC's refusal to release $GME FTD data citing "unusual circumstances" is a glaring red flag. They're stalling—just as they did with "foreseeable harm." What's buried in that data? Let's look to history for clues:</p>
-        <ul>
-            <li><strong>Volkswagen Squeeze (2008):</strong> FTDs skyrocketed as shorts scrambled to cover with no shares available.</li>
-            <li><strong>Piggly Wiggly (1923):</strong> Saunders exposed Wall Street's short game, only for the NYSE to rewrite the rules.</li>
-        </ul>
+        
+        <div class="timeline">
+            <div class="timeline-item">
+                <h3>Volkswagen Squeeze (2008)</h3>
+                <p>FTDs skyrocketed as shorts scrambled to cover with no shares available. Peak price reached €999, making VW briefly the most valuable company worldwide.</p>
+            </div>
+            <div class="timeline-item">
+                <h3>Piggly Wiggly (1923)</h3>
+                <p>Saunders exposed Wall Street's short game, only for the NYSE to rewrite the rules. A classic example of market manipulation and rule changes.</p>
+            </div>
+        </div>
+
         <h2>📜 Lessons from History</h2>
         <p>The Piggly Wiggly corner in 1923 remains a critical lesson. Clarence Saunders called the shorts' bluff, and when they couldn't deliver, chaos ensued. The NYSE bent the rules to protect Wall Street. Today, similar tactics appear to be in play with $GME:</p>
         <div class="quote">"When you beat Wall Street at their own game, they'll change the rules to win anyway."</div>
+
         <h2>🔗 Additional Reading</h2>
         <ul>
             <li><a href="https://fibonacciai.github.io/42069/gmefibresonance.html" target="_blank">Deep Dive on Cycles</a></li>
-            <li><a href="https://www.sec.gov/files/pigglywiggly.pdf" target="_blank">The Piggly Wiggly Squeeze (SEC)</a></li>
+            <li><a href="https://www.sec.gov/Archives/edgar/data/1587205/000119312513455180/d598593ds1a.htm" target="_blank">The Piggly Wiggly Squeeze (SEC)</a></li>
         </ul>
     </main>
     <footer>
