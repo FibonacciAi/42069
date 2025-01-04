@@ -14,6 +14,7 @@
       --secondary-text-color: #ccc;
       --transition-speed: 0.3s;
       --border-radius: 10px;
+      --tooltip-bg: rgba(0, 0, 0, 0.95);
     }
 
     * {
@@ -21,6 +22,7 @@
       padding: 0;
       box-sizing: border-box;
     }
+    
     body {
       background-color: var(--bg-color);
       color: var(--text-color);
@@ -40,6 +42,7 @@
       top: 0;
       z-index: 999;
     }
+    
     header h1 {
       color: var(--accent-color);
       font-size: 1.8rem;
@@ -80,7 +83,7 @@
 
     section.calendar-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1.5rem;
       width: 100%;
       margin-top: 1rem;
@@ -93,16 +96,20 @@
       text-align: center;
       padding: 1rem;
       transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+      position: relative;
       cursor: pointer;
     }
+
     article.month-card:hover {
       transform: scale(1.03);
       box-shadow: 0 0 10px var(--accent-color);
     }
+
     article.month-card h2 {
       color: var(--accent-color);
       margin-bottom: 0.5rem;
     }
+
     article.month-card p {
       color: var(--secondary-text-color);
       margin: 0.3rem 0;
@@ -111,6 +118,27 @@
     article.month-card .sequence {
       font-size: 1.2em;
       color: var(--accent-color);
+    }
+
+    .month-card .hidden-dates {
+      visibility: hidden;
+      position: absolute;
+      bottom: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--tooltip-bg);
+      padding: 0.8rem;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--accent-color);
+      width: 90%;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity var(--transition-speed), visibility var(--transition-speed);
+    }
+
+    .month-card:hover .hidden-dates {
+      visibility: visible;
+      opacity: 1;
     }
 
     .month-card.hidden {
@@ -123,6 +151,7 @@
       padding: 1rem;
       border-top: 2px solid var(--accent-color);
     }
+    
     footer p {
       font-size: 0.85rem;
       color: var(--secondary-text-color);
@@ -158,29 +187,29 @@
 
   <script>
     const calendarData = {
-      "March 2024":    [1, 16],
-      "April 2024":    [2, 15],
-      "May 2024":      [3, 14],
-      "June 2024":     [4, 13],
-      "July 2024":     [5, 12],
-      "August 2024":   [6, 11],
-      "September 2024":[7, 10],
-      "October 2024":  [8, 9],
-      "November 2024": [9, 8],
-      "December 2024": [10, 7],
-      "January 2025":  [11, 6],
-      "February 2025": [12, 5],
-      "March 2025":    [13, 4],
-      "April 2025":    [14, 3],
-      "May 2025":      [15, 2],
-      "June 2025":     [16, 1],
+      "March 2024":    [1, 16, "1/16, 3/16"],
+      "April 2024":    [2, 15, "2/15, 4/15"],
+      "May 2024":      [3, 14, "3/14, 5/14"],
+      "June 2024":     [4, 13, "4/13, 6/13"],
+      "July 2024":     [5, 12, "5/12, 7/12"],
+      "August 2024":   [6, 11, "6/11, 8/11"],
+      "September 2024":[7, 10, "7/10, 9/10"],
+      "October 2024":  [8, 9, "8/9, 10/9"],
+      "November 2024": [9, 8, "9/8, 11/8"],
+      "December 2024": [10, 7, "10/7, 12/7"],
+      "January 2025":  [11, 6, "11/6, 1/6"],
+      "February 2025": [12, 5, "12/5, 2/5"],
+      "March 2025":    [13, 4, "13/4, 3/4"],
+      "April 2025":    [14, 3, "14/3, 4/3"],
+      "May 2025":      [15, 2, "15/2, 5/2"],
+      "June 2025":     [16, 1, "16/1, 6/1"]
     };
 
     const calendarGrid = document.getElementById('calendarGrid');
     const searchBar = document.getElementById('searchBar');
 
     // Build the cards
-    Object.entries(calendarData).forEach(([month, [ascending, descending]]) => {
+    Object.entries(calendarData).forEach(([month, [ascending, descending, altDates]]) => {
       const card = document.createElement('article');
       card.className = 'month-card';
 
@@ -189,13 +218,21 @@
 
       const sequence = document.createElement('p');
       sequence.className = 'sequence';
-      // Create the combined numbers (e.g., "710, 107" for December)
       const combined1 = `${descending}${ascending}`;
       const combined2 = `${ascending}${descending}`;
       sequence.textContent = `${ascending} ; ${descending} — ${combined1}, ${combined2}`;
 
+      const hiddenDates = document.createElement('div');
+      hiddenDates.className = 'hidden-dates';
+      hiddenDates.innerHTML = `
+        <p>Alternative Readings:</p>
+        <p>${altDates}</p>
+        <p>Combined: ${combined1} → ${descending}/${ascending}</p>
+      `;
+
       card.appendChild(h2);
       card.appendChild(sequence);
+      card.appendChild(hiddenDates);
       calendarGrid.appendChild(card);
     });
 
