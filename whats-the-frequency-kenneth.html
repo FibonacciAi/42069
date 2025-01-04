@@ -1,654 +1,870 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vortex Mathematics Matrix</title>
-    <style>
-        /* Reset and Base Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Vortex Mathematics Matrix - Updated</title>
 
-        body {
-            overflow: hidden;
-            background: #000;
-            color: #fff;
-            font-family: 'Arial', sans-serif;
-        }
+  <style>
+    /* CSS Variables for Theming */
+    :root {
+      --background-color: #000;
+      --overlay-bg: rgba(0, 0, 0, 0.7);
+      --primary-color: #88ccff;
+      --secondary-color: #1a1a1a;
+      --hover-bg: rgba(136, 204, 255, 0.3);
+      --button-bg: var(--secondary-color);
+      --button-hover-bg: #333;
+      --button-active-bg: var(--primary-color);
+      --text-color: #fff;
+      --accent-color: #005577;
+    }
 
-        /* Three.js Canvas */
-        #three-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Behind all overlays */
-        }
+    /* Reset and Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        /* Visualizer Canvas */
-        #visualizer {
-            position: fixed;
-            bottom: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 100px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 10px;
-            z-index: 1001; /* Above Three.js canvas */
-        }
+    body {
+      overflow: hidden;
+      background: var(--background-color);
+      color: var(--text-color);
+      font-family: 'Arial', sans-serif;
+      transition: background 0.3s ease;
+    }
 
-        /* Overlay Styles */
-        .overlay {
-            position: fixed;
-            padding: 20px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 10px;
-            z-index: 1001; /* Above Three.js canvas */
-            backdrop-filter: blur(5px);
-            max-width: 350px;
-        }
+    /* Dark Mode Toggle */
+    body.dark-mode {
+      --background-color: #121212;
+      --overlay-bg: rgba(18, 18, 18, 0.8);
+      --primary-color: #bb86fc;
+      --secondary-color: #1f1f1f;
+      --hover-bg: rgba(187, 134, 252, 0.3);
+      --button-bg: var(--secondary-color);
+      --button-hover-bg: #333;
+      --button-active-bg: var(--primary-color);
+      --text-color: #e0e0e0;
+      --accent-color: #3700b3;
+    }
 
-        /* Info Panel Positioning */
-        #info-panel {
-            top: 20px;
-            left: 20px;
-        }
+    /* Three.js Canvas */
+    #three-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1; /* Behind all overlays */
+    }
 
-        /* Controls Panel Positioning */
-        #controls {
-            top: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+    /* Visualizer Canvas */
+    #visualizer {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      height: 120px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      z-index: 1001; /* Above Three.js canvas */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
 
-        /* Audio Controls Grid */
-        #audio-controls {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
+    /* Overlay Styles */
+    .overlay {
+      position: fixed;
+      padding: 20px;
+      background: var(--overlay-bg);
+      border-radius: 10px;
+      z-index: 1001; /* Above Three.js canvas */
+      backdrop-filter: blur(10px);
+      max-width: 350px;
+      transition: background 0.3s ease;
+    }
 
-        /* Button and Select Styles */
-        .button, select {
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #333;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-        }
+    /* Info Panel Positioning */
+    #info-panel {
+      top: 20px;
+      left: 20px;
+    }
 
-        .button:hover, select:hover {
-            background: #333;
-            border-color: #88ccff;
-        }
+    /* Controls Panel Positioning */
+    #controls {
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
 
-        .button.active {
-            background: #88ccff;
-            color: #000;
-        }
+    /* Audio Controls Grid */
+    #audio-controls {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
 
-        /* Slider Container */
-        .slider-container {
-            margin: 10px 0;
-        }
+    /* Button and Select Styles */
+    .button, select {
+      background: var(--button-bg);
+      color: var(--text-color);
+      border: 1px solid #333;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease, border-color 0.3s ease;
+      font-size: 1rem;
+      outline: none;
+    }
 
-        .slider-container label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
+    .button:hover, select:hover {
+      background: var(--button-hover-bg);
+      border-color: var(--primary-color);
+    }
 
-        /* Slider Styles */
-        .slider {
-            width: 100%;
-            margin: 5px 0;
-        }
+    .button.active {
+      background: var(--button-active-bg);
+      color: #000;
+    }
 
-        /* Frequency Display */
-        #frequency-display {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
-            color: #88ccff;
-            z-index: 1001;
-        }
+    /* Dark Mode Toggle Button */
+    #dark-mode-toggle {
+      background: var(--secondary-color);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        /* Number Grid Styling */
-        #number-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
+    #dark-mode-toggle:focus {
+      outline: 2px solid var(--primary-color);
+    }
 
-        .number-cell {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1.5rem;
-            user-select: none;
-        }
+    /* Slider Container */
+    .slider-container {
+      margin: 10px 0;
+    }
 
-        .number-cell:hover {
-            background: rgba(136,204,255,0.3);
-            transform: scale(1.1);
-        }
+    .slider-container label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
 
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
-            #controls, #info-panel, #frequency-display, #visualizer {
-                max-width: 90%;
-                left: 50%;
-                transform: translateX(-50%);
-            }
+    /* Slider Styles */
+    .slider {
+      width: 100%;
+      margin: 5px 0;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: #444;
+      outline: none;
+      transition: background 0.3s ease;
+    }
 
-            #controls {
-                top: auto;
-                bottom: 140px;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
 
-            #audio-controls {
-                grid-template-columns: 1fr;
-            }
+    .slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
 
-            #number-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-    </style>
-    <!-- Three.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Tone.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- OrbitControls for Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.min.js"></script>
+    /* Frequency Display */
+    #frequency-display {
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      color: var(--primary-color);
+      z-index: 1001;
+      text-shadow: 0 0 10px var(--primary-color);
+      transition: color 0.3s ease;
+    }
+
+    /* Number Grid Styling */
+    #number-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .number-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease, background 0.3s ease, transform 0.3s ease;
+      font-size: 1.5rem;
+      user-select: none;
+      position: relative;
+    }
+
+    .number-cell:hover {
+      background: var(--hover-bg);
+      transform: scale(1.1);
+    }
+
+    .number-cell:focus {
+      outline: 2px solid var(--primary-color);
+      transform: scale(1.1);
+    }
+
+    /* Tooltip Styling */
+    .tooltip {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent-color);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 1002;
+    }
+
+    .number-cell:hover .tooltip,
+    .number-cell:focus .tooltip {
+      opacity: 1;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1024px) {
+      #visualizer {
+        bottom: 100px;
+        height: 100px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      #controls, #info-panel, #frequency-display, #visualizer {
+        max-width: 90%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      #controls {
+        top: auto;
+        bottom: 160px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      #audio-controls {
+        grid-template-columns: 1fr;
+      }
+
+      #number-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #frequency-display {
+        font-size: 20px;
+      }
+      .number-cell {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+
+  <!-- Three.js (matching version) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <!-- OrbitControls matching three@0.128.0 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Tone.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
-    <!-- Three.js Visualization Canvas -->
-    <canvas id="three-canvas"></canvas>
+  <!-- Dark Mode Toggle Button -->
+  <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+    🌙
+  </button>
 
-    <!-- Info Panel with Number Grid -->
-    <div id="info-panel" class="overlay">
-        <h2>Vortex Mathematics</h2>
-        <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
-        <div id="number-grid">
-            <!-- Number Cells (1-8) -->
-            <div class="number-cell">1</div>
-            <div class="number-cell">2</div>
-            <div class="number-cell">3</div>
-            <div class="number-cell">4</div>
-            <div class="number-cell">5</div>
-            <div class="number-cell">6</div>
-            <div class="number-cell">7</div>
-            <div class="number-cell">8</div>
-        </div>
+  <!-- Three.js Visualization Canvas -->
+  <canvas id="three-canvas" aria-hidden="true"></canvas>
+
+  <!-- Info Panel with Number Grid -->
+  <div id="info-panel" class="overlay" role="region" aria-labelledby="info-heading">
+    <h2 id="info-heading">Vortex Mathematics</h2>
+    <p>Spirit is latent potential energy manifesting through numerical patterns.</p>
+    <div id="number-grid" role="grid" aria-label="Number Grid">
+      <!-- Number Cells (1-8) -->
+      <div class="number-cell" role="gridcell" tabindex="0">
+        1
+        <span class="tooltip">Frequency: Base</span>
+      </div>
+      <div class="number-cell" role="gridcell" tabindex="0">
+        2
+        <span class="tooltip">Frequency: Ratio 9/8</span>
+      </div>
+      <div class="number-cell" role="gridcell" tabindex="0">
+        3
+        <span class="tooltip">Frequency: Ratio 81/64</span>
+      </div>
+      <div class="number-cell" role="gridcell" tabindex="0">
+        4
+        <span class="tooltip">Frequency: Ratio 4/3</span>
+      </div>
+      <div class="number-cell" role="gridcell" tabindex="0">
+        5
+        <span class="tooltip">Frequency: Ratio 3/2</span>
+      </div>
+      <div class="number-cell" role="gridcell" tabindex="0">
+        6
+        <span class="tooltip">Frequency: Ratio 27/16</span>
+      </div>
+      <div class="number-cell" role="gridcell" tabindex="0">
+        7
+        <span class="tooltip">Frequency: Ratio 243/128</span>
+      </div>
+      <div class="number-cell" role="gridcell" tabindex="0">
+        8
+        <span class="tooltip">Frequency: Ratio 2/1</span>
+      </div>
     </div>
+  </div>
 
-    <!-- Controls Panel -->
-    <div id="controls" class="overlay">
-        <div id="audio-controls">
-            <button class="button" id="togglePlay">Start</button>
-            <button class="button" id="toggleRotation">Toggle Rotation</button>
-            <select class="button" id="waveformSelect">
-                <option value="sine">Sine</option>
-                <option value="triangle">Triangle</option>
-                <option value="square">Square</option>
-                <option value="sawtooth">Sawtooth</option>
-            </select>
-            <select class="button" id="scaleSelect">
-                <option value="pythagorean">Pythagorean</option>
-                <option value="just">Just Intonation</option>
-                <option value="equal">Equal Temperament</option>
-            </select>
-        </div>
-        <div class="slider-container">
-            <label for="masterVolume">Master Volume</label>
-            <input type="range" id="masterVolume" class="slider" min="0" max="1" step="0.01" value="0.5">
-        </div>
-        <div class="slider-container">
-            <label for="fmDepth">Frequency Modulation Depth</label>
-            <input type="range" id="fmDepth" class="slider" min="0" max="100" value="0">
-        </div>
+  <!-- Controls Panel -->
+  <div id="controls" class="overlay" role="region" aria-labelledby="controls-heading">
+    <h3 id="controls-heading">Controls</h3>
+    <div id="audio-controls">
+      <button class="button" id="togglePlay" aria-pressed="false">Start</button>
+      <button class="button" id="toggleRotation" aria-pressed="true">Pause Rotation</button>
+      <select class="button" id="waveformSelect" aria-label="Select Waveform">
+        <option value="sine">Sine</option>
+        <option value="triangle">Triangle</option>
+        <option value="square">Square</option>
+        <option value="sawtooth">Sawtooth</option>
+      </select>
+      <select class="button" id="scaleSelect" aria-label="Select Scale">
+        <option value="pythagorean">Pythagorean</option>
+        <option value="just">Just Intonation</option>
+        <option value="equal">Equal Temperament</option>
+      </select>
     </div>
+    <div class="slider-container">
+      <label for="masterVolume">Master Volume</label>
+      <input type="range" id="masterVolume" class="slider" min="0" max="1" step="0.01" value="0.5" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0.5">
+    </div>
+    <div class="slider-container">
+      <label for="fmDepth">Frequency Modulation Depth</label>
+      <input type="range" id="fmDepth" class="slider" min="0" max="100" value="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    </div>
+  </div>
 
-    <!-- Audio Waveform Visualizer Canvas -->
-    <canvas id="visualizer"></canvas>
-    <!-- Frequency Display -->
-    <div id="frequency-display" class="overlay">432 Hz</div>
+  <!-- Audio Waveform Visualizer Canvas -->
+  <canvas id="visualizer" aria-hidden="true"></canvas>
+  <!-- Frequency Display -->
+  <div id="frequency-display" class="overlay" role="status" aria-live="polite">432 Hz</div>
 
-    <script>
-        /**
-         * AudioEngine Class
-         * Handles audio synthesis, effects, and frequency modulation using Tone.js
-         */
-        class AudioEngine {
-            constructor() {
-                this.scales = {
-                    pythagorean: [1, 9/8, 81/64, 4/3, 3/2, 27/16, 243/128, 2],
-                    just: [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2],
-                    equal: [1, 1.059463, 1.122462, 1.189207, 1.259921, 1.334840, 1.414214, 1.498307]
-                };
+  <script>
+    /**
+     * AudioEngine Class
+     * Handles audio synthesis, effects, and frequency modulation using Tone.js
+     */
+    class AudioEngine {
+      constructor() {
+        this.scales = {
+          pythagorean: [1, 9/8, 81/64, 4/3, 3/2, 27/16, 243/128, 2],
+          just:        [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2],
+          equal:       [1, 1.059463, 1.122462, 1.189207, 1.259921, 1.334840, 1.414214, 1.498307]
+        };
 
-                this.baseFrequency = 432;
-                this.currentScale = 'pythagorean';
-                this.waveform = 'sine';
-                this.fmDepth = 0; // Initial FM Depth
+        this.baseFrequency = 432;
+        this.currentScale = 'pythagorean';
+        this.waveform = 'sine';
+        this.fmDepth = 0; // Initial FM Depth
 
-                this.initTone();
+        this.initTone();
+      }
+
+      /**
+       * Initializes Tone.js components
+       */
+      async initTone() {
+        try {
+          // Create FM Synth
+          this.fmSynth = new Tone.FMSynth({
+            harmonicity: 3,
+            modulationIndex: 10,
+            oscillator: {
+              type: this.waveform
+            },
+            modulation: {
+              type: 'square'
+            },
+            envelope: {
+              attack: 0.05,
+              decay: 0.2,
+              sustain: 0.8,
+              release: 1
+            },
+            modulationEnvelope: {
+              attack: 0.01,
+              decay: 0.1,
+              sustain: 1,
+              release: 0.5
             }
+          });
 
-            /**
-             * Initializes Tone.js components
-             */
-            async initTone() {
-                // Create FM Synth
-                this.fmSynth = new Tone.FMSynth({
-                    harmonicity: 3,
-                    modulationIndex: 10,
-                    oscillator: {
-                        type: this.waveform,
-                    },
-                    modulation: {
-                        type: 'square'
-                    },
-                    envelope: {
-                        attack: 0.05,
-                        decay: 0.2,
-                        sustain: 0.8,
-                        release: 1
-                    },
-                    modulationEnvelope: {
-                        attack: 0.01,
-                        decay: 0.1,
-                        sustain: 1,
-                        release: 0.5
-                    }
-                }).toDestination();
+          // Create Effects
+          this.chorus = new Tone.Chorus(4, 2.5, 0.5).start();
+          this.delay = new Tone.FeedbackDelay("8n", 0.2);
+          this.reverb = new Tone.Reverb({ decay: 5, preDelay: 0.1 });
+          this.compressor = new Tone.Compressor({
+            threshold: -24,
+            ratio: 12,
+            attack: 0.003,
+            release: 0.25
+          });
+          this.masterVolume = new Tone.Volume(-12);
 
-                // Create Effects
-                this.chorus = new Tone.Chorus(4, 2.5, 0.5).start();
-                this.delay = new Tone.FeedbackDelay("8n", 0.2);
-                this.reverb = new Tone.Reverb({
-                    decay: 5,
-                    preDelay: 0.1
-                }).toDestination();
-                this.compressor = new Tone.Compressor({
-                    threshold: -24,
-                    ratio: 12,
-                    attack: 0.003,
-                    release: 0.25
-                }).toDestination();
-                this.masterVolume = new Tone.Volume(-12).toDestination();
+          // Connect FM Synth to Effects Chain
+          this.fmSynth.chain(
+            this.chorus,
+            this.delay,
+            this.reverb,
+            this.compressor,
+            this.masterVolume,
+            Tone.Destination
+          );
 
-                // Connect FM Synth to Effects Chain
-                this.fmSynth.chain(
-                    this.chorus,
-                    this.delay,
-                    this.reverb,
-                    this.compressor,
-                    this.masterVolume
-                );
+          // Create Analyzer for Visualizer
+          this.analyzer = new Tone.Analyser("waveform", 1024);
+          this.masterVolume.connect(this.analyzer);
 
-                // Create Analyzer for Visualizer
-                this.analyzer = new Tone.Analyser("waveform", 1024);
-                this.masterVolume.connect(this.analyzer);
+          // Initially mute the audio
+          this.masterVolume.mute = true;
 
-                // Initially mute the audio
-                this.masterVolume.mute = true;
-
-                // Update frequencies based on the initial scale
-                this.updateFrequencies();
-            }
-
-            /**
-             * Sets the oscillator waveform type
-             * @param {string} type - Waveform type (sine, triangle, square, sawtooth)
-             */
-            setWaveform(type) {
-                this.waveform = type;
-                this.fmSynth.oscillator.type = type;
-            }
-
-            /**
-             * Sets the musical scale
-             * @param {string} scaleName - Scale name (pythagorean, just, equal)
-             */
-            setScale(scaleName) {
-                this.currentScale = scaleName;
-                this.updateFrequencies();
-            }
-
-            /**
-             * Updates the frequencies based on the selected scale
-             */
-            updateFrequencies() {
-                const frequencies = this.scales[this.currentScale].map(ratio => 
-                    this.baseFrequency * ratio
-                );
-
-                // Update carrier frequency
-                this.fmSynth.frequency.value = frequencies[0];
-
-                // Update modulation frequency
-                this.fmSynth.modulation.frequency.value = frequencies[1];
-            }
-
-            /**
-             * Sets the master volume
-             * @param {number} value - Volume value between 0 and 1
-             */
-            setMasterVolume(value) {
-                this.masterVolume.volume.value = Tone.gainToDb(value);
-            }
-
-            /**
-             * Sets the frequency modulation depth
-             * @param {number} depth - Depth value between 0 and 100
-             */
-            setFMDepth(depth) {
-                this.fmDepth = depth;
-                const normalizedDepth = depth / 100; // 0 to 1
-                this.fmSynth.modulationIndex.value = normalizedDepth * 100; // Adjust scaling as needed
-            }
-
-            /**
-             * Starts the audio synthesis
-             */
-            start() {
-                this.fmSynth.triggerAttack();
-                this.masterVolume.mute = false;
-            }
-
-            /**
-             * Stops the audio synthesis
-             */
-            stop() {
-                this.fmSynth.triggerRelease();
-                this.masterVolume.mute = true;
-            }
+          // Update frequencies based on the initial scale
+          this.updateFrequencies();
+        } catch (error) {
+          console.error('Error initializing Tone.js:', error);
         }
+      }
 
-        /**
-         * Visualizer Class
-         * Handles drawing the audio waveform on the canvas
-         */
-        class Visualizer {
-            constructor(canvas, analyzer) {
-                this.canvas = canvas;
-                this.ctx = canvas.getContext('2d');
-                this.analyzer = analyzer;
-                this.resize();
-                window.addEventListener('resize', () => this.resize());
-                this.draw(); // Start drawing
-            }
-
-            /**
-             * Resizes the canvas to fit its container
-             */
-            resize() {
-                this.canvas.width = this.canvas.offsetWidth;
-                this.canvas.height = this.canvas.offsetHeight;
-            }
-
-            /**
-             * Continuously draws the waveform
-             */
-            draw() {
-                requestAnimationFrame(() => this.draw());
-
-                const waveform = this.analyzer.getValue();
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.ctx.beginPath();
-                this.ctx.strokeStyle = '#88ccff';
-                this.ctx.lineWidth = 2;
-
-                const sliceWidth = this.canvas.width / waveform.length;
-                let x = 0;
-
-                for (let i = 0; i < waveform.length; i++) {
-                    const y = (waveform[i] + 1) / 2 * this.canvas.height;
-
-                    if (i === 0) {
-                        this.ctx.moveTo(x, y);
-                    } else {
-                        this.ctx.lineTo(x, y);
-                    }
-
-                    x += sliceWidth;
-                }
-
-                this.ctx.stroke();
-            }
+      /**
+       * Sets the oscillator waveform type
+       */
+      setWaveform(type) {
+        this.waveform = type;
+        if (this.fmSynth) {
+          this.fmSynth.oscillator.type = type;
         }
+      }
 
-        /**
-         * ThreeVisualizer Class
-         * Handles the Three.js 3D visualization
-         */
-        class ThreeVisualizer {
-            constructor() {
-                this.initThreeJS();
-                this.rotationEnabled = true; // Initialize rotation state
-                this.animate();
-            }
+      /**
+       * Sets the musical scale
+       */
+      setScale(scaleName) {
+        this.currentScale = scaleName;
+        this.updateFrequencies();
+      }
 
-            /**
-             * Initializes the Three.js scene, camera, renderer, and objects
-             */
-            initThreeJS() {
-                // Scene
-                this.scene = new THREE.Scene();
+      /**
+       * Updates the frequencies based on the selected scale
+       */
+      updateFrequencies() {
+        if (!this.fmSynth) return;
+        const frequencies = this.scales[this.currentScale].map(ratio =>
+          this.baseFrequency * ratio
+        );
 
-                // Camera
-                const aspect = window.innerWidth / window.innerHeight;
-                this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-                this.camera.position.z = 5;
+        // Update carrier frequency
+        this.fmSynth.frequency.value = frequencies[0];
 
-                // Renderer
-                this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true, alpha: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(window.devicePixelRatio);
+        // Update modulation frequency
+        this.fmSynth.modulation.frequency.value = frequencies[1];
+      }
 
-                // Controls
-                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.05;
-                this.controls.enablePan = false;
-
-                // Geometry and Material
-                const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
-                const material = new THREE.MeshStandardMaterial({ 
-                    color: 0x88ccff, 
-                    metalness: 0.5, 
-                    roughness: 0.5, 
-                    emissive: 0x005577, 
-                    emissiveIntensity: 0.5 
-                });
-                this.mesh = new THREE.Mesh(geometry, material);
-                this.scene.add(this.mesh);
-
-                // Lighting
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-                this.scene.add(ambientLight);
-
-                const pointLight = new THREE.PointLight(0xffffff, 1);
-                pointLight.position.set(5, 5, 5);
-                this.scene.add(pointLight);
-
-                // Handle window resize
-                window.addEventListener('resize', () => this.handleResize());
-            }
-
-            /**
-             * Adjusts the renderer and camera on window resize
-             */
-            handleResize() {
-                const width = window.innerWidth;
-                const height = window.innerHeight;
-                this.renderer.setSize(width, height);
-                this.camera.aspect = width / height;
-                this.camera.updateProjectionMatrix();
-            }
-
-            /**
-             * Animation loop for Three.js
-             */
-            animate() {
-                requestAnimationFrame(() => this.animate());
-
-                // Rotate the mesh if rotation is enabled
-                if (this.rotationEnabled) {
-                    this.mesh.rotation.x += 0.01;
-                    this.mesh.rotation.y += 0.01;
-                }
-
-                this.controls.update();
-                this.renderer.render(this.scene, this.camera);
-            }
-
-            /**
-             * Toggles the automatic rotation of the mesh
-             */
-            toggleRotation() {
-                this.rotationEnabled = !this.rotationEnabled;
-                console.log(`Rotation Enabled: ${this.rotationEnabled}`);
-            }
+      /**
+       * Sets the master volume
+       */
+      setMasterVolume(value) {
+        if (this.masterVolume) {
+          this.masterVolume.volume.value = Tone.gainToDb(value);
         }
+      }
 
-        /**
-         * VortexMatrix Class
-         * Integrates AudioEngine, Visualizer, and ThreeVisualizer
-         */
-        class VortexMatrix {
-            constructor() {
-                this.audio = new AudioEngine();
-                this.visualizer = new Visualizer(document.getElementById('visualizer'), this.audio.analyzer);
-                this.threeVisualizer = new ThreeVisualizer();
-                this.setupUI();
-                this.setupNumberGrid();
-            }
-
-            /**
-             * Sets up UI event listeners
-             */
-            setupUI() {
-                // Toggle Play Button
-                const togglePlayBtn = document.getElementById('togglePlay');
-                togglePlayBtn.addEventListener('click', async () => {
-                    try {
-                        // Start Tone.js context on user interaction
-                        if (Tone.context.state !== 'running') {
-                            await Tone.start();
-                            console.log('Tone.js started');
-                        }
-
-                        if (togglePlayBtn.classList.contains('active')) {
-                            this.audio.stop();
-                            togglePlayBtn.classList.remove('active');
-                            togglePlayBtn.textContent = 'Start';
-                            console.log('Audio stopped');
-                        } else {
-                            this.audio.start();
-                            togglePlayBtn.classList.add('active');
-                            togglePlayBtn.textContent = 'Stop';
-                            console.log('Audio started');
-                        }
-                    } catch (error) {
-                        console.error('Error starting Tone.js:', error);
-                    }
-                });
-
-                // Toggle Rotation Button
-                const toggleRotationBtn = document.getElementById('toggleRotation');
-                toggleRotationBtn.addEventListener('click', () => {
-                    this.threeVisualizer.toggleRotation();
-                });
-
-                // Waveform Select
-                const waveformSelect = document.getElementById('waveformSelect');
-                waveformSelect.addEventListener('change', (e) => {
-                    this.audio.setWaveform(e.target.value);
-                });
-
-                // Scale Select
-                const scaleSelect = document.getElementById('scaleSelect');
-                scaleSelect.addEventListener('change', (e) => {
-                    this.audio.setScale(e.target.value);
-                });
-
-                // Master Volume Slider
-                const masterVolumeSlider = document.getElementById('masterVolume');
-                masterVolumeSlider.addEventListener('input', (e) => {
-                    this.audio.setMasterVolume(parseFloat(e.target.value));
-                });
-
-                // FM Depth Slider
-                const fmDepthSlider = document.getElementById('fmDepth');
-                fmDepthSlider.addEventListener('input', (e) => {
-                    this.audio.setFMDepth(parseFloat(e.target.value));
-                });
-
-                // Update Frequency Display
-                const frequencyDisplay = document.getElementById('frequency-display');
-                setInterval(() => {
-                    const freq = this.audio.fmSynth.frequency.value.toFixed(2);
-                    frequencyDisplay.textContent = `${freq} Hz`;
-                }, 100);
-            }
-
-            /**
-             * Sets up the number grid with interactive frequency activation
-             */
-            setupNumberGrid() {
-                const grid = document.getElementById('number-grid');
-                const numberCells = grid.querySelectorAll('.number-cell');
-
-                numberCells.forEach((cell, index) => {
-                    cell.addEventListener('click', () => this.activateFrequency(index + 1));
-                });
-            }
-
-            /**
-             * Activates a specific frequency based on the number clicked
-             * @param {number} number - Number from the grid (1-8)
-             */
-            activateFrequency(number) {
-                // Map number to frequency based on current scale
-                if (number < 1 || number > 8) return;
-                const scaleArray = this.audio.scales[this.audio.currentScale];
-                const ratio = scaleArray[number - 1];
-                const frequency = this.audio.baseFrequency * ratio;
-                this.audio.fmSynth.frequency.value = frequency;
-                this.audio.fmSynth.modulation.frequency.value = frequency * 2;
-                console.log(`Activated frequency: ${frequency} Hz`);
-            }
+      /**
+       * Sets the frequency modulation depth
+       */
+      setFMDepth(depth) {
+        this.fmDepth = depth;
+        const normalizedDepth = depth / 100; // 0 to 1
+        if (this.fmSynth) {
+          this.fmSynth.modulationIndex.value = normalizedDepth * 100; 
         }
+      }
 
-        /**
-         * Initializes the VortexMatrix application once the window loads
-         */
-        window.addEventListener('load', () => {
-            new VortexMatrix();
+      /**
+       * Starts the audio synthesis
+       */
+      start() {
+        if (this.fmSynth) {
+          this.fmSynth.triggerAttack();
+          this.masterVolume.mute = false;
+        }
+      }
+
+      /**
+       * Stops the audio synthesis
+       */
+      stop() {
+        if (this.fmSynth) {
+          this.fmSynth.triggerRelease();
+          this.masterVolume.mute = true;
+        }
+      }
+    }
+
+    /**
+     * Visualizer Class
+     * Handles drawing the audio waveform on the canvas
+     */
+    class Visualizer {
+      constructor(canvas, analyzer) {
+        this.canvas = canvas;
+        this.ctx = this.canvas.getContext('2d');
+        this.analyzer = analyzer;
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.draw(); // Start drawing
+      }
+
+      /**
+       * Resizes the canvas to fit its container
+       */
+      resize() {
+        this.canvas.width = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+      }
+
+      /**
+       * Continuously draws the waveform
+       */
+      draw() {
+        requestAnimationFrame(() => this.draw());
+
+        if (!this.analyzer) return;
+
+        const waveform = this.analyzer.getValue();
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+        this.ctx.lineWidth = 2;
+
+        const sliceWidth = this.canvas.width / waveform.length;
+        let x = 0;
+
+        for (let i = 0; i < waveform.length; i++) {
+          const y = (waveform[i] + 1) / 2 * this.canvas.height;
+          if (i === 0) {
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+          x += sliceWidth;
+        }
+        this.ctx.stroke();
+      }
+    }
+
+    /**
+     * ThreeVisualizer Class
+     * Handles the Three.js 3D visualization
+     */
+    class ThreeVisualizer {
+      constructor() {
+        this.initThreeJS();
+        this.rotationEnabled = true;
+        this.animate();
+      }
+
+      /**
+       * Initializes the Three.js scene, camera, renderer, and objects
+       */
+      initThreeJS() {
+        // Scene
+        this.scene = new THREE.Scene();
+
+        // Camera
+        const aspect = window.innerWidth / window.innerHeight;
+        this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+        this.camera.position.z = 5;
+
+        // Renderer
+        this.renderer = new THREE.WebGLRenderer({ 
+          canvas: document.getElementById('three-canvas'), 
+          antialias: true, 
+          alpha: true 
         });
-    </script>
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+
+        // Controls (OrbitControls)
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+        this.controls.enablePan = false;
+        this.controls.enableZoom = false;
+
+        // Geometry and Material
+        const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
+        const material = new THREE.MeshStandardMaterial({ 
+          color: getComputedStyle(document.documentElement).getPropertyValue('--primary-color'),
+          metalness: 0.5,
+          roughness: 0.5,
+          emissive: getComputedStyle(document.documentElement).getPropertyValue('--accent-color'),
+          emissiveIntensity: 0.5 
+        });
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.scene.add(this.mesh);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(5, 5, 5);
+        this.scene.add(pointLight);
+
+        // Handle window resize
+        window.addEventListener('resize', () => this.handleResize());
+      }
+
+      /**
+       * Adjusts the renderer and camera on window resize
+       */
+      handleResize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        this.renderer.setSize(width, height);
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+      }
+
+      /**
+       * Animation loop for Three.js
+       */
+      animate() {
+        requestAnimationFrame(() => this.animate());
+
+        // Rotate the mesh if rotation is enabled
+        if (this.rotationEnabled) {
+          this.mesh.rotation.x += 0.005;
+          this.mesh.rotation.y += 0.005;
+        }
+
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+      }
+
+      /**
+       * Toggles the automatic rotation of the mesh
+       */
+      toggleRotation() {
+        this.rotationEnabled = !this.rotationEnabled;
+        console.log(`Rotation Enabled: ${this.rotationEnabled}`);
+        const toggleRotationBtn = document.getElementById('toggleRotation');
+        if (this.rotationEnabled) {
+          toggleRotationBtn.textContent = 'Pause Rotation';
+          toggleRotationBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          toggleRotationBtn.textContent = 'Resume Rotation';
+          toggleRotationBtn.setAttribute('aria-pressed', 'false');
+        }
+      }
+    }
+
+    /**
+     * VortexMatrix Class
+     * Integrates AudioEngine, Visualizer, and ThreeVisualizer
+     */
+    class VortexMatrix {
+      constructor() {
+        this.audio = new AudioEngine();
+        this.visualizer = new Visualizer(
+          document.getElementById('visualizer'),
+          this.audio.analyzer
+        );
+        this.threeVisualizer = new ThreeVisualizer();
+        this.setupUI();
+        this.setupNumberGrid();
+      }
+
+      /**
+       * Sets up UI event listeners
+       */
+      setupUI() {
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        darkModeToggle.addEventListener('click', () => {
+          document.body.classList.toggle('dark-mode');
+          this.updateColors();
+        });
+
+        // Toggle Play Button
+        const togglePlayBtn = document.getElementById('togglePlay');
+        togglePlayBtn.addEventListener('click', async () => {
+          try {
+            // Start Tone.js context on user interaction
+            if (Tone.context.state !== 'running') {
+              await Tone.start();
+              console.log('Tone.js started');
+            }
+            if (togglePlayBtn.classList.contains('active')) {
+              this.audio.stop();
+              togglePlayBtn.classList.remove('active');
+              togglePlayBtn.textContent = 'Start';
+              togglePlayBtn.setAttribute('aria-pressed', 'false');
+              console.log('Audio stopped');
+            } else {
+              this.audio.start();
+              togglePlayBtn.classList.add('active');
+              togglePlayBtn.textContent = 'Stop';
+              togglePlayBtn.setAttribute('aria-pressed', 'true');
+              console.log('Audio started');
+            }
+          } catch (error) {
+            console.error('Error starting Tone.js:', error);
+          }
+        });
+
+        // Toggle Rotation Button
+        const toggleRotationBtn = document.getElementById('toggleRotation');
+        toggleRotationBtn.addEventListener('click', () => {
+          this.threeVisualizer.toggleRotation();
+        });
+
+        // Waveform Select
+        const waveformSelect = document.getElementById('waveformSelect');
+        waveformSelect.addEventListener('change', (e) => {
+          this.audio.setWaveform(e.target.value);
+        });
+
+        // Scale Select
+        const scaleSelect = document.getElementById('scaleSelect');
+        scaleSelect.addEventListener('change', (e) => {
+          this.audio.setScale(e.target.value);
+        });
+
+        // Master Volume Slider
+        const masterVolumeSlider = document.getElementById('masterVolume');
+        masterVolumeSlider.addEventListener('input', (e) => {
+          this.audio.setMasterVolume(parseFloat(e.target.value));
+        });
+
+        // FM Depth Slider
+        const fmDepthSlider = document.getElementById('fmDepth');
+        fmDepthSlider.addEventListener('input', (e) => {
+          this.audio.setFMDepth(parseFloat(e.target.value));
+        });
+
+        // Update Frequency Display
+        const frequencyDisplay = document.getElementById('frequency-display');
+        setInterval(() => {
+          if (this.audio.fmSynth) {
+            const freq = this.audio.fmSynth.frequency.value.toFixed(2);
+            frequencyDisplay.textContent = `${freq} Hz`;
+          }
+        }, 100);
+      }
+
+      /**
+       * Updates colors in Three.js scene and other dynamic elements based on theme
+       */
+      updateColors() {
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+
+        // Update Three.js materials
+        if (this.threeVisualizer.mesh.material) {
+          this.threeVisualizer.mesh.material.color.set(primaryColor);
+          this.threeVisualizer.mesh.material.emissive.set(accentColor);
+        }
+
+        // Update Visualizer stroke color
+        // (The actual rendering loop references the --primary-color each frame,
+        // so this step is mostly relevant if you store the color somewhere else.)
+      }
+
+      /**
+       * Sets up the number grid with interactive frequency activation
+       */
+      setupNumberGrid() {
+        const grid = document.getElementById('number-grid');
+        const numberCells = grid.querySelectorAll('.number-cell');
+
+        numberCells.forEach((cell, index) => {
+          cell.addEventListener('click', () => this.activateFrequency(index + 1));
+          cell.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              this.activateFrequency(index + 1);
+            }
+          });
+        });
+      }
+
+      /**
+       * Activates a specific frequency based on the number clicked
+       */
+      activateFrequency(number) {
+        if (number < 1 || number > 8) return;
+        const scaleArray = this.audio.scales[this.audio.currentScale];
+        const ratio = scaleArray[number - 1];
+        const frequency = this.audio.baseFrequency * ratio;
+        if (this.audio.fmSynth) {
+          this.audio.fmSynth.frequency.value = frequency;
+          this.audio.fmSynth.modulation.frequency.value = frequency * 2;
+          console.log(`Activated frequency: ${frequency} Hz`);
+        }
+
+        // Provide visual feedback
+        const grid = document.getElementById('number-grid');
+        const numberCells = grid.querySelectorAll('.number-cell');
+        numberCells.forEach(cell => cell.classList.remove('active'));
+        numberCells[number - 1].classList.add('active');
+      }
+    }
+
+    // Initialize the VortexMatrix app once the window loads
+    window.addEventListener('load', () => {
+      new VortexMatrix();
+    });
+  </script>
 </body>
 </html>
