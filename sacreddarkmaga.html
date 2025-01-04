@@ -7,6 +7,8 @@
   <style>
     body { margin: 0; overflow: hidden; background-color: #000; }
     canvas { display: block; }
+
+    /* Info Panel Styling */
     .info-panel {
       position: absolute;
       top: 10px;
@@ -21,7 +23,15 @@
       pointer-events: none;
       max-width: 250px;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      transition: opacity 0.3s ease;
+      opacity: 0;
     }
+    .info-panel.visible {
+      display: block;
+      opacity: 1;
+    }
+
+    /* Control Panel Styling */
     .control-panel {
       position: absolute;
       top: 10px;
@@ -35,24 +45,67 @@
       max-height: 90vh;
       overflow-y: auto;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      width: 200px;
+    }
+    .control-panel h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 18px;
     }
     .control-panel label {
       display: flex;
       align-items: center;
       margin-bottom: 8px;
       cursor: pointer;
+      font-size: 14px;
     }
     .control-panel input[type="checkbox"] {
       margin-right: 8px;
       cursor: pointer;
     }
+
+    /* Legend Styling */
+    .legend {
+      margin-top: 15px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      margin-right: 8px;
+      border: 1px solid #fff;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 600px) {
+      .control-panel {
+        width: 150px;
+        padding: 10px;
+      }
+      .info-panel {
+        max-width: 200px;
+        padding: 10px;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Info Panel -->
   <div class="info-panel" id="infoPanel">Hover over a spiral point for details</div>
+
+  <!-- Control Panel -->
   <div class="control-panel" id="controlPanel">
-    <strong>Toggle Layers:</strong>
+    <h3>Spiral Layers</h3>
     <div id="layerToggles"></div>
+    <div class="legend">
+      <h4>Legend:</h4>
+      <div id="legendItems"></div>
+    </div>
   </div>
   
   <!-- Three.js Library -->
@@ -81,8 +134,10 @@
     // Tooltip Element
     const infoPanel = document.getElementById('infoPanel');
 
-    // Control Panel for Layer Toggles
-    const controlPanel = document.getElementById('layerToggles');
+    // Control Panel Elements
+    const controlPanel = document.getElementById('controlPanel');
+    const layerToggles = document.getElementById('layerToggles');
+    const legendItems = document.getElementById('legendItems');
 
     // Fibonacci Spiral Parameters
     const numLayers = 8;
@@ -100,7 +155,6 @@
     const spiralLayers = [];
 
     // Highlighting variables
-    let currentIntersected = null;
     let currentHighlighted = { mesh: null, instanceId: null };
     const highlightColor = new THREE.Color(0xffffff); // White highlight
 
@@ -116,11 +170,20 @@
       // Add layer toggle checkbox
       const layerToggle = document.createElement('label');
       layerToggle.innerHTML = `<input type="checkbox" checked data-layer="${layerIndex}"> Layer ${layerIndex + 1}`;
-      controlPanel.appendChild(layerToggle);
+      layerToggles.appendChild(layerToggle);
+
+      // Add legend item
+      const legendItem = document.createElement('div');
+      legendItem.className = 'legend-item';
+      legendItem.innerHTML = `
+        <div class="legend-color" style="background-color: ${color};"></div>
+        Layer ${layerIndex + 1}
+      `;
+      legendItems.appendChild(legendItem);
     });
 
     // Central Node
-    const centralGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const centralGeometry = new THREE.SphereGeometry(1.5, 32, 32);
     const centralMaterial = new THREE.MeshStandardMaterial({
       color: '#ff0000',
       emissive: '#550000',
@@ -130,12 +193,15 @@
     scene.add(centralNode);
 
     // Lighting Setup
-    const pointLight = new THREE.PointLight(0xffffff, 2, 500);
-    pointLight.position.set(50, 50, 50);
+    const pointLight = new THREE.PointLight(0xffffff, 3, 1000);
+    pointLight.position.set(100, 100, 100);
     scene.add(pointLight);
 
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
     scene.add(ambientLight);
+
+    // Background Star Field
+    createStarField();
 
     // GSAP Animations
     gsap.to(centralNode.scale, {
@@ -156,7 +222,7 @@
     });
 
     // Camera Position
-    camera.position.set(0, 50, 100);
+    camera.position.set(0, 50, 150);
     controls.update();
 
     // Animation Loop
@@ -177,7 +243,7 @@
 
     // Create Fibonacci Spiral using InstancedMesh
     function createFibonacciSpiral(points, scale, offset, color, layerIndex) {
-      const geometry = new THREE.SphereGeometry(0.3, 8, 8);
+      const geometry = new THREE.SphereGeometry(0.5, 8, 8);
       const material = new THREE.MeshStandardMaterial({ 
         vertexColors: true,
         roughness: 0.5,
@@ -251,7 +317,7 @@
           const pointData = spiral.userData.points[instanceId];
 
           // Update Info Panel
-          infoPanel.style.display = 'block';
+          infoPanel.classList.add('visible');
           infoPanel.style.left = `${event.clientX + 15}px`;
           infoPanel.style.top = `${event.clientY + 15}px`;
           infoPanel.innerHTML = `
@@ -270,7 +336,7 @@
           }
         }
       } else {
-        infoPanel.style.display = 'none';
+        infoPanel.classList.remove('visible');
         resetHighlight();
         currentHighlighted.mesh = null;
         currentHighlighted.instanceId = null;
@@ -328,6 +394,37 @@
       });
     });
 
+    // Function to Create Background Star Field
+    function createStarField() {
+      const starsGeometry = new THREE.BufferGeometry();
+      const starCount = 10000;
+      const positions = [];
+      const colors = [];
+
+      for (let i = 0; i < starCount; i++) {
+        const x = THREE.MathUtils.randFloatSpread(1000);
+        const y = THREE.MathUtils.randFloatSpread(1000);
+        const z = THREE.MathUtils.randFloatSpread(1000);
+        positions.push(x, y, z);
+
+        const color = new THREE.Color(0xffffff);
+        color.setHSL(0.0, 0.0, THREE.MathUtils.randFloat(0.5, 1));
+        colors.push(color.r, color.g, color.b);
+      }
+
+      starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      starsGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+      const starsMaterial = new THREE.PointsMaterial({
+        size: 1,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.7
+      });
+
+      const starField = new THREE.Points(starsGeometry, starsMaterial);
+      scene.add(starField);
+    }
   </script>
 </body>
 </html>
