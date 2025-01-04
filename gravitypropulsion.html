@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+  />
+  <title>Gravity Propulsion - June 1957</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/146/three.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #f5f5f5;
+      --text-color: #333;
+      --highlight-color: #ff5722;
+      --border-color: #ccc;
+      --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: var(--box-shadow);
+      padding: 20px;
+    }
+
+    .title {
+      font-size: 1.8em;
+      color: var(--highlight-color);
+      margin-bottom: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .content {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+    }
+
+    .highlight {
+      color: var(--highlight-color);
+      font-weight: bold;
+    }
+
+    .date {
+      font-size: 0.9em;
+      text-align: right;
+      color: #666;
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    .key-points {
+      margin-top: 20px;
+      padding-left: 20px;
+    }
+
+    .key-points li {
+      margin-bottom: 10px;
+    }
+
+    .model-section {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .model-title {
+      font-size: 1.5em;
+      color: var(--highlight-color);
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    /* Ensure the canvas is given a real height! */
+    #threejsContainer {
+      width: 100%;
+      height: 500px; /* Adjust as needed */
+      margin: 20px auto;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: var(--box-shadow);
+      position: relative; /* So the canvas can fill it */
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Gravity Propulsion</div>
+    <div class="content">
+      Several important things have been discovered with regard to gravity
+      propulsion. For one, the propulsive force doesn’t act on only one part
+      of the ship it is pushing; it acts on
+      <span class="highlight">all parts within the gravity field</span>
+      created by the gravitic drive. It probably is not limited by the speed
+      of light. Gravity-powered vehicles have apparently changed direction,
+      accelerated rapidly at very high G’s, and stopped abruptly without any
+      heavy stresses being experienced by the measuring devices aboard the
+      vehicle and within the gravity-propulsion field.
+    </div>
+    <div class="content">
+      This control is done by
+      <span class="highlight">changing the direction, intensity, and polarity</span>
+      of the charge on the condenser plates of the drive unit, a fairly simple
+      task for scientists.
+    </div>
+    <ul class="key-points">
+      <li><strong>Uniform Propulsion:</strong> Acts on all parts of the ship within the gravity field.</li>
+      <li><strong>Not Limited by Speed of Light:</strong> Allows for faster-than-light movement.</li>
+      <li><strong>High G-Force Tolerance:</strong> No heavy stresses on measuring devices.</li>
+      <li><strong>Adjustable Control:</strong> Direction, intensity, and polarity are modifiable.</li>
+    </ul>
+    <div class="date">June, 1957</div>
+
+    <div class="model-section">
+      <div class="model-title">3D Model Representation</div>
+      <div id="threejsContainer">
+        <canvas id="3dModel"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Scene, Camera, Renderer
+    const container = document.getElementById('threejsContainer');
+    const canvas = document.getElementById('3dModel');
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    // Sizing function
+    function resizeRenderer() {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+    }
+
+    window.addEventListener('resize', resizeRenderer);
+    resizeRenderer(); // Initial sizing
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    // Placeholder Ship Model (Torus)
+    const geometry = new THREE.TorusGeometry(2, 0.5, 16, 100);
+    const material = new THREE.MeshStandardMaterial({ color: 0xff5722 });
+    const ship = new THREE.Mesh(geometry, material);
+    scene.add(ship);
+
+    // Wireframe Sphere ("Gravity Field")
+    const fieldGeometry = new THREE.SphereGeometry(3, 32, 32);
+    const fieldMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ffcc,
+      wireframe: true
+    });
+    const gravityField = new THREE.Mesh(fieldGeometry, fieldMaterial);
+    scene.add(gravityField);
+
+    // Camera Start
+    camera.position.z = 10;
+
+    // Animate
+    function animate() {
+      requestAnimationFrame(animate);
+      ship.rotation.x += 0.01;
+      ship.rotation.y += 0.01;
+      gravityField.rotation.y += 0.005;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
