@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Fibonacci Spiral</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    .info-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      z-index: 1000;
+      display: none;
+      transition: opacity 0.2s ease-in-out;
+    }
+    .controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      z-index: 1000;
+    }
+    .controls input {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="info-panel" id="infoPanel">Hover over a spiral point for details</div>
+<div class="controls">
+  <h3>Controls</h3>
+  <label><input type="checkbox" id="toggleSpiral" checked> Spiral Animation</label><br>
+  <label><input type="checkbox" id="toggleTentacle" checked> Tentacle Animation</label><br>
+  <label><input type="checkbox" id="toggleRotation" checked> Scene Rotation</label><br>
+  <label><input type="checkbox" id="toggleGlow" checked> Glow Effects</label><br>
+  <button id="resetView">Reset View</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+<script>
+  // Scene, Camera, Renderer
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // Orbit Controls
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  // Tooltip
+  const infoPanel = document.getElementById('infoPanel');
+
+  // Colors
+  function getDynamicColor(time, offset) {
+    const hue = (time + offset) % 360;
+    return `hsl(${hue}, 80%, 60%)`;
+  }
+
+  // Fibonacci Spiral
+  function createFibonacciSpiral(points, scale, offset, colorOffset) {
+    const group = new THREE.Group();
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < points; i++) {
+      const theta = i * goldenAngle;
+      const radius = Math.sqrt(i) * scale;
+      const x = radius * Math.cos(theta);
+      const y = radius * Math.sin(theta);
+      const z = offset;
+
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 16, 16),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(getDynamicColor(0, colorOffset)) })
+      );
+      sphere.position.set(x, y, z);
+      group.add(sphere);
+    }
+    return group;
+  }
+
+  // Add Spirals
+  const spirals = [];
+  const spiralGroup = new THREE.Group();
+  for (let i = 0; i < 8; i++) {
+    const spiral = createFibonacciSpiral(200, 0.5 + i * 0.2, i * 0.2, i * 45);
+    spirals.push(spiral);
+    spiralGroup.add(spiral);
+  }
+  scene.add(spiralGroup);
+
+  // Central Node
+  const centralNode = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 32, 32),
+    new THREE.MeshStandardMaterial({ emissive: new THREE.Color(0xff00ff), emissiveIntensity: 1 })
+  );
+  scene.add(centralNode);
+
+  // Tentacles
+  const tentacles = [];
+  spirals.forEach((spiral, index) => {
+    const tentacle = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        spiral.children[0].position,
+      ]),
+      new THREE.LineBasicMaterial({ color: new THREE.Color(getDynamicColor(0, index * 45)) })
+    );
+    tentacles.push(tentacle);
+    scene.add(tentacle);
+  });
+
+  // Animations
+  let rotationAnimation, glowAnimation, tentacleAnimation;
+  function startAnimations() {
+    // Spiral Rotation
+    rotationAnimation = gsap.to(spiralGroup.rotation, {
+      duration: 10,
+      y: Math.PI * 2,
+      repeat: -1,
+      ease: "linear",
+    });
+
+    // Tentacle Pulse
+    tentacleAnimation = gsap.to(tentacles, {
+      duration: 2,
+      x: 1.2,
+      y: 1.2,
+      z: 1.2,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+
+    // Central Glow
+    glowAnimation = gsap.to(centralNode.material.emissive, {
+      duration: 2,
+      r: 1,
+      g: 0,
+      b: 1,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+  }
+  startAnimations();
+
+  // Lighting
+  const light = new THREE.PointLight(0xffffff, 1, 100);
+  light.position.set(10, 10, 10);
+  scene.add(light);
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  scene.add(ambientLight);
+
+  // Controls
+  document.getElementById('toggleSpiral').addEventListener('change', (e) => {
+    rotationAnimation.paused(!e.target.checked);
+  });
+  document.getElementById('toggleTentacle').addEventListener('change', (e) => {
+    tentacleAnimation.paused(!e.target.checked);
+  });
+  document.getElementById('toggleGlow').addEventListener('change', (e) => {
+    glowAnimation.paused(!e.target.checked);
+  });
+  document.getElementById('toggleRotation').addEventListener('change', (e) => {
+    controls.enabled = e.target.checked;
+  });
+  document.getElementById('resetView').addEventListener('click', () => {
+    camera.position.set(0, 5, 20);
+    controls.update();
+  });
+
+  // Animation Loop
+  function animate(time) {
+    tentacles.forEach((tentacle, i) => {
+      tentacle.material.color.set(getDynamicColor(time * 0.05, i * 45));
+    });
+    spirals.forEach((spiral, i) => {
+      spiral.children.forEach((sphere) => {
+        sphere.material.color.set(getDynamicColor(time * 0.05, i * 45));
+      });
+    });
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  // Resize
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+</body>
+</html>
