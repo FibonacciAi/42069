@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Timeline Analysis</title>
+    <title>Enhanced Timeline Analysis</title>
     <style>
         :root {
             --bg-color: #000;
@@ -25,7 +25,7 @@
             background: var(--bg-color);
             color: var(--text-color);
             font-family: 'Courier New', monospace;
-            padding: 20px;
+            padding: 10px;
             line-height: 1.6;
         }
 
@@ -45,14 +45,15 @@
 
         .title {
             font-size: 1.2em;
-            margin-bottom: 10px;
             color: var(--accent1);
+            font-family: 'Courier New', monospace;
         }
 
-        .controls {
+        .input-group {
+            margin: 10px 0;
             display: flex;
-            flex-wrap: wrap;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .button {
@@ -62,7 +63,7 @@
             padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
-            font-family: inherit;
+            font-family: 'Courier New', monospace;
         }
 
         .button:hover {
@@ -76,48 +77,39 @@
             color: var(--text-color);
             padding: 8px;
             border-radius: 5px;
-            font-family: inherit;
+            font-family: 'Courier New', monospace;
         }
 
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .result-card {
+        .analysis-card {
             background: var(--card-bg);
             border: 1px solid var(--accent2);
             border-radius: 10px;
             padding: 15px;
+            margin-bottom: 15px;
         }
 
-        .pattern-highlight {
+        .highlight {
             color: var(--accent3);
             font-weight: bold;
         }
 
-        .timeline {
-            position: relative;
-            height: 40px;
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pattern-cell {
             background: #333;
-            margin: 10px 0;
+            padding: 8px;
             border-radius: 5px;
+            text-align: center;
         }
 
-        .marker {
-            position: absolute;
-            width: 2px;
-            height: 100%;
-            background: var(--accent1);
-        }
-
-        .connection-line {
-            position: absolute;
-            height: 2px;
-            background: var(--accent2);
-            opacity: 0.5;
+        .convergence-highlight {
+            border: 1px solid var(--accent3);
+            background: rgba(204, 255, 0, 0.1);
         }
     </style>
 </head>
@@ -125,7 +117,7 @@
     <div class="container">
         <div class="control-section">
             <div class="title">Timeline Controls</div>
-            <div class="controls">
+            <div class="input-group">
                 <button class="button" onclick="analyze(3)">×3</button>
                 <button class="button" onclick="analyze(9)">×9</button>
                 <button class="button" onclick="analyze(33)">×33</button>
@@ -135,21 +127,23 @@
         </div>
 
         <div class="control-section">
-            <div class="title">Pattern Search</div>
-            <div class="controls">
-                <input type="number" class="date-input" id="patternInput" placeholder="Enter number...">
-                <button class="button" onclick="findPatterns()">Search Patterns</button>
+            <div class="title">Special Pattern Search</div>
+            <div class="input-group">
+                <button class="button" onclick="analyzeSpecialPattern(26)">26</button>
+                <button class="button" onclick="analyzeSpecialPattern(62)">62</button>
+                <button class="button" onclick="analyzeSpecialPattern(65)">65</button>
+                <button class="button" onclick="analyzeSpecialPattern(95)">95</button>
+                <button class="button" onclick="analyzeSpecialPattern(59)">59</button>
+                <input type="number" class="date-input" id="customPattern" placeholder="Custom...">
+                <button class="button" onclick="analyzeCustomPattern()">Analyze</button>
             </div>
         </div>
 
-        <div id="resultsContainer" class="results-grid"></div>
+        <div id="resultsContainer"></div>
     </div>
 
     <script>
         const keyDates = {
-            historical: {
-                'RC_2019': '2019-01-01', // Adjust this date as needed
-            },
             forward: {
                 'RK': '2020-08-30',
                 'Oct21': '2021-10-26',
@@ -160,8 +154,16 @@
                 'June25': '2025-06-01',
                 'April25': '2025-04-01',
                 'March25': '2025-03-15'
+            },
+            special: {
+                'RK_Start': '2024-04-16',
+                'RK_Day26': '2024-05-12',
+                'Convergence': '2025-01-09'
             }
         };
+
+        const specialNumbers = [26, 62, 65, 95, 59];
+        const daysCounts = [1593, 1171, 1009, 268];
 
         function getDaysBetween(date1, date2) {
             const d1 = new Date(date1);
@@ -175,124 +177,75 @@
             return date.toISOString().split('T')[0];
         }
 
-        function findPatterns() {
-            const number = parseInt(document.getElementById('patternInput').value);
+        function analyzeSpecialPattern(number) {
             const results = document.getElementById('resultsContainer');
-            results.innerHTML = '';
-
-            // Create pattern card
-            const patternCard = document.createElement('div');
-            patternCard.className = 'result-card';
+            const card = document.createElement('div');
+            card.className = 'analysis-card';
             
+            let content = `<h3>Analysis of Pattern ${number}</h3>`;
+            content += '<div class="pattern-grid">';
+
             // Forward analysis
-            let forwardAnalysis = '<h3>Forward Patterns</h3>';
             Object.entries(keyDates.forward).forEach(([name, date]) => {
                 const targetDate = getDateFromDays(date, number);
-                forwardAnalysis += `
-                    <p>${name}: Day ${number} = ${targetDate}</p>
+                content += `
+                    <div class="pattern-cell">
+                        ${name} + ${number} = ${targetDate}
+                    </div>
                 `;
             });
 
-            // Backward analysis
-            let backwardAnalysis = '<h3>Backward Patterns</h3>';
-            Object.entries(keyDates.backward).forEach(([name, date]) => {
-                const targetDate = getDateFromDays(date, -number);
-                backwardAnalysis += `
-                    <p>${name}: ${number} days before = ${targetDate}</p>
+            // Check for convergence
+            if (number === 26) {
+                content += `
+                    <div class="pattern-cell convergence-highlight">
+                        RK Schedule Start: ${keyDates.special.RK_Start}<br>
+                        Day 26 = ${keyDates.special.RK_Day26}
+                    </div>
                 `;
-            });
+            }
 
-            // Historical connections
-            let historicalAnalysis = '<h3>Historical Connections</h3>';
-            Object.entries(keyDates.historical).forEach(([name, date]) => {
-                const forwardDays = Object.entries(keyDates.forward).map(([fwdName, fwdDate]) => {
-                    return {
-                        name: fwdName,
-                        days: getDaysBetween(date, fwdDate)
-                    };
-                });
-
-                historicalAnalysis += `<p>From ${name}:</p>`;
-                forwardDays.forEach(({name: fwdName, days}) => {
-                    historicalAnalysis += `<p>${fwdName}: Day ${days}</p>`;
-                });
-            });
-
-            patternCard.innerHTML = forwardAnalysis + backwardAnalysis + historicalAnalysis;
-            results.appendChild(patternCard);
+            content += '</div>';
+            card.innerHTML = content;
+            results.prepend(card);
         }
 
         function analyzeDate(date) {
             const results = document.getElementById('resultsContainer');
-            results.innerHTML = '';
-
-            const analysisCard = document.createElement('div');
-            analysisCard.className = 'result-card';
+            const card = document.createElement('div');
+            card.className = 'analysis-card';
             
-            let analysis = '<h3>Date Analysis</h3>';
+            let content = '<h3>Date Analysis</h3>';
 
             // Forward counting
             Object.entries(keyDates.forward).forEach(([name, startDate]) => {
                 const days = getDaysBetween(startDate, date);
-                analysis += `<p>${name} + ${days} days = ${date}</p>`;
+                content += `<p>${name} + ${days} days = ${date}</p>`;
             });
 
             // Backward counting
             Object.entries(keyDates.backward).forEach(([name, endDate]) => {
                 const days = getDaysBetween(date, endDate);
-                analysis += `<p>${days} days until ${name} (${endDate})</p>`;
+                content += `<p>${days} days until ${name} (${endDate})</p>`;
             });
 
-            // Pattern recognition
-            const dayNumbers = new Set();
-            Object.entries(keyDates.forward).forEach(([_, startDate]) => {
-                dayNumbers.add(getDaysBetween(startDate, date));
-            });
-
-            if (dayNumbers.size < Object.keys(keyDates.forward).length) {
-                analysis += '<p class="pattern-highlight">Pattern detected: Same day count on multiple calendars!</p>';
+            // Check for convergence date
+            if (date === keyDates.special.Convergence) {
+                content += `
+                    <p class="highlight">
+                        Convergence Date Detected!<br>
+                        Days counts: ${daysCounts.join(', ')}
+                    </p>
+                `;
             }
 
-            analysisCard.innerHTML = analysis;
-            results.appendChild(analysisCard);
+            card.innerHTML = content;
+            results.prepend(card);
         }
 
-        function analyze(multiplier) {
-            const results = document.getElementById('resultsContainer');
-            results.innerHTML = '';
-
-            const multiplierCard = document.createElement('div');
-            multiplierCard.className = 'result-card';
-            
-            let analysis = `<h3>Analysis of ×${multiplier}</h3>`;
-
-            Object.entries(keyDates.forward).forEach(([name, startDate]) => {
-                const targetDate = getDateFromDays(startDate, multiplier);
-                analysis += `<p>${name}: Day ${multiplier} = ${targetDate}</p>`;
-            });
-
-            // Special handling for 121-type patterns
-            if (multiplier === 121) {
-                analysis += '<h4>121 Pattern Analysis</h4>';
-                const historicalDates = Object.entries(keyDates.historical);
-                const forwardDates = Object.entries(keyDates.forward);
-                
-                historicalDates.forEach(([histName, histDate]) => {
-                    forwardDates.forEach(([fwdName, fwdDate]) => {
-                        const connection = getDaysBetween(histDate, fwdDate) % 121;
-                        if (connection === 0) {
-                            analysis += `<p class="pattern-highlight">Connection found: ${histName} to ${fwdName}</p>`;
-                        }
-                    });
-                });
-            }
-
-            multiplierCard.innerHTML = analysis;
-            results.appendChild(multiplierCard);
-        }
-
-        // Initialize with today's date
-        document.getElementById('dateInput').valueAsDate = new Date();
+        // Initialize with convergence date
+        document.getElementById('dateInput').value = keyDates.special.Convergence;
+        analyzeDate(keyDates.special.Convergence);
     </script>
 </body>
 </html>
