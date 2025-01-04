@@ -7,134 +7,99 @@
     <style>
         :root {
             --primary: #bb86fc;
-            --text-primary: #000000;
-            --background: #ffffff;
-            --surface: #ffffff;
-            --ios-purple: rgb(187, 134, 252);
+            --secondary: #03dac5;
+            --background: #121212;
+            --surface: #1c1c1c; /* Updated to match dark mode */
+            --on-surface: #e0e0e0;
+            --accent: #64b5f6;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background: #1a1a1a;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.4;
-            -webkit-font-smoothing: antialiased;
+            background: var(--background);
+            color: var(--on-surface);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            animation: fadeIn 1s ease-in forwards;
         }
 
-        .ios-container {
-            max-width: 100%;
-            margin: 0 auto;
-            background: #1a1a1a;
-            color: #ffffff;
-            padding: 20px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        .header-title {
-            color: var(--ios-purple);
-            font-size: 42px;
-            font-weight: 700;
+        header {
+            padding: 2rem;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
             text-align: center;
-            padding: 20px;
-            margin-bottom: 40px;
         }
 
-        .content-card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 20px;
-            margin: 20px 0;
-            color: var(--text-primary);
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--surface); /* Ensures consistency with dark mode */
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
 
-        h2 {
-            color: var(--ios-purple);
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 20px;
+        h1, h2 {
+            color: var(--primary);
         }
 
-        .section-text {
-            font-size: 17px;
-            line-height: 1.5;
-            color: #000000;
-            margin-bottom: 16px;
-        }
-
-        ul {
-            padding-left: 20px;
-            margin-bottom: 16px;
-        }
-
-        li {
-            font-size: 17px;
-            margin-bottom: 12px;
-            position: relative;
-            list-style-type: none;
-        }
-
-        li::before {
-            content: "→";
-            color: #64b5f6;
-            position: absolute;
-            left: -20px;
-        }
-
-        .ios-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(248, 248, 248, 0.95);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .ios-nav a {
-            color: #007AFF;
+        a {
+            color: var(--accent);
             text-decoration: none;
-            font-size: 24px;
         }
 
-        .highlight {
-            background-color: rgba(187, 134, 252, 0.1);
-            padding: 2px 4px;
-            border-radius: 4px;
+        a:hover {
+            color: var(--secondary);
         }
 
-        @media (prefers-color-scheme: dark) {
-            .content-card {
-                background: #2a2a2a;
-                color: #ffffff;
-            }
-            
-            .section-text {
-                color: #ffffff;
-            }
+        ul li {
+            margin-bottom: 1rem;
+        }
+
+        .quote {
+            font-style: italic;
+            color: #b0bec5;
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            background: rgba(100,181,246,0.1);
+            border-radius: 0 8px 8px 0;
+        }
+
+        footer {
+            padding: 2rem;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            text-align: center;
+            margin-top: 3rem;
         }
     </style>
 </head>
 <body>
-    <div class="ios-container">
-        <h1 class="header-title">The Historical Playbook of Squeezes</h1>
-        
-        <div class="content-card">
-            <h2>🔍 Fails-to-Deliver: The Smoking Gun</h2>
-            <p class="section-text">
-                The SEC's refusal to release $GME FTD data citing "unusual circumstances" is a glaring red flag. They're stalling—just as they did with "foreseeable harm." What's buried in that data? Let's look to history for clues:
-            </p>
-            <ul>
-                <li>
-                    <span class="highlight">Volkswagen Squeeze (2008):</span> FTDs skyrocketed as shorts scrambled to cover with no shares available. Sound familiar?
-                </li>
-                <li>
-                    <span class="highlight">Piggly Wiggly (1923):</span> Saunders exposed Wall Street's short game, only for the NYSE to rewrite the rules. History doesn't repeat, but it rhymes.
-                </li>
-            </ul>
-        </div>
-        <!-- Rest of the content would follow the same pattern -->
-    </div>
+    <header>
+        <h1>The Historical Playbook of Squeezes</h1>
+    </header>
+    <main>
+        <h2>🔍 Fails-to-Deliver: The Smoking Gun</h2>
+        <p>The SEC's refusal to release $GME FTD data citing "unusual circumstances" is a glaring red flag. They're stalling—just as they did with "foreseeable harm." What's buried in that data? Let's look to history for clues:</p>
+        <ul>
+            <li><strong>Volkswagen Squeeze (2008):</strong> FTDs skyrocketed as shorts scrambled to cover with no shares available.</li>
+            <li><strong>Piggly Wiggly (1923):</strong> Saunders exposed Wall Street's short game, only for the NYSE to rewrite the rules.</li>
+        </ul>
+        <h2>📜 Lessons from History</h2>
+        <p>The Piggly Wiggly corner in 1923 remains a critical lesson. Clarence Saunders called the shorts' bluff, and when they couldn't deliver, chaos ensued. The NYSE bent the rules to protect Wall Street. Today, similar tactics appear to be in play with $GME:</p>
+        <div class="quote">"When you beat Wall Street at their own game, they'll change the rules to win anyway."</div>
+        <h2>🔗 Additional Reading</h2>
+        <ul>
+            <li><a href="https://fibonacciai.github.io/42069/gmefibresonance.html" target="_blank">Deep Dive on Cycles</a></li>
+            <li><a href="https://www.sec.gov/files/pigglywiggly.pdf" target="_blank">The Piggly Wiggly Squeeze (SEC)</a></li>
+        </ul>
+    </main>
+    <footer>
+        <p>&copy; 2025 – Built by the community, for the community.</p>
+    </footer>
 </body>
 </html>
