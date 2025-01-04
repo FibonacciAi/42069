@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Vortex Mathematics - Redesign</title>
+  <title>Vortex Mathematics - Redesign (Wireframe)</title>
   <style>
     body {
       margin: 0; 
@@ -232,12 +232,9 @@
         if (!scaleArray) return;
         // Keep the same index if user previously clicked a number cell,
         // otherwise default to the first ratio:
-        const currentFreq = this.fmSynth.frequency.value;
-        // figure out which ratio the current freq corresponded to
-        // or just reset to the base ratio for simplicity
         const frequencies = scaleArray.map(r => this.baseFrequency * r);
 
-        // if we want to always reset to the first ratio:
+        // Always reset to the first ratio:
         this.fmSynth.frequency.value = frequencies[0];
         this.fmSynth.modulation.frequency.value = frequencies[1];
       }
@@ -352,13 +349,22 @@
         this.controls.enablePan = false;
         this.controls.enableZoom = false;
 
+        // ***** Wireframe Material *****
         const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
         const material = new THREE.MeshStandardMaterial({
-          color: 0x88ccff, metalness: 0.5, roughness: 0.4, emissive: 0x005577, emissiveIntensity: 0.5
+          color: 0x88ccff,
+          metalness: 0.5,
+          roughness: 0.4,
+          emissive: 0x005577,
+          emissiveIntensity: 0.5,
+          wireframe: true  // <-- Make the torus knot wireframe
         });
+
         this.mesh = new THREE.Mesh(geometry, material);
         this.scene.add(this.mesh);
 
+        // Even though lighting doesn’t affect wireframe as much,
+        // we'll keep it so we could switch off wireframe easily later.
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
         const pointLight = new THREE.PointLight(0xffffff, 1);
