@@ -7,7 +7,7 @@
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             background: linear-gradient(135deg, #1e1e2f, #2c3e50);
             color: white;
             font-family: 'Arial', sans-serif;
@@ -15,41 +15,67 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
         }
         .container {
             text-align: center;
+            max-width: 800px;
+            width: 100%;
         }
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 30px;
             letter-spacing: 2px;
             animation: fadeIn 2s ease-in-out;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
         .links {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
         }
         .link {
             padding: 15px 20px;
             background: linear-gradient(135deg, #3498db, #9b59b6);
             color: white;
             text-decoration: none;
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        .link:hover::before {
+            left: 100%;
         }
         .link:hover {
-            transform: translateY(-5px);
+            transform: translateY(-5px) scale(1.02);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            background: linear-gradient(135deg, #2980b9, #8e44ad);
         }
         .footer {
-            margin-top: 20px;
+            margin-top: 40px;
             font-size: 0.9em;
             opacity: 0.7;
+            animation: pulse 2s infinite;
         }
         @keyframes fadeIn {
             from {
@@ -61,13 +87,27 @@
                 transform: translateY(0);
             }
         }
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0.7; }
+        }
+        @media (max-width: 600px) {
+            .links {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            .link {
+                font-size: 1em;
+                padding: 12px 15px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>MOASS Reports Index</h1>
         <div class="links">
-            <!-- Add the HTML files here -->
             <a class="link" href="3dmediauniverse.html" target="_blank">3D Media Universe</a>
             <a class="link" href="3dspheres.html" target="_blank">3D Spheres</a>
             <a class="link" href="432-quest.html" target="_blank">432 Quest</a>
