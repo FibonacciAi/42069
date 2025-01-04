@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Unified Calendar System</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Directional Julian Calendar System</title>
   <style>
     :root {
       --bg-color: #000;
@@ -12,9 +11,7 @@
       --accent-color: #00ffcc;
       --accent2-color: #ff00cc;
       --card-bg: #1a1a1a;
-      --secondary-text-color: #ccc;
-      --transition-speed: 0.3s;
-      --border-radius: 10px;
+      --highlight: rgba(0, 255, 204, 0.1);
     }
 
     * {
@@ -24,214 +21,179 @@
     }
 
     body {
-      background-color: var(--bg-color);
+      background: var(--bg-color);
       color: var(--text-color);
       font-family: 'Courier New', monospace;
       line-height: 1.6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      padding: 20px;
     }
 
-    header {
-      background: #111;
-      padding: 1rem;
-      text-align: center;
-      border-bottom: 2px solid var(--accent-color);
-    }
-
-    main {
-      flex: 1;
-      padding: 1rem;
+    .container {
       max-width: 1200px;
       margin: 0 auto;
-      width: 95%;
     }
 
-    .system-grid {
+    .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-      margin-top: 2rem;
+      gap: 20px;
+      margin-top: 20px;
     }
 
-    .calendar-system {
+    .calendar-box {
       background: var(--card-bg);
       border: 1px solid var(--accent-color);
-      border-radius: var(--border-radius);
-      padding: 1rem;
+      border-radius: 10px;
+      padding: 15px;
     }
 
-    .calendar-system h2 {
+    .calendar-box h2 {
       color: var(--accent-color);
-      margin-bottom: 1rem;
+      margin-bottom: 15px;
       text-align: center;
     }
 
-    .cycle-info {
-      margin: 1rem 0;
-      padding: 0.5rem;
-      background: rgba(0, 255, 204, 0.1);
-      border-radius: 5px;
-    }
-
-    .date-converter {
-      background: var(--card-bg);
-      padding: 1rem;
-      margin: 2rem 0;
-      border-radius: var(--border-radius);
-      border: 1px solid var(--accent2-color);
-    }
-
-    input, select {
+    .date-input {
       background: #333;
       border: 1px solid var(--accent-color);
       color: var(--text-color);
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      border-radius: 5px;
+      padding: 8px;
       width: 100%;
-    }
-
-    button {
-      background: var(--accent-color);
-      color: var(--bg-color);
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 0.5rem 0;
-    }
-
-    .result {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: rgba(0, 255, 204, 0.1);
+      margin-bottom: 10px;
       border-radius: 5px;
     }
 
-    .key-date {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem;
-      border-bottom: 1px solid var(--accent-color);
+    .result-box {
+      background: var(--highlight);
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
     }
 
-    @media (max-width: 768px) {
-      .system-grid {
-        grid-template-columns: 1fr;
-      }
+    .convergence-point {
+      color: var(--accent2-color);
+      font-weight: bold;
+    }
+
+    .info-box {
+      background: var(--highlight);
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
     }
   </style>
 </head>
-
 <body>
-  <header>
-    <h1>Unified Calendar System</h1>
-  </header>
+  <div class="container">
+    <div class="info-box">
+      <h2>Multi-Directional Julian Calendar System</h2>
+      <p>Forward Calendars: 8/30/20, 4/6/22, 4/16/24</p>
+      <p>Backward Calendars: 6/1/25, 4/1/25</p>
+    </div>
 
-  <main>
-    <div class="system-grid">
-      <!-- Base Calendar System -->
-      <div class="calendar-system">
-        <h2>Primary Cycle (16-Month)</h2>
-        <div class="cycle-info">
-          <p>Start Date: 4/16/24</p>
-          <p>Cycle Length: 16 months</p>
-          <p>Key Intervals: 741, 767 days</p>
-        </div>
-        <div id="primaryDates"></div>
+    <div class="grid">
+      <div class="calendar-box">
+        <h2>Date Analyzer</h2>
+        <input type="date" id="dateInput" class="date-input">
+        <div id="result" class="result-box"></div>
       </div>
 
-      <!-- Overlay System -->
-      <div class="calendar-system">
-        <h2>Overlay System</h2>
-        <div class="cycle-info">
-          <p>Reference Points:</p>
-          <ul id="referencePoints"></ul>
-        </div>
+      <div class="calendar-box">
+        <h2>Convergence Points</h2>
+        <div id="convergence" class="result-box"></div>
       </div>
 
-      <!-- Date Converter -->
-      <div class="date-converter">
-        <h2>Universal Converter</h2>
-        <input type="date" id="dateInput">
-        <select id="systemSelect">
-          <option value="primary">Primary System</option>
-          <option value="overlay">Overlay System</option>
-          <option value="unified">Unified View</option>
-        </select>
-        <button onclick="convertDate()">Convert</button>
-        <div id="conversionResult" class="result"></div>
+      <div class="calendar-box">
+        <h2>Pattern Finder</h2>
+        <div id="patterns" class="result-box"></div>
       </div>
     </div>
-  </main>
+  </div>
 
   <script>
-    // Core system parameters
-    const systems = {
-      primary: {
-        startDate: '2024-04-16',
-        cycleLength: 16,
-        keyIntervals: [741, 767]
-      },
-      overlay: {
-        startDates: [
-          '2022-04-06', // First reference
-          '2024-05-12'  // Secondary reference
-        ],
-        intervals: [741, 767, 312]
-      }
+    const julianCalendars = {
+      forward: [
+        { name: "RK", startDate: "2020-08-30" },
+        { name: "First Reference", startDate: "2022-04-06" },
+        { name: "Primary", startDate: "2024-04-16" }
+      ],
+      backward: [
+        { name: "June Target", endDate: "2025-06-01" },
+        { name: "April Target", endDate: "2025-04-01" }
+      ]
     };
 
-    // Initialize reference points
-    function initializeReferences() {
-      const refList = document.getElementById('referencePoints');
-      const points = [
-        '4/6/22 → Initial Reference',
-        '4/16/24 → Primary Cycle Start (+741)',
-        '5/12/24 → Secondary Cycle Start',
-        '3/20/25 → Convergence Point'
-      ];
-      
-      refList.innerHTML = points.map(point => 
-        `<li>${point}</li>`
-      ).join('');
+    function getDayCount(date1, date2) {
+      return Math.floor((new Date(date2) - new Date(date1)) / (1000 * 60 * 60 * 24));
     }
 
-    // Date conversion system
-    function convertDate() {
-      const date = new Date(document.getElementById('dateInput').value);
-      const system = document.getElementById('systemSelect').value;
-      const result = document.getElementById('conversionResult');
+    function updateResults() {
+      const selectedDate = document.getElementById('dateInput').value;
+      if (!selectedDate) return;
 
-      const primaryStart = new Date(systems.primary.startDate);
-      const daysSincePrimary = Math.floor((date - primaryStart) / (1000 * 60 * 60 * 24));
+      let result = "<h3>Julian Day Counts:</h3>";
+
+      // Forward counts
+      julianCalendars.forward.forEach(cal => {
+        const days = getDayCount(cal.startDate, selectedDate);
+        result += `<p>${cal.name}: Day +${days}</p>`;
+      });
+
+      // Backward counts
+      julianCalendars.backward.forEach(cal => {
+        const days = getDayCount(selectedDate, cal.endDate);
+        result += `<p>${cal.name}: Day -${days}</p>`;
+      });
+
+      // Add 16-month cycle position
+      const primaryStart = new Date("2024-04-16");
+      const daysSincePrimary = getDayCount("2024-04-16", selectedDate);
+      const cyclePosition = (daysSincePrimary % 480) + 1; // 480 = 16 months * 30 days
+      result += `<p>16-Month Cycle: Day ${cyclePosition}</p>`;
+
+      document.getElementById('result').innerHTML = result;
+      findConvergences();
+      findPatterns();
+    }
+
+    function findConvergences() {
+      let convergences = "<h3>Notable Alignments:</h3>";
       
-      let output = '';
-      if (system === 'primary') {
-        const cycleMonth = (daysSincePrimary % (systems.primary.cycleLength * 30)) / 30;
-        output = `Cycle Month: ${Math.floor(cycleMonth) + 1}\n`;
-        output += `Days in Cycle: ${daysSincePrimary % (systems.primary.cycleLength * 30)}`;
-      } else if (system === 'overlay') {
-        const overlayStart = new Date(systems.overlay.startDates[0]);
-        const daysSinceOverlay = Math.floor((date - overlayStart) / (1000 * 60 * 60 * 24));
-        output = `Days from Reference: ${daysSinceOverlay}\n`;
-        output += `Interval Position: ${daysSinceOverlay % systems.overlay.intervals[0]}`;
-      } else {
-        output = `Primary: Day ${daysSincePrimary}\n`;
-        systems.overlay.intervals.forEach(interval => {
-          output += `${interval} cycle: Day ${daysSincePrimary % interval}\n`;
-        });
+      // Find dates where forward and backward counts create interesting patterns
+      const checkDate = new Date("2024-04-16");
+      for (let i = 0; i < 365; i++) {
+        const date = new Date(checkDate.getTime() + (i * 24 * 60 * 60 * 1000));
+        const forwardCounts = julianCalendars.forward.map(cal => 
+          getDayCount(cal.startDate, date.toISOString().split('T')[0]));
+        const backwardCounts = julianCalendars.backward.map(cal => 
+          getDayCount(date.toISOString().split('T')[0], cal.endDate));
+        
+        // Look for interesting patterns
+        if (forwardCounts.some((count, idx) => 
+            backwardCounts.includes(count) || 
+            count % 741 === 0 || 
+            count % 767 === 0)) {
+          convergences += `<p class="convergence-point">${date.toISOString().split('T')[0]}</p>`;
+        }
       }
 
-      result.innerText = output;
+      document.getElementById('convergence').innerHTML = convergences;
     }
 
-    // Initialize on load
-    window.onload = function() {
-      initializeReferences();
-    };
+    function findPatterns() {
+      const patterns = "<h3>Active Patterns:</h3>" +
+        "<p>741 Day Cycle</p>" +
+        "<p>767 Day Cycle</p>" +
+        "<p>16-Month Cycle (480 days)</p>" +
+        "<p>Forward/Backward Intersections</p>";
+      
+      document.getElementById('patterns').innerHTML = patterns;
+    }
+
+    // Initialize
+    document.getElementById('dateInput').valueAsDate = new Date();
+    document.getElementById('dateInput').addEventListener('change', updateResults);
+    updateResults();
   </script>
 </body>
 </html>
