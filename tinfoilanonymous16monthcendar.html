@@ -49,6 +49,41 @@
       letter-spacing: 1px;
     }
 
+    .info-section {
+      background: var(--card-bg);
+      margin: 1rem auto;
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--accent-color);
+      max-width: 800px;
+      width: 90%;
+    }
+
+    .info-section h2 {
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+    }
+
+    .info-section p {
+      margin-bottom: 0.8rem;
+    }
+
+    .info-section ul {
+      list-style-type: none;
+      margin-left: 1rem;
+    }
+
+    .info-section li {
+      margin-bottom: 0.5rem;
+    }
+
+    .info-section .example {
+      background: rgba(0, 255, 204, 0.1);
+      padding: 0.5rem;
+      border-radius: 5px;
+      margin: 0.5rem 0;
+    }
+
     .search-container {
       margin: 1rem auto;
       max-width: 500px;
@@ -150,6 +185,7 @@
       text-align: center;
       padding: 1rem;
       border-top: 2px solid var(--accent-color);
+      margin-top: 2rem;
     }
     
     footer p {
@@ -174,6 +210,24 @@
   </header>
 
   <main>
+    <div class="info-section">
+      <h2>Understanding the Numbers</h2>
+      <p>This calendar system operates on multiple levels of interpretation:</p>
+      <ul>
+        <li>Each month has two primary numbers: an ascending value (1-16) and a descending value (16-1)</li>
+        <li>When combined, these numbers create date patterns that can be read in multiple ways</li>
+        <li>Numbers can represent different dates depending on which calendar system you're using</li>
+      </ul>
+      <div class="example">
+        <p>For example: 420 can be read as:</p>
+        <ul>
+          <li>4/20 (traditional calendar)</li>
+          <li>3/20 (where month #4 is March 2025)</li>
+        </ul>
+      </div>
+      <p>The numbers after each month (e.g., "710, 107") represent combinations of the ascending and descending values, which can be interpreted as alternative dates or reference points.</p>
+    </div>
+
     <div class="search-container">
       <input type="text" class="search-bar" placeholder="Search months..." id="searchBar">
     </div>
