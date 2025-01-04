@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Visualization</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+            --accent1: #00ffcc;
+            --accent2: #ff00cc;
+            --accent3: #ccff00;
+            --accent4: #ff6600;
+            --card-bg: #1a1a1a;
+            --border-glow: 0 0 10px var(--accent1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .timeline-container {
+            background: var(--card-bg);
+            border: 1px solid var(--accent1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .timeline {
+            position: relative;
+            height: 400px;
+            min-width: 800px;
+            margin: 40px 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent1);
+        }
+
+        .date-marker {
+            position: absolute;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-point {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent1);
+        }
+
+        .date-label {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            padding: 5px;
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .interval {
+            position: absolute;
+            height: 30px;
+            background: rgba(204, 255, 0, 0.2);
+            border: 1px solid var(--accent3);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+
+        .interval-143 {
+            background: rgba(255, 102, 0, 0.2);
+            border-color: var(--accent4);
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .connections {
+            margin-top: 20px;
+            padding: 10px;
+            background: #333;
+            border-radius: 8px;
+        }
+
+        .connections-title {
+            color: var(--accent1);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="timeline-container">
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(204, 255, 0, 0.2); border: 1px solid var(--accent3)"></div>
+                <span>Standard Intervals</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(255, 102, 0, 0.2); border: 1px solid var(--accent4)"></div>
+                <span>143-day Intervals</span>
+            </div>
+        </div>
+        <div id="timeline" class="timeline">
+            <div class="timeline-line"></div>
+        </div>
+        <div class="connections" id="connections"></div>
+    </div>
+
+    <script>
+        const dates = {
+            'RK': '2020-08-30',
+            'Oct21': '2021-10-26',
+            'FirstRef': '2022-04-06',
+            'Primary': '2024-04-16',
+            'DogTweet': '2024-09-06',
+            'Convergence': '2025-01-09',
+            'March25': '2025-03-15',
+            'April25': '2025-04-01',
+            'June25': '2025-06-01'
+        };
+
+        function getDaysBetween(date1, date2) {
+            return Math.floor((new Date(date2) - new Date(date1)) / (1000 * 60 * 60 * 24));
+        }
+
+        function getPositionPercentage(date) {
+            const start = new Date(dates.RK);
+            const end = new Date(dates.June25);
+            const current = new Date(date);
+            return ((current - start) / (end - start)) * 100;
+        }
+
+        function createTimeline() {
+            const timeline = document.getElementById('timeline');
+            const connections = document.getElementById('connections');
+            let connectionsHtml = '<h3 class="connections-title">Key Intervals</h3>';
+
+            // Create date markers
+            Object.entries(dates).forEach(([key, date]) => {
+                const position = getPositionPercentage(date);
+                const marker = document.createElement('div');
+                marker.className = 'date-marker';
+                marker.style.left = `${position}%`;
+                marker.innerHTML = `
+                    <div class="date-label">${key}: ${date}</div>
+                    <div class="date-point"></div>
+                `;
+                timeline.appendChild(marker);
+            });
+
+            // Create intervals
+            const intervals = [
+                {start: 'Primary', end: 'DogTweet', class: 'interval-143', label: '143d'},
+                {start: 'DogTweet', end: 'Convergence', label: '125d'},
+                {start: 'Primary', end: 'Convergence', label: '268d'},
+                {start: 'FirstRef', end: 'Convergence', label: '1009d'},
+                {start: 'Oct21', end: 'Convergence', label: '1171d'},
+                {start: 'RK', end: 'Convergence', label: '1593d'}
+            ];
+
+            intervals.forEach(({start, end, class: className = '', label}) => {
+                const startPos = getPositionPercentage(dates[start]);
+                const endPos = getPositionPercentage(dates[end]);
+                const width = endPos - startPos;
+
+                const interval = document.createElement('div');
+                interval.className = `interval ${className}`;
+                interval.style.left = `${startPos}%`;
+                interval.style.width = `${width}%`;
+                interval.style.top = `${Math.random() * 200 + 100}px`;
+                interval.textContent = label;
+                timeline.appendChild(interval);
+
+                connectionsHtml += `
+                    <div>${start} → ${end}: ${label}</div>
+                `;
+            });
+
+            connections.innerHTML = connectionsHtml;
+        }
+
+        window.onload = createTimeline;
+    </script>
+</body>
+</html>
