@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Enhanced Timeline Analysis</title>
+    <style>
+        :root {--bg:#000;--text:#fff;--accent1:#00ffcc;--accent2:#ff00cc;--accent3:#ccff00;--card-bg:#1a1a1a;}
+        body {background:var(--bg);color:var(--text);font-family:Courier New,monospace;padding:10px;line-height:1.6;}
+        .container {max-width:1000px;margin:auto;padding:0 10px;}
+        .section {background:var(--card-bg);border:1px solid var(--accent1);border-radius:10px;padding:15px;margin-bottom:15px;}
+        .section-header {font-size:1.2em;color:var(--accent1);margin-bottom:10px;}
+        .input-group {display:flex;flex-wrap:wrap;gap:10px;}
+        .button, .date-input {background:#333;border:none;color:var(--text);padding:10px;border-radius:5px;font-family:inherit;font-size:16px;}
+        .button:hover {background:var(--accent1);color:var(--bg);}
+        .date-input {width:100%;}
+        .button-group {display:flex;justify-content:space-between;}
+        .analysis-card {background:var(--card-bg);border:1px solid var(--accent2);border-radius:10px;padding:15px;margin-bottom:15px;}
+        .pattern-grid {display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:10px;}
+        .pattern-cell {background:#333;padding:8px;border-radius:5px;text-align:center;}
+        @media (max-width: 600px) {
+            .button-group {flex-direction:column;}
+            .button {width:100%;margin-bottom:5px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <div class="section-header">Date Analysis</div>
+            <input type="date" class="date-input" id="dateInput" onchange="analyzeDate(this.value)">
+        </div>
+
+        <div class="section">
+            <div class="section-header">Timeline Multipliers</div>
+            <div class="button-group">
+                <button class="button" onclick="analyze(3)">×3</button>
+                <button class="button" onclick="analyze(9)">×9</button>
+                <button class="button" onclick="analyze(33)">×33</button>
+                <button class="button" onclick="analyze(333)">×333</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">Special Patterns</div>
+            <div class="input-group">
+                <button class="button" onclick="analyzeSpecialPattern(26)">26</button>
+                <button class="button" onclick="analyzeSpecialPattern(62)">62</button>
+                <button class="button" onclick="analyzeSpecialPattern(65)">65</button>
+                <button class="button" onclick="analyzeSpecialPattern(95)">95</button>
+                <button class="button" onclick="analyzeSpecialPattern(59)">59</button>
+                <input type="number" class="date-input" id="customPattern" placeholder="Custom Pattern" oninput="analyzeCustomPattern()">
+            </div>
+        </div>
+
+        <div id="resultsContainer"></div>
+    </div>
+
+    <script>
+        const keyDates = {
+            forward: {RK:'2020-08-30',Oct21:'2021-10-26',FirstRef:'2022-04-06',Primary:'2024-04-16'},
+            backward: {June25:'2025-06-01',April25:'2025-04-01',March25:'2025-03-15'},
+            special: {RK_Start:'2024-04-16',RK_Day26:'2024-05-12',Convergence:'2025-01-09'}
+        };
+
+        function daysBetween(date1, date2) {return Math.floor((new Date(date2) - new Date(date1)) / 86400000);}
+        function addDays(date, days) {const d = new Date(date); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0];}
+
+        function analyze(number) {
+            const results = document.getElementById('resultsContainer');
+            const card = document.createElement('div');
+            card.className = 'analysis-card';
+            card.innerHTML = `<h3>Analysis for ×${number}</h3><div class="pattern-grid">${Object.entries(keyDates.forward).map(([name, date]) => `<div class="pattern-cell">${name} × ${number} = ${addDays(date, number)}</div>`).join('')}</div>`;
+            results.prepend(card);
+        }
+
+        function analyzeSpecialPattern(number) {
+            const results = document.getElementById('resultsContainer');
+            const card = document.createElement('div');
+            card.className = 'analysis-card';
+            let content = `<h3>Analysis of Pattern ${number}</h3><div class="pattern-grid">${Object.entries(keyDates.forward).map(([name, date]) => `<div class="pattern-cell">${name} + ${number} = ${addDays(date, number)}</div>`).join('')}${number === 26 ? `<div class="pattern-cell">RK Schedule Start: ${keyDates.special.RK_Start}<br>Day 26 = ${keyDates.special.RK_Day26}</div>` : ''}</div>`;
+            card.innerHTML = content;
+            results.prepend(card);
+        }
+
+        function analyzeDate(date) {
+            const results = document.getElementById('resultsContainer');
+            const card = document.createElement('div');
+            card.className = 'analysis-card';
+            let content = '<h3>Date Analysis</h3>';
+            for (let [name, startDate] of Object.entries(keyDates.forward)) {
+                content += `<p>${name} + ${daysBetween(startDate, date)} days = ${date}</p>`;
+            }
+            for (let [name, endDate] of Object.entries(keyDates.backward)) {
+                content += `<p>${daysBetween(date, endDate)} days until ${name} (${endDate})</p>`;
+            }
+            if (date === keyDates.special.Convergence) {
+                content += `<p>Convergence Date Detected!</p>`;
+            }
+            card.innerHTML = content;
+            results.prepend(card);
+        }
+
+        function analyzeCustomPattern() {
+            const number = parseInt(document.getElementById('customPattern').value);
+            if (number) analyzeSpecialPattern(number);
+        }
+
+        document.getElementById('dateInput').value = keyDates.special.Convergence;
+        analyzeDate(keyDates.special.Convergence);
+    </script>
+</body>
+</html>
