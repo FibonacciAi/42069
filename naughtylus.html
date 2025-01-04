@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Advanced Fibonacci Spiral with Cthulhu Node</title>
+  <title>Advanced Fibonacci Spiral</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -13,71 +13,57 @@
       left: 10px;
       background: rgba(0, 0, 0, 0.8);
       color: white;
-      padding: 15px;
-      border-radius: 8px;
+      padding: 10px;
+      border-radius: 5px;
       font-family: Arial, sans-serif;
-      z-index: 10;
-      max-width: 300px;
+      z-index: 1000;
       display: none;
     }
   </style>
 </head>
 <body>
-<div class="info-panel" id="infoPanel">Sector Info</div>
+<div class="info-panel" id="infoPanel">Hover over a spiral point for details</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/BloomPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three/examples/js/shaders/CopyShader.js"></script>
 <script>
   // Scene, Camera, Renderer
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x000011);
   document.body.appendChild(renderer.domElement);
 
   // Orbit Controls
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-  // Tooltip and Info Panel
+  // Tooltip
   const infoPanel = document.getElementById('infoPanel');
 
   // Fibonacci Spiral Function
   function createFibonacciSpiral(points, scale, offset, color, layerIndex) {
     const group = new THREE.Group();
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // Golden angle
     for (let i = 0; i < points; i++) {
       const theta = i * goldenAngle;
       const radius = Math.sqrt(i) * scale;
       const x = radius * Math.cos(theta);
       const y = radius * Math.sin(theta);
-      const z = offset * (layerIndex * 0.5) + (i / points) * 5;
+      const z = offset * 0.1;
 
       const sphere = new THREE.Mesh(
         new THREE.SphereGeometry(0.1, 16, 16),
-        new THREE.MeshStandardMaterial({
-          color,
-          emissive: color,
-          emissiveIntensity: 0.5,
-        })
+        new THREE.MeshStandardMaterial({ color })
       );
       sphere.position.set(x, y, z);
-      sphere.userData = { sector: `Sector ${layerIndex + 1}`, pointIndex: i };
+      sphere.userData = { layer: layerIndex + 1, point: i };
 
-      // Add hover and click interactions
       sphere.onHover = () => {
         infoPanel.style.display = 'block';
-        infoPanel.textContent = `Sector: Sector ${layerIndex + 1}\nPoint: ${i}`;
+        infoPanel.textContent = `Layer: ${layerIndex + 1}, Point: ${i}`;
       };
       sphere.onOut = () => {
         infoPanel.style.display = 'none';
-      };
-      sphere.onClick = () => {
-        alert(`Clicked: Sector ${layerIndex + 1}, Point ${i}`);
       };
 
       group.add(sphere);
@@ -85,39 +71,23 @@
     return group;
   }
 
-  // Add Spirals with Dynamic Layers
+  // Add multiple spiral layers
   const numLayers = 8;
-  const spirals = [];
   const colors = ['#ff6666', '#66ff66', '#6666ff', '#ffcc66', '#66ccff', '#cc66ff', '#cccc66', '#66cccc'];
   for (let i = 0; i < numLayers; i++) {
-    const spiral = createFibonacciSpiral(300, 0.5 + i * 0.1, i, colors[i], i);
+    const spiral = createFibonacciSpiral(300, 0.5 + i * 0.2, i, colors[i], i);
     spiral.rotation.z = (Math.PI / numLayers) * i;
     scene.add(spiral);
-    spirals.push(spiral);
   }
 
-  // Central Glowing Node
+  // Central Node
   const centralNode = new THREE.Mesh(
     new THREE.SphereGeometry(1, 32, 32),
-    new THREE.MeshStandardMaterial({
-      color: '#ff0000',
-      emissive: '#ff0000',
-      emissiveIntensity: 1,
-    })
+    new THREE.MeshStandardMaterial({ color: '#ff0000', emissive: '#550000', emissiveIntensity: 1 })
   );
-  centralNode.position.set(0, 0, 0);
   scene.add(centralNode);
 
-  // Tentacle-like connections
-  const tentacleMaterial = new THREE.LineBasicMaterial({ color: '#ff4444' });
-  for (let i = 0; i < spirals.length; i++) {
-    const points = [new THREE.Vector3(0, 0, 0), spirals[i].children[0].position];
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const line = new THREE.Line(geometry, tentacleMaterial);
-    scene.add(line);
-  }
-
-  // Lights
+  // Lighting
   const light = new THREE.PointLight(0xffffff, 1, 100);
   light.position.set(10, 10, 10);
   scene.add(light);
@@ -127,7 +97,10 @@
 
   // GSAP Animations
   gsap.to(centralNode.scale, { duration: 2, x: 1.2, y: 1.2, z: 1.2, repeat: -1, yoyo: true });
-  gsap.to(spirals, { duration: 6, rotationZ: "+=2*Math.PI", repeat: -1 });
+
+  // Camera Position
+  camera.position.set(0, 5, 20);
+  controls.update();
 
   // Animation Loop
   function animate() {
@@ -136,7 +109,7 @@
   }
   animate();
 
-  // Mouse Interactions
+  // Interactivity: Tooltip on hover
   window.addEventListener('mousemove', (event) => {
     const rect = renderer.domElement.getBoundingClientRect();
     const mouse = {
@@ -145,17 +118,19 @@
     };
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children, true);
 
+    const intersects = raycaster.intersectObjects(scene.children, true);
     if (intersects.length > 0) {
       const obj = intersects[0].object;
       if (obj.onHover) obj.onHover();
     } else {
       infoPanel.style.display = 'none';
     }
+    infoPanel.style.left = `${event.clientX + 10}px`;
+    infoPanel.style.top = `${event.clientY + 10}px`;
   });
 
-  // Resize
+  // Resize handler
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
