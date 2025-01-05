@@ -5,12 +5,11 @@
     <style>
         * {
             box-sizing: border-box;
-            touch-action: none;
+            margin: 0;
+            padding: 0;
         }
         
         body, html { 
-            margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -19,12 +18,22 @@
             color: #fff;
         }
 
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #canvas-container {
+            width: 100vmin;
+            height: 100vmin;
+            position: relative;
+        }
+
         canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
+            display: block;
         }
 
         .controls {
@@ -105,7 +114,9 @@
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+    <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
     <div class="controls">
         <div class="control-row">
             <label>Speed</label>
@@ -137,16 +148,12 @@
             speed: 1,
             particles: 40000,
             waveScale: 5,
-            colorMode: 'monochrome',
-            autoMove: true
+            colorMode: 'monochrome'
         };
 
-        // Virtual touch point that moves automatically
-        let autoX = 0.5;
-        let autoY = 0.5;
         let autoAngle = 0;
+        let autoX = 0.5, autoY = 0.5;
 
-        // Update parameters from controls
         document.querySelectorAll('input, select').forEach(input => {
             input.addEventListener('input', (e) => {
                 params[e.target.id] = parseFloat(e.target.value) || e.target.value;
@@ -163,9 +170,9 @@
         
         function point(x, y, color) {
             ctx.beginPath();
-            ctx.arc(x, y, 1, 0, Math.PI * 2);
-            ctx.strokeStyle = color;
-            ctx.stroke();
+            ctx.arc(x, y, 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
         }
         
         function updateAutoPosition() {
@@ -176,17 +183,17 @@
         }
         
         function a(x, y) {
-            const k = x / 8 - 50;
-            const e = y / 8 - 50;
+            // Normalize coordinates to canvas size
+            const k = (x / canvas.width - 0.5) * 100;
+            const e = (y / canvas.height - 0.5) * 100;
             
-            // Use automatic movement for wave influence
             const touchInfluence = Math.sin(mag(x/canvas.width - autoX, y/canvas.height - autoY) * 10) * 15;
             
             const o = mag(k, e) / 12 * Math.cos(Math.sin(k/2) * Math.cos(e/2));
             const d = params.waveScale * Math.cos(o) + touchInfluence;
             
-            const xPos = (x + d * k * (Math.sin(d * 2 + t) + Math.sin(y * o * o) / 9)) / 1.5 + canvas.width/2;
-            const yPos = (y / 3 - d * 40 + 19 * Math.cos(d + t)) * 1.5 + canvas.height * 0.75;
+            const xPos = canvas.width * (0.5 + (k/100 + d * k/1000 * (Math.sin(d * 2 + t) + Math.sin(y * o * o) / 900)));
+            const yPos = canvas.height * (0.5 + (e/100 - d/25 + 0.19 * Math.cos(d + t)));
             
             let color;
             switch(params.colorMode) {
@@ -211,8 +218,16 @@
             
             updateAutoPosition();
             
-            for(let i = 0; i < params.particles; i++) {
-                a(i % 400, Math.floor(i / 400));
+            const cols = Math.round(Math.sqrt(params.particles));
+            const rows = Math.round(params.particles / cols);
+            
+            for(let y = 0; y < rows; y++) {
+                for(let x = 0; x < cols; x++) {
+                    a(
+                        (x / cols) * canvas.width,
+                        (y / rows) * canvas.height
+                    );
+                }
             }
             
             t += Math.PI / 90 * params.speed;
@@ -220,9 +235,15 @@
         }
         
         function resize() {
+            const container = document.getElementById('canvas-container');
+            const size = container.offsetWidth;
+            
+            // Set canvas size accounting for device pixel ratio
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            
+            // Scale the context to ensure correct drawing operations
             ctx.scale(dpr, dpr);
         }
         
