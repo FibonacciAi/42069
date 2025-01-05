@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enhanced Mathematical Art Pattern</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 100vh;
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .controls {
+            position: relative;
+            z-index: 2;
+            margin: 20px auto 60px;
+            padding: 20px;
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            width: 85%;
+            max-width: 400px;
+            transition: transform 0.3s ease;
+        }
+        .controls.minimized {
+            transform: translateY(calc(100% - 40px));
+        }
+        .minimize-button {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 30, 0.8);
+            border: none;
+            color: white;
+            padding: 5px 20px;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            backdrop-filter: blur(20px);
+        }
+        .slider-container {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .slider-container label {
+            font-size: 17px;
+            min-width: 120px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            height: 2px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 1px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .value-display {
+            min-width: 50px;
+            text-align: right;
+            font-size: 17px;
+        }
+        .color-container {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: pointer;
+            padding: 0;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .preset-colors {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .preset-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        .preset-color:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div class="controls">
+        <button class="minimize-button">▼</button>
+        <div class="slider-container">
+            <label>Speed</label>
+            <input type="range" id="speedSlider" min="1" max="200" value="100">
+            <span class="value-display" id="speedValue">100</span>
+        </div>
+        <div class="slider-container">
+            <label>Density</label>
+            <input type="range" id="densitySlider" min="1000" max="60000" value="40000">
+            <span class="value-display" id="densityValue">40000</span>
+        </div>
+        <div class="slider-container">
+            <label>Wave Scale</label>
+            <input type="range" id="waveSlider" min="1" max="30" value="18">
+            <span class="value-display" id="waveValue">18</span>
+        </div>
+        <div class="slider-container">
+            <label>Trail Length</label>
+            <input type="range" id="trailSlider" min="0" max="255" value="96">
+            <span class="value-display" id="trailValue">96</span>
+        </div>
+        <div class="slider-container">
+            <label>Pattern Color</label>
+            <input type="color" id="colorPicker" value="#00FF00" class="color-picker">
+        </div>
+        <div class="preset-colors">
+            <div class="preset-color" style="background: #00ff00"></div>
+            <div class="preset-color" style="background: #ff00ff"></div>
+            <div class="preset-color" style="background: #00ffff"></div>
+            <div class="preset-color" style="background: #ff0000"></div>
+            <div class="preset-color" style="background: #0000ff"></div>
+        </div>
+        <div class="button-container">
+            <button id="resetButton">Reset View</button>
+            <button id="randomizeButton">Randomize</button>
+            <button id="pauseButton">Pause</button>
+        </div>
+    </div>
+
+    <script>
+        let t = 0;
+        let speedMultiplier = 2;
+        let density = 40000;
+        let waveScale = 18;
+        let trailLength = 96;
+        let patternColor;
+        let scale = 1;
+        let baseScale;
+        let offsetX = 0, offsetY = 0;
+        let touchStartX = 0, touchStartY = 0;
+        let lastTouchDistance = 0;
+        let isDragging = false;
+        let isPaused = false;
+        let currentRotation = 0;
+        let isRotating = false;
+
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('canvas-container');
+            patternColor = color(0, 255, 0);
+            baseScale = min(width, height) / 400;
+            scale = baseScale;
+            
+            canvas.touchStarted(touchStart);
+            canvas.touchMoved(touchMove);
+            canvas.touchEnded(touchEnd);
+            
+            setupControlListeners();
+            setupPresetColors();
+        }
+
+        function setupControlListeners() {
+            document.getElementById('speedSlider').addEventListener('input', (e) => {
+                speedMultiplier = e.target.value / 50;
+                document.getElementById('speedValue').textContent = e.target.value;
+            });
+            
+            document.getElementById('densitySlider').addEventListener('input', (e) => {
+                density = parseInt(e.target.value);
+                document.getElementById('densityValue').textContent = e.target.value;
+            });
+
+            document.getElementById('waveSlider').addEventListener('input', (e) => {
+                waveScale = parseInt(e.target.value);
+                document.getElementById('waveValue').textContent = e.target.value;
+            });
+
+            document.getElementById('trailSlider').addEventListener('input', (e) => {
+                trailLength = parseInt(e.target.value);
+                document.getElementById('trailValue').textContent = e.target.value;
+            });
+
+            document.getElementById('colorPicker').addEventListener('input', (e) => {
+                const c = e.target.value;
+                patternColor = color(
+                    parseInt(c.substr(1,2), 16),
+                    parseInt(c.substr(3,2), 16),
+                    parseInt(c.substr(5,2), 16)
+                );
+            });
+
+            document.querySelector('.minimize-button').addEventListener('click', () => {
+                document.querySelector('.controls').classList.toggle('minimized');
+                document.querySelector('.minimize-button').textContent = 
+                    document.querySelector('.controls').classList.contains('minimized') ? '▲' : '▼';
+            });
+
+            document.getElementById('resetButton').addEventListener('click', resetView);
+            document.getElementById('randomizeButton').addEventListener('click', randomizePattern);
+            document.getElementById('pauseButton').addEventListener('click', togglePause);
+        }
+
+        function setupPresetColors() {
+            document.querySelectorAll('.preset-color').forEach(preset => {
+                preset.addEventListener('click', () => {
+                    const bgColor = preset.style.background;
+                    document.getElementById('colorPicker').value = rgbToHex(bgColor);
+                    patternColor = color(preset.style.background);
+                });
+            });
+        }
+
+        function rgbToHex(rgb) {
+            const values = rgb.match(/\d+/g);
+            return '#' + values.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+        }
+
+        function resetView() {
+            scale = baseScale;
+            offsetX = 0;
+            offsetY = 0;
+            currentRotation = 0;
+        }
+
+        function randomizePattern() {
+            waveScale = random(1, 30);
+            document.getElementById('waveSlider').value = waveScale;
+            document.getElementById('waveValue').textContent = floor(waveScale);
+            
+            speedMultiplier = random(0.5, 4);
+            document.getElementById('speedSlider').value = speedMultiplier * 50;
+            document.getElementById('speedValue').textContent = floor(speedMultiplier * 50);
+            
+            patternColor = color(random(255), random(255), random(255));
+            document.getElementById('colorPicker').value = '#' + 
+                hex(red(patternColor), 2) + 
+                hex(green(patternColor), 2) + 
+                hex(blue(patternColor), 2);
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pauseButton').textContent = isPaused ? 'Resume' : 'Pause';
+        }
+
+        function touchStart(event) {
+            if (event.touches.length === 1) {
+                isDragging = true;
+                touchStartX = event.touches[0].clientX - offsetX;
+                touchStartY = event.touches[0].clientY - offsetY;
+            } else if (event.touches.length === 2) {
+                lastTouchDistance = dist(
+                    event.touches[0].clientX, event.touches[0].clientY,
+                    event.touches[1].clientX, event.touches[1].clientY
+                );
+            }
+            return false;
+        }
+
+        function touchMove(event) {
+            if (event.touches.length === 1 && isDragging) {
+                offsetX = event.touches[0].clientX - touchStartX;
+                offsetY = event.touches[0].clientY - touchStartY;
+            } else if (event.touches.length === 2) {
+                const currentTouchDistance = dist(
+                    event.touches[0].clientX, event.touches[0].clientY,
+                    event.touches[1].clientX, event.touches[1].clientY
+                );
+                const scaleDelta = currentTouchDistance / lastTouchDistance;
+                scale *= scaleDelta;
+                scale = constrain(scale, baseScale * 0.5, baseScale * 3);
+                lastTouchDistance = currentTouchDistance;
+            }
+            return false;
+        }
+
+        function touchEnd() {
+            isDragging = false;
+            return false;
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            baseScale = min(width, height) / 400;
+            scale = baseScale;
+            offsetX = 0;
+            offsetY = 0;
+        }
+
+        function a(x, y, d = waveScale * cos(o = mag(k = x / 8 - 12.5, e = y / 8 - 12.5) / 12 * cos(sin(k / 2) * cos(e / 2)))) {
+            let px = ((x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 * scale + width/2) + offsetX;
+            let py = ((y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 * scale + height/2) + offsetY;
+            point(px, py);
+        }
+
+        function draw() {
+            background(0, trailLength);
+            stroke(patternColor);
+            strokeWeight(2 * scale);
+            
+            if (!isPaused) {
+                t += (PI / 90) * speedMultiplier;
+            }
+            
+            push();
+            translate(width/2, height/2);
+            rotate(currentRotation);
+            translate(-width/2, -height/2);
+            
+            for (let i = density; i--;) {
+                a(i % 200, i / 200);
+            }
+            pop();
+
+            if (isRotating) {
+                currentRotation += 0.01;
+            }
+        }
+
+        // Add keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case ' ':
+                    togglePause();
+                    break;
+                case 'r':
+                    resetView();
+                    break;
+                case 'R':
+                    randomizePattern();
+                    break;
+                case 't':
+                    isRotating = !isRotating;
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
