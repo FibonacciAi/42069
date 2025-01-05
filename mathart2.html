@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mathematical Art Pattern</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+        }
+        .controls {
+            margin: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        .slider-container {
+            margin: 10px 0;
+        }
+        input[type="range"] {
+            width: 200px;
+            margin: 10px;
+        }
+        .value-display {
+            display: inline-block;
+            min-width: 40px;
+            text-align: right;
+        }
+        .color-picker {
+            margin: 10px;
+            background: none;
+            border: none;
+            width: 50px;
+            height: 30px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="canvas-container"></div>
+        <div class="controls">
+            <div class="slider-container">
+                Speed: <input type="range" id="speedSlider" min="1" max="100" value="50">
+                <span class="value-display" id="speedValue">50</span>
+            </div>
+            <div class="slider-container">
+                Density: <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
+                <span class="value-display" id="densityValue">40000</span>
+            </div>
+            <div class="slider-container">
+                Wave Scale: <input type="range" id="waveSlider" min="1" max="20" value="5">
+                <span class="value-display" id="waveValue">5</span>
+            </div>
+            <div>
+                Pattern Color: <input type="color" id="colorPicker" value="#FFFFFF" class="color-picker">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let t = 0;
+        let w = 400;
+        let speedMultiplier = 0.5;
+        let density = 40000;
+        let waveScale = 5;
+        let patternColor;
+
+        function setup() {
+            const canvas = createCanvas(w, w);
+            canvas.parent('canvas-container');
+            patternColor = color(255);
+            
+            document.getElementById('speedSlider').addEventListener('input', (e) => {
+                speedMultiplier = e.target.value / 50;
+                document.getElementById('speedValue').textContent = e.target.value;
+            });
+            
+            document.getElementById('densitySlider').addEventListener('input', (e) => {
+                density = parseInt(e.target.value);
+                document.getElementById('densityValue').textContent = e.target.value;
+            });
+
+            document.getElementById('waveSlider').addEventListener('input', (e) => {
+                waveScale = parseInt(e.target.value);
+                document.getElementById('waveValue').textContent = e.target.value;
+            });
+
+            document.getElementById('colorPicker').addEventListener('input', (e) => {
+                const c = e.target.value;
+                patternColor = color(
+                    parseInt(c.substr(1,2), 16),
+                    parseInt(c.substr(3,2), 16),
+                    parseInt(c.substr(5,2), 16)
+                );
+            });
+        }
+
+        function a(x, y, d = waveScale * cos(o = mag(k = x / 8 - 12.5, e = y / 8 - 12.5) / 12 * cos(sin(k / 2) * cos(e / 2)))) {
+            point(
+                (x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 + 133,
+                (y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 + 300
+            );
+        }
+
+        function draw() {
+            background(6, 96);
+            stroke(patternColor);
+            strokeWeight(1.5);
+            
+            t += (PI / 90) * speedMultiplier;
+            
+            for (let i = density; i--;) {
+                a(i % 200, i / 200);
+            }
+        }
+    </script>
+</body>
+</html>
