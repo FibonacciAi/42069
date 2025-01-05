@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julian Calendar Analysis</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+            --accent1: #00ffcc;
+            --accent2: #ff00cc;
+            --accent3: #ccff00;
+            --purple: #9933ff;
+            --orange: #ff6600;
+            --card-bg: #1a1a1a;
+            --julian-color: #ff3366;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        .calendar-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .calendar-card {
+            background: var(--card-bg);
+            border: 1px solid var(--accent1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .calendar-header {
+            color: var(--accent1);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--accent1);
+            padding-bottom: 10px;
+        }
+
+        .offset-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        .offset-table td {
+            padding: 8px;
+            border: 1px solid #333;
+        }
+
+        .julian-date {
+            color: var(--julian-color);
+            font-weight: bold;
+        }
+
+        .gregorian-date {
+            color: var(--accent3);
+        }
+
+        .leap-indicator {
+            color: var(--purple);
+            font-style: italic;
+        }
+
+        .alignment-shift {
+            color: var(--orange);
+            font-weight: bold;
+        }
+
+        .explanation {
+            background: rgba(0, 255, 204, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .shift-marker {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .shift-positive {
+            background: var(--accent2);
+        }
+
+        .shift-negative {
+            background: var(--orange);
+        }
+
+        .date-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 15px 0;
+            padding-left: 15px;
+            border-left: 2px solid var(--accent1);
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar-container">
+        <div class="calendar-card">
+            <h3 class="calendar-header">Julian Financial Year Analysis</h3>
+            <div id="julianAnalysis"></div>
+        </div>
+        <div class="calendar-card">
+            <h3 class="calendar-header">Leap Year Alignment Shifts</h3>
+            <div id="leapYearAnalysis"></div>
+        </div>
+        <div class="calendar-card">
+            <h3 class="calendar-header">Critical Date Alignments</h3>
+            <div id="alignmentAnalysis"></div>
+        </div>
+    </div>
+
+<script>
+    function generateJulianAnalysis() {
+        const julianDiv = document.getElementById('julianAnalysis');
+        const leapDiv = document.getElementById('leapYearAnalysis');
+        const alignDiv = document.getElementById('alignmentAnalysis');
+
+        // Julian Financial Year Analysis
+        julianDiv.innerHTML = `
+            <div class="date-flow">
+                <span class="julian-date">4/6 Julian Calendar Start</span>
+                <span class="gregorian-date">→ Gregorian Offset: +13 days</span>
+                <span>Modern Financial Year Reference Points:</span>
+                <span class="julian-date">4/6/22 (DFV: 4,6,22)</span>
+                <span class="julian-date">4/6/24 (Key Reference)</span>
+            </div>
+            <div class="explanation">
+                Julian calendar financial year start (4/6) creates foundational 
+                alignment points across the pattern sequence, particularly significant 
+                in 2022 and 2024.
+            </div>
+        `;
+
+        // Leap Year Analysis
+        leapDiv.innerHTML = `
+            <div class="date-flow">
+                <span class="leap-indicator">2024 Leap Year Effects:</span>
+                <span>Pre-9/6/24: Standard alignment</span>
+                <span class="alignment-shift">Post-9/6/24: +1 day shift</span>
+                <span class="leap-indicator">Key Shift Points:</span>
+                <span>• ${subtractDays('2024-09-06', 55)}</span>
+                <span>• 2024-09-06</span>
+                <span>• ${addDays('2024-09-06', 55)}</span>
+            </div>
+            <div class="explanation">
+                Leap year causes alignment shift after 9/6/24, affecting all 
+                subsequent date calculations by +1 day.
+            </div>
+        `;
+
+        // Critical Alignments
+        alignDiv.innerHTML = `
+            <div class="date-flow">
+                <span class="julian-date">4/6/24 → ${addDays('2024-04-06', 143)}</span>
+                <span class="alignment-shift">9/6/24: Alignment Shift Point</span>
+                <span class="julian-date">11/13-14/24 → 1/7-8/25</span>
+                <span class="gregorian-date">Convergence: 1/9/25</span>
+            </div>
+            <table class="offset-table">
+                <tr>
+                    <td>Pre-Shift Pattern</td>
+                    <td>Post-Shift Pattern</td>
+                </tr>
+                <tr>
+                    <td>+0 days</td>
+                    <td>+1 day</td>
+                </tr>
+                <tr>
+                    <td>4/6 → 8/27</td>
+                    <td>9/6 → 1/9</td>
+                </tr>
+            </table>
+            <div class="explanation">
+                The Julian/Gregorian relationship creates precise alignment windows,
+                with 9/6/24 as the critical shift point affecting all subsequent
+                pattern calculations.
+            </div>
+        `;
+    }
+
+    function addDays(date, days) {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result.toISOString().split('T')[0];
+    }
+
+    function subtractDays(date, days) {
+        const result = new Date(date);
+        result.setDate(result.getDate() - days);
+        return result.toISOString().split('T')[0];
+    }
+
+    window.onload = generateJulianAnalysis;
+</script>
+</body>
+</html>
