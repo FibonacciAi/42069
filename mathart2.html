@@ -6,34 +6,47 @@
     <style>
         body {
             margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
+            justify-content: flex-end;
             min-height: 100vh;
             background: #1a1a1a;
             color: white;
             font-family: Arial, sans-serif;
+            overflow: hidden;
         }
-        .container {
-            text-align: center;
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
         .controls {
-            margin: 20px;
+            position: relative;
+            z-index: 2;
+            margin: 20px auto;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            backdrop-filter: blur(5px);
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            max-width: 90%;
+            width: 300px;
         }
         .slider-container {
-            margin: 10px 0;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         input[type="range"] {
-            width: 200px;
-            margin: 10px;
+            flex-grow: 1;
+            margin: 0 10px;
         }
         .value-display {
-            display: inline-block;
-            min-width: 40px;
+            min-width: 50px;
             text-align: right;
         }
         .color-picker {
@@ -47,37 +60,34 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="canvas-container"></div>
-        <div class="controls">
-            <div class="slider-container">
-                Speed: <input type="range" id="speedSlider" min="1" max="100" value="50">
-                <span class="value-display" id="speedValue">50</span>
-            </div>
-            <div class="slider-container">
-                Density: <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
-                <span class="value-display" id="densityValue">40000</span>
-            </div>
-            <div class="slider-container">
-                Wave Scale: <input type="range" id="waveSlider" min="1" max="20" value="5">
-                <span class="value-display" id="waveValue">5</span>
-            </div>
-            <div>
-                Pattern Color: <input type="color" id="colorPicker" value="#FFFFFF" class="color-picker">
-            </div>
+    <div id="canvas-container"></div>
+    <div class="controls">
+        <div class="slider-container">
+            Speed: <input type="range" id="speedSlider" min="1" max="100" value="50">
+            <span class="value-display" id="speedValue">50</span>
+        </div>
+        <div class="slider-container">
+            Density: <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
+            <span class="value-display" id="densityValue">40000</span>
+        </div>
+        <div class="slider-container">
+            Wave Scale: <input type="range" id="waveSlider" min="1" max="20" value="5">
+            <span class="value-display" id="waveValue">5</span>
+        </div>
+        <div class="slider-container">
+            Pattern Color: <input type="color" id="colorPicker" value="#FFFFFF" class="color-picker">
         </div>
     </div>
 
     <script>
         let t = 0;
-        let w = 400;
         let speedMultiplier = 0.5;
         let density = 40000;
         let waveScale = 5;
         let patternColor;
 
         function setup() {
-            const canvas = createCanvas(w, w);
+            const canvas = createCanvas(windowWidth, windowHeight);
             canvas.parent('canvas-container');
             patternColor = color(255);
             
@@ -106,10 +116,14 @@
             });
         }
 
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
         function a(x, y, d = waveScale * cos(o = mag(k = x / 8 - 12.5, e = y / 8 - 12.5) / 12 * cos(sin(k / 2) * cos(e / 2)))) {
             point(
-                (x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 + 133,
-                (y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 + 300
+                (x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 + width/2,
+                (y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 + height/2
             );
         }
 
