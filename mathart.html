@@ -14,83 +14,63 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #111;
+            background: #000;
             font-family: system-ui, -apple-system, sans-serif;
             color: #fff;
         }
 
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
         canvas {
-            touch-action: none;
-            background: #000;
-            max-width: 100%;
-            max-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .controls {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.85);
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
             padding: 15px;
-            transform: translateY(80%);
-            transition: transform 0.3s ease;
+            border-radius: 12px;
             z-index: 1000;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
         }
 
-        .controls:hover,
-        .controls.active {
-            transform: translateY(0);
-        }
-
-        .controls-handle {
-            position: absolute;
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            padding: 8px 20px;
-            border-radius: 15px 15px 0 0;
-            cursor: pointer;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            border-left: 1px solid rgba(255,255,255,0.1);
-            border-right: 1px solid rgba(255,255,255,0.1);
+        .controls:hover {
+            opacity: 1;
         }
 
         .control-row {
             display: flex;
             align-items: center;
-            margin: 10px 0;
             gap: 10px;
+            white-space: nowrap;
         }
 
         label {
-            flex: 0 0 100px;
-            font-size: 14px;
+            font-size: 12px;
+            opacity: 0.8;
         }
 
         input[type="range"] {
-            flex: 1;
-            max-width: 200px;
+            width: 100px;
             -webkit-appearance: none;
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 3px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 12px;
+            height: 12px;
             background: #fff;
             border-radius: 50%;
             cursor: pointer;
@@ -98,30 +78,28 @@
 
         select {
             background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: none;
             color: #fff;
-            padding: 5px 10px;
+            padding: 3px 6px;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 12px;
+            cursor: pointer;
         }
 
         @media (max-width: 768px) {
             .controls {
-                padding: 10px;
-            }
-            
-            .control-row {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 5px;
-            }
-            
-            label {
-                flex: none;
+                top: auto;
+                bottom: 20px;
+                right: 50%;
+                transform: translateX(50%);
+                flex-direction: row;
+                flex-wrap: wrap;
+                max-width: 90%;
+                justify-content: center;
             }
             
             input[type="range"] {
-                max-width: 100%;
+                width: 80px;
             }
         }
     </style>
@@ -129,23 +107,22 @@
 <body>
     <canvas id="canvas"></canvas>
     <div class="controls">
-        <div class="controls-handle">Controls ▲</div>
         <div class="control-row">
             <label>Speed</label>
             <input type="range" id="speed" min="0.1" max="5" step="0.1" value="1">
         </div>
         <div class="control-row">
-            <label>Particles</label>
+            <label>Density</label>
             <input type="range" id="particles" min="10000" max="100000" step="1000" value="40000">
         </div>
         <div class="control-row">
-            <label>Wave Scale</label>
+            <label>Wave</label>
             <input type="range" id="waveScale" min="1" max="10" step="0.1" value="5">
         </div>
         <div class="control-row">
-            <label>Color Mode</label>
+            <label>Color</label>
             <select id="colorMode">
-                <option value="monochrome">Monochrome</option>
+                <option value="monochrome">Mono</option>
                 <option value="rainbow">Rainbow</option>
                 <option value="plasma">Plasma</option>
             </select>
@@ -154,77 +131,20 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const controls = document.querySelector('.controls');
-        const controlsHandle = document.querySelector('.controls-handle');
         
         let t = 0;
-        let isControlsActive = false;
-        let touchStartY = 0;
-        let touchStartX = 0;
-        let isDragging = false;
-
         let params = {
             speed: 1,
             particles: 40000,
             waveScale: 5,
             colorMode: 'monochrome',
-            touchX: 0,
-            touchY: 0,
-            touchActive: false
+            autoMove: true
         };
 
-        // Touch and mouse interaction
-        function handlePointerStart(e) {
-            const touch = e.touches ? e.touches[0] : e;
-            params.touchX = touch.clientX / window.innerWidth;
-            params.touchY = touch.clientY / window.innerHeight;
-            params.touchActive = true;
-        }
-
-        function handlePointerMove(e) {
-            if (params.touchActive) {
-                const touch = e.touches ? e.touches[0] : e;
-                params.touchX = touch.clientX / window.innerWidth;
-                params.touchY = touch.clientY / window.innerHeight;
-            }
-        }
-
-        function handlePointerEnd() {
-            params.touchActive = false;
-        }
-
-        // Controls panel interaction
-        controlsHandle.addEventListener('click', () => {
-            isControlsActive = !isControlsActive;
-            controls.classList.toggle('active', isControlsActive);
-            controlsHandle.textContent = `Controls ${isControlsActive ? '▼' : '▲'}`;
-        });
-
-        // Touch events for controls panel
-        controls.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-            isDragging = true;
-        });
-
-        controls.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const deltaY = e.touches[0].clientY - touchStartY;
-            if (Math.abs(deltaY) > 10) {
-                isControlsActive = deltaY < 0;
-                controls.classList.toggle('active', isControlsActive);
-                controlsHandle.textContent = `Controls ${isControlsActive ? '▼' : '▲'}`;
-            }
-        });
-
-        controls.addEventListener('touchend', () => {
-            isDragging = false;
-        });
-
-        // Canvas touch and mouse events
-        canvas.addEventListener('pointerdown', handlePointerStart);
-        canvas.addEventListener('pointermove', handlePointerMove);
-        canvas.addEventListener('pointerup', handlePointerEnd);
-        canvas.addEventListener('pointerleave', handlePointerEnd);
+        // Virtual touch point that moves automatically
+        let autoX = 0.5;
+        let autoY = 0.5;
+        let autoAngle = 0;
 
         // Update parameters from controls
         document.querySelectorAll('input, select').forEach(input => {
@@ -248,13 +168,19 @@
             ctx.stroke();
         }
         
+        function updateAutoPosition() {
+            autoAngle += 0.002;
+            const radius = 0.2;
+            autoX = 0.5 + Math.cos(autoAngle) * radius;
+            autoY = 0.5 + Math.sin(autoAngle * 0.7) * radius;
+        }
+        
         function a(x, y) {
             const k = x / 8 - 50;
             const e = y / 8 - 50;
             
-            // Incorporate touch interaction
-            const touchInfluence = params.touchActive ? 
-                Math.sin(mag(x/canvas.width - params.touchX, y/canvas.height - params.touchY) * 10) * 20 : 0;
+            // Use automatic movement for wave influence
+            const touchInfluence = Math.sin(mag(x/canvas.width - autoX, y/canvas.height - autoY) * 10) * 15;
             
             const o = mag(k, e) / 12 * Math.cos(Math.sin(k/2) * Math.cos(e/2));
             const d = params.waveScale * Math.cos(o) + touchInfluence;
@@ -283,6 +209,8 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
+            updateAutoPosition();
+            
             for(let i = 0; i < params.particles; i++) {
                 a(i % 400, Math.floor(i / 400));
             }
@@ -293,14 +221,8 @@
         
         function resize() {
             const dpr = window.devicePixelRatio || 1;
-            const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
-            
-            canvas.style.width = `${size}px`;
-            canvas.style.height = `${size}px`;
-            
-            canvas.width = size * dpr;
-            canvas.height = size * dpr;
-            
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
             ctx.scale(dpr, dpr);
         }
         
