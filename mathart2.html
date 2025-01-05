@@ -28,28 +28,31 @@
         .controls {
             position: relative;
             z-index: 2;
-            margin: 20px auto 40px;
-            padding: 15px;
-            background: rgba(30, 30, 30, 0.7);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
+            margin: 20px auto 60px;
+            padding: 20px;
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
             width: 85%;
-            max-width: 300px;
+            max-width: 320px;
         }
         .slider-container {
-            margin: 12px 0;
+            margin: 15px 0;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 14px;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .slider-container label {
+            font-size: 17px;
+            min-width: 120px;
         }
         input[type="range"] {
             flex-grow: 1;
-            margin: 0;
-            height: 20px;
+            height: 2px;
             -webkit-appearance: none;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 1px;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -57,19 +60,21 @@
             height: 20px;
             background: white;
             border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
         .value-display {
-            min-width: 40px;
+            min-width: 50px;
             text-align: right;
+            font-size: 17px;
         }
         .color-picker {
-            margin-left: auto;
-            background: none;
-            border: 2px solid white;
             width: 30px;
             height: 30px;
             border-radius: 50%;
+            border: 2px solid white;
             cursor: pointer;
+            padding: 0;
+            background: #00FF00;
         }
     </style>
 </head>
@@ -77,34 +82,38 @@
     <div id="canvas-container"></div>
     <div class="controls">
         <div class="slider-container">
-            Speed <input type="range" id="speedSlider" min="1" max="100" value="92">
-            <span class="value-display" id="speedValue">92</span>
+            <label>Speed</label>
+            <input type="range" id="speedSlider" min="1" max="100" value="100">
+            <span class="value-display" id="speedValue">100</span>
         </div>
         <div class="slider-container">
-            Density <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
+            <label>Density</label>
+            <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
             <span class="value-display" id="densityValue">40000</span>
         </div>
         <div class="slider-container">
-            Wave Scale <input type="range" id="waveSlider" min="1" max="20" value="5">
-            <span class="value-display" id="waveValue">5</span>
+            <label>Wave Scale</label>
+            <input type="range" id="waveSlider" min="1" max="20" value="18">
+            <span class="value-display" id="waveValue">18</span>
         </div>
         <div class="slider-container">
-            Pattern Color <input type="color" id="colorPicker" value="#FFFFFF" class="color-picker">
+            <label>Pattern Color</label>
+            <input type="color" id="colorPicker" value="#00FF00" class="color-picker">
         </div>
     </div>
 
     <script>
         let t = 0;
-        let speedMultiplier = 0.92;
+        let speedMultiplier = 2;
         let density = 40000;
-        let waveScale = 5;
+        let waveScale = 18;
         let patternColor;
         let scale;
 
         function setup() {
             const canvas = createCanvas(windowWidth, windowHeight);
             canvas.parent('canvas-container');
-            patternColor = color(255);
+            patternColor = color(0, 255, 0);
             scale = min(width, height) / 400;
             
             document.getElementById('speedSlider').addEventListener('input', (e) => {
@@ -147,7 +156,7 @@
         function draw() {
             background(0, 96);
             stroke(patternColor);
-            strokeWeight(1.5 * scale);
+            strokeWeight(2 * scale);
             
             t += (PI / 90) * speedMultiplier;
             
