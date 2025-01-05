@@ -1,235 +1,225 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mathematical Art Pattern</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
+        body {
             margin: 0;
             padding: 0;
-        }
-        
-        body, html { 
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        canvas {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
-
-        .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            border-radius: 12px;
-            z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            opacity: 0.3;
-            transition: opacity 0.3s ease;
+            justify-content: flex-end;
+            min-height: 100vh;
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            touch-action: none;
         }
-
-        .controls:hover {
-            opacity: 1;
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
-
-        .control-row {
+        .controls {
+            position: relative;
+            z-index: 2;
+            margin: 20px auto 60px;
+            padding: 20px;
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            width: 85%;
+            max-width: 320px;
+        }
+        .slider-container {
+            margin: 15px 0;
             display: flex;
             align-items: center;
-            gap: 10px;
-            white-space: nowrap;
+            justify-content: space-between;
+            gap: 15px;
         }
-
-        label {
-            font-size: 12px;
-            opacity: 0.8;
-            color: #fff;
+        .slider-container label {
+            font-size: 17px;
+            min-width: 120px;
         }
-
         input[type="range"] {
-            width: 100px;
+            flex-grow: 1;
+            height: 2px;
             -webkit-appearance: none;
-            height: 4px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 1px;
         }
-
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            background: #fff;
+            width: 20px;
+            height: 20px;
+            background: white;
             border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .value-display {
+            min-width: 50px;
+            text-align: right;
+            font-size: 17px;
+        }
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid white;
             cursor: pointer;
-        }
-
-        select {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: #fff;
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                top: auto;
-                bottom: 20px;
-                right: 50%;
-                transform: translateX(50%);
-                flex-direction: row;
-                flex-wrap: wrap;
-                max-width: 90%;
-                justify-content: center;
-            }
-            
-            input[type="range"] {
-                width: 80px;
-            }
+            padding: 0;
+            background: #00FF00;
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+    <div id="canvas-container"></div>
     <div class="controls">
-        <div class="control-row">
+        <div class="slider-container">
             <label>Speed</label>
-            <input type="range" id="speed" min="0.1" max="5" step="0.1" value="1">
+            <input type="range" id="speedSlider" min="1" max="100" value="100">
+            <span class="value-display" id="speedValue">100</span>
         </div>
-        <div class="control-row">
+        <div class="slider-container">
             <label>Density</label>
-            <input type="range" id="particles" min="10000" max="100000" step="1000" value="40000">
+            <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
+            <span class="value-display" id="densityValue">40000</span>
         </div>
-        <div class="control-row">
-            <label>Wave</label>
-            <input type="range" id="waveScale" min="1" max="10" step="0.1" value="5">
+        <div class="slider-container">
+            <label>Wave Scale</label>
+            <input type="range" id="waveSlider" min="1" max="20" value="18">
+            <span class="value-display" id="waveValue">18</span>
         </div>
-        <div class="control-row">
-            <label>Color</label>
-            <select id="colorMode">
-                <option value="monochrome">Mono</option>
-                <option value="rainbow">Rainbow</option>
-                <option value="plasma">Plasma</option>
-            </select>
+        <div class="slider-container">
+            <label>Pattern Color</label>
+            <input type="color" id="colorPicker" value="#00FF00" class="color-picker">
         </div>
     </div>
+
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
         let t = 0;
-        let params = {
-            speed: 1,
-            particles: 40000,
-            waveScale: 5,
-            colorMode: 'monochrome'
-        };
+        let speedMultiplier = 2;
+        let density = 40000;
+        let waveScale = 18;
+        let patternColor;
+        let scale = 1;
+        let baseScale;
+        let offsetX = 0, offsetY = 0;
+        let touchStartX = 0, touchStartY = 0;
+        let lastTouchDistance = 0;
+        let isDragging = false;
 
-        let autoAngle = 0;
-        let autoX = 0.5, autoY = 0.5;
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('canvas-container');
+            patternColor = color(0, 255, 0);
+            baseScale = min(width, height) / 400;
+            scale = baseScale;
+            
+            // Touch events for zooming and panning
+            canvas.touchStarted(touchStart);
+            canvas.touchMoved(touchMove);
+            canvas.touchEnded(touchEnd);
+            
+            setupControlListeners();
+        }
 
-        document.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('input', (e) => {
-                params[e.target.id] = parseFloat(e.target.value) || e.target.value;
+        function setupControlListeners() {
+            document.getElementById('speedSlider').addEventListener('input', (e) => {
+                speedMultiplier = e.target.value / 50;
+                document.getElementById('speedValue').textContent = e.target.value;
             });
-        });
-        
-        function mag(x, y) {
-            return Math.sqrt(x * x + y * y);
-        }
-        
-        function hsl(h, s, l) {
-            return `hsl(${h}, ${s}%, ${l}%)`;
-        }
-        
-        function point(x, y, color) {
-            ctx.beginPath();
-            ctx.arc(x, y, 0.5, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
-        }
-        
-        function updateAutoPosition() {
-            autoAngle += 0.002;
-            const radius = 0.2;
-            autoX = 0.5 + Math.cos(autoAngle) * radius;
-            autoY = 0.5 + Math.sin(autoAngle * 0.7) * radius;
-        }
-        
-        function a(x, y) {
-            const k = (x / canvas.width - 0.5) * 100;
-            const e = (y / canvas.height - 0.5) * 100;
             
-            const touchInfluence = Math.sin(mag(x/canvas.width - autoX, y/canvas.height - autoY) * 10) * 15;
-            
-            const o = mag(k, e) / 12 * Math.cos(Math.sin(k/2) * Math.cos(e/2));
-            const d = params.waveScale * Math.cos(o) + touchInfluence;
-            
-            const xPos = canvas.width * (0.5 + (k/100 + d * k/1000 * (Math.sin(d * 2 + t) + Math.sin(y * o * o) / 900)));
-            const yPos = canvas.height * (0.5 + (e/100 - d/25 + 0.19 * Math.cos(d + t)));
-            
-            let color;
-            switch(params.colorMode) {
-                case 'rainbow':
-                    const hue = (t * 50 + mag(k, e)) % 360;
-                    color = hsl(hue, 70, 50);
-                    break;
-                case 'plasma':
-                    const plasma = Math.sin(d + t) * Math.cos(o * 2);
-                    color = hsl((plasma * 180 + 180) % 360, 80, 50);
-                    break;
-                default:
-                    color = `rgba(255, 255, 255, ${0.3 + Math.sin(d + t) * 0.2})`;
+            document.getElementById('densitySlider').addEventListener('input', (e) => {
+                density = parseInt(e.target.value);
+                document.getElementById('densityValue').textContent = e.target.value;
+            });
+
+            document.getElementById('waveSlider').addEventListener('input', (e) => {
+                waveScale = parseInt(e.target.value);
+                document.getElementById('waveValue').textContent = e.target.value;
+            });
+
+            document.getElementById('colorPicker').addEventListener('input', (e) => {
+                const c = e.target.value;
+                patternColor = color(
+                    parseInt(c.substr(1,2), 16),
+                    parseInt(c.substr(3,2), 16),
+                    parseInt(c.substr(5,2), 16)
+                );
+            });
+        }
+
+        function touchStart(event) {
+            if (event.touches.length === 1) {
+                isDragging = true;
+                touchStartX = event.touches[0].clientX - offsetX;
+                touchStartY = event.touches[0].clientY - offsetY;
+            } else if (event.touches.length === 2) {
+                lastTouchDistance = dist(
+                    event.touches[0].clientX, event.touches[0].clientY,
+                    event.touches[1].clientX, event.touches[1].clientY
+                );
             }
-            
-            point(xPos, yPos, color);
+            return false;
         }
-        
+
+        function touchMove(event) {
+            if (event.touches.length === 1 && isDragging) {
+                offsetX = event.touches[0].clientX - touchStartX;
+                offsetY = event.touches[0].clientY - touchStartY;
+            } else if (event.touches.length === 2) {
+                const currentTouchDistance = dist(
+                    event.touches[0].clientX, event.touches[0].clientY,
+                    event.touches[1].clientX, event.touches[1].clientY
+                );
+                const scaleDelta = currentTouchDistance / lastTouchDistance;
+                scale *= scaleDelta;
+                scale = constrain(scale, baseScale * 0.5, baseScale * 2);
+                lastTouchDistance = currentTouchDistance;
+            }
+            return false;
+        }
+
+        function touchEnd() {
+            isDragging = false;
+            return false;
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            baseScale = min(width, height) / 400;
+            scale = baseScale;
+            offsetX = 0;
+            offsetY = 0;
+        }
+
+        function a(x, y, d = waveScale * cos(o = mag(k = x / 8 - 12.5, e = y / 8 - 12.5) / 12 * cos(sin(k / 2) * cos(e / 2)))) {
+            let px = ((x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 * scale + width/2) + offsetX;
+            let py = ((y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 * scale + height/2) + offsetY;
+            point(px, py);
+        }
+
         function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            background(0, 96);
+            stroke(patternColor);
+            strokeWeight(2 * scale);
             
-            updateAutoPosition();
+            t += (PI / 90) * speedMultiplier;
             
-            const cols = Math.round(Math.sqrt(params.particles));
-            const rows = Math.round(params.particles / cols);
-            
-            for(let y = 0; y < rows; y++) {
-                for(let x = 0; x < cols; x++) {
-                    a(
-                        (x / cols) * canvas.width,
-                        (y / rows) * canvas.height
-                    );
-                }
+            push();
+            for (let i = density; i--;) {
+                a(i % 200, i / 200);
             }
-            
-            t += Math.PI / 90 * params.speed;
-            requestAnimationFrame(draw);
+            pop();
         }
-        
-        function resize() {
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
-            ctx.scale(dpr, dpr);
-        }
-        
-        window.addEventListener('resize', resize);
-        resize();
-        draw();
     </script>
 </body>
 </html>
