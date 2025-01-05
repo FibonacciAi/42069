@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Bet Core Pattern</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+            --accent1: #00ffcc;
+            --accent2: #ff00cc;
+            --accent3: #ccff00;
+            --purple: #9933ff;
+            --card-bg: #1a1a1a;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        .core-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .core-pattern {
+            background: var(--card-bg);
+            border: 1px solid var(--accent1);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .date-sequence {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            border-left: 3px solid var(--purple);
+            margin: 20px 0;
+        }
+
+        .key-date {
+            color: var(--accent2);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .pattern-note {
+            color: var(--accent3);
+            padding: 5px 0;
+        }
+
+        .critical-point {
+            color: var(--purple);
+            font-weight: bold;
+        }
+
+        .pattern-emoji {
+            margin-right: 10px;
+        }
+
+        .separator {
+            border-top: 1px solid var(--accent1);
+            margin: 20px 0;
+        }
+
+        .highlight-box {
+            background: rgba(153, 51, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="core-container">
+        <div class="core-pattern">
+            <div class="date-sequence">
+                <span class="key-date">
+                    <span class="pattern-emoji">🎯</span>
+                    Nov 13/14 → Jan 7/8
+                </span>
+                <span class="pattern-note">55 Days</span>
+            </div>
+
+            <div class="highlight-box">
+                <span class="critical-point">
+                    <span class="pattern-emoji">💫</span>
+                    Best Bet Window:
+                </span>
+                <div class="date-sequence">
+                    <span>Nov 13/14: Entry</span>
+                    <span>Jan 7/8: Primary Target</span>
+                    <span>Jan 9: Final Confirmation</span>
+                </div>
+            </div>
+
+            <div class="separator"></div>
+
+            <div class="date-sequence">
+                <span class="critical-point">
+                    <span class="pattern-emoji">💜</span>
+                    Perfect Pattern
+                </span>
+                <span>• 55 Days Forward</span>
+                <span>• Post 9/6 Shift</span>
+                <span>• Double-Date Confirmation</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
