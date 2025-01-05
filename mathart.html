@@ -14,25 +14,14 @@
             height: 100%;
             overflow: hidden;
             background: #000;
-            font-family: system-ui, -apple-system, sans-serif;
-            color: #fff;
-        }
-
-        body {
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        #canvas-container {
-            width: 100vmin;
-            height: 100vmin;
-            position: relative;
-        }
-
         canvas {
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             display: block;
         }
 
@@ -66,6 +55,7 @@
         label {
             font-size: 12px;
             opacity: 0.8;
+            color: #fff;
         }
 
         input[type="range"] {
@@ -92,7 +82,6 @@
             padding: 3px 6px;
             border-radius: 4px;
             font-size: 12px;
-            cursor: pointer;
         }
 
         @media (max-width: 768px) {
@@ -114,9 +103,7 @@
     </style>
 </head>
 <body>
-    <div id="canvas-container">
-        <canvas id="canvas"></canvas>
-    </div>
+    <canvas id="canvas"></canvas>
     <div class="controls">
         <div class="control-row">
             <label>Speed</label>
@@ -183,7 +170,6 @@
         }
         
         function a(x, y) {
-            // Normalize coordinates to canvas size
             const k = (x / canvas.width - 0.5) * 100;
             const e = (y / canvas.height - 0.5) * 100;
             
@@ -235,15 +221,9 @@
         }
         
         function resize() {
-            const container = document.getElementById('canvas-container');
-            const size = container.offsetWidth;
-            
-            // Set canvas size accounting for device pixel ratio
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = size * dpr;
-            canvas.height = size * dpr;
-            
-            // Scale the context to ensure correct drawing operations
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
             ctx.scale(dpr, dpr);
         }
         
