@@ -1,268 +1,323 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Enhanced 3D Sacred Geometry Viewer</title>
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            background: #1a1a1a;
-            margin: 0;
-            padding: 20px;
-            color: #fff;
+        body { 
+            margin: 0; 
+            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            color: white;
+            font-family: 'Arial', sans-serif;
         }
-        canvas {
-            background: #2a2a2a;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            margin: 10px;
-            max-width: 100%;
+        canvas { 
+            display: block; 
         }
-        .controls {
-            margin: 20px;
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
             padding: 20px;
-            background: #2a2a2a;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            width: 80%;
-            max-width: 300px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        button.active {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
         .slider-container {
             margin: 10px 0;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
         }
         .slider-container label {
-            color: #fff;
-            font-size: 0.9em;
-            min-width: 100px;
+            display: block;
+            margin-bottom: 5px;
         }
         input[type="range"] {
-            width: 100px;
-            height: 4px;
-            background: #4CAF50;
-            border-radius: 2px;
-            -webkit-appearance: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            background: #fff;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        .color-picker {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            width: 100%;
             margin: 10px 0;
         }
-        .color-picker label {
-            font-size: 0.9em;
-        }
-        input[type="color"] {
-            width: 40px;
-            height: 40px;
-            border: none;
-            border-radius: 4px;
-            background: none;
-            cursor: pointer;
-        }
-        .button-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-top: 15px;
-        }
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            background: #333;
-            color: white;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #444;
-        }
-        button.active {
-            background: #4CAF50;
+        #info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            display: none;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <canvas id="geometryCanvas" width="400" height="400"></canvas>
-    <div class="controls">
+    <div id="controls">
+        <div class="control-group">
+            <button onclick="showShape('metatron')" class="active">Metatron's Cube</button>
+            <button onclick="showShape('tetrahedron')">Star Tetrahedron</button>
+            <button onclick="showShape('cube')">Hexahedron</button>
+            <button onclick="showShape('octahedron')">Octahedron</button>
+            <button onclick="showShape('dodecahedron')">Dodecahedron</button>
+            <button onclick="showShape('icosahedron')">Icosahedron</button>
+        </div>
         <div class="slider-container">
-            <label for="radiusSlider">Radius: <span id="radiusValue">40</span>px</label>
-            <input type="range" id="radiusSlider" min="20" max="80" value="40">
+            <label>Rotation Speed</label>
+            <input type="range" min="0" max="100" value="50" id="rotationSpeed">
         </div>
-        <div class="color-picker">
-            <label for="colorPicker">Line Color:</label>
-            <input type="color" id="colorPicker" value="#4CAF50">
+        <div class="slider-container">
+            <label>Scale</label>
+            <input type="range" min="50" max="150" value="100" id="scaleSlider">
         </div>
-        <div class="button-container">
-            <button onclick="drawFlowerOfLife()" class="active">Flower of Life</button>
-            <button onclick="drawSeedOfLife()">Seed of Life</button>
-            <button onclick="drawEggOfLife()">Egg of Life</button>
-            <button onclick="drawMetatronsCube()">Metatron's Cube</button>
-        </div>
+        <button onclick="toggleAutoRotate()">Toggle Auto-Rotate</button>
+        <button onclick="toggleWireframe()">Toggle Wireframe</button>
     </div>
+    <div id="info"></div>
     <script>
-        const canvas = document.getElementById('geometryCanvas');
-        const ctx = canvas.getContext('2d');
-        const radiusSlider = document.getElementById('radiusSlider');
-        const radiusValue = document.getElementById('radiusValue');
-        const colorPicker = document.getElementById('colorPicker');
-        let currentPattern = 'flower';
+        let scene, camera, renderer, currentShape;
+        let autoRotate = true;
+        let wireframeMode = true;
+        const descriptions = {
+            metatron: "Metatron's Cube contains all 5 Platonic solids and represents the underlying geometric patterns of our universe.",
+            tetrahedron: "The Star Tetrahedron symbolizes the perfect union of opposing forces and the element of Fire.",
+            cube: "The Hexahedron represents stability, foundation, and the element of Earth.",
+            octahedron: "The Octahedron symbolizes air, thought, and the connection between Heaven and Earth.",
+            dodecahedron: "The Dodecahedron represents the universe itself and the element of Aether or Spirit.",
+            icosahedron: "The Icosahedron symbolizes the element of Water and represents flow and change."
+        };
 
-        function updateActiveButton(pattern) {
-            document.querySelectorAll('button').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.toLowerCase().includes(pattern)) {
-                    btn.classList.add('active');
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            camera.position.z = 5;
+
+            // Enhanced lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+
+            const light1 = new THREE.PointLight(0xffffff, 1, 100);
+            light1.position.set(10, 10, 10);
+            scene.add(light1);
+
+            const light2 = new THREE.PointLight(0xffffff, 0.5, 100);
+            light2.position.set(-10, -10, -10);
+            scene.add(light2);
+
+            // Add subtle particle background
+            addParticleBackground();
+
+            animate();
+        }
+
+        function addParticleBackground() {
+            const particles = new THREE.Points(
+                new THREE.BufferGeometry(),
+                new THREE.PointsMaterial({
+                    color: 0xffffff,
+                    size: 0.02,
+                    transparent: true,
+                    opacity: 0.5
+                })
+            );
+
+            const positions = [];
+            for(let i = 0; i < 1000; i++) {
+                positions.push(
+                    Math.random() * 100 - 50,
+                    Math.random() * 100 - 50,
+                    Math.random() * 100 - 50
+                );
+            }
+
+            particles.geometry.setAttribute(
+                'position',
+                new THREE.Float32BufferAttribute(positions, 3)
+            );
+
+            scene.add(particles);
+        }
+
+        function createMetatronsCube() {
+            const group = new THREE.Group();
+            const radius = 2;
+            const sphereGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+            const sphereMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x00ff00,
+                emissive: 0x00ff00,
+                emissiveIntensity: 0.2
+            });
+            
+            // Create vertices with golden ratio
+            const phi = (1 + Math.sqrt(5)) / 2;
+            const vertices = [
+                new THREE.Vector3(0, 1, phi),
+                new THREE.Vector3(0, -1, phi),
+                new THREE.Vector3(0, 1, -phi),
+                new THREE.Vector3(0, -1, -phi),
+                new THREE.Vector3(1, phi, 0),
+                new THREE.Vector3(-1, phi, 0),
+                new THREE.Vector3(1, -phi, 0),
+                new THREE.Vector3(-1, -phi, 0),
+                new THREE.Vector3(phi, 0, 1),
+                new THREE.Vector3(-phi, 0, 1),
+                new THREE.Vector3(phi, 0, -1),
+                new THREE.Vector3(-phi, 0, -1)
+            ];
+
+            // Add vertices
+            vertices.forEach(vertex => {
+                const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                sphere.position.copy(vertex);
+                group.add(sphere);
+            });
+
+            // Create lines
+            const lineMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            for (let i = 0; i < vertices.length; i++) {
+                for (let j = i + 1; j < vertices.length; j++) {
+                    const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                        vertices[i],
+                        vertices[j]
+                    ]);
+                    const line = new THREE.Line(lineGeometry, lineMaterial);
+                    group.add(line);
                 }
+            }
+
+            return group;
+        }
+
+        function createCustomMaterial(color1, color2) {
+            return new THREE.MeshPhongMaterial({
+                color: color1,
+                emissive: color2,
+                emissiveIntensity: 0.3,
+                wireframe: wireframeMode,
+                wireframeLinewidth: 2,
+                transparent: true,
+                opacity: 0.9,
+                side: THREE.DoubleSide
             });
         }
 
-        radiusSlider.addEventListener('input', function() {
-            radiusValue.textContent = this.value;
-            redrawCurrentPattern();
-        });
+        function showShape(shapeName) {
+            if (currentShape) scene.remove(currentShape);
+            
+            // Update active button
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`button[onclick="showShape('${shapeName}')"]`).classList.add('active');
 
-        colorPicker.addEventListener('input', function() {
-            redrawCurrentPattern();
-        });
+            // Show description
+            const info = document.getElementById('info');
+            info.textContent = descriptions[shapeName];
+            info.style.display = 'block';
 
-        function redrawCurrentPattern() {
-            switch(currentPattern) {
-                case 'flower':
-                    drawFlowerOfLife();
-                    break;
-                case 'seed':
-                    drawSeedOfLife();
-                    break;
-                case 'egg':
-                    drawEggOfLife();
-                    break;
+            switch(shapeName) {
                 case 'metatron':
-                    drawMetatronsCube();
+                    currentShape = createMetatronsCube();
+                    break;
+                case 'tetrahedron':
+                    currentShape = new THREE.Mesh(
+                        new THREE.TetrahedronGeometry(1.5),
+                        createCustomMaterial(0xFF5252, 0xFF1744)
+                    );
+                    break;
+                case 'cube':
+                    currentShape = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.5, 1.5, 1.5),
+                        createCustomMaterial(0x2196F3, 0x1976D2)
+                    );
+                    break;
+                case 'octahedron':
+                    currentShape = new THREE.Mesh(
+                        new THREE.OctahedronGeometry(1.5),
+                        createCustomMaterial(0x9C27B0, 0x7B1FA2)
+                    );
+                    break;
+                case 'dodecahedron':
+                    currentShape = new THREE.Mesh(
+                        new THREE.DodecahedronGeometry(1.5),
+                        createCustomMaterial(0x4CAF50, 0x388E3C)
+                    );
+                    break;
+                case 'icosahedron':
+                    currentShape = new THREE.Mesh(
+                        new THREE.IcosahedronGeometry(1.5),
+                        createCustomMaterial(0xFFC107, 0xFFA000)
+                    );
                     break;
             }
-        }
-        
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function drawCircle(x, y, radius) {
-            ctx.beginPath();
-            ctx.strokeStyle = colorPicker.value;
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-
-        function drawSeedOfLife() {
-            currentPattern = 'seed';
-            updateActiveButton('seed');
-            clearCanvas();
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = parseInt(radiusSlider.value);
-
-            drawCircle(centerX, centerY, radius);
-
-            for (let i = 0; i < 6; i++) {
-                const angle = i * Math.PI / 3;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                drawCircle(x, y, radius);
-            }
-        }
-
-        function drawEggOfLife() {
-            currentPattern = 'egg';
-            updateActiveButton('egg');
-            clearCanvas();
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = parseInt(radiusSlider.value);
-
-            drawCircle(centerX, centerY, radius);
-
-            for (let i = 0; i < 6; i++) {
-                const angle = i * Math.PI / 3;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                drawCircle(x, y, radius);
-            }
-
-            drawCircle(centerX, centerY - radius, radius);
-        }
-
-        function drawFlowerOfLife() {
-            currentPattern = 'flower';
-            updateActiveButton('flower');
-            clearCanvas();
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = parseInt(radiusSlider.value);
             
-            drawCircle(centerX, centerY, radius);
-            
-            for (let i = 0; i < 6; i++) {
-                const angle = i * Math.PI / 3;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                drawCircle(x, y, radius);
-            }
-            
-            for (let i = 0; i < 12; i++) {
-                const angle = i * Math.PI / 6;
-                const x = centerX + radius * 2 * Math.cos(angle);
-                const y = centerY + radius * 2 * Math.sin(angle);
-                drawCircle(x, y, radius);
-            }
+            scene.add(currentShape);
         }
 
-        function drawMetatronsCube() {
-            currentPattern = 'metatron';
-            updateActiveButton('metatron');
-            clearCanvas();
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = parseInt(radiusSlider.value);
-
-            drawCircle(centerX, centerY, radius);
-            
-            const points = [];
-            for (let i = 0; i < 6; i++) {
-                const angle = i * Math.PI / 3;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                drawCircle(x, y, radius);
-                points.push({x, y});
-            }
-
-            ctx.beginPath();
-            ctx.strokeStyle = colorPicker.value;
-            for (let i = 0; i < points.length; i++) {
-                for (let j = i + 1; j < points.length; j++) {
-                    ctx.moveTo(points[i].x, points[i].y);
-                    ctx.lineTo(points[j].x, points[j].y);
-                }
-            }
-            ctx.stroke();
+        function toggleAutoRotate() {
+            autoRotate = !autoRotate;
         }
 
-        // Initial drawing
-        drawFlowerOfLife();
+        function toggleWireframe() {
+            wireframeMode = !wireframeMode;
+            showShape(document.querySelector('button.active').onclick.toString().match(/'(.*?)'/)[1]);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentShape && autoRotate) {
+                const speed = document.getElementById('rotationSpeed').value / 5000;
+                currentShape.rotation.x += speed;
+                currentShape.rotation.y += speed;
+            }
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resizing
+        window.addEventListener('resize', onWindowResize, false);
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Scale control
+        document.getElementById('scaleSlider').addEventListener('input', function(e) {
+            if (currentShape) {
+                const scale = e.target.value / 100;
+                currentShape.scale.set(scale, scale, scale);
+            }
+        });
+
+        init();
+        showShape('metatron'); // Show Metatron's Cube by default
     </script>
 </body>
 </html>
