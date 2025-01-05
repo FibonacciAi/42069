@@ -1,179 +1,268 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>3D Sacred Geometry Viewer - Colored</title>
     <style>
-        body { margin: 0; background: #f0f0f0; }
-        canvas { display: block; }
-        #controls {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            margin: 0;
+            padding: 20px;
+            color: #fff;
         }
-        button {
-            margin: 5px;
-            padding: 8px 15px;
+        canvas {
+            background: #2a2a2a;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            margin: 10px;
+            max-width: 100%;
+        }
+        .controls {
+            margin: 20px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            width: 80%;
+            max-width: 300px;
+        }
+        .slider-container {
+            margin: 10px 0;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .slider-container label {
+            color: #fff;
+            font-size: 0.9em;
+            min-width: 100px;
+        }
+        input[type="range"] {
+            width: 100px;
+            height: 4px;
+            background: #4CAF50;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
             cursor: pointer;
+        }
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .color-picker label {
+            font-size: 0.9em;
+        }
+        input[type="color"] {
+            width: 40px;
+            height: 40px;
             border: none;
             border-radius: 4px;
-            background: #2196F3;
+            background: none;
+            cursor: pointer;
+        }
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #333;
             color: white;
+            cursor: pointer;
             transition: background 0.3s;
         }
         button:hover {
-            background: #1976D2;
+            background: #444;
+        }
+        button.active {
+            background: #4CAF50;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <div id="controls">
-        <button onclick="showShape('metatron')">Metatron's Cube</button>
-        <button onclick="showShape('tetrahedron')">Star Tetrahedron</button>
-        <button onclick="showShape('cube')">Hexahedron</button>
-        <button onclick="showShape('octahedron')">Octahedron</button>
-        <button onclick="showShape('dodecahedron')">Dodecahedron</button>
-        <button onclick="showShape('icosahedron')">Icosahedron</button>
+    <canvas id="geometryCanvas" width="400" height="400"></canvas>
+    <div class="controls">
+        <div class="slider-container">
+            <label for="radiusSlider">Radius: <span id="radiusValue">40</span>px</label>
+            <input type="range" id="radiusSlider" min="20" max="80" value="40">
+        </div>
+        <div class="color-picker">
+            <label for="colorPicker">Line Color:</label>
+            <input type="color" id="colorPicker" value="#4CAF50">
+        </div>
+        <div class="button-container">
+            <button onclick="drawFlowerOfLife()" class="active">Flower of Life</button>
+            <button onclick="drawSeedOfLife()">Seed of Life</button>
+            <button onclick="drawEggOfLife()">Egg of Life</button>
+            <button onclick="drawMetatronsCube()">Metatron's Cube</button>
+        </div>
     </div>
     <script>
-        let scene, camera, renderer, currentShape;
+        const canvas = document.getElementById('geometryCanvas');
+        const ctx = canvas.getContext('2d');
+        const radiusSlider = document.getElementById('radiusSlider');
+        const radiusValue = document.getElementById('radiusValue');
+        const colorPicker = document.getElementById('colorPicker');
+        let currentPattern = 'flower';
 
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf0f0f0);
-            
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            camera.position.z = 5;
-
-            // Add multiple lights for better 3D effect
-            const ambientLight = new THREE.AmbientLight(0x404040);
-            scene.add(ambientLight);
-
-            const light1 = new THREE.PointLight(0xffffff, 1, 100);
-            light1.position.set(10, 10, 10);
-            scene.add(light1);
-
-            const light2 = new THREE.PointLight(0xffffff, 0.5, 100);
-            light2.position.set(-10, -10, -10);
-            scene.add(light2);
-
-            animate();
-        }
-
-        function createMetatronsCube() {
-            const group = new THREE.Group();
-            const radius = 2;
-            const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
-            const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
-            
-            // Create vertices
-            const vertices = [];
-            for (let i = 0; i < 6; i++) {
-                const angle = (i * Math.PI * 2) / 6;
-                const x = Math.cos(angle) * radius;
-                const y = Math.sin(angle) * radius;
-                vertices.push(new THREE.Vector3(x, y, 0));
-                
-                const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-                sphere.position.set(x, y, 0);
-                group.add(sphere);
-            }
-
-            // Create lines
-            const lineMaterial = new THREE.LineBasicMaterial({ color: 0x2196F3, linewidth: 2 });
-            for (let i = 0; i < vertices.length; i++) {
-                for (let j = i + 1; j < vertices.length; j++) {
-                    const lineGeometry = new THREE.BufferGeometry().setFromPoints([vertices[i], vertices[j]]);
-                    const line = new THREE.Line(lineGeometry, lineMaterial);
-                    group.add(line);
+        function updateActiveButton(pattern) {
+            document.querySelectorAll('button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(pattern)) {
+                    btn.classList.add('active');
                 }
-            }
-
-            return group;
-        }
-
-        function createCustomMaterial(color1, color2) {
-            return new THREE.MeshPhongMaterial({
-                color: color1,
-                emissive: color2,
-                emissiveIntensity: 0.2,
-                wireframe: true,
-                wireframeLinewidth: 2,
-                transparent: true,
-                opacity: 0.9
             });
         }
 
-        function showShape(shapeName) {
-            if (currentShape) scene.remove(currentShape);
+        radiusSlider.addEventListener('input', function() {
+            radiusValue.textContent = this.value;
+            redrawCurrentPattern();
+        });
 
-            switch(shapeName) {
+        colorPicker.addEventListener('input', function() {
+            redrawCurrentPattern();
+        });
+
+        function redrawCurrentPattern() {
+            switch(currentPattern) {
+                case 'flower':
+                    drawFlowerOfLife();
+                    break;
+                case 'seed':
+                    drawSeedOfLife();
+                    break;
+                case 'egg':
+                    drawEggOfLife();
+                    break;
                 case 'metatron':
-                    currentShape = createMetatronsCube();
+                    drawMetatronsCube();
                     break;
-                case 'tetrahedron':
-                    currentShape = new THREE.Mesh(
-                        new THREE.TetrahedronGeometry(1),
-                        createCustomMaterial(0xFF5252, 0xFF1744)
-                    );
-                    break;
-                case 'cube':
-                    currentShape = new THREE.Mesh(
-                        new THREE.BoxGeometry(1, 1, 1),
-                        createCustomMaterial(0x2196F3, 0x1976D2)
-                    );
-                    break;
-                case 'octahedron':
-                    currentShape = new THREE.Mesh(
-                        new THREE.OctahedronGeometry(1),
-                        createCustomMaterial(0x9C27B0, 0x7B1FA2)
-                    );
-                    break;
-                case 'dodecahedron':
-                    currentShape = new THREE.Mesh(
-                        new THREE.DodecahedronGeometry(1),
-                        createCustomMaterial(0x4CAF50, 0x388E3C)
-                    );
-                    break;
-                case 'icosahedron':
-                    currentShape = new THREE.Mesh(
-                        new THREE.IcosahedronGeometry(1),
-                        createCustomMaterial(0xFFC107, 0xFFA000)
-                    );
-                    break;
+            }
+        }
+        
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawCircle(x, y, radius) {
+            ctx.beginPath();
+            ctx.strokeStyle = colorPicker.value;
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function drawSeedOfLife() {
+            currentPattern = 'seed';
+            updateActiveButton('seed');
+            clearCanvas();
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
+
+            drawCircle(centerX, centerY, radius);
+
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                drawCircle(x, y, radius);
+            }
+        }
+
+        function drawEggOfLife() {
+            currentPattern = 'egg';
+            updateActiveButton('egg');
+            clearCanvas();
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
+
+            drawCircle(centerX, centerY, radius);
+
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                drawCircle(x, y, radius);
+            }
+
+            drawCircle(centerX, centerY - radius, radius);
+        }
+
+        function drawFlowerOfLife() {
+            currentPattern = 'flower';
+            updateActiveButton('flower');
+            clearCanvas();
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
+            
+            drawCircle(centerX, centerY, radius);
+            
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                drawCircle(x, y, radius);
             }
             
-            scene.add(currentShape);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            if (currentShape) {
-                currentShape.rotation.x += 0.01;
-                currentShape.rotation.y += 0.01;
+            for (let i = 0; i < 12; i++) {
+                const angle = i * Math.PI / 6;
+                const x = centerX + radius * 2 * Math.cos(angle);
+                const y = centerY + radius * 2 * Math.sin(angle);
+                drawCircle(x, y, radius);
             }
-            renderer.render(scene, camera);
         }
 
-        // Handle window resizing
-        window.addEventListener('resize', onWindowResize, false);
+        function drawMetatronsCube() {
+            currentPattern = 'metatron';
+            updateActiveButton('metatron');
+            clearCanvas();
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseInt(radiusSlider.value);
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            drawCircle(centerX, centerY, radius);
+            
+            const points = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                drawCircle(x, y, radius);
+                points.push({x, y});
+            }
+
+            ctx.beginPath();
+            ctx.strokeStyle = colorPicker.value;
+            for (let i = 0; i < points.length; i++) {
+                for (let j = i + 1; j < points.length; j++) {
+                    ctx.moveTo(points[i].x, points[i].y);
+                    ctx.lineTo(points[j].x, points[j].y);
+                }
+            }
+            ctx.stroke();
         }
 
-        init();
-        showShape('metatron'); // Show Metatron's Cube by default
+        // Initial drawing
+        drawFlowerOfLife();
     </script>
 </body>
 </html>
