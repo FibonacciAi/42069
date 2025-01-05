@@ -5,7 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        /* Previous styles remain the same */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 100vh;
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .controls {
+            position: relative;
+            z-index: 2;
+            margin: 20px auto 60px;
+            padding: 20px;
+            background: rgba(25, 25, 25, 0.95);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            width: 280px;
+        }
+        .slider-container {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .slider-container label {
+            font-size: 17px;
+            min-width: 100px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            height: 2px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 1px;
+            margin: 0 15px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+        }
+        .value-display {
+            min-width: 40px;
+            text-align: right;
+            font-size: 17px;
+        }
+        .color-picker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            background: #00FF00;
+        }
     </style>
 </head>
 <body>
@@ -38,52 +107,115 @@
         let density = 40000;
         let waveScale = 18;
         let patternColor;
+        let scale = 1;
+        let baseScale;
+        let offsetX = 0, offsetY = 0;
+        let touchStartX = 0, touchStartY = 0;
+        let lastTouchDistance = 0;
+        let isDragging = false;
 
         function setup() {
             const canvas = createCanvas(windowWidth, windowHeight);
             canvas.parent('canvas-container');
             patternColor = color(0, 255, 0);
+            baseScale = min(width, height) / 800;
+            scale = baseScale;
+            
+            canvas.touchStarted(touchStart);
+            canvas.touchMoved(touchMove);
+            canvas.touchEnded(touchEnd);
             
             setupControlListeners();
         }
 
         function setupControlListeners() {
-            // Previous control listeners remain the same
+            document.getElementById('speedSlider').addEventListener('input', (e) => {
+                speedMultiplier = e.target.value / 50;
+                document.getElementById('speedValue').textContent = e.target.value;
+            });
+            
+            document.getElementById('densitySlider').addEventListener('input', (e) => {
+                density = parseInt(e.target.value);
+                document.getElementById('densityValue').textContent = e.target.value;
+            });
+
+            document.getElementById('waveSlider').addEventListener('input', (e) => {
+                waveScale = parseInt(e.target.value);
+                document.getElementById('waveValue').textContent = e.target.value;
+            });
+
+            document.getElementById('colorPicker').addEventListener('input', (e) => {
+                const c = e.target.value;
+                patternColor = color(
+                    parseInt(c.substr(1,2), 16),
+                    parseInt(c.substr(3,2), 16),
+                    parseInt(c.substr(5,2), 16)
+                );
+            });
+        }
+
+        function touchStart(event) {
+            if (event.touches.length === 1) {
+                isDragging = true;
+                touchStartX = event.touches[0].clientX - offsetX;
+                touchStartY = event.touches[0].clientY - offsetY;
+            } else if (event.touches.length === 2) {
+                lastTouchDistance = dist(
+                    event.touches[0].clientX, event.touches[0].clientY,
+                    event.touches[1].clientX, event.touches[1].clientY
+                );
+            }
+            return false;
+        }
+
+        function touchMove(event) {
+            if (event.touches.length === 1 && isDragging) {
+                offsetX = event.touches[0].clientX - touchStartX;
+                offsetY = event.touches[0].clientY - touchStartY;
+            } else if (event.touches.length === 2) {
+                const currentTouchDistance = dist(
+                    event.touches[0].clientX, event.touches[0].clientY,
+                    event.touches[1].clientX, event.touches[1].clientY
+                );
+                const scaleDelta = currentTouchDistance / lastTouchDistance;
+                scale *= scaleDelta;
+                scale = constrain(scale, baseScale * 0.5, baseScale * 2);
+                lastTouchDistance = currentTouchDistance;
+            }
+            return false;
+        }
+
+        function touchEnd() {
+            isDragging = false;
+            return false;
         }
 
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
+            baseScale = min(width, height) / 800;
+            scale = baseScale;
+            offsetX = 0;
+            offsetY = 0;
         }
 
-        function a(x, y) {
-            let d = waveScale * cos(
-                mag(x/8 - 12.5, y/8 - 12.5) / 12 * 
-                cos(sin(x/16) * cos(y/16))
-            );
-            
-            let px = x + d * (x/8 - 12.5) * (
-                sin(d * 2 + t) + 
-                sin(y * mag(x/8 - 12.5, y/8 - 12.5) / 144) / 9
-            );
-            
-            let py = y/3 - d * 40 + 19 * cos(d + t);
-            
-            point(px + width/2, py + height/2);
+        function a(x, y, d = waveScale * cos(o = mag(k = x / 8 - 12.5, e = y / 8 - 12.5) / 12 * cos(sin(k / 2) * cos(e / 2)))) {
+            let px = x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9);
+            let py = y / 3 - d * 40 + 19 * cos(d + t);
+            point(px * scale + width, py * scale + height/2);
         }
 
         function draw() {
             background(0, 96);
             stroke(patternColor);
-            strokeWeight(2);
+            strokeWeight(2 * scale);
             
             t += (PI / 90) * speedMultiplier;
             
-            for (let i = 0; i < density; i++) {
-                a(
-                    (i % 200) - 100,
-                    (i / 200) - 100
-                );
+            push();
+            for (let i = density; i--;) {
+                a(i % 200 - 200, i / 200 - 100);
             }
+            pop();
         }
     </script>
 </body>
