@@ -16,6 +16,7 @@
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
+            touch-action: none;
         }
         #canvas-container {
             position: absolute;
@@ -30,22 +31,20 @@
             z-index: 2;
             margin: 20px auto 60px;
             padding: 20px;
-            background: rgba(30, 30, 30, 0.8);
+            background: rgba(25, 25, 25, 0.95);
             border-radius: 16px;
             backdrop-filter: blur(20px);
-            width: 85%;
-            max-width: 320px;
+            width: 280px;
         }
         .slider-container {
             margin: 15px 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 15px;
         }
         .slider-container label {
             font-size: 17px;
-            min-width: 120px;
+            min-width: 100px;
         }
         input[type="range"] {
             flex-grow: 1;
@@ -53,6 +52,7 @@
             -webkit-appearance: none;
             background: rgba(255, 255, 255, 0.3);
             border-radius: 1px;
+            margin: 0 15px;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -60,18 +60,22 @@
             height: 20px;
             background: white;
             border-radius: 50%;
-            box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
         .value-display {
-            min-width: 50px;
+            min-width: 40px;
             text-align: right;
             font-size: 17px;
         }
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
         .color-picker {
-            width: 30px;
-            height: 30px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            border: 2px solid white;
+            border: none;
             cursor: pointer;
             padding: 0;
             background: #00FF00;
@@ -108,14 +112,21 @@
         let density = 40000;
         let waveScale = 18;
         let patternColor;
-        let scale;
+        let scale = 1;
+        let baseScale;
+        let offsetX = 0, offsetY = 0;
 
         function setup() {
             const canvas = createCanvas(windowWidth, windowHeight);
             canvas.parent('canvas-container');
             patternColor = color(0, 255, 0);
-            scale = min(width, height) / 400;
+            baseScale = min(width, height) / 800;
+            scale = baseScale;
             
+            setupControlListeners();
+        }
+
+        function setupControlListeners() {
             document.getElementById('speedSlider').addEventListener('input', (e) => {
                 speedMultiplier = e.target.value / 50;
                 document.getElementById('speedValue').textContent = e.target.value;
@@ -143,26 +154,30 @@
 
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
-            scale = min(width, height) / 400;
+            baseScale = min(width, height) / 800;
+            scale = baseScale;
         }
 
         function a(x, y, d = waveScale * cos(o = mag(k = x / 8 - 12.5, e = y / 8 - 12.5) / 12 * cos(sin(k / 2) * cos(e / 2)))) {
             point(
-                ((x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 + width/2) * scale,
-                ((y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 + height/2) * scale
+                (x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) * scale + width/2,
+                (y / 3 - d * 40 + 19 * cos(d + t)) * scale + height/2
             );
         }
 
         function draw() {
             background(0, 96);
             stroke(patternColor);
-            strokeWeight(2 * scale);
+            strokeWeight(2);
             
             t += (PI / 90) * speedMultiplier;
             
+            push();
+            translate(offsetX, offsetY);
             for (let i = density; i--;) {
-                a(i % 200, i / 200);
+                a(i % 200 - 100, i / 200 - 100);
             }
+            pop();
         }
     </script>
 </body>
