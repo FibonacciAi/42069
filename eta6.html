@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Bet Analysis</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+            --accent1: #00ffcc;
+            --accent2: #ff00cc;
+            --accent3: #ccff00;
+            --purple: #9933ff;
+            --orange: #ff6600;
+            --card-bg: #1a1a1a;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .pattern-card {
+            background: var(--card-bg);
+            border: 1px solid var(--accent1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .sequence {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(153, 51, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .key-date {
+            color: var(--accent2);
+            font-weight: bold;
+        }
+
+        .pattern-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 15px 0;
+            padding-left: 15px;
+            border-left: 2px solid var(--purple);
+        }
+
+        .highlight {
+            color: var(--accent3);
+            font-weight: bold;
+        }
+
+        .insight {
+            background: rgba(0, 255, 204, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .emoji {
+            font-style: normal;
+            margin: 0 5px;
+        }
+
+        .pattern-header {
+            color: var(--accent1);
+            border-bottom: 1px solid var(--accent1);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .shift-indicator {
+            color: var(--orange);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="pattern-grid">
+        <div class="pattern-card">
+            <h3 class="pattern-header">55-Day Best Bet Pattern</h3>
+            <div class="sequence">
+                <div class="pattern-flow">
+                    <span class="key-date">Nov 13/14 → Jan 7/8</span>
+                    <span class="highlight">55-day Perfect Alignment</span>
+                    <span class="shift-indicator">Post-9/6 Offset Applied</span>
+                </div>
+            </div>
+            <div class="insight">
+                <span class="emoji">🎯</span> Nov 13/14 represents optimal entry
+                <br>
+                <span class="emoji">💫</span> Jan 7/8 convergence window
+            </div>
+        </div>
+
+        <div class="pattern-card">
+            <h3 class="pattern-header">Critical Alignment Points</h3>
+            <div class="sequence">
+                <div class="pattern-flow">
+                    <span>9/6/24: Leap Year Shift</span>
+                    <span class="highlight">+1 Day Alignment Change</span>
+                    <span>11/13 → 11/14 Window</span>
+                </div>
+            </div>
+            <div class="insight">
+                <span class="emoji">🔄</span> Pattern maintains integrity through shift
+                <br>
+                <span class="emoji">🎲</span> Double-date windows provide confirmation
+            </div>
+        </div>
+
+        <div class="pattern-card">
+            <h3 class="pattern-header">Convergence Analysis</h3>
+            <div class="sequence">
+                <div class="pattern-flow">
+                    <span class="key-date">Jan 7/8/9 Window</span>
+                    <span class="highlight">Three-Day Convergence</span>
+                    <span class="shift-indicator">Pattern Resolution Point</span>
+                </div>
+            </div>
+            <div class="insight">
+                <span class="emoji">💜</span> Primary convergence: Jan 7/8
+                <br>
+                <span class="emoji">✨</span> Secondary confirmation: Jan 9
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add dynamic date calculations if needed
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result.toISOString().split('T')[0];
+        }
+
+        function subtractDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() - days);
+            return result.toISOString().split('T')[0];
+        }
+    </script>
+</body>
+</html>
