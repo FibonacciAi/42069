@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Mathematical Art Pattern</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
         body {
@@ -11,9 +12,9 @@
             flex-direction: column;
             justify-content: flex-end;
             min-height: 100vh;
-            background: #1a1a1a;
+            background: #000;
             color: white;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
         }
         #canvas-container {
@@ -27,34 +28,47 @@
         .controls {
             position: relative;
             z-index: 2;
-            margin: 20px auto;
-            padding: 20px;
-            background: rgba(30, 30, 30, 0.8);
-            border-radius: 15px;
+            margin: 20px auto 40px;
+            padding: 15px;
+            background: rgba(30, 30, 30, 0.7);
+            border-radius: 12px;
             backdrop-filter: blur(10px);
-            max-width: 90%;
-            width: 300px;
+            width: 85%;
+            max-width: 300px;
         }
         .slider-container {
-            margin: 15px 0;
+            margin: 12px 0;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 10px;
+            font-size: 14px;
         }
         input[type="range"] {
             flex-grow: 1;
-            margin: 0 10px;
+            margin: 0;
+            height: 20px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
         }
         .value-display {
-            min-width: 50px;
+            min-width: 40px;
             text-align: right;
         }
         .color-picker {
-            margin: 10px;
+            margin-left: auto;
             background: none;
-            border: none;
-            width: 50px;
+            border: 2px solid white;
+            width: 30px;
             height: 30px;
+            border-radius: 50%;
             cursor: pointer;
         }
     </style>
@@ -63,33 +77,35 @@
     <div id="canvas-container"></div>
     <div class="controls">
         <div class="slider-container">
-            Speed: <input type="range" id="speedSlider" min="1" max="100" value="50">
-            <span class="value-display" id="speedValue">50</span>
+            Speed <input type="range" id="speedSlider" min="1" max="100" value="92">
+            <span class="value-display" id="speedValue">92</span>
         </div>
         <div class="slider-container">
-            Density: <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
+            Density <input type="range" id="densitySlider" min="1000" max="40000" value="40000">
             <span class="value-display" id="densityValue">40000</span>
         </div>
         <div class="slider-container">
-            Wave Scale: <input type="range" id="waveSlider" min="1" max="20" value="5">
+            Wave Scale <input type="range" id="waveSlider" min="1" max="20" value="5">
             <span class="value-display" id="waveValue">5</span>
         </div>
         <div class="slider-container">
-            Pattern Color: <input type="color" id="colorPicker" value="#FFFFFF" class="color-picker">
+            Pattern Color <input type="color" id="colorPicker" value="#FFFFFF" class="color-picker">
         </div>
     </div>
 
     <script>
         let t = 0;
-        let speedMultiplier = 0.5;
+        let speedMultiplier = 0.92;
         let density = 40000;
         let waveScale = 5;
         let patternColor;
+        let scale;
 
         function setup() {
             const canvas = createCanvas(windowWidth, windowHeight);
             canvas.parent('canvas-container');
             patternColor = color(255);
+            scale = min(width, height) / 400;
             
             document.getElementById('speedSlider').addEventListener('input', (e) => {
                 speedMultiplier = e.target.value / 50;
@@ -118,19 +134,20 @@
 
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
+            scale = min(width, height) / 400;
         }
 
         function a(x, y, d = waveScale * cos(o = mag(k = x / 8 - 12.5, e = y / 8 - 12.5) / 12 * cos(sin(k / 2) * cos(e / 2)))) {
             point(
-                (x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 + width/2,
-                (y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 + height/2
+                ((x + d * k * (sin(d * 2 + t) + sin(y * o * o) / 9)) / 1.5 + width/2) * scale,
+                ((y / 3 - d * 40 + 19 * cos(d + t)) * 1.5 + height/2) * scale
             );
         }
 
         function draw() {
-            background(6, 96);
+            background(0, 96);
             stroke(patternColor);
-            strokeWeight(1.5);
+            strokeWeight(1.5 * scale);
             
             t += (PI / 90) * speedMultiplier;
             
