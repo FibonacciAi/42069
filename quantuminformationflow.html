@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+/* Base styles remain the same */
+.node {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: #1DA1F2;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 0 10px rgba(29, 161, 242, 0.3);
+}
+
+.node::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: transparent;
+    border: 2px solid #1DA1F2;
+    animation: pulse 2s infinite;
+    opacity: 0;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.node.sending {
+    background: #44FF44;
+    transform: scale(1.5);
+    box-shadow: 0 0 20px rgba(68, 255, 68, 0.8);
+}
+
+.node.receiving {
+    background: #FF4444;
+    transform: scale(1.3);
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.8);
+}
+
+.node.processing {
+    background: #FFAA00;
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(255, 170, 0, 0.8);
+}
+
+.connection {
+    position: absolute;
+    height: 2px;
+    background: rgba(29, 161, 242, 0.2);
+    transform-origin: left center;
+}
+
+.connection.active {
+    height: 3px;
+    background: linear-gradient(to right, 
+        rgba(68, 255, 68, 0.8) 0%, 
+        rgba(255, 68, 68, 0.8) 100%);
+    filter: drop-shadow(0 0 8px rgba(29, 161, 242, 0.5));
+}
+
+.packet {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.info-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    font-family: monospace;
+    color: #1DA1F2;
+    border: 1px solid rgba(29, 161, 242, 0.3);
+}
+
+.metrics {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    font-family: monospace;
+    color: #1DA1F2;
+    border: 1px solid rgba(29, 161, 242, 0.3);
+}
+
+.layer-indicator {
+    position: absolute;
+    left: 10px;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 4px;
+    color: #1DA1F2;
+    font-family: monospace;
+}
+</style>
+
+<script>
+class EnhancedNetwork {
+    constructor(container) {
+        this.container = container;
+        this.nodes = [];
+        this.connections = [];
+        this.packets = [];
+        this.layers = new Map();
+        this.activeTransmissions = 0;
+        this.setupVisualization();
+    }
+
+    setupVisualization() {
+        this.createLayers();
+        this.createConnections();
+        this.setupMetrics();
+        this.startSimulation();
+    }
+
+    createLayers() {
+        const layerCount = 3;
+        const nodesPerLayer = 12;
+
+        for (let i = 0; i < layerCount; i++) {
+            const layerLabel = document.createElement('div');
+            layerLabel.className = 'layer-indicator';
+            layerLabel.style.top = `${25 + i * 30}%`;
+            layerLabel.textContent = `Layer ${i + 1}`;
+            this.container.appendChild(layerLabel);
+
+            const layerNodes = [];
+            for (let j = 0; j < nodesPerLayer; j++) {
+                const node = this.createNode(i, j, nodesPerLayer);
+                layerNodes.push(node);
+            }
+            this.layers.set(i, layerNodes);
+        }
+    }
+
+    createNode(layer, index, totalInLayer) {
+        const node = document.createElement('div');
+        node.className = 'node';
+        
+        // Position nodes in an arc within their layer
+        const angleStep = Math.PI / (totalInLayer + 1);
+        const angle = (index + 1) * angleStep;
+        const radius = 40;
+        const centerX = 50;
+        const layerY = 25 + layer * 30;
+        
+        const x = centerX + radius * Math.cos(angle);
+        const y = layerY + radius * Math.sin(angle) * 0.5;
+        
+        node.style.left = `${x}%`;
+        node.style.top = `${y}%`;
+        node.dataset.layer = layer;
+        
+        this.container.appendChild(node);
+        this.nodes.push(node);
+        return node;
+    }
+
+    createConnections() {
+        // Intra-layer connections
+        this.layers.forEach(nodes => {
+            nodes.forEach((node, i) => {
+                nodes.slice(i + 1).forEach(target => {
+                    if (Math.random() < 0.3) {
+                        this.createConnection(node, target);
+                    }
+                });
+            });
+        });
+
+        // Inter-layer connections
+        for (let i = 0; i < this.layers.size - 1; i++) {
+            const currentLayer = this.layers.get(i);
+            const nextLayer = this.layers.get(i + 1);
+            
+            currentLayer.forEach(node => {
+                nextLayer.forEach(target => {
+                    if (Math.random() < 0.2) {
+                        this.createConnection(node, target);
+                    }
+                });
+            });
+        }
+    }
+
+    createConnection(from, to) {
+        const connection = document.createElement('div');
+        connection.className = 'connection';
+        this.container.appendChild(connection);
+        this.connections.push({
+            element: connection,
+            from: from,
+            to: to,
+            active: false
+        });
+    }
+
+    transmitInformation(startNode) {
+        startNode.classList.add('sending');
+        
+        const connections = this.connections.filter(conn => 
+            conn.from === startNode || conn.to === startNode
+        );
+
+        connections.forEach(connection => {
+            setTimeout(() => {
+                this.animateTransmission(connection);
+            }, Math.random() * 500);
+        });
+
+        setTimeout(() => {
+            startNode.classList.remove('sending');
+        }, 1000);
+    }
+
+    animateTransmission(connection) {
+        connection.active = true;
+        connection.element.classList.add('active');
+        
+        const packet = this.createPacket(connection);
+        
+        setTimeout(() => {
+            connection.element.classList.remove('active');
+            connection.active = false;
+            
+            const targetNode = connection.to;
+            targetNode.classList.add('receiving');
+            
+            setTimeout(() => {
+                targetNode.classList.remove('receiving');
+                targetNode.classList.add('processing');
+                
+                setTimeout(() => {
+                    targetNode.classList.remove('processing');
+                    this.transmitInformation(targetNode);
+                }, 500);
+            }, 500);
+        }, 1000);
+    }
+
+    createPacket(connection) {
+        const packet = document.createElement('div');
+        packet.className = 'packet';
+        this.container.appendChild(packet);
+        
+        const start = this.getNodePosition(connection.from);
+        const end = this.getNodePosition(connection.to);
+        
+        packet.style.left = `${start.x}px`;
+        packet.style.top = `${start.y}px`;
+        
+        const duration = 1000;
+        const startTime = performance.now();
+        
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const x = start.x + (end.x - start.x) * progress;
+            const y = start.y + (end.y - start.y) * progress;
+            
+            packet.style.left = `${x}px`;
+            packet.style.top = `${y}px`;
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                packet.remove();
+            }
+        };
+        
+        requestAnimationFrame(animate);
+        return packet;
+    }
+
+    getNodePosition(node) {
+        const rect = node.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+    }
+
+    setupMetrics() {
+        const metrics = document.createElement('div');
+        metrics.className = 'metrics';
+        this.metricsDisplay = metrics;
+        this.container.appendChild(metrics);
+        
+        const info = document.createElement('div');
+        info.className = 'info-overlay';
+        info.textContent = 'Information Flow Visualization';
+        this.container.appendChild(info);
+    }
+
+    updateMetrics() {
+        const activeNodes = this.nodes.filter(node => 
+            node.classList.contains('sending') || 
+            node.classList.contains('receiving') || 
+            node.classList.contains('processing')
+        ).length;
+
+        const activeConnections = this.connections.filter(conn => conn.active).length;
+        
+        this.metricsDisplay.innerHTML = `
+            Active Nodes: ${activeNodes}<br>
+            Active Connections: ${activeConnections}<br>
+            Transmission Rate: ${this.activeTransmissions}/s
+        `;
+    }
+
+    startSimulation() {
+        setInterval(() => {
+            if (Math.random() < 0.3) {
+                const startLayer = this.layers.get(0);
+                const startNode = startLayer[Math.floor(Math.random() * startLayer.length)];
+                this.transmitInformation(startNode);
+                this.activeTransmissions++;
+            }
+            this.updateMetrics();
+        }, 2000);
+
+        setInterval(() => {
+            this.activeTransmissions = 0;
+        }, 1000);
+    }
+}
+
+window.onload = function() {
+    const viz = document.querySelector('.consciousness-viz');
+    new EnhancedNetwork(viz);
+}
+</script>
+</head>
+<body>
+
+<div class="article">
+    <h1>Enhanced Information Flow Visualization</h1>
+    <div class="consciousness-viz" style="height: 600px;">
+        <!-- Network visualization will be rendered here -->
+    </div>
+</div>
+
+</body>
+</html>
