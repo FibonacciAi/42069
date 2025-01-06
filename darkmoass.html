@@ -1,416 +1,347 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Enhanced Fibonacci Spiral</title>
-  <style>
-    body { margin: 0; overflow: hidden; background-color: #000; }
-    canvas { display: block; }
-
-    .control-panel {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.85);
-      color: #ffffff;
-      padding: 15px;
-      border-radius: 8px;
-      font-family: 'Segoe UI', sans-serif;
-      z-index: 1000;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    }
-
-    .slider {
-      width: 200px;
-      margin: 10px 0;
-    }
-
-    .button-container {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    button {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      padding: 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.3s;
-      flex: 1;
-    }
-
-    button:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Enhanced Fibonacci Spiral</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .slider {
+            width: 200px;
+            margin: 10px 0;
+        }
+        .button-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex: 1;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
 </head>
 <body>
-  <div class="control-panel">
-    <div>Rotation Speed</div>
-    <input type="range" id="rotationSpeed" class="slider" min="0" max="100" value="50">
-    <div class="button-container">
-      <button id="resetCamera">Reset View</button>
-      <button id="toggleAutoRotate">Stop Rotation</button>
+    <div class="control-panel">
+        <div>Rotation Speed</div>
+        <input type="range" id="rotationSpeed" class="slider" min="0" max="100" value="50">
+        <div class="button-container">
+            <button id="resetCamera">Reset View</button>
+            <button id="toggleAutoRotate">Stop Rotation</button>
+        </div>
     </div>
-  </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
 
-  <script>
-// Scene setup
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-document.body.appendChild(renderer.domElement);
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0;
 
-// Controls
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-controls.enableZoom = true;
-controls.autoRotate = true; // Enable auto-rotate by default
-controls.autoRotateSpeed = 1.0;
+        // Constants
+        const numLayers = 8;
+        const pointsPerLayer = 500;
+        const colors = [
+            '#ff6666', '#66ff66', '#6666ff', '#ffcc66',
+            '#66ccff', '#cc66ff', '#cccc66', '#66cccc'
+        ];
 
-// Constants
-const numLayers = 8;
-const pointsPerLayer = 500;
-const colors = [
-  '#ff6666', '#66ff66', '#6666ff', '#ffcc66',
-  '#66ccff', '#cc66ff', '#cccc66', '#66cccc'
-];
+        // Scene groups
+        const spiralsGroup = new THREE.Group();
+        scene.add(spiralsGroup);
 
-// Scene groups
-const spiralsGroup = new THREE.Group();
-scene.add(spiralsGroup);
+        // Create spiral with instancing
+        function createFibonacciSpiral(points, scale, offset, color) {
+            const geometry = new THREE.SphereGeometry(0.5, 8, 8);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: new THREE.Color(color),
+                roughness: 0.5,
+                metalness: 0.1
+            });
 
-// Create spiral with instancing
-function createFibonacciSpiral(points, scale, offset, color) {
-  const geometry = new THREE.SphereGeometry(0.5, 8, 8);
-  const material = new THREE.MeshStandardMaterial({ 
-    color: new THREE.Color(color),
-    roughness: 0.5,
-    metalness: 0.1
-  });
+            const mesh = new THREE.InstancedMesh(geometry, material, points);
+            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
-  const mesh = new THREE.InstancedMesh(geometry, material, points);
-  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            const dummy = new THREE.Object3D();
+            const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
-  const dummy = new THREE.Object3D();
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+            for (let i = 0; i < points; i++) {
+                const theta = i * goldenAngle;
+                const radius = Math.sqrt(i) * scale;
+                const x = radius * Math.cos(theta);
+                const y = radius * Math.sin(theta);
+                const z = offset * 0.1;
 
-  for (let i = 0; i < points; i++) {
-    const theta = i * goldenAngle;
-    const radius = Math.sqrt(i) * scale;
-    const x = radius * Math.cos(theta);
-    const y = radius * Math.sin(theta);
-    const z = offset * 0.1;
+                dummy.position.set(x, y, z);
+                dummy.scale.set(0.1, 0.1, 0.1);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(i, dummy.matrix);
+            }
 
-    dummy.position.set(x, y, z);
-    dummy.scale.set(0.1, 0.1, 0.1);
-    dummy.updateMatrix();
-    mesh.setMatrixAt(i, dummy.matrix);
-  }
+            mesh.instanceMatrix.needsUpdate = true;
+            return mesh;
+        }
 
-  mesh.instanceMatrix.needsUpdate = true;
-  return mesh;
-}
+        // Create spirals
+        colors.forEach((color, layerIndex) => {
+            const spiral = createFibonacciSpiral(pointsPerLayer, 0.5 + layerIndex * 0.2, layerIndex, color);
+            spiral.rotation.z = (Math.PI / numLayers) * layerIndex;
+            spiralsGroup.add(spiral);
+        });
 
-// Create spirals
-colors.forEach((color, layerIndex) => {
-  const spiral = createFibonacciSpiral(pointsPerLayer, 0.5 + layerIndex * 0.2, layerIndex, color);
-  spiral.rotation.z = (Math.PI / numLayers) * layerIndex;
-  spiralsGroup.add(spiral);
-});
+        // Lighting
+        const pointLight = new THREE.PointLight(0xffffff, 3, 1000);
+        pointLight.position.set(100, 100, 100);
+        scene.add(pointLight);
 
-// Lighting
-const pointLight = new THREE.PointLight(0xffffff, 3, 1000);
-pointLight.position.set(100, 100, 100);
-scene.add(pointLight);
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+      // Star field creation
+        function createStarField() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const starCount = 15000;
+            const positions = new Float32Array(starCount * 3);
+            const colors = new Float32Array(starCount * 3);
 
-const ambientLight = new THREE.AmbientLight(0x404040, 2);
-scene.add(ambientLight);
+            for (let i = 0; i < starCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = THREE.MathUtils.randFloatSpread(2000);
+                positions[i3 + 1] = THREE.MathUtils.randFloatSpread(2000);
+                positions[i3 + 2] = THREE.MathUtils.randFloatSpread(2000);
 
-// Star field
-function createStarField() {
-  const starsGeometry = new THREE.BufferGeometry();
-  const starCount = 15000;
-  const positions = new Float32Array(starCount * 3);
-  const colors = new Float32Array(starCount * 3);
+                const starColor = new THREE.Color().setHSL(0, 0, THREE.MathUtils.randFloat(0.5, 1));
+                colors[i3] = starColor.r;
+                colors[i3 + 1] = starColor.g;
+                colors[i3 + 2] = starColor.b;
+            }
 
-  for (let i = 0; i < starCount; i++) {
-    const i3 = i * 3;
-    positions[i3] = THREE.MathUtils.randFloatSpread(2000);
-    positions[i3 + 1] = THREE.MathUtils.randFloatSpread(2000);
-    positions[i3 + 2] = THREE.MathUtils.randFloatSpread(2000);
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starsGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    const starColor = new THREE.Color().setHSL(0, 0, THREE.MathUtils.randFloat(0.5, 1));
-    colors[i3] = starColor.r;
-    colors[i3 + 1] = starColor.g;
-    colors[i3 + 2] = starColor.b;
-  }
+            const starsMaterial = new THREE.PointsMaterial({
+                size: 1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.7
+            });
 
-  starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  starsGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            return new THREE.Points(starsGeometry, starsMaterial);
+        }
 
-  const starsMaterial = new THREE.PointsMaterial({
-    size: 1,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.7
-  });
+        const starField = createStarField();
+        scene.add(starField);
 
-  return new THREE.Points(starsGeometry, starsMaterial);
-}
+        // Create central sphere with electrified core
+        function createCentralSphere() {
+            const group = new THREE.Group();
 
-const starField = createStarField();
-scene.add(starField);
+            // Base sphere
+            const geometry = new THREE.SphereGeometry(1.8, 64, 64);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                emissive: 0x550000,
+                emissiveIntensity: 1,
+                metalness: 0.9,
+                roughness: 0.2,
+            });
 
-// Create electrified core
-function createElectrifiedCore() {
-  const group = new THREE.Group();
+            const sphere = new THREE.Mesh(geometry, material);
+            group.add(sphere);
 
-  // Black core
-  const coreGeometry = new THREE.SphereGeometry(0.8, 32, 32);
-  const coreMaterial = new THREE.MeshStandardMaterial({
-    color: 0x000000,
-    emissive: 0x002200,
-    metalness: 1,
-    roughness: 0.2
-  });
-  const core = new THREE.Mesh(coreGeometry, coreMaterial);
-  group.add(core);
+            // Electrified core
+            const coreGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+            const coreMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    color: { value: new THREE.Color(0x00ff00) }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    void main() {
+                        vUv = uv;
+                        vNormal = normalize(normalMatrix * normal);
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float time;
+                    uniform vec3 color;
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    
+                    float random(vec2 st) {
+                        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+                    }
+                    
+                    void main() {
+                        vec2 uv = vUv + time * 0.1;
+                        float noise = random(uv * 10.0);
+                        float lightning = step(0.92, noise);
+                        float glow = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 2.0);
+                        gl_FragColor = vec4(color, 1.0) * (lightning * glow + 0.2);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending
+            });
 
-  // Electric effect
-  const electricGeometry = new THREE.SphereGeometry(0.9, 32, 32);
-  const electricMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      time: { value: 0 },
-      color: { value: new THREE.Color(0x00ff00) }
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      varying vec3 vNormal;
-      void main() {
-        vUv = uv;
-        vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform float time;
-      uniform vec3 color;
-      varying vec2 vUv;
-      varying vec3 vNormal;
-      
-      float random(vec2 st) {
-        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-      }
-      
-      void main() {
-        vec2 uv = vUv + time * 0.1;
-        float noise = random(uv * 10.0);
-        float lightning = step(0.92, noise);
-        float glow = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 2.0);
-        gl_FragColor = vec4(color, 1.0) * (lightning * glow + 0.2);
-      }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending
-  });
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            group.add(core);
 
-  const electricEffect = new THREE.Mesh(electricGeometry, electricMaterial);
-  group.add(electricEffect);
+            // Create wrapped text
+            const textPoints = 12;
+            const loader = new THREE.FontLoader();
+            loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+                const textGeometry = new THREE.TextGeometry('DARK MOASS', {
+                    font: font,
+                    size: 0.2,
+                    height: 0.05,
+                    curveSegments: 12,
+                    bevelEnabled: true,
+                    bevelThickness: 0.01,
+                    bevelSize: 0.01,
+                    bevelOffset: 0,
+                    bevelSegments: 3
+                });
 
-  return group;
-}
+                const textMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    emissive: 0x888888,
+                    metalness: 1,
+                    roughness: 0.1
+                });
 
-// Central sphere
-function createCentralSphere() {
-  const group = new THREE.Group();
+                for (let i = 0; i < textPoints; i++) {
+                    const angle = (i / textPoints) * Math.PI * 2;
+                    const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
+                    
+                    textMesh.position.x = Math.sin(angle) * 2.2;
+                    textMesh.position.z = Math.cos(angle) * 2.2;
+                    textMesh.rotation.y = angle + Math.PI / 2;
+                    textMesh.rotation.z = Math.PI / 8;
+                    
+                    group.add(textMesh);
+                }
+            });
 
-  // Base sphere
-  const geometry = new THREE.SphereGeometry(1.8, 64, 64);
-  const material = new THREE.MeshStandardMaterial({
-    color: 0xff0000,
-    emissive: 0x550000,
-    emissiveIntensity: 1,
-    metalness: 0.9,
-    roughness: 0.2,
-  });
+            return group;
+        }
 
-  const sphere = new THREE.Mesh(geometry, material);
-  group.add(sphere);
+        const centralSphere = createCentralSphere();
+        scene.add(centralSphere);
 
-  // Add electrified core
-  const core = createElectrifiedCore();
-  group.add(core);
+        // Animations
+        const rotationAnimation = gsap.to(spiralsGroup.rotation, {
+            duration: 60,
+            y: Math.PI * 2,
+            repeat: -1,
+            ease: "none"
+        });
 
-  // Create wrapped text
-  const textPoints = 16;
-  const loader = new THREE.FontLoader();
-  loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
-    const textGeometry = new THREE.TextGeometry('DARK MOASS', {
-      font: font,
-      size: 0.15,
-      height: 0.03,
-      curveSegments: 12,
-      bevelEnabled: true,
-      bevelThickness: 0.01,
-      bevelSize: 0.005,
-      bevelOffset: 0,
-      bevelSegments: 3
-    });
+        gsap.to(centralSphere.scale, {
+            duration: 2,
+            x: 1.1,
+            y: 1.1,
+            z: 1.1,
+            repeat: -1,
+            yoyo: true,
+            ease: "power1.inOut"
+        });
 
-    const textMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: 0x888888,
-      metalness: 1,
-      roughness: 0.1
-    });
+        gsap.to(centralSphere.rotation, {
+            duration: 30,
+            y: Math.PI * 2,
+            repeat: -1,
+            ease: "none"
+        });
 
-    for (let i = 0; i < textPoints; i++) {
-      const angle = (i / textPoints) * Math.PI * 2;
-      const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
-      
-      textMesh.position.x = Math.sin(angle) * 2.2;
-      textMesh.position.z = Math.cos(angle) * 2.2;
-      textMesh.rotation.y = angle + Math.PI / 2;
-      textMesh.rotation.z = Math.PI / 12;
-      
-      group.add(textMesh);
-    }
-  });
+        // Event handlers
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
-  // Glow effect
-  const glowGeometry = new THREE.SphereGeometry(1.85, 32, 32);
-  const glowMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color(0xff0000) },
-      intensity: { value: 1.0 }
-    },
-    vertexShader: `
-      varying vec3 vNormal;
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      uniform float intensity;
-      varying vec3 vNormal;
-      void main() {
-        float glow = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 4.0) * intensity;
-        gl_FragColor = vec4(color, 1.0) * glow;
-      }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending
-  });
-  
-  const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-  group.add(glow);
+        document.getElementById('rotationSpeed').addEventListener('input', (e) => {
+            const speed = e.target.value / 50;
+            rotationAnimation.timeScale(speed);
+            controls.autoRotateSpeed = speed;
+        });
 
-  return group;
-}
+        document.getElementById('resetCamera').addEventListener('click', () => {
+            gsap.to(camera.position, {
+                x: 0,
+                y: 25,
+                z: 75,
+                duration: 1,
+                ease: "power2.inOut",
+                onUpdate: () => controls.update()
+            });
+        });
 
-const centralSphere = createCentralSphere();
-scene.add(centralSphere);
+        document.getElementById('toggleAutoRotate').addEventListener('click', (e) => {
+            controls.autoRotate = !controls.autoRotate;
+            e.target.textContent = controls.autoRotate ? "Stop Rotation" : "Auto Rotate";
+        });
 
-// Animations
-const rotationAnimation = gsap.to(spiralsGroup.rotation, {
-  duration: 60,
-  y: Math.PI * 2,
-  repeat: -1,
-  ease: "none"
-});
+        // Camera setup
+        camera.position.set(0, 25, 75);
+        controls.update();
 
-gsap.to(centralSphere.scale, {
-  duration: 2,
-  x: 1.1,
-  y: 1.1,
-  z: 1.1,
-  repeat: -1,
-  yoyo: true,
-  ease: "power1.inOut"
-});
+        // Animation loop
+        const clock = new THREE.Clock();
 
-gsap.to(centralSphere.rotation, {
-  duration: 30,
-  y: Math.PI * 2,
-  repeat: -1,
-  ease: "none"
-});
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = clock.getElapsedTime();
+            controls.update();
 
-// Event handlers
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+            // Update electrified core
+            centralSphere.children[1].material.uniforms.time.value = time;
 
-document.getElementById('rotationSpeed').addEventListener('input', (e) => {
-  const speed = e.target.value / 50;
-  rotationAnimation.timeScale(speed);
-  controls.autoRotateSpeed = speed;
-});
+            renderer.render(scene, camera);
+        }
 
-document.getElementById('resetCamera').addEventListener('click', () => {
-  gsap.to(camera.position, {
-    x: 0,
-    y: 25,
-    z: 75,
-    duration: 1,
-    ease: "power2.inOut",
-    onUpdate: () => controls.update()
-  });
-});
-
-document.getElementById('toggleAutoRotate').addEventListener('click', (e) => {
-  controls.autoRotate = !controls.autoRotate;
-  e.target.textContent = controls.autoRotate ? "Stop Rotation" : "Auto Rotate";
-});
-
-// Camera setup with closer initial position
-camera.position.set(0, 25, 75);
-controls.update();
-
-// Animation loop
-const clock = new THREE.Clock();
-
-function animate() {
-  requestAnimationFrame(animate);
-  
-  const delta = clock.getDelta();
-  const time = clock.getElapsedTime();
-  
-  controls.update();
-  
-  // Update electric effect
-  centralSphere.traverse((child) => {
-    if (child.material && child.material.uniforms && child.material.uniforms.time) {
-      child.material.uniforms.time.value = time;
-    }
-  });
-  
-  // Update sphere glow
-  if (centralSphere.children[1].material.uniforms) {
-    const cameraAngle = camera.position.angleTo(new THREE.Vector3(0, 0, 1));
-    centralSphere.children[1].material.uniforms.intensity.value = Math.sin(cameraAngle) * 0.5 + 0.5;
-  }
-
-  renderer.render(scene, camera);
-}
-animate();  </script>
+        animate();
+    </script>
 </body>
 </html>
