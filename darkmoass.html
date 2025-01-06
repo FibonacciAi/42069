@@ -168,8 +168,7 @@
         const starField = createStarField();
         scene.add(starField);
 
-        // Create central sphere with electrified core
-function createCentralSphere() {
+        function createCentralSphere() {
     const group = new THREE.Group();
 
     // Base sphere (red outer sphere)
@@ -277,7 +276,6 @@ function createCentralSphere() {
             group.add(textMesh);
         }
     });
-
     return group;
 }
 
