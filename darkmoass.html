@@ -52,6 +52,8 @@
             <button id="toggleAutoRotate">Stop Rotation</button>
         </div>
     </div>
+
+    <!-- Three.js and extras -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -62,12 +64,14 @@
         // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 25, 75);
+
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // Controls
+        // Orbit controls
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
@@ -75,7 +79,18 @@
         controls.autoRotate = true;
         controls.autoRotateSpeed = 1.0;
 
-        // Constants
+        // Lighting
+        const pointLight = new THREE.PointLight(0xffffff, 3, 1000);
+        pointLight.position.set(100, 100, 100);
+        scene.add(pointLight);
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+
+        // ===== FIBONACCI SPIRALS GROUP =====
+        const spiralsGroup = new THREE.Group();
+        scene.add(spiralsGroup);
+
         const numLayers = 8;
         const pointsPerLayer = 500;
         const colors = [
@@ -83,17 +98,14 @@
             '#66ccff', '#cc66ff', '#cccc66', '#66cccc'
         ];
 
-        // Scene groups
-        const spiralsGroup = new THREE.Group();
-        scene.add(spiralsGroup);
-
-        // Create spiral with instancing
+        // Helper function to create a Fibonacci spiral layer
         function createFibonacciSpiral(points, scale, offset, color) {
             const geometry = new THREE.SphereGeometry(0.5, 8, 8);
             const material = new THREE.MeshStandardMaterial({ 
                 color: new THREE.Color(color),
                 roughness: 0.5,
-                metalness: 0.1
+                metalness: 0.1,
+                emissive: new THREE.Color(color).multiplyScalar(0.2)
             });
 
             const mesh = new THREE.InstancedMesh(geometry, material, points);
@@ -119,36 +131,209 @@
             return mesh;
         }
 
-        // Create spirals
+        // Build the spiral layers
         colors.forEach((color, layerIndex) => {
             const spiral = createFibonacciSpiral(pointsPerLayer, 0.5 + layerIndex * 0.2, layerIndex, color);
             spiral.rotation.z = (Math.PI / numLayers) * layerIndex;
             spiralsGroup.add(spiral);
         });
 
-        // Lighting
-        const pointLight = new THREE.PointLight(0xffffff, 3, 1000);
-        pointLight.position.set(100, 100, 100);
-        scene.add(pointLight);
+        // ===== CENTRAL SPHERE GROUP =====
+        function createCentralSphere() {
+            const group = new THREE.Group();
 
-        const ambientLight = new THREE.AmbientLight(0x404040, 2);
-        scene.add(ambientLight);
+            // Outer red sphere
+            const redGeometry = new THREE.SphereGeometry(1.8, 64, 64);
+            const redMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff2200,
+                emissive: 0x661100,
+                emissiveIntensity: 1.5,
+                metalness: 0.9,
+                roughness: 0.2,
+                transparent: true,
+                opacity: 0.92
+            });
+            const redSphere = new THREE.Mesh(redGeometry, redMaterial);
+            group.add(redSphere);
 
-        // Star field creation
+            // ===== REMOVED BLACK SPHERE =====
+            // The black sphere has been removed as per the request.
+
+            // "DARK MOASS" text at radius ~1.5
+            const textPoints = 12;
+            const loader = new THREE.FontLoader();
+            loader.load(
+                'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json',
+                (font) => {
+                    const textGeometry = new THREE.TextGeometry('DARK MOASS', {
+                        font: font,
+                        size: 0.13,
+                        height: 0.04,
+                        curveSegments: 12,
+                        bevelEnabled: true,
+                        bevelThickness: 0.01,
+                        bevelSize: 0.005,
+                        bevelOffset: 0,
+                        bevelSegments: 5
+                    });
+
+                    const textMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x00ff00, // Electric green color
+                        emissive: 0x00ff00, // Matching emissive color for glow
+                        emissiveIntensity: 3.0, // Increased emissive intensity for stronger glow
+                        metalness: 0.9,
+                        roughness: 0.2
+                    });
+
+                    for (let i = 0; i < textPoints; i++) {
+                        const angle = (i / textPoints) * Math.PI * 2;
+                        const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
+
+                        textMesh.position.x = Math.sin(angle) * 1.5;
+                        textMesh.position.z = Math.cos(angle) * 1.5;
+                        textMesh.rotation.y = angle + Math.PI / 2;
+                        textMesh.rotation.z = Math.PI / 8;
+                        group.add(textMesh);
+                    }
+                }
+            );
+
+            // ===== UPDATED INNER SWIRLING CORE =====
+            const coreGeometry = new THREE.SphereGeometry(0.5, 64, 64); // Reduced size to 0.5
+
+            const coreMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    colorA: { value: new THREE.Color(0x006600) }, // Dark green
+                    colorB: { value: new THREE.Color(0x00ff00) }, // Bright electric green
+                    brightness: { value: 10.0 }, // Increased brightness
+                    swirlScale: { value: 4.0 },    // Increased swirl scale for tighter swirl
+                    warpScale: { value: 0.6 },     // Increased warp scale for more dynamic warp
+                    warpSpeed: { value: 3.0 }      // Increased warp speed for faster animation
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    varying vec3 vPos;
+                    void main() {
+                        vUv = uv;
+                        vPos = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    float hash(vec2 p) {
+                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+                    }
+                    float noise2D(vec2 st) {
+                        vec2 i = floor(st);
+                        vec2 f = fract(st);
+                        float a = hash(i);
+                        float b = hash(i + vec2(1.0, 0.0));
+                        float c = hash(i + vec2(0.0, 1.0));
+                        float d = hash(i + vec2(1.0, 1.0));
+                        vec2 u = f * f * (3.0 - 2.0 * f);
+                        return mix(a, b, u.x) +
+                               (c - a)* u.y * (1.0 - u.x) +
+                               (d - b)* u.x * u.y;
+                    }
+
+                    vec2 domainWarp(vec2 st, float warpScale, float t) {
+                        float nx = noise2D(st + 1.0 * t);
+                        float ny = noise2D(st - 0.5 * t);
+                        return st + vec2(nx, ny) * warpScale;
+                    }
+
+                    uniform float time;
+                    uniform vec3 colorA;
+                    uniform vec3 colorB;
+                    uniform float brightness;
+                    uniform float swirlScale;
+                    uniform float warpScale;
+                    uniform float warpSpeed;
+
+                    varying vec2 vUv;
+                    varying vec3 vPos;
+
+                    void main() {
+                        // Basic swirl coords
+                        float angle = atan(vPos.z, vPos.x) + time * warpSpeed;
+                        float radius = length(vPos.xz);
+
+                        // 1) Clamp radius so swirl can't exceed 0.5
+                        radius = min(radius, 0.5);
+
+                        // 2) Build swirl coordinate
+                        vec2 st = vec2(
+                            angle * (swirlScale / (2.0 * 3.14159)),
+                            radius * swirlScale
+                        );
+
+                        // 3) Domain warp with the increased warpScale
+                        st = domainWarp(st, warpScale, time);
+
+                        // 4) Combine noise
+                        float baseNoise = noise2D(st);
+                        float modNoise  = noise2D(st * 3.0 + 2.0);
+                        float rawIntensity = baseNoise + 0.25 * modNoise;
+
+                        // 5) Radial falloff => swirl fades near radius=0.5
+                        float radialFactor = 1.0 - (radius / 0.5);
+                        radialFactor = clamp(radialFactor, 0.0, 1.0);
+
+                        // 6) Combine swirl noise + radial factor
+                        float intensity = smoothstep(0.2, 1.0, rawIntensity) * radialFactor;
+
+                        // Mix final color
+                        vec3 color = mix(colorA, colorB, intensity);
+
+                        // "Glow" factor
+                        float glow = clamp(intensity * 3.0, 0.0, 1.0); // Increased glow multiplier
+
+                        color *= brightness * glow;
+
+                        float alpha = glow; 
+                        gl_FragColor = vec4(color, alpha);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending
+            });
+
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            core.rotation.x = Math.PI * 0.5;
+            group.add(core);
+
+            // Pulse brightness from 10.0 to ~20.0 for more dynamic effect
+            gsap.to(coreMaterial.uniforms.brightness, {
+                value: 20.0,
+                duration: 1.0,
+                repeat: -1,
+                yoyo: true,
+                ease: "power2.inOut"
+            });
+
+            return group;
+        }
+
+        // Build & add central sphere
+        const centralSphere = createCentralSphere();
+        scene.add(centralSphere);
+
+        // ===== STAR FIELD =====
         function createStarField() {
             const starsGeometry = new THREE.BufferGeometry();
-            const starCount = 15000;
+            const starCount = 20000;
             const positions = new Float32Array(starCount * 3);
             const colors = new Float32Array(starCount * 3);
 
             for (let i = 0; i < starCount; i++) {
                 const i3 = i * 3;
-                positions[i3] = THREE.MathUtils.randFloatSpread(2000);
-                positions[i3 + 1] = THREE.MathUtils.randFloatSpread(2000);
-                positions[i3 + 2] = THREE.MathUtils.randFloatSpread(2000);
+                positions[i3]   = THREE.MathUtils.randFloatSpread(2000);
+                positions[i3+1] = THREE.MathUtils.randFloatSpread(2000);
+                positions[i3+2] = THREE.MathUtils.randFloatSpread(2000);
 
                 const starColor = new THREE.Color().setHSL(0, 0, THREE.MathUtils.randFloat(0.5, 1));
-                colors[i3] = starColor.r;
+                colors[i3]     = starColor.r;
                 colors[i3 + 1] = starColor.g;
                 colors[i3 + 2] = starColor.b;
             }
@@ -157,10 +342,10 @@
             starsGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
             const starsMaterial = new THREE.PointsMaterial({
-                size: 1,
+                size: 1.2,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.7
+                opacity: 0.8
             });
 
             return new THREE.Points(starsGeometry, starsMaterial);
@@ -169,123 +354,7 @@
         const starField = createStarField();
         scene.add(starField);
 
-        // Create central sphere with electrified core
-        function createCentralSphere() {
-            const group = new THREE.Group();
-
-            // Base sphere (red outer sphere)
-            const geometry = new THREE.SphereGeometry(1.8, 64, 64);
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xff0000,
-                emissive: 0x550000,
-                emissiveIntensity: 1,
-                metalness: 0.9,
-                roughness: 0.2,
-                transparent: true,
-                opacity: 0.9
-            });
-
-            const sphere = new THREE.Mesh(geometry, material);
-            group.add(sphere);
-
-            // Black middle sphere
-            const blackSphereGeometry = new THREE.SphereGeometry(1.6, 64, 64);
-            const blackSphereMaterial = new THREE.MeshStandardMaterial({
-                color: 0x000000,
-                emissive: 0x000000,
-                metalness: 1,
-                roughness: 0,
-            });
-            const blackSphere = new THREE.Mesh(blackSphereGeometry, blackSphereMaterial);
-            group.add(blackSphere);
-
-            // Electrified core (enhanced)
-            const coreGeometry = new THREE.SphereGeometry(1.5, 32, 32);
-            const coreMaterial = new THREE.ShaderMaterial({
-                uniforms: {
-                    time: { value: 0 },
-                    color: { value: new THREE.Color(0x00ff00) }
-                },
-                vertexShader: `
-                    varying vec2 vUv;
-                    varying vec3 vNormal;
-                    void main() {
-                        vUv = uv;
-                        vNormal = normalize(normalMatrix * normal);
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    uniform float time;
-                    uniform vec3 color;
-                    varying vec2 vUv;
-                    varying vec3 vNormal;
-                    
-                    float random(vec2 st) {
-                        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-                    }
-                    
-                    void main() {
-                        vec2 uv = vUv + time * 0.2;
-                        float noise1 = random(uv * 15.0);
-                        float noise2 = random((uv + 0.1) * 10.0);
-                        float lightning = step(0.95, noise1) + step(0.97, noise2) * 0.5;
-                        float glow = pow(0.8 - dot(vNormal, vec3(0, 0, 1.0)), 3.0);
-                        vec3 finalColor = color * (lightning * 2.0 + 0.1);
-                        gl_FragColor = vec4(finalColor, (lightning * glow + 0.1) * 0.8);
-                    }
-                `,
-                transparent: true,
-                blending: THREE.AdditiveBlending
-            });
-
-            const core = new THREE.Mesh(coreGeometry, coreMaterial);
-            group.add(core);
-
-            // Enhanced text
-            const textPoints = 12;
-            const loader = new THREE.FontLoader();
-            loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
-                const textGeometry = new THREE.TextGeometry('DARK MOASS', {
-                    font: font,
-                    size: 0.08,
-                    height: 0.02,
-                    curveSegments: 12,
-                    bevelEnabled: true,
-                    bevelThickness: 0.005,
-                    bevelSize: 0.003,
-                    bevelOffset: 0,
-                    bevelSegments: 5
-                });
-
-                const textMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xffffff,
-                    emissive: 0xaaaaaa,
-                    emissiveIntensity: 0.5,
-                    metalness: 0.8,
-                    roughness: 0.2
-                });
-
-                for (let i = 0; i < textPoints; i++) {
-                    const angle = (i / textPoints) * Math.PI * 2;
-                    const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
-                    
-                    textMesh.position.x = Math.sin(angle) * 1.7;
-                    textMesh.position.z = Math.cos(angle) * 1.7;
-                    textMesh.rotation.y = angle + Math.PI / 2;
-                    textMesh.rotation.z = Math.PI / 8;
-                    
-                    group.add(textMesh);
-                }
-            });
-
-            return group;
-        }
-
-        const centralSphere = createCentralSphere();
-        scene.add(centralSphere);
-
-        // Animations
+        // ===== ANIMATIONS =====
         const rotationAnimation = gsap.to(spiralsGroup.rotation, {
             duration: 60,
             y: Math.PI * 2,
@@ -310,7 +379,7 @@
             ease: "none"
         });
 
-        // Event handlers
+        // ===== HANDLERS =====
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -339,25 +408,24 @@
             e.target.textContent = controls.autoRotate ? "Stop Rotation" : "Auto Rotate";
         });
 
-        // Camera setup
-        camera.position.set(0, 25, 75);
-        controls.update();
-
-        // Animation loop
+        // ===== MAIN LOOP =====
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-            
             const time = clock.getElapsedTime();
+
             controls.update();
 
-            // Update electrified core
-            centralSphere.children[2].material.uniforms.time.value = time;
+            // Update swirl's time uniform
+            scene.traverse((child) => {
+                if (child.material && child.material.uniforms && child.material.uniforms.time) {
+                    child.material.uniforms.time.value = time;
+                }
+            });
 
             renderer.render(scene, camera);
         }
-
         animate();
     </script>
 </body>
