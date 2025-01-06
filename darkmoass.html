@@ -227,40 +227,40 @@
             group.add(core);
 
             // Create wrapped text
-            const textPoints = 12;
-            const loader = new THREE.FontLoader();
-            loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
-                const textGeometry = new THREE.TextGeometry('DARK MOASS', {
-                    font: font,
-                    size: 0.2,
-                    height: 0.05,
-                    curveSegments: 12,
-                    bevelEnabled: true,
-                    bevelThickness: 0.01,
-                    bevelSize: 0.01,
-                    bevelOffset: 0,
-                    bevelSegments: 3
-                });
+const textPoints = 12;
+const loader = new THREE.FontLoader();
+loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+    const textGeometry = new THREE.TextGeometry('DARK MOASS', {
+        font: font,
+        size: 0.15,  // Reduced from 0.2
+        height: 0.02,  // Reduced from 0.05
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.005,  // Reduced from 0.01
+        bevelSize: 0.005,  // Reduced from 0.01
+        bevelOffset: 0,
+        bevelSegments: 3
+    });
 
-                const textMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xffffff,
-                    emissive: 0x888888,
-                    metalness: 1,
-                    roughness: 0.1
-                });
+    const textMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0x888888,
+        metalness: 1,
+        roughness: 0.1
+    });
 
-                for (let i = 0; i < textPoints; i++) {
-                    const angle = (i / textPoints) * Math.PI * 2;
-                    const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
-                    
-                    textMesh.position.x = Math.sin(angle) * 2.2;
-                    textMesh.position.z = Math.cos(angle) * 2.2;
-                    textMesh.rotation.y = angle + Math.PI / 2;
-                    textMesh.rotation.z = Math.PI / 8;
-                    
-                    group.add(textMesh);
-                }
-            });
+    for (let i = 0; i < textPoints; i++) {
+        const angle = (i / textPoints) * Math.PI * 2;
+        const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
+        
+        textMesh.position.x = Math.sin(angle) * 1.9;  // Reduced from 2.2
+        textMesh.position.z = Math.cos(angle) * 1.9;  // Reduced from 2.2
+        textMesh.rotation.y = angle + Math.PI / 2;
+        textMesh.rotation.z = Math.PI / 8;
+        
+        group.add(textMesh);
+    }
+});
 
             return group;
         }
