@@ -169,98 +169,117 @@
         scene.add(starField);
 
         // Create central sphere with electrified core
-        function createCentralSphere() {
-            const group = new THREE.Group();
+function createCentralSphere() {
+    const group = new THREE.Group();
 
-            // Base sphere
-            const geometry = new THREE.SphereGeometry(1.8, 64, 64);
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xff0000,
-                emissive: 0x550000,
-                emissiveIntensity: 1,
-                metalness: 0.9,
-                roughness: 0.2,
-            });
-
-            const sphere = new THREE.Mesh(geometry, material);
-            group.add(sphere);
-
-            // Electrified core
-            const coreGeometry = new THREE.SphereGeometry(1.5, 32, 32);
-            const coreMaterial = new THREE.ShaderMaterial({
-                uniforms: {
-                    time: { value: 0 },
-                    color: { value: new THREE.Color(0x00ff00) }
-                },
-                vertexShader: `
-                    varying vec2 vUv;
-                    varying vec3 vNormal;
-                    void main() {
-                        vUv = uv;
-                        vNormal = normalize(normalMatrix * normal);
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    uniform float time;
-                    uniform vec3 color;
-                    varying vec2 vUv;
-                    varying vec3 vNormal;
-                    
-                    float random(vec2 st) {
-                        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-                    }
-                    
-                    void main() {
-                        vec2 uv = vUv + time * 0.1;
-                        float noise = random(uv * 10.0);
-                        float lightning = step(0.92, noise);
-                        float glow = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 2.0);
-                        gl_FragColor = vec4(color, 1.0) * (lightning * glow + 0.2);
-                    }
-                `,
-                transparent: true,
-                blending: THREE.AdditiveBlending
-            });
-
-            const core = new THREE.Mesh(coreGeometry, coreMaterial);
-            group.add(core);
-
-            // Create wrapped text
-const textPoints = 12;
-const loader = new THREE.FontLoader();
-loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
-    const textGeometry = new THREE.TextGeometry('DARK MOASS', {
-        font: font,
-        size: 0.08,  // Reduced from 0.15
-        height: 0.01,  // Reduced from 0.02
-        curveSegments: 12,
-        bevelEnabled: true,
-        bevelThickness: 0.002,  // Reduced from 0.005
-        bevelSize: 0.002,  // Reduced from 0.005
-        bevelOffset: 0,
-        bevelSegments: 3
+    // Base sphere (red outer sphere)
+    const geometry = new THREE.SphereGeometry(1.8, 64, 64);
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: 0x550000,
+        emissiveIntensity: 1,
+        metalness: 0.9,
+        roughness: 0.2,
+        transparent: true,
+        opacity: 0.9
     });
 
-    const textMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        emissive: 0x888888,
+    const sphere = new THREE.Mesh(geometry, material);
+    group.add(sphere);
+
+    // Black middle sphere
+    const blackSphereGeometry = new THREE.SphereGeometry(1.6, 64, 64);
+    const blackSphereMaterial = new THREE.MeshStandardMaterial({
+        color: 0x000000,
+        emissive: 0x000000,
         metalness: 1,
-        roughness: 0.1
+        roughness: 0,
+    });
+    const blackSphere = new THREE.Mesh(blackSphereGeometry, blackSphereMaterial);
+    group.add(blackSphere);
+
+    // Electrified core (enhanced)
+    const coreGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+    const coreMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            color: { value: new THREE.Color(0x00ff00) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            void main() {
+                vUv = uv;
+                vNormal = normalize(normalMatrix * normal);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float time;
+            uniform vec3 color;
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            
+            float random(vec2 st) {
+                return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+            }
+            
+            void main() {
+                vec2 uv = vUv + time * 0.2;
+                float noise1 = random(uv * 15.0);
+                float noise2 = random((uv + 0.1) * 10.0);
+                float lightning = step(0.95, noise1) + step(0.97, noise2) * 0.5;
+                float glow = pow(0.8 - dot(vNormal, vec3(0, 0, 1.0)), 3.0);
+                vec3 finalColor = color * (lightning * 2.0 + 0.1);
+                gl_FragColor = vec4(finalColor, (lightning * glow + 0.1) * 0.8);
+            }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending
     });
 
-    for (let i = 0; i < textPoints; i++) {
-        const angle = (i / textPoints) * Math.PI * 2;
-        const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
-        
-        textMesh.position.x = Math.sin(angle) * 1.7;  // Reduced from 1.9
-        textMesh.position.z = Math.cos(angle) * 1.7;  // Reduced from 1.9
-        textMesh.rotation.y = angle + Math.PI / 2;
-        textMesh.rotation.z = Math.PI / 8;
-        
-        group.add(textMesh);
-    }
-});
+    const core = new THREE.Mesh(coreGeometry, coreMaterial);
+    group.add(core);
+
+    // Enhanced text
+    const textPoints = 12;
+    const loader = new THREE.FontLoader();
+    loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+        const textGeometry = new THREE.TextGeometry('DARK MOASS', {
+            font: font,
+            size: 0.08,
+            height: 0.02,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.005,
+            bevelSize: 0.003,
+            bevelOffset: 0,
+            bevelSegments: 5
+        });
+
+        const textMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            emissive: 0xaaaaaa,
+            emissiveIntensity: 0.5,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+
+        for (let i = 0; i < textPoints; i++) {
+            const angle = (i / textPoints) * Math.PI * 2;
+            const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
+            
+            textMesh.position.x = Math.sin(angle) * 1.7;
+            textMesh.position.z = Math.cos(angle) * 1.7;
+            textMesh.rotation.y = angle + Math.PI / 2;
+            textMesh.rotation.z = Math.PI / 8;
+            
+            group.add(textMesh);
+        }
+    });
+
+    return group;
+}
 
             return group;
         }
