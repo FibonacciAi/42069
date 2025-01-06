@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="A visualization of a multi-layered neural network with animated nodes and dynamic connections." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Integration Visualization</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .consciousness-viz {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .network-container {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .node {
+      position: absolute;
+      width: min(8px, 2vw);
+      height: min(8px, 2vw);
+      background: #1DA1F2;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 0 min(10px, 2.5vw) rgba(29, 161, 242, 0.5);
+    }
+    .node.active {
+      background: #FF4444;
+      box-shadow: 0 0 min(20px, 5vw) rgba(255, 68, 68, 0.8);
+    }
+    .node.processing {
+      background: #44FF44;
+      box-shadow: 0 0 min(20px, 5vw) rgba(68, 255, 68, 0.8);
+    }
+
+    .connection {
+      position: absolute;
+      height: min(1px, 0.25vw);
+      background: rgba(29, 161, 242, 0.3);
+      transform-origin: left center;
+      transition: all 0.3s ease;
+    }
+    .connection.active {
+      background: rgba(255, 68, 68, 0.8);
+      height: min(2px, 0.5vw);
+    }
+
+    .info-panel {
+      position: absolute;
+      top: min(20px, 5vw);
+      left: min(20px, 5vw);
+      background: rgba(0, 0, 0, 0.8);
+      padding: min(15px, 4vw);
+      border-radius: min(8px, 2vw);
+      color: #fff;
+      font-size: min(14px, 3.5vw);
+      max-width: min(300px, 80vw);
+      z-index: 1;
+    }
+    .info-panel h1 {
+      margin: 0 0 min(10px, 2.5vw) 0;
+      font-size: min(18px, 4.5vw);
+      color: #1DA1F2;
+    }
+
+    .metrics-panel {
+      position: absolute;
+      bottom: min(20px, 5vw);
+      right: min(20px, 5vw);
+      text-align: right;
+      color: #fff;
+      font-size: min(14px, 3.5vw);
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.8);
+      padding: min(10px, 2.5vw);
+      border-radius: min(8px, 2vw);
+    }
+    .metric {
+      margin: min(2px, 0.5vw) 0;
+    }
+    .metric-value {
+      color: #1DA1F2;
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      .info-panel {
+        max-width: 90vw;
+      }
+      
+      .node {
+        width: 4px;
+        height: 4px;
+      }
+    }
+  </style>
+
+  <script>
+    class IntegratedConsciousnessNetwork {
+      constructor(container) {
+        this.container = container;
+        this.networkContainer = document.createElement('div');
+        this.networkContainer.className = 'network-container';
+        this.container.appendChild(this.networkContainer);
+
+        this.nodes = [];
+        this.connections = [];
+        this.layers = new Map();
+        this.integrationMetric = 0;
+        this.activeNodes = 0;
+        this.totalActivations = 0;
+
+        this.initialize();
+      }
+
+      initialize() {
+        this.createInfoPanel();
+        this.createMetricsPanel();
+
+        const layerConfig = [
+          { count: 10, height: 15 },
+          { count: 15, height: 45 },
+          { count: 10, height: 75 }
+        ];
+
+        layerConfig.forEach((config, index) => {
+          this.createLayer(index, config);
+        });
+
+        this.createLayeredConnections();
+        this.initializeInformationFlow();
+        this.animate();
+      }
+
+      createInfoPanel() {
+        const panel = document.createElement('div');
+        panel.className = 'info-panel';
+        panel.innerHTML = `
+          <h1>Neural Integration Visualization</h1>
+          <p>
+            This visualization demonstrates information flow 
+            and integration across neural networks. Nodes 
+            represent neural clusters, and connections 
+            show information pathways.
+          </p>
+          <p>
+            Red nodes are actively firing, green nodes are 
+            processing, and blue nodes are at rest.
+          </p>
+        `;
+        this.container.appendChild(panel);
+      }
+
+      createMetricsPanel() {
+        const panel = document.createElement('div');
+        panel.className = 'metrics-panel';
+        panel.innerHTML = `
+          <div class="metric">Integration: <span id="integration-value">0.0%</span></div>
+          <div class="metric">Active Nodes: <span id="active-nodes">0</span></div>
+          <div class="metric">Total Activations: <span id="total-activations">0</span></div>
+        `;
+        this.container.appendChild(panel);
+      }
+
+      createLayer(layerIndex, config) {
+        const newLayer = [];
+        for (let i = 0; i < config.count; i++) {
+          const node = this.createNode(layerIndex, config.height, i, config.count);
+          newLayer.push(node);
+        }
+        this.layers.set(layerIndex, newLayer);
+      }
+
+      createNode(layer, baseHeight, index, totalNodes) {
+        const node = document.createElement('div');
+        node.className = 'node';
+
+        const horizontalSpacing = 90 / (totalNodes + 1);
+        const horizontalPosition = horizontalSpacing * (index + 1);
+
+        node.style.left = (horizontalPosition + (Math.random() - 0.5) * 10) + '%';
+        node.style.top = (baseHeight + (Math.random() - 0.5) * 8) + '%';
+
+        node.velocity = {
+          x: (Math.random() - 0.5) * 0.1,
+          y: (Math.random() - 0.5) * 0.1
+        };
+
+        node.layer = layer;
+        node.information = 0;
+        node.processing = false;
+
+        this.networkContainer.appendChild(node);
+        this.nodes.push(node);
+        return node;
+      }
+
+      createLayeredConnections() {
+        this.layers.forEach((nodes, layer) => {
+          const connectionProbability = layer === 1 ? 0.4 : 0.3;
+          nodes.forEach((node, i) => {
+            nodes.slice(i + 1).forEach(target => {
+              if (Math.random() < connectionProbability) {
+                this.createConnection(node, target);
+              }
+            });
+          });
+        });
+
+        for (let layer = 0; layer < this.layers.size - 1; layer++) {
+          const currentNodes = this.layers.get(layer);
+          const nextNodes = this.layers.get(layer + 1);
+
+          currentNodes.forEach(node => {
+            nextNodes.forEach(target => {
+              if (Math.random() < 0.3) {
+                this.createConnection(node, target);
+              }
+            });
+          });
+        }
+      }
+
+      createConnection(from, to) {
+        const connection = document.createElement('div');
+        connection.className = 'connection';
+
+        this.networkContainer.appendChild(connection);
+        this.connections.push({
+          element: connection,
+          from: from,
+          to: to,
+          active: false,
+          strength: Math.random()
+        });
+      }
+
+      initializeInformationFlow() {
+        setInterval(() => {
+          this.layers.get(0).forEach(node => {
+            if (Math.random() < 0.15) {
+              this.activateNode(node);
+            }
+          });
+        }, 1000);
+      }
+
+      activateNode(node) {
+        if (!node.classList.contains('active')) {
+          node.information = 1;
+          node.classList.add('active');
+          this.activeNodes++;
+          this.totalActivations++;
+          this.updateMetrics();
+
+          setTimeout(() => {
+            node.classList.remove('active');
+            this.activeNodes--;
+            this.updateMetrics();
+            this.propagateInformation(node);
+          }, 500);
+        }
+      }
+
+      propagateInformation(node) {
+        const relevantConnections = this.connections.filter(
+          conn => conn.from === node && Math.random() < conn.strength
+        );
+
+        relevantConnections.forEach(connection => {
+          connection.active = true;
+          connection.element.classList.add('active');
+
+          setTimeout(() => {
+            connection.element.classList.remove('active');
+            connection.active = false;
+
+            connection.to.classList.add('processing');
+            setTimeout(() => {
+              connection.to.classList.remove('processing');
+              this.activateNode(connection.to);
+            }, 200);
+          }, 300);
+        });
+      }
+
+      updateMetrics() {
+        const activeConnections = this.connections.filter(c => c.active).length;
+        this.integrationMetric = (
+          (this.activeNodes / this.nodes.length) +
+          (activeConnections / this.connections.length)
+        ) / 2;
+
+        document.getElementById('integration-value').textContent =
+          `${(this.integrationMetric * 100).toFixed(1)}%`;
+        document.getElementById('active-nodes').textContent =
+          this.activeNodes.toString();
+        document.getElementById('total-activations').textContent =
+          this.totalActivations.toString();
+      }
+
+      updateConnections() {
+        this.connections.forEach(connection => {
+          const fromRect = connection.from.getBoundingClientRect();
+          const toRect = connection.to.getBoundingClientRect();
+          const containerRect = this.networkContainer.getBoundingClientRect();
+
+          const from = {
+            x: fromRect.left - containerRect.left + fromRect.width / 2,
+            y: fromRect.top - containerRect.top + fromRect.height / 2
+          };
+          const to = {
+            x: toRect.left - containerRect.left + toRect.width / 2,
+            y: toRect.top - containerRect.top + toRect.height / 2
+          };
+
+          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          const length = Math.sqrt((to.x - from.x) ** 2 + (to.y - from.y) ** 2);
+
+          connection.element.style.width = `${length}px`;
+          connection.element.style.left = `${from.x}px`;
+          connection.element.style.top = `${from.y}px`;
+          connection.element.style.transform = `rotate(${angle}rad)`;
+        });
+      }
+
+      animate() {
+        this.nodes.forEach(node => {
+          let left = parseFloat(node.style.left);
+          let top = parseFloat(node.style.top);
+
+          left += node.velocity.x;
+          top += node.velocity.y;
+
+          if (left < 5 || left > 95) node.velocity.x *= -1;
+
+          const layerHeights = [15, 45, 75];
+          const layerHeight = layerHeights[node.layer] || 50;
+          const heightRange = 8;
+          if (Math.abs(top - layerHeight) > heightRange) node.velocity.y *= -1;
+
+          node.style.left = `${left}%`;
+          node.style.top = `${top}%`;
+        });
+
+        this.updateConnections();
+        requestAnimationFrame(() => this.animate());
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div class="consciousness-viz"></div>
+  <script>
+    window.onload = function() {
+      const viz = document.querySelector('.consciousness-viz');
+      new IntegratedConsciousnessNetwork(viz);
+    }
+  </script>
+</body>
+</html>
