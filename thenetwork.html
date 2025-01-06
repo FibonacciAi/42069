@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background: #111;
+    overflow: hidden;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#debug {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    color: #1DA1F2;
+    font-family: monospace;
+}
+
+.consciousness-viz {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.network-container {
+    position: relative;
+    width: 300px;
+    height: 80vh;
+    border: 1px solid rgba(29, 161, 242, 0.2);
+}
+
+.node {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #1DA1F2;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 0 10px rgba(29, 161, 242, 0.5);
+}
+
+.connection {
+    position: absolute;
+    height: 1px;
+    background: rgba(29, 161, 242, 0.3);
+    transform-origin: left center;
+}
+
+.metrics-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: right;
+    color: #1DA1F2;
+    font-size: 14px;
+    z-index: 1;
+}
+</style>
+
+<script>
+// Add basic error handling
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    console.error('Error: ' + msg + '\nLine: ' + lineNo);
+    document.getElementById('debug').innerHTML += '<br>Error: ' + msg;
+    return false;
+};
+
+class IntegratedConsciousnessNetwork {
+    constructor(container) {
+        this.debug('Initializing network...');
+        
+        this.container = container;
+        this.networkContainer = document.createElement('div');
+        this.networkContainer.className = 'network-container';
+        this.container.appendChild(this.networkContainer);
+        
+        this.nodes = [];
+        this.connections = [];
+        this.layers = new Map();
+        
+        this.initialize();
+    }
+
+    debug(message) {
+        console.log(message);
+        document.getElementById('debug').innerHTML += '<br>' + message;
+    }
+
+    initialize() {
+        this.debug('Creating layers...');
+        
+        // Create three simple layers
+        for (let layer = 0; layer < 3; layer++) {
+            this.layers.set(layer, []);
+            const nodeCount = layer === 1 ? 15 : 10;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                this.createNode(layer);
+            }
+        }
+        
+        this.debug('Creating connections...');
+        this.createConnections();
+        
+        this.debug('Starting animation...');
+        this.animate();
+    }
+
+    createNode(layer) {
+        const node = document.createElement('div');
+        node.className = 'node';
+        
+        // Position node based on layer
+        const y = 20 + (layer * 30);
+        const x = (Math.random() * 80) + 10;
+        
+        node.style.left = x + '%';
+        node.style.top = y + '%';
+        
+        this.networkContainer.appendChild(node);
+        this.nodes.push(node);
+        this.layers.get(layer).push(node);
+        
+        return node;
+    }
+
+    createConnections() {
+        // Create connections between nodes
+        this.layers.forEach((nodes, layer) => {
+            nodes.forEach((node, i) => {
+                // Connect to next layer
+                if (layer < 2) {
+                    const nextLayer = this.layers.get(layer + 1);
+                    nextLayer.forEach(target => {
+                        if (Math.random() < 0.3) {
+                            this.createConnection(node, target);
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    createConnection(from, to) {
+        const connection = document.createElement('div');
+        connection.className = 'connection';
+        this.networkContainer.appendChild(connection);
+        this.connections.push({
+            element: connection,
+            from: from,
+            to: to
+        });
+    }
+
+    updateConnections() {
+        this.connections.forEach(conn => {
+            const fromRect = conn.from.getBoundingClientRect();
+            const toRect = conn.to.getBoundingClientRect();
+            const containerRect = this.networkContainer.getBoundingClientRect();
+
+            const from = {
+                x: fromRect.left - containerRect.left + fromRect.width/2,
+                y: fromRect.top - containerRect.top + fromRect.height/2
+            };
+            const to = {
+                x: toRect.left - containerRect.left + toRect.width/2,
+                y: toRect.top - containerRect.top + toRect.height/2
+            };
+
+            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const length = Math.sqrt(Math.pow(to.x - from.x, 2) + Math.pow(to.y - from.y, 2));
+
+            conn.element.style.width = length + 'px';
+            conn.element.style.left = from.x + 'px';
+            conn.element.style.top = from.y + 'px';
+            conn.element.style.transform = `rotate(${angle}rad)`;
+        });
+    }
+
+    animate() {
+        this.updateConnections();
+        requestAnimationFrame(() => this.animate());
+    }
+}
+</script>
+</head>
+<body>
+    <div id="debug">Initializing...</div>
+    <div class="consciousness-viz"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const debug = document.getElementById('debug');
+            debug.innerHTML += '<br>DOM loaded';
+            
+            try {
+                const viz = document.querySelector('.consciousness-viz');
+                if (viz) {
+                    debug.innerHTML += '<br>Found viz container';
+                    new IntegratedConsciousnessNetwork(viz);
+                } else {
+                    debug.innerHTML += '<br>Error: Could not find viz container';
+                }
+            } catch (e) {
+                debug.innerHTML += '<br>Error: ' + e.message;
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+</html>
