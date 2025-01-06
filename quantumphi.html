@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quantum Holographic Simulator</title>
+    <style>
+        body, html {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: monospace;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 20, 40, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0f4;
+            color: #0f8;
+            z-index: 1000;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .value-display {
+            color: #0f4;
+            margin-left: 10px;
+        }
+        input[type="range"] {
+            width: 200px;
+            -webkit-appearance: none;
+            background: #001;
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #0f8;
+            cursor: pointer;
+            border: 2px solid #0f4;
+        }
+        .angle-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .hud {
+            position: fixed;
+            padding: 10px;
+            color: #0f0;
+            text-shadow: 0 0 2px #0f0;
+            pointer-events: none;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        .top-left { top: 10px; left: 10px; }
+        .bottom-left { bottom: 10px; left: 10px; }
+    </style>
+</head>
+<body>
+<canvas id="holographicCanvas"></canvas>
+<div class="controls">
+    <div class="control-group">
+        <div class="control-label">
+            Holographic Depth
+            <span class="value-display" id="depthValue">1.00</span>
+        </div>
+        <input type="range" id="depthControl" min="0.1" max="5" step="0.1" value="1">
+    </div>
+    <div class="control-group">
+        <div class="control-label">Projection Angles</div>
+        <div class="angle-controls">
+            <div>
+                <div class="control-label">
+                    θ (Theta)
+                    <span class="value-display" id="thetaValue">0°</span>
+                </div>
+                <input type="range" id="thetaControl" min="-180" max="180" step="1" value="0">
+            </div>
+            <div>
+                <div class="control-label">
+                    φ (Phi)
+                    <span class="value-display" id="phiValue">0°</span>
+                </div>
+                <input type="range" id="phiControl" min="-90" max="90" step="1" value="0">
+            </div>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="control-label">
+            Quantum Coupling
+            <span class="value-display" id="couplingValue">0.50</span>
+        </div>
+        <input type="range" id="couplingControl" min="0" max="1" step="0.01" value="0.5">
+    </div>
+    <div class="control-group">
+        <div class="control-label">
+            Entropy Scale
+            <span class="value-display" id="entropyValue">1.00</span>
+        </div>
+        <input type="range" id="entropyControl" min="0" max="2" step="0.01" value="1">
+    </div>
+</div>
+<div class="hud top-left" id="metrics"></div>
+<div class="hud bottom-left" id="quantum"></div>
+
+<script type="x-shader/x-vertex" id="vertexShader">
+    attribute vec3 position;
+    varying vec3 vPosition;
+    void main() {
+        vPosition = position;
+        gl_Position = vec4(position, 1.0);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+    precision highp float;
+
+    uniform float uTime;
+    uniform vec2 uResolution;
+    uniform vec3 uQuantumState;
+    uniform float uEntropyLevel;
+    uniform float uHolographicDepth;
+    uniform float uQuantumCoupling;
+    uniform vec2 uProjectionAngles;
+    
+    varying vec3 vPosition;
+
+    #define PI 3.14159265359
+    #define E 2.71828182846
+
+    mat3 rotationMatrix(vec2 angles) {
+        float cx = cos(angles.x);
+        float sx = sin(angles.x);
+        float cy = cos(angles.y);
+        float sy = sin(angles.y);
+        
+        return mat3(
+            cy, 0.0, -sy,
+            sx*sy, cx, sx*cy,
+            cx*sy, -sx, cx*cy
+        );
+    }
+
+    vec2 cmul(vec2 a, vec2 b) {
+        return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
+    }
+
+    float quantum_foam(vec3 pos, float t) {
+        float foam = 0.0;
+        vec2 p = pos.xy;
+        
+        for(float i = 1.0; i < 8.0; i++) {
+            p = cmul(p, p) + vec2(cos(t * i + pos.z), sin(t * i + pos.z));
+            foam += 0.5/i * sin(p.x * p.y + t * i);
+        }
+        
+        return foam;
+    }
+
+    float holographic_boundary(vec3 pos, float depth, float t) {
+        float r = length(pos.xy);
+        float angle = atan(pos.y, pos.x);
+        
+        float boundary = 0.0;
+        for(float i = 1.0; i < 6.0; i++) {
+            boundary += sin(r * 10.0 * depth + angle * i + pos.z + t) / i;
+        }
+        
+        return boundary * exp(-r * depth);
+    }
+
+    void main() {
+        vec2 pos = gl_FragCoord.xy / uResolution.xy * 2.0 - 1.0;
+        pos.x *= uResolution.x / uResolution.y;
+
+        // Apply rotation to position
+        vec3 rotatedPos = rotationMatrix(uProjectionAngles) * vec3(pos, 1.0);
+        
+        // Enhanced quantum foam with coupling
+        float foam = quantum_foam(rotatedPos, uTime) * uQuantumCoupling;
+        
+        // Holographic boundary effect with depth control
+        float boundary = holographic_boundary(rotatedPos, uHolographicDepth, uTime);
+        
+        // Quantum state influence with rotation
+        float quantum_influence = dot(uQuantumState, vec3(
+            sin(rotatedPos.x * 10.0 + uTime),
+            cos(rotatedPos.y * 10.0 + uTime),
+            sin(length(rotatedPos.xy) * 5.0 - uTime)
+        )) * 0.5 + 0.5;
+
+        // Enhanced color mixing
+        vec3 color = vec3(0.0);
+        color += vec3(0.2, 0.4, 0.8) * quantum_influence * uQuantumCoupling;
+        color += vec3(0.8, 0.3, 0.2) * boundary;
+        color += vec3(0.2, 0.7, 0.3) * foam;
+
+        // Depth-based effects with rotation consideration
+        float depth_fade = exp(-length(rotatedPos.xy) * uHolographicDepth);
+        color *= depth_fade;
+
+        // Entropy variation
+        color *= 1.0 + 0.2 * sin(uTime + length(rotatedPos) * 10.0) * uEntropyLevel;
+
+        // Add subtle interference patterns based on projection angles
+        color += 0.05 * vec3(sin(rotatedPos.x * 20.0), sin(rotatedPos.y * 20.0), sin(rotatedPos.z * 20.0));
+
+        gl_FragColor = vec4(color, 1.0);
+    }
+</script>
+
+<script>
+    const canvas = document.getElementById('holographicCanvas');
+    const gl = canvas.getContext('webgl');
+    const metrics = document.getElementById('metrics');
+
+    // Control elements
+    const depthControl = document.getElementById('depthControl');
+    const depthValue = document.getElementById('depthValue');
+    const couplingControl = document.getElementById('couplingControl');
+    const couplingValue = document.getElementById('couplingValue');
+    const entropyControl = document.getElementById('entropyControl');
+    const entropyValue = document.getElementById('entropyValue');
+    const thetaControl = document.getElementById('thetaControl');
+    const thetaValue = document.getElementById('thetaValue');
+    const phiControl = document.getElementById('phiControl');
+    const phiValue = document.getElementById('phiValue');
+
+    function createShader(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    }
+
+    function initGL() {
+        const vertexShader = createShader(gl.VERTEX_SHADER, document.getElementById('vertexShader').textContent);
+        const fragmentShader = createShader(gl.FRAGMENT_SHADER, document.getElementById('fragmentShader').textContent);
+        
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error('Program link error:', gl.getProgramInfoLog(program));
+            return null;
+        }
+
+        gl.useProgram(program);
+
+        const positions = new Float32Array([
+            -1, -1, 0,
+             1, -1, 0,
+            -1,  1, 0,
+             1,  1, 0
+        ]);
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        const positionLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+        window.uniforms = {
+            time: gl.getUniformLocation(program, 'uTime'),
+            resolution: gl.getUniformLocation(program, 'uResolution'),
+            quantumState: gl.getUniformLocation(program, 'uQuantumState'),
+            entropyLevel: gl.getUniformLocation(program, 'uEntropyLevel'),
+            holographicDepth: gl.getUniformLocation(program, 'uHolographicDepth'),
+            quantumCoupling: gl.getUniformLocation(program, 'uQuantumCoupling'),
+            projectionAngles: gl.getUniformLocation(program, 'uProjectionAngles')
+        };
+    }
+
+    class QuantumState {
+        constructor() {
+            this.state = new Float32Array([1, 0, 0]);
+            this.evolution = 0;
+        }
+
+        update(dt) {
+            this.evolution += dt;
+            this.state[0] = Math.cos(this.evolution);
+            this.state[1] = Math.sin(this.evolution * 1.3);
+            this.state[2] = Math.sin(this.evolution * 0.7);
+        }
+    }
+
+    const quantumState = new QuantumState();
+    let lastTime = 0;
+
+    function render(time) {
+        const dt = (time - lastTime) * 0.001;
+        lastTime = time;
+
+        quantumState.update(dt);
+
+        const theta = parseFloat(thetaControl.value) * Math.PI / 180;
+        const phi = parseFloat(phiControl.value) * Math.PI / 180;
+
+        gl.uniform1f(uniforms.time, time * 0.001);
+        gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+        gl.uniform3fv(uniforms.quantumState, quantumState.state);
+        gl.uniform1f(uniforms.entropyLevel, parseFloat(entropyControl.value));
+        gl.uniform1f(uniforms.holographicDepth, parseFloat(depthControl.value));
+        gl.uniform1f(uniforms.quantumCoupling, parseFloat(couplingControl.value));
+        gl.uniform2f(uniforms.projectionAngles, theta, phi);
+
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        metrics.textContent = `Quantum Coherence: ${(quantumState.state[0] * 100).toFixed(1)}%
+                             Projection Angles: θ=${thetaControl.value}° φ=${phiControl.value}°
+                             Holographic Depth: ${depthControl.value}
+                             Quantum Coupling: ${couplingControl.value}`;
+        
+        requestAnimationFrame(render);
+    }
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+
+    // Control event listeners
+    depthControl.addEventListener('input', function() {
+        depthValue.textContent = this.value;
+    });
+
+    couplingControl.addEventListener('input', function() {
+        couplingValue.textContent = this.value;
+    });
+
+    entropyControl.addEventListener('input', function() {
+        entropyValue.textContent = this.value;
+    });
+
+    thetaControl.addEventListener('input', function() {
+        thetaValue.textContent = this.value + '°';
+    });
+
+    phiControl.addEventListener('input', function() {
+        phiValue.textContent = this.value + '°';
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // Initialize and start
+    resizeCanvas();
+    initGL();
+    requestAnimationFrame(render);
+</script>
+</body>
+</html>
