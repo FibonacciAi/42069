@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Physics Visualization</title>
+    <style>
+        body, html {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        .controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 5px 10px;
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="controls">
+    <button id="quantumField">Quantum Field</button>
+    <button id="wavePart">Wave-Particle</button>
+    <button id="gravity">Gravitational Fields</button>
+</div>
+<canvas id="physicsCanvas"></canvas>
+
+<script type="x-shader/x-vertex" id="vertexShader">
+    attribute vec3 position;
+    void main() {
+        gl_Position = vec4(position, 1.0);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+    precision highp float;
+    
+    uniform float uTime;
+    uniform vec2 uResolution;
+    uniform int uMode;
+    uniform vec2 uMouse;
+    
+    #define PI 3.14159265359
+    
+    // Quantum field simulation
+    vec4 quantumField(vec2 uv) {
+        float t = uTime * 0.5;
+        vec2 pos = uv;
+        float field = 0.0;
+        
+        // Quantum fluctuations
+        for(float i = 1.0; i < 6.0; i++) {
+            vec2 p = pos * i * 2.0;
+            field += sin(p.x * 1.5 + t) * cos(p.y * 1.5 + t) / i;
+            field += cos(p.x * 2.0 - t * 0.5) * sin(p.y * 2.0 + t * 0.7) / (i * 1.5);
+        }
+        
+        // Energy levels
+        float energy = abs(field) * 2.0;
+        vec3 color = vec3(
+            energy * 0.5,
+            energy * energy * 0.3,
+            energy * energy * energy * 0.2
+        );
+        
+        return vec4(color, 1.0);
+    }
+    
+    // Wave-particle duality
+    vec4 waveParticle(vec2 uv) {
+        float t = uTime;
+        vec2 pos = uv;
+        vec2 center = uMouse * 2.0 - 1.0;
+        float dist = length(pos - center);
+        
+        // Wave function
+        float wave = sin(dist * 20.0 - t * 5.0) * exp(-dist * 2.0);
+        
+        // Probability distribution
+        float probability = exp(-dist * 5.0);
+        
+        // Interference pattern
+        float interference = sin(pos.x * 30.0 + t) * sin(pos.y * 30.0 + t) * 0.5;
+        
+        vec3 color = vec3(
+            wave * 0.5 + 0.5,
+            probability,
+            interference + 0.5
+        );
+        
+        return vec4(color, 1.0);
+    }
+    
+    // Gravitational field
+    vec4 gravityField(vec2 uv) {
+        float t = uTime * 0.2;
+        vec2 pos = uv;
+        
+        // Spacetime curvature
+        float curvature = 0.0;
+        vec2 massPos = vec2(sin(t) * 0.3, cos(t * 0.7) * 0.3);
+        float dist = length(pos - massPos);
+        curvature = 1.0 / (1.0 + dist * 10.0);
+        
+        // Gravitational lensing effect
+        vec2 distortion = normalize(pos - massPos) * curvature;
+        pos += distortion * 0.1;
+        
+        // Field visualization
+        float field = sin(pos.x * 10.0 + t) * sin(pos.y * 10.0 + t);
+        field *= (1.0 + curvature * 2.0);
+        
+        vec3 color = vec3(
+            field * 0.5 + 0.5,
+            curvature * 2.0,
+            length(distortion) * 2.0
+        );
+        
+        return vec4(color, 1.0);
+    }
+    
+    void main() {
+        vec2 uv = (gl_FragCoord.xy * 2.0 - uResolution) / min(uResolution.x, uResolution.y);
+        vec4 color;
+        
+        if (uMode == 0) color = quantumField(uv);
+        else if (uMode == 1) color = waveParticle(uv);
+        else color = gravityField(uv);
+        
+        gl_FragColor = color;
+    }
+</script>
+
+<script>
+    const canvas = document.getElementById('physicsCanvas');
+    const gl = canvas.getContext('webgl');
+
+    let currentMode = 0;
+    let mousePos = [0.5, 0.5];
+
+    function createShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    }
+
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, document.getElementById('vertexShader').textContent);
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, document.getElementById('fragmentShader').textContent);
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    const positionBuffer = gl.createBuffer();
+    const positions = new Float32Array([
+        -1, -1, 0,
+         1, -1, 0,
+        -1,  1, 0,
+         1,  1, 0
+    ]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+    const positionLocation = gl.getAttribLocation(program, 'position');
+    const timeLocation = gl.getUniformLocation(program, 'uTime');
+    const resolutionLocation = gl.getUniformLocation(program, 'uResolution');
+    const modeLocation = gl.getUniformLocation(program, 'uMode');
+    const mouseLocation = gl.getUniformLocation(program, 'uMouse');
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    canvas.addEventListener('mousemove', (e) => {
+        mousePos = [
+            e.clientX / canvas.width,
+            1.0 - e.clientY / canvas.height
+        ];
+    });
+
+    document.getElementById('quantumField').onclick = () => currentMode = 0;
+    document.getElementById('wavePart').onclick = () => currentMode = 1;
+    document.getElementById('gravity').onclick = () => currentMode = 2;
+
+    function render(time) {
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(program);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+        gl.uniform1f(timeLocation, time * 0.001);
+        gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+        gl.uniform1i(modeLocation, currentMode);
+        gl.uniform2f(mouseLocation, mousePos[0], mousePos[1]);
+
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+</script>
+</body>
+</html>
