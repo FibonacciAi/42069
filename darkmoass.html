@@ -232,12 +232,12 @@ const loader = new THREE.FontLoader();
 loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
     const textGeometry = new THREE.TextGeometry('DARK MOASS', {
         font: font,
-        size: 0.15,  // Reduced from 0.2
-        height: 0.02,  // Reduced from 0.05
+        size: 0.08,  // Reduced from 0.15
+        height: 0.01,  // Reduced from 0.02
         curveSegments: 12,
         bevelEnabled: true,
-        bevelThickness: 0.005,  // Reduced from 0.01
-        bevelSize: 0.005,  // Reduced from 0.01
+        bevelThickness: 0.002,  // Reduced from 0.005
+        bevelSize: 0.002,  // Reduced from 0.005
         bevelOffset: 0,
         bevelSegments: 3
     });
@@ -253,8 +253,8 @@ loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetike
         const angle = (i / textPoints) * Math.PI * 2;
         const textMesh = new THREE.Mesh(textGeometry.clone(), textMaterial);
         
-        textMesh.position.x = Math.sin(angle) * 1.9;  // Reduced from 2.2
-        textMesh.position.z = Math.cos(angle) * 1.9;  // Reduced from 2.2
+        textMesh.position.x = Math.sin(angle) * 1.7;  // Reduced from 1.9
+        textMesh.position.z = Math.cos(angle) * 1.7;  // Reduced from 1.9
         textMesh.rotation.y = angle + Math.PI / 2;
         textMesh.rotation.z = Math.PI / 8;
         
