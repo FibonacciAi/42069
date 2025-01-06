@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Rainbow Vortex</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+        
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 2;
+            backdrop-filter: blur(5px);
+            max-width: 300px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            background: #444;
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .mathematical-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 2;
+            backdrop-filter: blur(5px);
+            font-size: 14px;
+        }
+        
+        .hide-ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <button class="hide-ui">Toggle UI</button>
+    
+    <div class="controls" id="controls">
+        <div class="control-group">
+            <label>Rotation Speed: <span id="speedValue">1</span>x</label>
+            <input type="range" id="speed" min="0" max="2" step="0.1" value="1">
+        </div>
+        <div class="control-group">
+            <label>Pattern Density: <span id="densityValue">1</span>x</label>
+            <input type="range" id="density" min="0.2" max="2" step="0.1" value="1">
+        </div>
+        <div class="control-group">
+            <label>Color Shift: <span id="colorShiftValue">1</span>x</label>
+            <input type="range" id="colorShift" min="0.2" max="2" step="0.1" value="1">
+        </div>
+        <div class="control-group">
+            <label>Wave Amplitude: <span id="amplitudeValue">1</span>x</label>
+            <input type="range" id="amplitude" min="0" max="2" step="0.1" value="1">
+        </div>
+    </div>
+    
+    <div class="mathematical-info" id="mathInfo">
+        <div>Fibonacci Ratio: φ = <span id="goldenRatio">1.618034</span></div>
+        <div>Current Rotation: <span id="currentRotation">0</span>°</div>
+        <div>Wave Function: sin(r × <span id="waveFunction">0</span>)</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let time = 0;
+        
+        // Configuration object
+        const config = {
+            speed: 1,
+            density: 1,
+            colorShift: 1,
+            amplitude: 1,
+            showUI: true
+        };
+
+        // Initialize canvas size
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Interactive controls
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+                config[e.target.id] = parseFloat(e.target.value);
+                document.getElementById(`${e.target.id}Value`).textContent = e.target.value;
+            });
+        });
+
+        // UI Toggle
+        document.querySelector('.hide-ui').addEventListener('click', () => {
+            config.showUI = !config.showUI;
+            document.getElementById('controls').style.display = config.showUI ? 'block' : 'none';
+            document.getElementById('mathInfo').style.display = config.showUI ? 'block' : 'none';
+        });
+
+        // Mouse interaction
+        let mouseX = 0, mouseY = 0;
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function drawVortex() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const maxRadius = Math.max(canvas.width, canvas.height);
+            
+            // Clear canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate mouse influence
+            const mouseDistance = Math.sqrt((mouseX - centerX) ** 2 + (mouseY - centerY) ** 2);
+            const mouseInfluence = Math.min(mouseDistance / maxRadius, 1);
+
+            // Fibonacci sequence for pattern generation
+            const phi = (1 + Math.sqrt(5)) / 2;
+            document.getElementById('goldenRatio').textContent = phi.toFixed(6);
+
+            // Draw radial pattern
+            const angleStep = (Math.PI / 180) / config.density;
+            const radiusStep = 2 * config.density;
+
+            for (let radius = 0; radius < maxRadius; radius += radiusStep) {
+                for (let angle = 0; angle < Math.PI * 2; angle += angleStep) {
+                    // Apply golden ratio to angle
+                    const modifiedAngle = angle * phi;
+                    
+                    const x = centerX + radius * Math.cos(modifiedAngle + time * config.speed * 0.05);
+                    const y = centerY + radius * Math.sin(modifiedAngle + time * config.speed * 0.05);
+                    
+                    // Calculate dynamic color
+                    const baseHue = (modifiedAngle * 180 / Math.PI + radius / 2 + time * config.colorShift) % 360;
+                    const distanceFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+                    const waveValue = Math.sin(distanceFromCenter * 0.05 - time * 0.05);
+                    
+                    // Apply mouse interaction to wave amplitude
+                    const amplitudeModifier = 1 + (mouseInfluence * config.amplitude);
+                    
+                    ctx.fillStyle = `hsl(${baseHue}, 100%, ${50 + waveValue * 30 * amplitudeModifier}%)`;
+                    ctx.fillRect(x, y, 2, 2);
+                }
+            }
+
+            // Update mathematical info
+            document.getElementById('currentRotation').textContent = ((time * config.speed) % 360).toFixed(1);
+            document.getElementById('waveFunction').textContent = (0.05 * config.amplitude).toFixed(3);
+
+            // Add radial gradient overlay
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
+            gradient.addColorStop(0, 'rgba(0,0,0,0)');
+            gradient.addColorStop(0.7, 'rgba(0,0,0,0.1)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0.8)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time += 0.5 * config.speed;
+            requestAnimationFrame(drawVortex);
+        }
+
+        // Add touch support
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        }, { passive: false });
+
+        drawVortex();
+    </script>
+</body>
+</html>
