@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quantum Grid Visualization</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.min.js"></script>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        
+        // OrbitControls implementation
+        class OrbitControls {
+            constructor(camera, element) {
+                this.camera = camera;
+                this.element = element;
+                this.target = new THREE.Vector3();
+                this.enableDamping = false;
+                this.dampingFactor = 0.05;
+                
+                this.rotateSpeed = 1.0;
+                this.zoomSpeed = 1.0;
+                
+                this.rotation = new THREE.Vector2();
+                this.distance = camera.position.length();
+                
+                this.element.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.element.addEventListener('wheel', this.onMouseWheel.bind(this));
+                
+                this.update();
+            }
+            
+            onMouseDown(event) {
+                event.preventDefault();
+                
+                const onMouseMove = (event) => {
+                    const movementX = event.movementX || 0;
+                    const movementY = event.movementY || 0;
+                    
+                    this.rotation.x += movementX * 0.002 * this.rotateSpeed;
+                    this.rotation.y = Math.max(-Math.PI/2, Math.min(Math.PI/2, 
+                        this.rotation.y + movementY * 0.002 * this.rotateSpeed));
+                    
+                    this.update();
+                };
+                
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+                
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            }
+            
+            onMouseWheel(event) {
+                event.preventDefault();
+                
+                this.distance *= 1 - event.deltaY * 0.001 * this.zoomSpeed;
+                this.distance = Math.max(1, Math.min(100, this.distance));
+                
+                this.update();
+            }
+            
+            update() {
+                const position = new THREE.Vector3();
+                position.setFromSpherical(new THREE.Spherical(
+                    this.distance,
+                    this.rotation.y + Math.PI/2,
+                    this.rotation.x
+                ));
+                
+                this.camera.position.copy(position);
+                this.camera.lookAt(this.target);
+            }
+        }
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        
+        const gridSize = 20;
+        const spacing = 1.5;
+        const geometry = new THREE.SphereGeometry(0.05, 16, 16);
+        const materialOn = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const materialOff = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const meshNodes = [];
+
+        for (let x = -gridSize; x < gridSize; x++) {
+            for (let y = -gridSize; y < gridSize; y++) {
+                for (let z = -gridSize; z < gridSize; z++) {
+                    const node = new THREE.Mesh(geometry, Math.random() > 0.5 ? materialOn : materialOff);
+                    node.position.set(x * spacing, y * spacing, z * spacing);
+                    scene.add(node);
+                    meshNodes.push(node);
+                }
+            }
+        }
+
+        let time = 0;
+        function animateMesh() {
+            time += 0.01;
+            meshNodes.forEach((node, i) => {
+                const waveFactor = Math.sin(time + i * 0.1) * 0.5 + 0.5;
+                node.material = waveFactor > 0.5 ? materialOn : materialOff;
+                node.scale.set(waveFactor, waveFactor, waveFactor);
+            });
+        }
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+        const pointLight = new THREE.PointLight(0xffffff, 1.5, 100);
+        pointLight.position.set(10, 10, 10);
+        scene.add(ambientLight, pointLight);
+
+        camera.position.z = 30;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            animateMesh();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
+
+
