@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Advanced Mathematical Rainbow Vortex</title>
+    <title>Complex Mathematical Rainbow Vortex</title>
     <style>
         body {
             margin: 0;
@@ -47,8 +47,9 @@
             };
         }
 
-        // Mandelbrot iteration for color variation
+        // Mandelbrot iteration with bounds checking
         function mandelbrotIter(x, y, maxIter) {
+            if (!isFinite(x) || !isFinite(y)) return 0;
             let real = x;
             let imag = y;
             for (let i = 0; i < maxIter; i++) {
@@ -57,14 +58,23 @@
                 if (r2 + i2 > 4) return i;
                 imag = 2 * real * imag + y;
                 real = r2 - i2 + x;
+                if (!isFinite(real) || !isFinite(imag)) return i;
             }
             return maxIter;
+        }
+
+        function safeArc(ctx, x, y, radius, start, end) {
+            if (!isFinite(x) || !isFinite(y) || !isFinite(radius)) return;
+            if (x < -1000 || x > canvas.width + 1000) return;
+            if (y < -1000 || y > canvas.height + 1000) return;
+            if (radius < 0 || radius > 1000) return;
+            ctx.arc(x, y, radius, start, end);
         }
 
         function drawVortex() {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const maxRadius = Math.max(canvas.width, canvas.height) * 0.7;
+            const maxRadius = Math.min(canvas.width, canvas.height) * 0.7;
             
             // Partial clear with motion blur
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
@@ -82,25 +92,24 @@
                 for (let s = 0; s < numSpirals; s++) {
                     const spiralOffset = (s * PI2) / numSpirals + layerOffset;
                     
-                    // Combine multiple mathematical sequences
                     for (let i = 0; i < 800; i++) {
-                        // Complex spiral formula combining logarithmic and Fibonacci elements
                         const t = i / 100;
                         const angle = i * goldenAngle + time * (1 + layer * 0.5) + spiralOffset;
                         const logSpiral = Math.pow(E, t/5) * Math.cos(t);
                         const fiboSpiral = Math.pow(PHI, i/100);
-                        const radius = (logSpiral + fiboSpiral) * 5;
+                        const radius = Math.min(maxRadius, (logSpiral + fiboSpiral) * 5);
                         
-                        if (radius > maxRadius) break;
+                        if (radius > maxRadius) continue;
 
-                        // Lissajous curve modification
                         const lissX = Math.sin(lissajousA * angle + time);
                         const lissY = Math.cos(lissajousB * angle - time);
                         
                         const x = centerX + radius * (Math.cos(angle) + lissX * 0.2);
                         const y = centerY + radius * (Math.sin(angle) + lissY * 0.2);
                         
-                        // Complex color calculations using multiple mathematical relationships
+                        if (!isFinite(x) || !isFinite(y)) continue;
+                        if (x < -100 || x > canvas.width + 100 || y < -100 || y > canvas.height + 100) continue;
+
                         const zReal = (x - centerX) / maxRadius;
                         const zImag = (y - centerY) / maxRadius;
                         const mandel = mandelbrotIter(zReal, zImag, 20) / 20;
@@ -109,34 +118,35 @@
                         const wavePhase = Math.sin(radius * 0.02 - time * 0.5);
                         const waveMagnitude = Math.cos(angle * 3 + time * 0.2);
                         
-                        // Harmonograph-inspired size variation
                         const decay = Math.exp(-t/50);
-                        const dotSize = (2 + Math.sin(i * PHI + time) * 2) * decay;
+                        const dotSize = Math.min(4, (2 + Math.sin(i * PHI + time) * 2) * decay);
                         
-                        // Color modulation using multiple waves and Mandelbrot influence
                         const hue = (baseHue + wavePhase * 30 + mandel * 100) % 360;
-                        const saturation = 80 + waveMagnitude * 20;
-                        const lightness = 50 + wavePhase * waveMagnitude * 20;
+                        const saturation = Math.min(100, Math.max(0, 80 + waveMagnitude * 20));
+                        const lightness = Math.min(100, Math.max(0, 50 + wavePhase * waveMagnitude * 20));
                         
                         ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${0.7 * decay})`;
                         ctx.beginPath();
-                        ctx.arc(x, y, dotSize, 0, PI2);
+                        safeArc(ctx, x, y, dotSize, 0, PI2);
                         ctx.fill();
                     }
                 }
             }
 
-            // Add interference pattern using standing waves
+            // Add interference pattern
             for (let angle = 0; angle < PI2; angle += Math.PI / 180) {
                 const wave1 = Math.sin(angle * 5 + time * 2);
                 const wave2 = Math.cos(angle * 7 - time);
                 const wave3 = Math.sin(angle * 3 + time * 0.5);
                 
-                const waveRadius = maxRadius * 0.3 * (1 + wave1 * wave2 * wave3);
+                const waveRadius = Math.min(maxRadius * 0.3, maxRadius * 0.3 * (1 + wave1 * wave2 * wave3));
                 
                 const x = centerX + waveRadius * Math.cos(angle);
                 const y = centerY + waveRadius * Math.sin(angle);
                 
+                if (!isFinite(x) || !isFinite(y)) continue;
+                if (x < -100 || x > canvas.width + 100 || y < -100 || y > canvas.height + 100) continue;
+
                 const interference = Math.sin(angle * 8 + time * 2) * 
                                    Math.cos(angle * 5 - time) * 
                                    Math.sin(angle * 3 + time * 0.5);
@@ -145,23 +155,23 @@
                 
                 ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${Math.abs(interference) * 0.1})`;
                 ctx.beginPath();
-                ctx.arc(x, y, 2, 0, PI2);
+                safeArc(ctx, x, y, 2, 0, PI2);
                 ctx.fill();
             }
 
-            // Add moiré pattern effect
+            // Add moiré pattern
             for (let r = 0; r < maxRadius; r += 20) {
                 const phase = r * 0.1 + time;
                 ctx.strokeStyle = `rgba(255, 255, 255, 0.1)`;
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, r + Math.sin(phase) * 10, 0, PI2);
+                safeArc(ctx, centerX, centerY, r + Math.sin(phase) * 10, 0, PI2);
                 ctx.stroke();
             }
 
-            // Radial gradient overlay with dynamic stops
+            // Dynamic gradient overlay
             const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
             gradient.addColorStop(0, 'rgba(0,0,0,0)');
-            gradient.addColorStop(0.5 + Math.sin(time * 0.5) * 0.1, 'rgba(0,0,0,0.1)');
+            gradient.addColorStop(Math.min(1, Math.max(0, 0.5 + Math.sin(time * 0.5) * 0.1)), 'rgba(0,0,0,0.1)');
             gradient.addColorStop(1, 'rgba(0,0,0,0.8)');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
