@@ -1,139 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slick Index Page</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #1e1e2f, #2c3e50);
-            color: white;
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-        .container {
-            text-align: center;
-        }
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            animation: fadeIn 2s ease-in-out;
-        }
-        .links {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 70vh;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #9b59b6 #1e1e2f;
-        }
-        .link {
-            padding: 10px 15px;
-            background: linear-gradient(135deg, #3498db, #9b59b6);
-            color: white;
-            text-decoration: none;
-            font-size: 1em;
-            font-weight: bold;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .link:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-        }
-        .footer {
-            margin-top: 20px;
-            font-size: 0.9em;
-            opacity: 0.7;
-        }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOASS Reports Index</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Roboto:wght@400;700&display=swap"
+  >
+  <style>
+    /* BODY & CONTAINER */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Montserrat', 'Roboto', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      background: #1e1e2f;
+      color: #fff;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      /* Optional subtle background animation */
+      background: linear-gradient(135deg, #1e1e2f 0%, #2c3e50 100%);
+      background-size: 300% 300%;
+      animation: bgAnimate 10s ease infinite alternate;
+    }
+
+    @keyframes bgAnimate {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 40px auto;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* SEARCH BAR */
+    .search-bar {
+      margin-bottom: 20px;
+    }
+
+    .search-bar input {
+      width: 80%;
+      max-width: 400px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      outline: none;
+    }
+
+    /* LINKS */
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 15px;
+      max-height: 65vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #9b59b6 #1e1e2f; /* For Firefox */
+    }
+    /* Custom scrollbar for Chrome/Edge/Safari */
+    .links::-webkit-scrollbar {
+      width: 8px;
+    }
+    .links::-webkit-scrollbar-track {
+      background: #1e1e2f;
+    }
+    .links::-webkit-scrollbar-thumb {
+      background-color: #9b59b6;
+      border-radius: 4px;
+    }
+
+    .link {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #3498db, #9b59b6);
+      color: white;
+      text-decoration: none;
+      font-size: 1em;
+      font-weight: 600;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 40px;
+      word-break: break-word;
+    }
+
+    .link:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    /* FOOTER */
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>MOASS Reports Index</h1>
-        <div class="links">
-            <!-- Add all the HTML files from the screenshots -->
-            <a class="link" href="3dmediauniverse.html" target="_blank">3D Media Universe</a>
-            <a class="link" href="3dspheres.html" target="_blank">3D Spheres</a>
-            <a class="link" href="432-quest.html" target="_blank">432 Quest</a>
-            <a class="link" href="432.html" target="_blank">432</a>
-            <a class="link" href="432hz.html" target="_blank">432 Hz</a>
-            <a class="link" href="6174.html" target="_blank">6174</a>
-            <a class="link" href="GME.html" target="_blank">GME Report</a>
-            <a class="link" href="SIRI.html" target="_blank">SIRI Report</a>
-            <a class="link" href="SVMH.html" target="_blank">SVMH Report</a>
-            <a class="link" href="Sierpiński-gasket.html" target="_blank">Sierpiński Gasket</a>
-            <a class="link" href="UAVS.html" target="_blank">UAVS Report</a>
-            <a class="link" href="advanced-3d-fibonacci-spiral.html" target="_blank">Advanced 3D Fibonacci Spiral</a>
-            <a class="link" href="allmath.html" target="_blank">All Math</a>
-            <a class="link" href="anothercreativespark.html" target="_blank">Another Creative Spark</a>
-            <a class="link" href="army-consciousness-fisa.html" target="_blank">Army Consciousness (FISA)</a>
-            <a class="link" href="artificialintelligence-google.html" target="_blank">AI & Google</a>
-            <a class="link" href="audiocercei.html" target="_blank">Audio Cersei</a>
-            <a class="link" href="cantorsacredgeometry.html" target="_blank">Cantor Sacred Geometry</a>
-            <a class="link" href="cantorsacredgeometrydmt.html" target="_blank">Cantor Sacred Geometry DMT</a>
-            <a class="link" href="cercei.html" target="_blank">Cercei</a>
-            <a class="link" href="cia-ares.html" target="_blank">CIA Ares</a>
-            <a class="link" href="creativespark.html" target="_blank">Creative Spark</a>
-            <a class="link" href="d741matrix.html" target="_blank">D741 Matrix</a>
-            <a class="link" href="deep-capture-analysis.html" target="_blank">Deep Capture Analysis</a>
-            <a class="link" href="eta.html" target="_blank">ETA</a>
-            <a class="link" href="eta2.html" target="_blank">ETA 2</a>
-            <a class="link" href="eta3.html" target="_blank">ETA 3</a>
-            <a class="link" href="ethicsgaetz.html" target="_blank">Ethics Gaetz</a>
-            <a class="link" href="fibonacci.html" target="_blank">Fibonacci</a>
-            <a class="link" href="field-fluid-quantum.html" target="_blank">Field Fluid Quantum</a>
-            <a class="link" href="four-year-cycle-resonance.html" target="_blank">Four-Year Cycle Resonance</a>
-            <a class="link" href="frac.html" target="_blank">Frac</a>
-            <a class="link" href="frequency.html" target="_blank">Frequency</a>
-            <a class="link" href="generative.html" target="_blank">Generative</a>
-            <a class="link" href="gme-algo1740.html" target="_blank">GME Algo 1740</a>
-            <a class="link" href="gmefibresonance.html" target="_blank">GME Fibonacci Resonance</a>
-            <a class="link" href="grokko.html" target="_blank">Grokko</a>
-            <a class="link" href="harmonicpendelum.html" target="_blank">Harmonic Pendulum</a>
-            <a class="link" href="interactivequantumviz.html" target="_blank">Interactive Quantum Viz</a>
-            <a class="link" href="isometricgrid.html" target="_blank">Isometric Grid</a>
-            <a class="link" href="metatron-enhanced.html" target="_blank">Metatron Enhanced</a>
-            <a class="link" href="negative-time-possible.html" target="_blank">Negative Time Possible</a>
-            <a class="link" href="particlezoodemo.html" target="_blank">Particle Zoo Demo</a>
-            <a class="link" href="poofjustlikethat.html" target="_blank">Poof Just Like That</a>
-            <a class="link" href="quantum-fractal-dynamics.html" target="_blank">Quantum Fractal Dynamics</a>
-            <a class="link" href="quantumbreakthru.html" target="_blank">Quantum Breakthrough</a>
-            <a class="link" href="quantumconsciousness.html" target="_blank">Quantum Consciousness</a>
-            <a class="link" href="quantumspin.html" target="_blank">Quantum Spin</a>
-            <a class="link" href="ratios.html" target="_blank">Ratios</a>
-            <a class="link" href="recursive.html" target="_blank">Recursive</a>
-            <a class="link" href="sacredgeometry.html" target="_blank">Sacred Geometry</a>
-            <a class="link" href="sacredmt.html" target="_blank">Sacred MT</a>
-            <a class="link" href="schumann.html" target="_blank">Schumann Resonance</a>
-            <a class="link" href="seed.html" target="_blank">Seed</a>
-            <a class="link" href="space-policy-insights-q424.html" target="_blank">Space Policy Insights Q4 2024</a>
-            <a class="link" href="synth.html" target="_blank">Synth</a>
-            <a class="link" href="triads.html" target="_blank">Triads</a>
-            <a class="link" href="vortex.html" target="_blank">Vortex</a>
-        </div>
-        <div class="footer">
-            Made with ❤️ by FibonacciAI
-        </div>
+  <div class="container">
+    <h1>MOASS Reports Index</h1>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search links..."
+        oninput="filterLinks()"
+      />
     </div>
+
+    <div class="links" id="linksContainer">
+      <!-- Existing links -->
+      <a class="link" href="3dmediauniverse.html" target="_blank">3D Media Universe</a>
+      <a class="link" href="3dspheres.html" target="_blank">3D Spheres</a>
+      <a class="link" href="432-quest.html" target="_blank">432 Quest</a>
+      <a class="link" href="432.html" target="_blank">432</a>
+      <a class="link" href="432hz.html" target="_blank">432 Hz</a>
+      <a class="link" href="6174.html" target="_blank">6174</a>
+      <a class="link" href="GME.html" target="_blank">GME Report</a>
+      <a class="link" href="SIRI.html" target="_blank">SIRI Report</a>
+      <a class="link" href="SVMH.html" target="_blank">SVMH Report</a>
+      <a class="link" href="Sierpiński-gasket.html" target="_blank">Sierpiński Gasket</a>
+      <a class="link" href="UAVS.html" target="_blank">UAVS Report</a>
+      <a class="link" href="advanced-3d-fibonacci-spiral.html" target="_blank">Advanced 3D Fibonacci Spiral</a>
+      <a class="link" href="allmath.html" target="_blank">All Math</a>
+      <a class="link" href="anothercreativespark.html" target="_blank">Another Creative Spark</a>
+      <a class="link" href="army-consciousness-fisa.html" target="_blank">Army Consciousness (FISA)</a>
+      <a class="link" href="artificialintelligence-google.html" target="_blank">AI & Google</a>
+      <a class="link" href="audiocercei.html" target="_blank">Audio Cersei</a>
+      <a class="link" href="cantorsacredgeometry.html" target="_blank">Cantor Sacred Geometry</a>
+      <a class="link" href="cantorsacredgeometrydmt.html" target="_blank">Cantor Sacred Geometry DMT</a>
+      <a class="link" href="cercei.html" target="_blank">Cercei</a>
+      <a class="link" href="cia-ares.html" target="_blank">CIA Ares</a>
+      <a class="link" href="creativespark.html" target="_blank">Creative Spark</a>
+      <a class="link" href="d741matrix.html" target="_blank">D741 Matrix</a>
+      <a class="link" href="deep-capture-analysis.html" target="_blank">Deep Capture Analysis</a>
+      <a class="link" href="eta.html" target="_blank">ETA</a>
+      <a class="link" href="eta2.html" target="_blank">ETA 2</a>
+      <a class="link" href="eta3.html" target="_blank">ETA 3</a>
+      <a class="link" href="ethicsgaetz.html" target="_blank">Ethics Gaetz</a>
+      <a class="link" href="fibonacci.html" target="_blank">Fibonacci</a>
+      <a class="link" href="field-fluid-quantum.html" target="_blank">Field Fluid Quantum</a>
+      <a class="link" href="four-year-cycle-resonance.html" target="_blank">Four-Year Cycle Resonance</a>
+      <a class="link" href="frac.html" target="_blank">Frac</a>
+      <a class="link" href="frequency.html" target="_blank">Frequency</a>
+      <a class="link" href="generative.html" target="_blank">Generative</a>
+      <a class="link" href="gme-algo1740.html" target="_blank">GME Algo 1740</a>
+      <a class="link" href="gmefibresonance.html" target="_blank">GME Fibonacci Resonance</a>
+      <a class="link" href="grokko.html" target="_blank">Grokko</a>
+      <a class="link" href="harmonicpendelum.html" target="_blank">Harmonic Pendulum</a>
+      <a class="link" href="interactivequantumviz.html" target="_blank">Interactive Quantum Viz</a>
+      <a class="link" href="isometricgrid.html" target="_blank">Isometric Grid</a>
+      <a class="link" href="metatron-enhanced.html" target="_blank">Metatron Enhanced</a>
+      <a class="link" href="negative-time-possible.html" target="_blank">Negative Time Possible</a>
+      <a class="link" href="particlezoodemo.html" target="_blank">Particle Zoo Demo</a>
+      <a class="link" href="poofjustlikethat.html" target="_blank">Poof Just Like That</a>
+      <a class="link" href="quantum-fractal-dynamics.html" target="_blank">Quantum Fractal Dynamics</a>
+      <a class="link" href="quantumbreakthru.html" target="_blank">Quantum Breakthrough</a>
+      <a class="link" href="quantumconsciousness.html" target="_blank">Quantum Consciousness</a>
+      <a class="link" href="quantumspin.html" target="_blank">Quantum Spin</a>
+      <a class="link" href="ratios.html" target="_blank">Ratios</a>
+      <a class="link" href="recursive.html" target="_blank">Recursive</a>
+      <a class="link" href="sacredgeometry.html" target="_blank">Sacred Geometry</a>
+      <a class="link" href="sacredmt.html" target="_blank">Sacred MT</a>
+      <a class="link" href="schumann.html" target="_blank">Schumann Resonance</a>
+      <a class="link" href="seed.html" target="_blank">Seed</a>
+      <a class="link" href="space-policy-insights-q424.html" target="_blank">Space Policy Insights Q4 2024</a>
+      <a class="link" href="synth.html" target="_blank">Synth</a>
+      <a class="link" href="triads.html" target="_blank">Triads</a>
+      <a class="link" href="vortex.html" target="_blank">Vortex</a>
+      <!-- Newly added links not previously in the page -->
+      <a class="link" href="432hzfx.html" target="_blank">432 Hz FX</a>
+      <a class="link" href="4dtesseract.html" target="_blank">4D Tesseract</a>
+      <a class="link" href="README.md" target="_blank">README</a>
+      <a class="link" href="awake.html" target="_blank">Awake</a>
+      <a class="link" href="awaken.html" target="_blank">Awaken</a>
+      <a class="link" href="darkmoass.html" target="_blank">Dark MOASS</a>
+      <a class="link" href="easteregg.html" target="_blank">Easter Egg</a>
+      <a class="link" href="egg.html" target="_blank">Egg</a>
+      <a class="link" href="eta4.html" target="_blank">ETA 4</a>
+      <a class="link" href="eta5.html" target="_blank">ETA 5</a>
+      <a class="link" href="eta6.html" target="_blank">ETA 6</a>
+      <a class="link" href="eta7.html" target="_blank">ETA 7</a>
+      <a class="link" href="eta8.html" target="_blank">ETA 8</a>
+      <a class="link" href="eta9.html" target="_blank">ETA 9</a>
+      <a class="link" href="fouryear.html" target="_blank">Four Year</a>
+      <a class="link" href="gravitypropulsion.html" target="_blank">Gravity Propulsion</a>
+      <a class="link" href="grokko" target="_blank">Grokko (Directory)</a>
+      <a class="link" href="houseweaponizationreportanalysis.html" target="_blank">House Weaponization Report Analysis</a>
+      <a class="link" href="ichingme.html" target="_blank">I Ching Me</a>
+      <a class="link" href="iso.html" target="_blank">ISO</a>
+      <a class="link" href="iso2-mobile.html" target="_blank">ISO2 Mobile</a>
+      <a class="link" href="iso2.html" target="_blank">ISO2</a>
+      <a class="link" href="itstime.html" target="_blank">It’s Time</a>
+      <a class="link" href="kaprekar.html" target="_blank">Kaprekar</a>
+      <a class="link" href="law-of-time.html" target="_blank">Law of Time</a>
+      <a class="link" href="life-is-math.html" target="_blank">Life is Math</a>
+      <a class="link" href="life.html" target="_blank">Life</a>
+      <a class="link" href="madeupandtotallyfakecompanyimaginedbychatgptoimini.html" target="_blank">
+        Made Up and Totally Fake Company Imagined by ChatGPT Mini
+      </a>
+      <a class="link" href="mathart.html" target="_blank">Math Art</a>
+      <a class="link" href="mathart2.html" target="_blank">Math Art 2</a>
+      <a class="link" href="mathart3.html" target="_blank">Math Art 3</a>
+      <a class="link" href="metatron.html" target="_blank">Metatron</a>
+      <a class="link" href="metatron3d.html" target="_blank">Metatron 3D</a>
+      <a class="link" href="nasastranded.html" target="_blank">NASA Stranded</a>
+      <a class="link" href="naughtylus.html" target="_blank">Naughtylus</a>
+      <a class="link" href="nautilus.html" target="_blank">Nautilus</a>
+      <a class="link" href="networking.html" target="_blank">Networking</a>
+      <a class="link" href="neutron-matter-simulation.html" target="_blank">Neutron Matter Simulation</a>
+      <a class="link" href="pen2.html" target="_blank">Pen2</a>
+      <a class="link" href="pen3.html" target="_blank">Pen3</a>
+      <a class="link" href="pigglywiggly.html" target="_blank">Piggly Wiggly</a>
+      <a class="link" href="pointsignblack.html" target="_blank">Point Sign Black</a>
+      <a class="link" href="pointsine.html" target="_blank">Point Sine</a>
+      <a class="link" href="projectstargate.html" target="_blank">Project Stargate</a>
+      <a class="link" href="quantconsciousness.html" target="_blank">Quant Consciousness</a>
+      <a class="link" href="quantum information.html" target="_blank">Quantum Information</a>
+      <a class="link" href="quantum.html" target="_blank">Quantum</a>
+      <a class="link" href="quantumentropy.html" target="_blank">Quantum Entropy</a>
+      <a class="link" href="quantumgrid.html" target="_blank">Quantum Grid</a>
+      <a class="link" href="quantumholography.html" target="_blank">Quantum Holography</a>
+      <a class="link" href="quantuminformationflow.html" target="_blank">Quantum Information Flow</a>
+      <a class="link" href="quantumneural.html" target="_blank">Quantum Neural</a>
+      <a class="link" href="quantumphi.html" target="_blank">Quantum Phi</a>
+      <a class="link" href="quantumsatadynth.html" target="_blank">Quantum Satadynth</a>
+      <a class="link" href="rainbow-vortex.html" target="_blank">Rainbow Vortex</a>
+      <a class="link" href="ratiosenhanced.html" target="_blank">Ratios Enhanced</a>
+      <a class="link" href="realityisbased.html" target="_blank">Reality Is Based</a>
+      <a class="link" href="reimann.html" target="_blank">Riemann</a>
+      <a class="link" href="sacreddarkmaga.html" target="_blank">Sacred Dark Maga</a>
+      <a class="link" href="sacredgeometryasbt.html" target="_blank">Sacred Geometry ASBT</a>
+      <a class="link" href="schu.html" target="_blank">Schu</a>
+      <a class="link" href="schumannresonance.html" target="_blank">Schumann Resonance</a>
+      <a class="link" href="shilldestroy.html" target="_blank">Shill Destroy</a>
+      <a class="link" href="sui.html" target="_blank">SUI</a>
+      <a class="link" href="thenetwork.html" target="_blank">The Network</a>
+      <a class="link" href="tinfoilanonymous16monthcendar.html" target="_blank">Tinfoil Anonymous 16 Month Calendar</a>
+      <a class="link" href="tinfoilanonymousunifiedcalendar.html" target="_blank">Tinfoil Anonymous Unified Calendar</a>
+      <a class="link" href="triadsofanotherflavor.html" target="_blank">Triads Of Another Flavor</a>
+      <a class="link" href="whats-the-frequency-kenneth.html" target="_blank">What's the Frequency Kenneth?</a>
+      <a class="link" href="whatsthefrequencykenneth.html" target="_blank">WhatsTheFrequencyKenneth</a>
+    </div>
+
+    <div class="footer">
+      Made with ❤️ by FibonacciAI
+    </div>
+  </div>
+
+  <!-- Optional JavaScript for Filtering -->
+  <script>
+    function filterLinks() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const linksContainer = document.getElementById('linksContainer');
+      const links = linksContainer.getElementsByTagName('a');
+
+      for (let i = 0; i < links.length; i++) {
+        const linkText = links[i].textContent.toLowerCase();
+        if (linkText.includes(input)) {
+          links[i].style.display = '';
+        } else {
+          links[i].style.display = 'none';
+        }
+      }
+    }
+  </script>
 </body>
 </html>
