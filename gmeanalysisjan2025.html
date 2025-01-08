@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Cycle Analysis Visualization</title>
+  <style>
+    :root {
+      --bg-color: #0f0f13;
+      --text-color: #ffffff;
+      --primary-color: #4CAF50;
+      --secondary-color: #FF5722;
+      --panel-bg: rgba(15, 15, 19, 0.85);
+      --highlight: #2196F3;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #cycleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .panel {
+      position: absolute;
+      background: var(--panel-bg);
+      padding: 1.25rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .controls {
+      top: 20px;
+      right: 20px;
+    }
+
+    .controls label {
+      display: block;
+      margin: 1rem 0 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .control-group {
+      margin-bottom: 1rem;
+    }
+
+    input[type="range"] {
+      width: 200px;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--highlight);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.1s;
+      box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .cycle-info {
+      bottom: 20px;
+      left: 20px;
+    }
+
+    .cycle-info h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--highlight);
+    }
+
+    .cycle-info p {
+      margin: 0.5rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    .cycle-info span {
+      color: var(--highlight);
+    }
+
+    .stats {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    button {
+      background: var(--highlight);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 1rem;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <canvas id="cycleCanvas"></canvas>
+    <div class="stats panel" id="stats">FPS: 60</div>
+    <div class="controls panel">
+      <div class="control-group">
+        <label>Rotation Speed</label>
+        <input type="range" id="rotationSpeed" min="0" max="2" step="0.1" value="0.5">
+      </div>
+      <div class="control-group">
+        <label>Zoom</label>
+        <input type="range" id="zoom" min="0.1" max="2" step="0.1" value="1">
+      </div>
+      <div class="control-group">
+        <label>Point Size</label>
+        <input type="range" id="pointSize" min="0.5" max="2" step="0.1" value="1">
+      </div>
+      <div class="control-group">
+        <label>Trail Length</label>
+        <input type="range" id="trailLength" min="0" max="50" step="1" value="20">
+      </div>
+      <button id="resetView">Reset View</button>
+    </div>
+    <div class="cycle-info panel">
+      <h3>Cycle Information</h3>
+      <p>55-Day Cycle: <span id="cycle55">Phase 0</span></p>
+      <p>255-Day Cycle: <span id="cycle255">Phase 0</span></p>
+      <p>Total Points: <span id="pointCount">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    class CycleVisualizer {
+      constructor() {
+        this.canvas = document.getElementById('cycleCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.rotationSpeed = 0.5;
+        this.zoom = 1;
+        this.pointSize = 1;
+        this.trailLength = 20;
+        this.angle = 0;
+        this.trails = new Map();
+        this.lastTime = performance.now();
+        this.frameCount = 0;
+        
+        this.cycles = {
+          cycle55: {
+            length: 55,
+            keyDays: [13, 28, 33],
+            color: '#4CAF50',
+            points: []
+          },
+          cycle255: {
+            length: 255,
+            keyDays: [13, 28, 33, 132],
+            color: '#FF5722',
+            points: []
+          }
+        };
+        
+        this.setupCanvas();
+        this.generatePoints();
+        this.addEventListeners();
+        this.animate();
+      }
+
+      setupCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.canvas.style.width = `${window.innerWidth}px`;
+        this.canvas.style.height = `${window.innerHeight}px`;
+        this.ctx.scale(dpr, dpr);
+        this.centerX = window.innerWidth / 2;
+        this.centerY = window.innerHeight / 2;
+      }
+
+      generatePoints() {
+        for (let cycleName in this.cycles) {
+          const cycle = this.cycles[cycleName];
+          cycle.points = [];
+          
+          for (let phase = 0; phase < 3; phase++) {
+            for (let day of cycle.keyDays) {
+              const t = (day + phase * cycle.length) / cycle.length;
+              const radius = 100 * (1 + phase * 0.5);
+              const x = radius * Math.cos(2 * Math.PI * t);
+              const y = radius * Math.sin(2 * Math.PI * t);
+              const z = day * 2;
+              const id = `${cycleName}-${phase}-${day}`;
+              cycle.points.push({x, y, z, id});
+              this.trails.set(id, []);
+            }
+          }
+        }
+
+        document.getElementById('pointCount').textContent = 
+          Object.values(this.cycles).reduce((acc, cycle) => acc + cycle.points.length, 0);
+      }
+
+      addEventListeners() {
+        window.addEventListener('resize', () => this.setupCanvas());
+        
+        document.getElementById('rotationSpeed').addEventListener('input', (e) => {
+          this.rotationSpeed = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('zoom').addEventListener('input', (e) => {
+          this.zoom = parseFloat(e.target.value);
+        });
+
+        document.getElementById('pointSize').addEventListener('input', (e) => {
+          this.pointSize = parseFloat(e.target.value);
+        });
+
+        document.getElementById('trailLength').addEventListener('input', (e) => {
+          this.trailLength = parseInt(e.target.value);
+        });
+
+        document.getElementById('resetView').addEventListener('click', () => {
+          this.rotationSpeed = 0.5;
+          this.zoom = 1;
+          this.pointSize = 1;
+          this.trailLength = 20;
+          this.angle = 0;
+          
+          document.getElementById('rotationSpeed').value = 0.5;
+          document.getElementById('zoom').value = 1;
+          document.getElementById('pointSize').value = 1;
+          document.getElementById('trailLength').value = 20;
+        });
+      }
+
+      updateTrails(point, projectedX, projectedY) {
+        const trail = this.trails.get(point.id);
+        trail.push({x: projectedX, y: projectedY});
+        if (trail.length > this.trailLength) {
+          trail.shift();
+        }
+      }
+
+      drawTrails(point, color) {
+        const trail = this.trails.get(point.id);
+        if (trail.length < 2) return;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(trail[0].x, trail[0].y);
+        
+        for (let i = 1; i < trail.length; i++) {
+          this.ctx.lineTo(trail[i].x, trail[i].y);
+        }
+
+        this.ctx.strokeStyle = color + '40';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+      }
+
+      draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        let allPoints = [];
+        for (let cycleName in this.cycles) {
+          const cycle = this.cycles[cycleName];
+          cycle.points.forEach(point => {
+            allPoints.push({...point, color: cycle.color});
+          });
+        }
+        
+        allPoints.sort((a, b) => b.z - a.z);
+        
+        allPoints.forEach(point => {
+          const rotatedX = point.x * Math.cos(this.angle) - point.z * Math.sin(this.angle);
+          const rotatedZ = point.x * Math.sin(this.angle) + point.z * Math.cos(this.angle);
+          
+          const projectedX = this.centerX + rotatedX * this.zoom;
+          const projectedY = this.centerY + point.y * this.zoom;
+          
+          this.updateTrails(point, projectedX, projectedY);
+          this.drawTrails(point, point.color);
+
+          const size = Math.max(2, (rotatedZ + 200) / 50) * this.pointSize;
+          
+          const gradient = this.ctx.createRadialGradient(
+            projectedX, projectedY, 0,
+            projectedX, projectedY, size * 2
+          );
+          gradient.addColorStop(0, point.color + 'ff');
+          gradient.addColorStop(1, point.color + '00');
+          
+          this.ctx.beginPath();
+          this.ctx.arc(projectedX, projectedY, size * 2, 0, Math.PI * 2);
+          this.ctx.fillStyle = gradient;
+          this.ctx.fill();
+          
+          this.ctx.beginPath();
+          this.ctx.arc(projectedX, projectedY, size, 0, Math.PI * 2);
+          this.ctx.fillStyle = point.color;
+          this.ctx.fill();
+        });
+        
+        document.getElementById('cycle55').textContent = 
+          `Phase ${Math.floor(this.angle / (Math.PI * 2) * 55) % 55}`;
+        document.getElementById('cycle255').textContent = 
+          `Phase ${Math.floor(this.angle / (Math.PI * 2) * 255) % 255}`;
+
+        this.updateFPS();
+      }
+
+      updateFPS() {
+        const now = performance.now();
+        this.frameCount++;
+        
+        if (now - this.lastTime >= 1000) {
+          document.getElementById('stats').textContent = 
+            `FPS: ${this.frameCount}`;
+          this.frameCount = 0;
+          this.lastTime = now;
+        }
+      }
+
+      animate() {
+        this.angle += this.rotationSpeed * 0.02;
+        this.draw();
+        requestAnimationFrame(() => this.animate());
+      }
+    }
+
+    window.onload = () => new CycleVisualizer();
+  </script>
+</body>
+</html>
