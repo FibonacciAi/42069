@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breaking: Annie Altman's Allegations Against Sam Altman</title>
+    <style>
+        :root {
+            --primary-bg: #121212;
+            --secondary-bg: #1f1f1f;
+            --text-primary: #e0e0e0;
+            --text-secondary: #757575;
+            --accent-color: #f44336;
+            --link-color: #03a9f4;
+            --quote-border: #ff9800;
+            --breaking-bg: #ff5722;
+            --heading-color: #ffc107;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--secondary-bg);
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid #444;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            color: var(--accent-color);
+            letter-spacing: -0.5px;
+        }
+
+        .container {
+            padding: 1.25rem;
+            max-width: 800px;
+            margin: auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        .breaking-news {
+            background-color: var(--breaking-bg);
+            color: #fff;
+            padding: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        article {
+            background-color: var(--secondary-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        article h2 {
+            color: var(--heading-color);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        article p {
+            margin: 1rem 0;
+        }
+
+        blockquote {
+            font-style: italic;
+            background-color: rgba(255,255,255,0.05);
+            border-left: 4px solid var(--quote-border);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: var(--secondary-bg);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #29b6f6;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            article {
+                padding: 1rem;
+            }
+
+            blockquote {
+                margin: 1rem 0;
+            }
+        }
+
+        strong {
+            color: #fff;
+        }
+
+        .timestamp {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+            text-align: right;
+        }
+
+        .source-links {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .source-link {
+            background-color: rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .source-link:hover {
+            background-color: rgba(255,255,255,0.15);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Breaking: Annie Altman's Allegations Against Sam Altman</h1>
+    </header>
+    <div class="container">
+        <div class="breaking-news">
+            DEVELOPING STORY
+        </div>
+        <article>
+            <h2>OpenAI CEO Sam Altman Faces Serious Allegations from Sister</h2>
+            <p>In a series of social media posts beginning in November 2021, <strong>Annie Altman</strong>, sister of OpenAI CEO <strong>Sam Altman</strong>, has made serious allegations, claiming she "experienced sexual, physical, emotional, verbal, financial, and technological abuse" from her biological siblings, primarily Sam Altman.</p>
+            
+            <p>According to Annie's statements, the alleged abuse began when she was four years old and Sam was thirteen. She has also alleged that Sam withheld inheritance funds following their father's death, which she says led her to engage in sex work for survival.</p>
+
+            <blockquote>
+                "These claims are utterly untrue." – Sam Altman
+            </blockquote>
+
+            <p>X owner Elon Musk has joined the discussion around these allegations, responding to commentary about media coverage disparities. When discussing the media's handling of the situation, Musk stated that "Russell is perceived as a threat to the establishment media, but Sam is not," referring to comparisons with coverage of other high-profile cases.</p>
+
+            <p>As of January 2025, these allegations remain unverified, and no legal actions have been reported. The Altman family has not issued additional public statements regarding the matter.</p>
+
+            <div class="source-links">
+                <a href="https://www.thestatesman.com/technology/musk-joins-controversy-around-annie-who-accused-brother-sam-altman-of-abusing-her-1503243644.html" target="_blank" rel="noopener noreferrer" class="source-link">The Statesman Coverage</a>
+                <a href="https://thedeepdive.ca/annie-altman-openai-ceos-sister-tweets-about-sexual-abuse-suffered-from-brother-sam-altman/" target="_blank" rel="noopener noreferrer" class="source-link">The Deep Dive Report</a>
+            </div>
+            
+            <div class="timestamp">
+                Last Updated: January 8, 2025 • 10:30 AM EST
+            </div>
+        </article>
+    </div>
+    <footer>
+        &copy; 2025 Your News Site. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Use</a>
+    </footer>
+</body>
+</html>
