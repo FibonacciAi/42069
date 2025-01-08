@@ -101,6 +101,49 @@
             border-radius: 0 4px 4px 0;
         }
 
+        .family-statement {
+            background-color: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .user-handle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .verified-badge {
+            color: #1DA1F2;
+            margin-left: 0.25rem;
+        }
+
+        .post-metrics {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
         footer {
             text-align: center;
             padding: 1rem;
@@ -119,31 +162,6 @@
         a:hover {
             text-decoration: underline;
             color: #29b6f6;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            article {
-                padding: 1rem;
-            }
-
-            blockquote {
-                margin: 1rem 0;
-            }
-        }
-
-        strong {
-            color: #fff;
-        }
-
-        .timestamp {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-top: 1rem;
-            text-align: right;
         }
 
         .source-links {
@@ -191,6 +209,31 @@
             height: 16px;
             fill: currentColor;
         }
+
+        .timestamp {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+            text-align: right;
+        }
+
+        strong {
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            article {
+                padding: 1rem;
+            }
+
+            blockquote {
+                margin: 1rem 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -203,6 +246,30 @@
         </div>
         <article>
             <h2>OpenAI CEO Sam Altman Faces Serious Allegations from Sister</h2>
+            
+            <div class="family-statement">
+                <div class="user-profile">
+                    <div class="user-info">
+                        <div class="user-name">Sam Altman <span class="verified-badge">✓</span></div>
+                        <div class="user-handle">@sama</div>
+                    </div>
+                </div>
+                <p>My sister has filed a lawsuit against me. Here is a statement from my mom, brothers, and me:</p>
+                <blockquote>
+                    "Our family loves Annie and is very concerned about her well-being. Caring for a family member who faces mental health challenges is incredibly difficult. We know many families facing similar struggles understand this well.
+                    
+                    Over the years, we've tried in many ways to support Annie and help her find stability, following professional advice on how to be supportive without enabling harmful behaviors..."
+                </blockquote>
+                <div class="post-metrics">
+                    <span class="metric">2.8M Views</span>
+                    <span class="metric">2.8K Comments</span>
+                    <span class="metric">1.7K Reposts</span>
+                    <span class="metric">18K Likes</span>
+                </div>
+            </div>
+
+            <p>The timing of these developments has brought renewed attention to Annie Altman's poetry book "Humannie Grief Poems," published in April 2024. The collection, which explores themes of personal struggle and human experience, has taken on new significance in light of recent events.</p>
+            
             <p>In a series of social media posts beginning in November 2021, <strong>Annie Altman</strong>, sister of OpenAI CEO <strong>Sam Altman</strong>, has made serious allegations, claiming she "experienced sexual, physical, emotional, verbal, financial, and technological abuse" from her biological siblings, primarily Sam Altman.</p>
             
             <p>According to Annie's statements, the alleged abuse began when she was four years old and Sam was thirteen. She has also alleged that Sam withheld inheritance funds following their father's death, which she says led her to engage in sex work for survival.</p>
@@ -213,11 +280,10 @@
 
             <p>X owner Elon Musk has joined the discussion around these allegations, responding to commentary about media coverage disparities. When discussing the media's handling of the situation, Musk stated that "Russell is perceived as a threat to the establishment media, but Sam is not," referring to comparisons with coverage of other high-profile cases.</p>
 
-            <p>As of January 2025, these allegations remain unverified, and no legal actions have been reported. The Altman family has not issued additional public statements regarding the matter.</p>
-
             <div class="source-links">
                 <a href="https://www.thestatesman.com/technology/musk-joins-controversy-around-annie-who-accused-brother-sam-altman-of-abusing-her-1503243644.html" target="_blank" rel="noopener noreferrer" class="source-link">The Statesman Coverage</a>
                 <a href="https://thedeepdive.ca/annie-altman-openai-ceos-sister-tweets-about-sexual-abuse-suffered-from-brother-sam-altman/" target="_blank" rel="noopener noreferrer" class="source-link">The Deep Dive Report</a>
+                <a href="https://www.lulu.com/shop/annie-altman/humannie-grief-poems/paperback/product-gjve592.html" target="_blank" rel="noopener noreferrer" class="source-link">Humannie Grief Poems</a>
             </div>
 
             <a href="https://twitter.com/_D_741Stef" target="_blank" rel="noopener noreferrer" class="social-link">
