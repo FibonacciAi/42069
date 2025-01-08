@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Refined & Expanded T35 Cycles Model (NFA)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Refined & Expanded T35 Cycles Model (NFA)</title>
+
+  <!-- Example of a Google Font -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" 
+    rel="stylesheet" 
+  />
+
+  <!-- Prism.js for syntax highlighting (optional) -->
+  <link 
+    href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" 
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --bg-color: #0b0b0c;
+      --text-color: #ffffff;
+      --highlight-color: #00ffcc;
+      --accent-color: #ff9800;
+      --secondary-color: #bbb;
+      --font-base: 'Inter', sans-serif;
+      --heading-size: 1.25rem;
+      --line-height: 1.6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-base);
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: var(--line-height);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header,
+    nav,
+    main,
+    section,
+    article,
+    aside,
+    footer {
+      margin: 0 auto;
+      width: 100%;
+      max-width: 1200px;
+      padding: 1rem;
+    }
+
+    header {
+      text-align: center;
+      padding-top: 2rem;
+    }
+
+    header h1 {
+      font-size: clamp(1.6rem, 5vw, 2.5rem);
+      margin-bottom: 1rem;
+      color: var(--highlight-color);
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      background: linear-gradient(45deg, var(--highlight-color), #80ffea);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    header p {
+      color: var(--secondary-color);
+      max-width: 800px;
+      margin: 0.5rem auto 2rem auto;
+      line-height: 1.5;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    nav ul {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      list-style: none;
+      margin-bottom: 2rem;
+    }
+
+    nav li {
+      font-size: 0.9rem;
+    }
+
+    nav a {
+      color: var(--highlight-color);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    nav a:hover {
+      color: var(--accent-color);
+    }
+
+    section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+    }
+
+    section h2 {
+      font-size: var(--heading-size);
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: var(--highlight-color);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    section p,
+    section li {
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      line-height: var(--line-height);
+      color: var(--secondary-color);
+    }
+
+    .disclaimer {
+      border-left: 4px solid var(--accent-color);
+      background: rgba(255, 152, 0, 0.1);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 6px;
+    }
+
+    .disclaimer p {
+      color: #ffb84d;
+      font-weight: 600;
+    }
+
+    /* Collapsible Code Sections */
+    details {
+      background-color: rgba(0, 255, 204, 0.1);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+    details summary {
+      color: var(--highlight-color);
+      font-weight: 600;
+      outline: none;
+      list-style: none;
+      user-select: none;
+    }
+    details summary::-webkit-details-marker {
+      display: none; /* remove default marker in Chrome/Safari */
+    }
+    details pre {
+      background: #2d2d2d;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-top: 1rem;
+      overflow-x: auto;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--secondary-color);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: clamp(1.4rem, 5vw, 2rem);
+      }
+      nav ul {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Refined &amp; Expanded T35 Cycles Model</h1>
+    <p class="subtitle">
+      <strong>NFA (Not Financial Advice):</strong> Exploratory Concepts and Code Samples for GME, Sirius, and Beyond
+    </p>
+  </header>
+
+  <!-- Navigation / Table of Contents -->
+  <nav aria-label="Main Navigation">
+    <ul>
+      <li><a href="#section-overview">Overview</a></li>
+      <li><a href="#section-patterns">Enhanced Patterns</a></li>
+      <li><a href="#section-bet">Best Bet Patterns</a></li>
+      <li><a href="#section-t35">T35 Cycles v1 Code</a></li>
+      <li><a href="#section-refinement">Refinement Steps</a></li>
+      <li><a href="#section-sample-code">Sample Code Snippets</a></li>
+      <li><a href="#section-final-thoughts">Final Thoughts</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- Disclaimer box -->
+    <aside class="disclaimer" aria-label="Disclaimer">
+      <p>
+        <strong>Disclaimer (NFA):</strong> This entire content is provided solely for educational and informational
+        purposes. It does <em>not</em> constitute financial advice. Always do your own due diligence and consult
+        professionals for financial decisions.
+      </p>
+    </aside>
+
+    <!-- Section: Overview -->
+    <section id="section-overview">
+      <h2>1. Purpose &amp; Overview</h2>
+      <p>
+        The GameStop (GME) saga sparked intrigue around market patterns, cycles, and dates. Our aim is to refine an
+        existing T35 cycles concept to include multiple 55-day cycles, plus additional layers like 255-day or 355-day
+        intervals, Fibonacci-based features, and sacred geometry. 
+      </p>
+      <p>
+        <strong>Note:</strong> This is purely theoretical. Markets are unpredictable, and no pattern is guaranteed 
+        to repeat or provide profitable signals.
+      </p>
+    </section>
+
+    <!-- Section: Enhanced Patterns -->
+    <section id="section-patterns">
+      <h2>2. Enhanced Timeline &amp; Patterns</h2>
+      <p>
+        Community analyses often highlight certain numbers and intervals:
+      </p>
+      <ul>
+        <li><strong>Multipliers:</strong> 3, 9, 33, 333</li>
+        <li><strong>Special Patterns:</strong> 26, 62, 65, 95, 59</li>
+      </ul>
+      <p>
+        Their interpretations vary widely; treat them as speculative. Nonetheless, they sometimes inform date-based 
+        cycles or resonance models for GME and Sirius.
+      </p>
+      <p>
+        Additionally, standard intervals like the 143-day and the effects of leap-year Julian shifts are frequently
+        discussed, potentially influencing cycle alignments.
+      </p>
+    </section>
+
+    <!-- Section: Best Bet & Ultimate Best Bet Patterns -->
+    <section id="section-bet">
+      <h2>3. Best Bet &amp; Ultimate Best Bet Patterns</h2>
+      <p>
+        A frequently mentioned pattern is the <strong>55-day cycle</strong>, with “entry” windows around November
+        13/14 and “convergence” windows around January 7/8. 
+      </p>
+      <p>
+        Additional emphasis is placed on “triple confirmations” on January 7, 8, and 9—speculated to represent 
+        sequential triggers. No robust evidence proves these alignments will continue into the future, so always 
+        apply caution.
+      </p>
+    </section>
+
+    <!-- Section: T35 Cycles v1 Code -->
+    <section id="section-t35">
+      <h2>4. Revisiting T35 Cycles v1 Code</h2>
+      <p>
+        Below is the original code snippet that generates 3D spiral visualizations of a 55-day cycle with key days 
+        (13, 28, 33). It uses <code>plotly.graph_objects</code> to render lines and markers.
+      </p>
+      <details>
+        <summary>Click to expand original T35 cycles v1 code</summary>
+        <pre><code class="language-python">
+import numpy as np
+import plotly.graph_objects as go
+
+# Parameters for the cycle
+phases = 3
+cycle_length = 55
+key_days = [13, 28, 33]
+
+# Generate spiral data
+spiral_data = []
+for phase in range(phases):
+    for key_day in key_days:
+        angle = 2 * np.pi * (key_day + phase * cycle_length) / cycle_length
+        x = (key_day + phase * cycle_length) * np.cos(angle)
+        y = (key_day + phase * cycle_length) * np.sin(angle)
+        z = key_day
+        spiral_data.append((x, y, z, phase))
+
+# Create 3D Scatter Plot
+fig = go.Figure()
+
+colors = ['blue', 'red', 'green']
+
+for phase in range(phases):
+    phase_data = [d for d in spiral_data if d[3] == phase]
+    x_vals = [d[0] for d in phase_data]
+    y_vals = [d[1] for d in phase_data]
+    z_vals = [d[2] for d in phase_data]
+    
+    fig.add_trace(go.Scatter3d(
+        x=x_vals,
+        y=y_vals,
+        z=z_vals,
+        mode='lines+markers',
+        line=dict(color=colors[phase], width=4),
+        marker=dict(size=5),
+        name=f'Phase {phase + 1}'
+    ))
+
+# Update layout
+fig.update_layout(
+    scene=dict(
+        xaxis_title='X Axis',
+        yaxis_title='Y Axis',
+        zaxis_title='Cycle Day'
+    ),
+    title='Nested Spirals Representation of 55-Day Cycle',
+)
+
+# Display the plot
+fig.show()
+        </code></pre>
+      </details>
+      <p>
+        We want to expand on this code by adding more cycles (like a 255-day cycle), 
+        phase shifts, and integration with actual price data. 
+      </p>
+    </section>
+
+    <!-- Section: Refinement Steps -->
+    <section id="section-refinement">
+      <h2>5. Refinement Steps</h2>
+      <p>
+        <strong>Disclaimer (NFA):</strong> The advanced steps below are purely informational, focusing on 
+        methodology rather than guaranteeing any specific financial outcome.
+      </p>
+      <ol>
+        <li><strong>Multiple 55-Day Cycles &amp; Phase Shifts:</strong> Explore how offset cycles (e.g., one 
+        shifted by 15 days) overlap on key days (13, 28, 33).</li>
+        <li><strong>255-Day &amp; 355-Day Cycles:</strong> Overlay these longer cycles, each with its own key 
+        dates, to see if macro patterns emerge.</li>
+        <li><strong>Cyclical Feature Engineering:</strong> Use sine/cosine transformations and binary flags for 
+        key days. Consider cross-cycle interactions (e.g., day13 in cycle1 with day28 in cycle2).</li>
+        <li><strong>Fibonacci &amp; Sacred Geometry:</strong> Add <em>golden ratio</em> based constructs or 
+        <em>Fibonacci retracement</em> levels to see if they correlate with pivot points.</li>
+        <li><strong>Machine Learning Models:</strong> Incorporate XGBoost or LSTM. Evaluate performance using 
+        time-series cross-validation or walk-forward analysis.</li>
+        <li><strong>Deployment &amp; Monitoring:</strong> If results are promising, build a pipeline to 
+        periodically retrain and monitor your model’s predictions.</li>
+      </ol>
+    </section>
+
+    <!-- Section: Sample Code Snippets -->
+    <section id="section-sample-code">
+      <h2>6. Sample Code Snippets</h2>
+      <p>
+        Below is a condensed example that merges a <code>55-day</code> and a <code>255-day</code> cycle 
+        into a single 3D spiral visualization. We include a <code>phase_shift</code> parameter and 
+        multiple <code>key_days</code> for each cycle.
+      </p>
+      <details>
+        <summary>Click to expand sample multi-cycle spiral code</summary>
+        <pre><code class="language-python">
+import numpy as np
+import plotly.graph_objects as go
+
+def generate_spiral_data(cycle_length, key_days, phases=3, phase_shift=0):
+    data = []
+    for phase in range(phases):
+        for kd in key_days:
+            angle = 2 * np.pi * (kd + phase * cycle_length + phase_shift) / cycle_length
+            r = (kd + phase * cycle_length + phase_shift)
+            x = r * np.cos(angle)
+            y = r * np.sin(angle)
+            z = kd
+            data.append((x, y, z, phase))
+    return data
+
+# Primary 55-day cycle
+cycle_length_55 = 55
+key_days_55 = [13, 28, 33]
+
+# Extended 255-day cycle
+cycle_length_255 = 255
+key_days_255 = [13, 28, 33, 132]  # Example extended key days
+
+# Generate data for both cycles
+spiral_data_55 = generate_spiral_data(cycle_length_55, key_days_55, phases=3, phase_shift=0)
+spiral_data_255 = generate_spiral_data(cycle_length_255, key_days_255, phases=2, phase_shift=10)
+
+fig = go.Figure()
+
+# Plot 55-day cycle
+colors_55 = ['blue', 'red', 'green']
+for phase in range(3):
+    phase_data = [d for d in spiral_data_55 if d[3] == phase]
+    x_vals = [d[0] for d in phase_data]
+    y_vals = [d[1] for d in phase_data]
+    z_vals = [d[2] for d in phase_data]
+    fig.add_trace(go.Scatter3d(
+        x=x_vals, y=y_vals, z=z_vals,
+        mode='lines+markers',
+        line=dict(color=colors_55[phase], width=4),
+        marker=dict(size=5),
+        name=f'55d Phase {phase + 1}'
+    ))
+
+# Plot 255-day cycle
+colors_255 = ['orange', 'purple']
+for phase in range(2):
+    phase_data = [d for d in spiral_data_255 if d[3] == phase]
+    x_vals = [d[0] for d in phase_data]
+    y_vals = [d[1] for d in phase_data]
+    z_vals = [d[2] for d in phase_data]
+    fig.add_trace(go.Scatter3d(
+        x=x_vals, y=y_vals, z=z_vals,
+        mode='lines+markers',
+        line=dict(color=colors_255[phase], width=4),
+        marker=dict(size=5),
+        name=f'255d Phase {phase + 1}'
+    ))
+
+fig.update_layout(
+    scene=dict(
+        xaxis_title='X Axis',
+        yaxis_title='Y Axis',
+        zaxis_title='Cycle Day'
+    ),
+    title='Multi-Cycle Spiral (55-Day & 255-Day)'
+)
+
+fig.show()
+        </code></pre>
+      </details>
+      <p>
+        You can extend the above approach to a <strong>355-day cycle</strong> by duplicating the process 
+        (e.g., <code>cycle_length_355</code>) and layering the results. 
+      </p>
+    </section>
+
+    <!-- Section: Final Thoughts -->
+    <section id="section-final-thoughts">
+      <h2>7. Final Thoughts (NFA)</h2>
+      <p>
+        This integrated approach to cyclical modeling is <strong>experimental</strong> and highly speculative.
+        Markets are driven by numerous factors—news events, macroeconomic data, and investor sentiment—none of 
+        which may perfectly align with these cyclical theories.
+      </p>
+      <p>
+        <strong>Key Takeaways:</strong>
+      </p>
+      <ul>
+        <li>
+          <strong>Use robust validation:</strong> Time-series cross-validation, walk-forward, or rolling-window 
+          analyses help avoid overfitting.
+        </li>
+        <li>
+          <strong>Combine multiple signals:</strong> If you incorporate advanced cycles, also consider 
+          fundamentals, sentiment, or broader market indicators.
+        </li>
+        <li>
+          <strong>Legal &amp; Ethical compliance:</strong> If sharing predictions, be transparent that this is 
+          <em>Not Financial Advice (NFA)</em>.
+        </li>
+      </ul>
+      <p>
+        Ultimately, no matter how intriguing these cycles appear, always conduct thorough research, remain 
+        cautious, and consult licensed professionals when making investment decisions.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 - Refined T35 Cycles / NFA. All rights reserved. <br />
+    Built for educational purposes.</p>
+  </footer>
+
+  <!-- Prism.js for syntax highlighting (optional) -->
+  <script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js">
+  </script>
+  <script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js">
+  </script>
+</body>
+</html>
