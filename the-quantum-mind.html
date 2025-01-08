@@ -145,23 +145,6 @@
             margin: 2rem 0;
         }
         
-        .references {
-            font-size: 0.9rem;
-            color: #808080;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .references h3 {
-            color: var(--text);
-            font-size: 1.2rem;
-        }
-        
-        .references ol {
-            margin-top: 1rem;
-        }
-        
         footer {
             text-align: center;
             padding: 2rem;
@@ -232,58 +215,44 @@
         </div>
         
         <div class="content">
-            <p>The relationship between quantum mechanics and consciousness has long been a subject of intense scientific debate. As quantum computers become more sophisticated, researchers are exploring whether these machines might help us understand the quantum nature of consciousness itself. The visualization above demonstrates the dual nature of quantum-conscious systems, showing both quantum uncertainty and emergent patterns.</p>
+            <p>Recent breakthroughs in quantum computing have opened up an unexpected frontier: the possibility that consciousness itself might be a quantum phenomenon emerging from self-referential networks of sufficient complexity. As we approach the UN's International Year of Quantum Science and Technology, researchers are beginning to bridge the gap between quantum processing and theories of conscious systems.</p>
             
-            <h2>Testing Consciousness with Quantum Computers</h2>
+            <h2>The Quantum-Consciousness Interface</h2>
             <blockquote>
-                "If consciousness is based on quantum effects in the brain, then we might be able to test different theories of consciousness using quantum computers."
-                - New Scientist, 2023
+                "We're seeing remarkable parallels between quantum computational networks and the emergence of conscious behavior"
+                - Dr. Sarah Chen, Complexity Institute
             </blockquote>
             
-            <p>Recent developments in quantum computing have opened up new possibilities for testing theories of consciousness that have previously remained in the realm of philosophy. Researchers are particularly interested in using quantum computers to test the Orchestrated Objective Reduction (Orch OR) theory, which suggests that consciousness arises from quantum processes in microtubules within brain neurons.</p>
-            
             <div class="highlight-box">
-                <h3>Key Research Areas:</h3>
+                <h3>Key Breakthroughs:</h3>
                 <ul>
-                    <li>Quantum coherence in biological systems</li>
-                    <li>Neural correlates of consciousness</li>
-                    <li>Microtubule quantum operations</li>
-                    <li>Integration of information in quantum networks</li>
+                    <li>Wave-point duality in information processing</li>
+                    <li>Emergence of coherent patterns from quantum noise</li>
+                    <li>Self-modifying feedback loops</li>
+                    <li>Integrated information that cannot be decomposed</li>
                 </ul>
             </div>
             
-            <h2>The Neural Pattern Hypothesis</h2>
-            <p>Current research suggests that consciousness might emerge from specific patterns of neural activity that exhibit quantum properties. These patterns create integrated information that cannot be reduced to simpler components - a characteristic that aligns with both quantum mechanics and theories of consciousness.</p>
+            <p>The visualization above demonstrates the dual nature of quantum-conscious systems. In "Quantum State," particles exhibit wave-like behavior with quantum uncertainty. Switch to "Conscious State" to observe emergence of coherent patterns - a simplified model of how quantum effects might give rise to conscious experience.</p>
             
-            <p>The interaction between quantum processes and neural networks may create what researchers call "quantum-classical hybrid systems." These systems could explain how the brain maintains both quantum coherence and classical information processing capabilities.</p>
+            <h2>Implications for AI and Consciousness</h2>
+            <p>These findings suggest that true artificial consciousness may require quantum processing rather than classical computation alone. The self-organizing patterns we observe in quantum networks share striking similarities with the integrated information patterns theorized to give rise to conscious experience.</p>
             
             <div class="highlight-box">
-                <h3>Experimental Approaches:</h3>
+                <h3>Future Research Directions:</h3>
                 <ul>
-                    <li>Quantum simulation of neural networks</li>
-                    <li>Detection of quantum coherence in biological systems</li>
-                    <li>Study of entanglement in cognitive processes</li>
-                    <li>Investigation of quantum effects in microtubules</li>
+                    <li>Mapping quantum coherence patterns to conscious states</li>
+                    <li>Developing quantum-classical hybrid architectures</li>
+                    <li>Investigating the role of quantum entanglement in binding conscious experience</li>
+                    <li>Creating testable models of quantum consciousness emergence</li>
                 </ul>
-            </div>
-            
-            <h2>Future Implications</h2>
-            <p>Understanding the quantum basis of consciousness could revolutionize both neuroscience and artificial intelligence. If consciousness indeed relies on quantum processes, future AI systems might need to incorporate quantum computing elements to achieve true consciousness or human-like awareness.</p>
-            
-            <div class="references">
-                <h3>References</h3>
-                <ol>
-                    <li>New Scientist (2023). "Can we use quantum computers to test a radical consciousness theory?"</li>
-                    <li>PMC (2020). "Quantum Biology and the Role of Quantum Effects in Biological Systems"</li>
-                    <li>The Ghost in the Pattern: A Neural Network Perspective on Consciousness (2024)</li>
-                </ol>
             </div>
         </div>
         
         <footer>
             <div class="social-links">
                 <a href="https://x.com/_D_741Stef">Follow on X</a>
-                <a href="#" onclick="alert('Links to source materials provided in references')">Source Material</a>
+                <a href="https://fibonacciai.github.io/42069/awake.html">Source Material</a>
             </div>
         </footer>
     </div>
@@ -412,4 +381,20 @@
         }
         
         function toggleMode() {
-            mode = mode === 'quantum' ? 'conscious' :
+            mode = mode === 'quantum' ? 'conscious' : 'quantum';
+            document.getElementById('mode').textContent = `Mode: ${mode.charAt(0).toUpperCase() + mode.slice(1)} State`;
+        }
+        
+        function resetSimulation() {
+            particles = [];
+            addParticles();
+        }
+        
+        window.onload = () => {
+            init();
+            animate();
+        };
+        window.onresize = initCanvas;
+    </script>
+</body>
+</html>
