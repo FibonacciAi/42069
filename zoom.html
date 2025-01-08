@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Infinite Mandelbrot Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            touch-action: none;
+            background: #000;
+        }
+
+        canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            touch-action: none;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .controls {
+            position: absolute;
+            top: env(safe-area-inset-top, 10px);
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            pointer-events: auto;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .controls.hidden {
+            opacity: 0;
+        }
+
+        .info {
+            position: absolute;
+            bottom: max(env(safe-area-inset-bottom, 10px), 10px);
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            text-align: right;
+        }
+
+        .button-container {
+            position: absolute;
+            bottom: max(env(safe-area-inset-bottom, 20px), 20px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .control-button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            font-size: 24px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont;
+            font-size: 18px;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        @media (orientation: landscape) {
+            .controls {
+                max-width: 200px;
+            }
+        }
+
+        .coordinate {
+            font-family: monospace;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">Loading...</div>
+    <div class="ui-overlay">
+        <div class="controls" id="controls">
+            <div>♟️ Drag: move</div>
+            <div>🤏 Pinch: zoom</div>
+            <div>👆 Double tap: zoom in</div>
+            <div>🔄 Two fingers: rotate</div>
+        </div>
+        <div class="info">
+            <div id="zoom-level">Zoom: 1x</div>
+            <div id="coordinates" class="coordinate"></div>
+        </div>
+        <div class="button-container">
+            <button class="control-button" id="reset">↺</button>
+            <button class="control-button" id="center">◉</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Previous shader code remains the same until the touch handling...
+
+        let hideTimeout;
+        const controls = document.getElementById('controls');
+        
+        function showControls() {
+            controls.classList.remove('hidden');
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                controls.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Enhanced touch handling
+        let touchStartTime;
+        let lastTapTime = 0;
+        let initialTouchDistance = 0;
+        let initialRotation = 0;
+        let currentRotation = 0;
+        let isRotating = false;
+
+        function getTouchDistance(e) {
+            return Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        }
+
+        function getTouchCenter(e) {
+            return {
+                x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+            };
+        }
+
+        function getTouchRotation(e) {
+            const dx = e.touches[1].clientX - e.touches[0].clientX;
+            const dy = e.touches[1].clientY - e.touches[0].clientY;
+            return Math.atan2(dy, dx);
+        }
+
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            showControls();
+            touchStartTime = Date.now();
+
+            if (e.touches.length === 2) {
+                initialTouchDistance = getTouchDistance(e);
+                initialRotation = getTouchRotation(e);
+                isRotating = false;
+            }
+
+            const currentTime = Date.now();
+            if (e.touches.length === 1) {
+                if (currentTime - lastTapTime < 300) {
+                    // Double tap zoom
+                    const touch = e.touches[0];
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    const x = (touch.clientX - rect.left) / rect.width;
+                    const y = 1.0 - (touch.clientY - rect.top) / rect.height;
+                    
+                    zoomToPoint(x, y, zoom + 1.5);
+                }
+                lastTapTime = currentTime;
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            showControls();
+
+            if (e.touches.length === 2) {
+                const currentDistance = getTouchDistance(e);
+                const currentRotationAngle = getTouchRotation(e);
+                
+                // Handle rotation
+                const rotationDelta = currentRotationAngle - initialRotation;
+                if (Math.abs(rotationDelta) > 0.1) {
+                    isRotating = true;
+                }
+                
+                if (isRotating) {
+                    currentRotation = (rotationDelta * 180 / Math.PI) % 360;
+                    plane.rotation.z = rotationDelta;
+                }
+
+                // Handle zoom
+                const delta = currentDistance - initialTouchDistance;
+                if (!isRotating) {
+                    zoom -= delta * 0.01;
+                    updateUniforms();
+                }
+                
+                initialTouchDistance = currentDistance;
+                initialRotation = currentRotationAngle;
+            } else if (e.touches.length === 1) {
+                const deltaX = e.touches[0].clientX - touchX;
+                const deltaY = e.touches[0].clientY - touchY;
+                
+                const zoomFactor = Math.exp(-zoom);
+                centerX -= deltaX * 0.003 * zoomFactor;
+                centerY += deltaY * 0.003 * zoomFactor;
+                
+                updateUniforms();
+            }
+            
+            touchX = e.touches[0].clientX;
+            touchY = e.touches[0].clientY;
+        }, { passive: false });
+
+        function zoomToPoint(x, y, targetZoom) {
+            const aspectRatio = width / height;
+            const zoomFactor = Math.exp(zoom);
+            const newX = ((x * 2 - 1) * aspectRatio) / zoomFactor + centerX;
+            const newY = ((y * 2 - 1)) / zoomFactor + centerY;
+            
+            centerX = newX;
+            centerY = newY;
+            zoom = targetZoom;
+            
+            updateUniforms();
+        }
+
+        function updateUniforms() {
+            material.uniforms.centerX.value = centerX;
+            material.uniforms.centerY.value = centerY;
+            material.uniforms.zoom.value = zoom;
+            material.uniforms.maxIterations.value = Math.min(1000, 300 + zoom * 50);
+            
+            document.getElementById('zoom-level').textContent = 
+                `Zoom: ${Math.exp(zoom).toExponential(2)}x`;
+            document.getElementById('coordinates').textContent = 
+                `X: ${centerX.toFixed(6)}\nY: ${centerY.toFixed(6)}`;
+        }
+
+        // Reset button
+        document.getElementById('reset').addEventListener('click', () => {
+            centerX = -0.5;
+            centerY = 0.0;
+            zoom = 1.0;
+            plane.rotation.z = 0;
+            currentRotation = 0;
+            updateUniforms();
+        });
+
+        // Center button
+        document.getElementById('center').addEventListener('click', () => {
+            centerX = -0.5;
+            centerY = 0.0;
+            updateUniforms();
+        });
+
+        // Remove loading screen once everything is ready
+        window.addEventListener('load', () => {
+            document.querySelector('.loading').style.display = 'none';
+            showControls();
+        });
+
+        // Prevent default touch behaviors
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+        document.addEventListener('gestureend', (e) => e.preventDefault());
+
+        // Handle visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                renderer.setAnimationLoop(null);
+            } else {
+                renderer.setAnimationLoop(animate);
+            }
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
