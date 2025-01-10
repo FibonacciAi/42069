@@ -131,9 +131,9 @@
             box-shadow: 0 0 10px var(--exciton-color);
             opacity: 0.7;
             transform-origin: left center;
+            pointer-events: none;
         }
 
-        /* Sliders styling */
         input[type="range"] {
             -webkit-appearance: none;
             width: 100%;
@@ -180,6 +180,16 @@
             font-weight: bold;
             color: var(--accent-primary);
         }
+
+        .layer-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            z-index: 1;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -206,10 +216,10 @@
         </div>
 
         <div class="layer" id="layer1">
-            <div class="layer-label">Layer 1</div>
+            <div class="layer-label">Layer 1 - Electrons</div>
         </div>
         <div class="layer" id="layer2">
-            <div class="layer-label">Layer 2</div>
+            <div class="layer-label">Layer 2 - Holes</div>
         </div>
 
         <canvas id="transportCanvas" width="760" height="200"></canvas>
@@ -231,7 +241,6 @@
     </div>
 
 <script>
-// Enhanced animation and physics variables
 let running = false;
 let showExcitons = false;
 let particles = [];
@@ -239,8 +248,8 @@ let excitons = [];
 let magneticStrength = 50;
 let temperature = 20;
 let time = 0;
+let lastTimestamp = 0;
 
-// Enhanced particle creation with quantum properties
 function createParticle(type, layer) {
     const layerEl = document.getElementById('layer' + layer);
     const particle = document.createElement('div');
@@ -267,26 +276,33 @@ function createParticle(type, layer) {
     };
 }
 
-// Enhanced physics calculations
+function createExciton(p1, p2) {
+    const line = document.createElement('div');
+    line.className = 'exciton-line';
+    document.getElementById('container').appendChild(line);
+    
+    return {
+        el: line,
+        p1: p1,
+        p2: p2
+    };
+}
+
 function updateParticle(p, dt) {
     const B = magneticStrength / 50;
     const T = temperature / 20;
     
-    // Quantum cyclotron motion
     const omega = B * (p.type === 'electron' ? 1 : -1);
     const oldVx = p.vx;
     p.vx += p.vy * omega * dt;
     p.vy -= oldVx * omega * dt;
     
-    // Thermal fluctuations
     p.vx += (Math.random() - 0.5) * T * dt;
     p.vy += (Math.random() - 0.5) * T * dt;
     
-    // Update position
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     
-    // Boundary conditions with quantum tunneling probability
     if(p.x < 0 || p.x > 700) {
         if(Math.random() > Math.exp(-1/T)) {
             p.vx *= -1;
@@ -300,16 +316,13 @@ function updateParticle(p, dt) {
         p.y = Math.max(0, Math.min(100, p.y));
     }
     
-    // Update DOM
     p.el.style.left = p.x + 'px';
     p.el.style.top = p.y + 'px';
     
-    // Quantum phase evolution
     p.phase += omega * dt;
     p.el.style.opacity = (Math.cos(p.phase) + 1) / 2 * 0.8 + 0.2;
 }
 
-// Enhanced exciton management
 function updateExcitons() {
     excitons.forEach(e => e.el.remove());
     excitons = [];
@@ -328,14 +341,31 @@ function updateExcitons() {
     document.getElementById('excitonCount').textContent = excitons.length;
 }
 
-// Enhanced transport visualization
+function updateExcitonLines() {
+    excitons.forEach(e => {
+        const dx = e.p2.x - e.p1.x;
+        const dy = e.p2.y - e.p1.y + 150;
+        const length = Math.sqrt(dx*dx + dy*dy);
+        const angle = Math.atan2(dy, dx);
+        
+        e.el.style.width = length + 'px';
+        e.el.style.transform = `rotate(${angle}rad)`;
+        e.el.style.left = e.p1.x + 'px';
+        e.el.style.top = e.p1.y + 'px';
+        
+        const phase = (time / 20) % (2 * Math.PI);
+        const intensity = (Math.cos(phase) + 1) / 2;
+        e.el.style.opacity = 0.3 + 0.7 * intensity;
+        e.el.style.boxShadow = `0 0 ${10 * intensity}px var(--exciton-color)`;
+    });
+}
+
 function drawTransport() {
     const canvas = document.getElementById('transportCanvas');
     const ctx = canvas.getContext('2d');
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Background grid
     ctx.strokeStyle = '#2a2a4f';
     ctx.lineWidth = 0.5;
     for(let x = 0; x < canvas.width; x += 20) {
@@ -351,7 +381,6 @@ function drawTransport() {
         ctx.stroke();
     }
     
-    // Transport data
     ctx.beginPath();
     ctx.lineWidth = 2;
     ctx.moveTo(0, 150);
@@ -367,12 +396,10 @@ function drawTransport() {
     ctx.strokeStyle = '#4a4aff';
     ctx.stroke();
     
-    // Update conductance value
     const conductance = Math.abs(Math.sin(time/10)) * Math.exp(-temperature/50);
     document.getElementById('conductanceValue').textContent = 
         conductance.toFixed(2);
     
-    // Update energy gap
     const gap = magneticStrength * (showExcitons ? 1 : 0.2) / temperature;
     document.getElementById('energyGap').textContent = gap.toFixed(2);
 }
@@ -391,10 +418,7 @@ function animate(timestamp) {
     requestAnimationFrame(animate);
 }
 
-let lastTimestamp = 0;
-
 function init() {
-    // Create initial particles
     for(let i = 0; i < 15; i++) {
         particles.push(createParticle('electron', 1));
         particles.push(createParticle('hole', 2));
@@ -411,6 +435,11 @@ function toggleSimulation() {
         lastTimestamp = performance.now();
         animate(lastTimestamp);
     }
+}
+
+function toggleExcitons() {
+    showExcitons = !showExcitons;
+    updateExcitons();
 }
 
 function updateMagnetic(value) {
