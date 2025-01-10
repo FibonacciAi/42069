@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quantum Hall Bilayer Visualization - Dark Mode</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2f;
+            --text-primary: #e1e1ff;
+            --accent-primary: #4a4aff;
+            --accent-secondary: #2a2a4f;
+            --electron-color: #00ffff;
+            --hole-color: #ff4444;
+            --exciton-color: #8844ff;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--text-primary);
+            text-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        #container {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        canvas {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: var(--accent-secondary);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: var(--accent-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .layer {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            margin: 10px 0;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .layer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 0%, rgba(74, 74, 255, 0.1) 100%);
+        }
+
+        .particle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            filter: blur(1px);
+        }
+
+        .electron {
+            background: var(--electron-color);
+            box-shadow: 0 0 10px var(--electron-color);
+        }
+
+        .hole {
+            background: var(--hole-color);
+            box-shadow: 0 0 10px var(--hole-color);
+        }
+
+        .exciton-line {
+            position: absolute;
+            height: 3px;
+            background: var(--exciton-color);
+            box-shadow: 0 0 10px var(--exciton-color);
+            opacity: 0.7;
+            transform-origin: left center;
+        }
+
+        /* Sliders styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--accent-secondary);
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="title">
+        Quantum Hall Bilayer Visualization
+    </div>
+
+    <div id="container">
+        <div class="controls">
+            <div class="control-group">
+                <button onclick="toggleSimulation()" id="simButton">Start Simulation</button>
+                <button onclick="toggleExcitons()">Toggle Excitons</button>
+            </div>
+            <div class="control-group">
+                <label>Magnetic Field Strength</label>
+                <input type="range" id="magnetic" min="0" max="100" value="50" 
+                       oninput="updateMagnetic(this.value)">
+            </div>
+            <div class="control-group">
+                <label>Temperature</label>
+                <input type="range" id="temperature" min="0" max="100" value="20" 
+                       oninput="updateTemperature(this.value)">
+            </div>
+        </div>
+
+        <div class="layer" id="layer1">
+            <div class="layer-label">Layer 1</div>
+        </div>
+        <div class="layer" id="layer2">
+            <div class="layer-label">Layer 2</div>
+        </div>
+
+        <canvas id="transportCanvas" width="760" height="200"></canvas>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div>Conductance</div>
+                <div class="stat-value" id="conductanceValue">0.00</div>
+            </div>
+            <div class="stat-item">
+                <div>Exciton Count</div>
+                <div class="stat-value" id="excitonCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div>Energy Gap</div>
+                <div class="stat-value" id="energyGap">0.00</div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Enhanced animation and physics variables
+let running = false;
+let showExcitons = false;
+let particles = [];
+let excitons = [];
+let magneticStrength = 50;
+let temperature = 20;
+let time = 0;
+
+// Enhanced particle creation with quantum properties
+function createParticle(type, layer) {
+    const layerEl = document.getElementById('layer' + layer);
+    const particle = document.createElement('div');
+    particle.className = 'particle ' + type;
+    
+    const x = Math.random() * 700;
+    const y = Math.random() * 100;
+    
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    
+    layerEl.appendChild(particle);
+    
+    return {
+        el: particle,
+        type: type,
+        layer: layer,
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        spin: Math.random() < 0.5 ? 0.5 : -0.5,
+        phase: Math.random() * Math.PI * 2
+    };
+}
+
+// Enhanced physics calculations
+function updateParticle(p, dt) {
+    const B = magneticStrength / 50;
+    const T = temperature / 20;
+    
+    // Quantum cyclotron motion
+    const omega = B * (p.type === 'electron' ? 1 : -1);
+    const oldVx = p.vx;
+    p.vx += p.vy * omega * dt;
+    p.vy -= oldVx * omega * dt;
+    
+    // Thermal fluctuations
+    p.vx += (Math.random() - 0.5) * T * dt;
+    p.vy += (Math.random() - 0.5) * T * dt;
+    
+    // Update position
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    
+    // Boundary conditions with quantum tunneling probability
+    if(p.x < 0 || p.x > 700) {
+        if(Math.random() > Math.exp(-1/T)) {
+            p.vx *= -1;
+        }
+        p.x = Math.max(0, Math.min(700, p.x));
+    }
+    if(p.y < 0 || p.y > 100) {
+        if(Math.random() > Math.exp(-1/T)) {
+            p.vy *= -1;
+        }
+        p.y = Math.max(0, Math.min(100, p.y));
+    }
+    
+    // Update DOM
+    p.el.style.left = p.x + 'px';
+    p.el.style.top = p.y + 'px';
+    
+    // Quantum phase evolution
+    p.phase += omega * dt;
+    p.el.style.opacity = (Math.cos(p.phase) + 1) / 2 * 0.8 + 0.2;
+}
+
+// Enhanced exciton management
+function updateExcitons() {
+    excitons.forEach(e => e.el.remove());
+    excitons = [];
+    
+    if(showExcitons) {
+        const electrons = particles.filter(p => p.type === 'electron');
+        const holes = particles.filter(p => p.type === 'hole');
+        
+        for(let i = 0; i < Math.min(electrons.length, holes.length); i++) {
+            if(Math.random() < Math.exp(-temperature/50)) {
+                excitons.push(createExciton(electrons[i], holes[i]));
+            }
+        }
+    }
+    
+    document.getElementById('excitonCount').textContent = excitons.length;
+}
+
+// Enhanced transport visualization
+function drawTransport() {
+    const canvas = document.getElementById('transportCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Background grid
+    ctx.strokeStyle = '#2a2a4f';
+    ctx.lineWidth = 0.5;
+    for(let x = 0; x < canvas.width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    for(let y = 0; y < canvas.height; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+    
+    // Transport data
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.moveTo(0, 150);
+    
+    for(let x = 0; x < canvas.width; x++) {
+        const B = magneticStrength / 50;
+        const T = temperature / 20;
+        const y = 150 - 50 * Math.sin(x/50 + time/10) * 
+                 Math.exp(-T) * (showExcitons ? Math.sin(B * time/20) : 0.2);
+        ctx.lineTo(x, y);
+    }
+    
+    ctx.strokeStyle = '#4a4aff';
+    ctx.stroke();
+    
+    // Update conductance value
+    const conductance = Math.abs(Math.sin(time/10)) * Math.exp(-temperature/50);
+    document.getElementById('conductanceValue').textContent = 
+        conductance.toFixed(2);
+    
+    // Update energy gap
+    const gap = magneticStrength * (showExcitons ? 1 : 0.2) / temperature;
+    document.getElementById('energyGap').textContent = gap.toFixed(2);
+}
+
+function animate(timestamp) {
+    if(!running) return;
+    
+    const dt = Math.min((timestamp - lastTimestamp) / 16, 2);
+    lastTimestamp = timestamp;
+    time += dt;
+    
+    particles.forEach(p => updateParticle(p, dt));
+    updateExcitonLines();
+    drawTransport();
+    
+    requestAnimationFrame(animate);
+}
+
+let lastTimestamp = 0;
+
+function init() {
+    // Create initial particles
+    for(let i = 0; i < 15; i++) {
+        particles.push(createParticle('electron', 1));
+        particles.push(createParticle('hole', 2));
+    }
+    
+    drawTransport();
+}
+
+function toggleSimulation() {
+    running = !running;
+    document.getElementById('simButton').textContent = 
+        running ? 'Stop Simulation' : 'Start Simulation';
+    if(running) {
+        lastTimestamp = performance.now();
+        animate(lastTimestamp);
+    }
+}
+
+function updateMagnetic(value) {
+    magneticStrength = value;
+}
+
+function updateTemperature(value) {
+    temperature = value;
+}
+
+init();
+</script>
+</body>
+</html>
