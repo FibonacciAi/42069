@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Quantum Hall Bilayer Visualization</title>
+    <style>
+        :root {
+            --bg-primary: #080818;
+            --bg-secondary: #0f0f2d;
+            --text-primary: #9090ff;
+            --accent-primary: #4040ff;
+            --button-bg: #4040ff;
+            --electron-color: #40f0ff;
+            --hole-color: #ff4040;
+            --exciton-color: #8040ff;
+        }
+
+        /* Global */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Title */
+        .title {
+            font-size: 32px;
+            margin: 40px 0;
+            color: var(--text-primary);
+            text-shadow: 0 0 20px rgba(144, 144, 255, 0.5);
+            text-align: center;
+        }
+
+        /* Container */
+        #container {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 90%;
+            margin-bottom: 40px;
+        }
+
+        /* Controls Layout */
+        .controls {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Buttons */
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background: var(--button-bg);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: #2d2dad;
+        }
+
+        /* Sliders */
+        .sliders {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .slider-group label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(64, 64, 255, 0.5);
+        }
+
+        /* Layers */
+        .layer {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            margin: 10px 0;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .layer-label {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            color: var(--text-primary);
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            filter: blur(4px);
+        }
+        .electron {
+            background: var(--electron-color);
+            box-shadow: 0 0 15px var(--electron-color);
+        }
+        .hole {
+            background: var(--hole-color);
+            box-shadow: 0 0 15px var(--hole-color);
+        }
+        .exciton-line {
+            position: absolute;
+            height: 2px;
+            background: var(--exciton-color);
+            box-shadow: 0 0 10px var(--exciton-color);
+            opacity: 0.6;
+            transform-origin: left center;
+        }
+
+        /* Transport Canvas */
+        canvas {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+            border-radius: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Title -->
+    <div class="title">Quantum Hall Bilayer Visualization</div>
+
+    <!-- Main Container -->
+    <div id="container">
+        <!-- Control Section -->
+        <div class="controls">
+            <div class="buttons">
+                <!-- Use data attributes or event listeners in the script below -->
+                <button id="simButton" aria-label="Toggle Simulation">Stop Simulation</button>
+                <button id="excitonButton" aria-label="Toggle Excitons">Toggle Excitons</button>
+            </div>
+            <div class="sliders">
+                <div class="slider-group">
+                    <label for="magnetic">Magnetic Field Strength</label>
+                    <input 
+                        type="range" 
+                        id="magnetic" 
+                        min="0" 
+                        max="100" 
+                        value="50"
+                        aria-label="Magnetic Field Strength Slider"
+                    />
+                </div>
+                <div class="slider-group">
+                    <label for="temperature">Temperature</label>
+                    <input 
+                        type="range" 
+                        id="temperature" 
+                        min="0" 
+                        max="100" 
+                        value="20"
+                        aria-label="Temperature Slider"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- Layers -->
+        <div class="layer" id="layer1">
+            <div class="layer-label">Layer 1 - Electrons</div>
+            <!-- Dynamically rendered electron particles go here -->
+        </div>
+        <div class="layer" id="layer2">
+            <div class="layer-label">Layer 2 - Holes</div>
+            <!-- Dynamically rendered hole particles go here -->
+        </div>
+
+        <!-- Transport Canvas -->
+        <canvas id="transportCanvas"></canvas>
+    </div>
+
+    <!-- JavaScript Section (Placeholder) -->
+    <script>
+        "use strict";
+
+        // Grab DOM elements
+        const simButton = document.getElementById("simButton");
+        const excitonButton = document.getElementById("excitonButton");
+        const magneticSlider = document.getElementById("magnetic");
+        const temperatureSlider = document.getElementById("temperature");
+
+        // Placeholder functions
+        function toggleSimulation() {
+            // Implementation detail
+            // e.g., if simulation is running, stop it; otherwise, start it
+            console.log("Simulation toggled.");
+        }
+
+        function toggleExcitons() {
+            // Implementation detail
+            // e.g., show or hide exciton lines
+            console.log("Excitons toggled.");
+        }
+
+        // Event listeners
+        simButton.addEventListener("click", toggleSimulation);
+        excitonButton.addEventListener("click", toggleExcitons);
+
+        // Previous or additional simulation code can be placed here
+        // e.g., create particles, animate them, handle canvas drawing, etc.
+    </script>
+</body>
+</html>
