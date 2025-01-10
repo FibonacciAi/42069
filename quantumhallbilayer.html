@@ -15,7 +15,7 @@
             --exciton-color: #8040ff;
         }
 
-        /* Global */
+        /* Global Reset & Base */
         * {
             box-sizing: border-box;
         }
@@ -169,7 +169,7 @@
     </style>
 </head>
 <body>
-    <!-- Page Title -->
+    <!-- Title Section -->
     <div class="title">Quantum Hall Bilayer Visualization</div>
 
     <!-- Main Container -->
@@ -177,9 +177,13 @@
         <!-- Control Section -->
         <div class="controls">
             <div class="buttons">
-                <!-- Use data attributes or event listeners in the script below -->
-                <button id="simButton" aria-label="Toggle Simulation">Stop Simulation</button>
-                <button id="excitonButton" aria-label="Toggle Excitons">Toggle Excitons</button>
+                <!-- Retaining your inline onclick for simplicity -->
+                <button onclick="toggleSimulation()" id="simButton" aria-label="Toggle Simulation">
+                    Stop Simulation
+                </button>
+                <button onclick="toggleExcitons()" aria-label="Toggle Excitons">
+                    Toggle Excitons
+                </button>
             </div>
             <div class="sliders">
                 <div class="slider-group">
@@ -207,11 +211,13 @@
             </div>
         </div>
 
-        <!-- Layers -->
+        <!-- Layer 1 -->
         <div class="layer" id="layer1">
             <div class="layer-label">Layer 1 - Electrons</div>
             <!-- Dynamically rendered electron particles go here -->
         </div>
+
+        <!-- Layer 2 -->
         <div class="layer" id="layer2">
             <div class="layer-label">Layer 2 - Holes</div>
             <!-- Dynamically rendered hole particles go here -->
@@ -221,35 +227,54 @@
         <canvas id="transportCanvas"></canvas>
     </div>
 
-    <!-- JavaScript Section (Placeholder) -->
+    <!-- JavaScript: Insert Your Existing Simulation Logic Here -->
     <script>
         "use strict";
 
-        // Grab DOM elements
-        const simButton = document.getElementById("simButton");
-        const excitonButton = document.getElementById("excitonButton");
-        const magneticSlider = document.getElementById("magnetic");
-        const temperatureSlider = document.getElementById("temperature");
+        /**
+         * Below are placeholder function definitions for your existing logic.
+         * If you already have them in a separate file, simply remove or replace
+         * them with your own logic.
+         */
 
-        // Placeholder functions
+        // Example toggling functions
         function toggleSimulation() {
-            // Implementation detail
-            // e.g., if simulation is running, stop it; otherwise, start it
+            // Insert your simulation start/stop code
             console.log("Simulation toggled.");
+            // E.g., if the simulation is running, stop it; otherwise, start it.
         }
 
         function toggleExcitons() {
-            // Implementation detail
-            // e.g., show or hide exciton lines
+            // Insert your exciton lines toggle logic
             console.log("Excitons toggled.");
+            // E.g., show or hide exciton lines or related visuals.
         }
 
-        // Event listeners
-        simButton.addEventListener("click", toggleSimulation);
-        excitonButton.addEventListener("click", toggleExcitons);
+        // You can also add your existing event handlers, particle creation, 
+        // animation loops, or data binding here as needed.
 
-        // Previous or additional simulation code can be placed here
-        // e.g., create particles, animate them, handle canvas drawing, etc.
+        // If you prefer event listeners instead of inline onclick:
+        // --------------------------------------------------------
+        // document.getElementById("simButton").addEventListener("click", toggleSimulation);
+        // document.getElementById("excitonButton").addEventListener("click", toggleExcitons);
+        // --------------------------------------------------------
+        
+        /**
+         * Example / placeholder: 
+         * 
+         * function initParticles() {
+         *   // create electrons, holes, and excitons...
+         * }
+         * 
+         * function animate() {
+         *   // requestAnimationFrame(animate);
+         *   // update positions, draw or render to canvas...
+         * }
+         * 
+         * // Start or set up your simulation:
+         * initParticles();
+         * animate();
+         */
     </script>
 </body>
 </html>
