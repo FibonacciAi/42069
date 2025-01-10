@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HTML Editor & Renderer</title>
+  <style>
+    /* Basic reset and layout */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #181a1b;
+      color: #f0f0f0;
+    }
+
+    header {
+      padding: 1rem;
+      background-color: #26292b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: #f0f0f0;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 1rem;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #3b4042;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #4b5153;
+    }
+
+    /* Editor & preview container */
+    .editor-container {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 60px); /* subtract header's height */
+    }
+
+    /* Code editor on the left */
+    #editor {
+      width: 50%;
+      height: 100%;
+      background-color: #1e1e1e;
+      color: #ccc;
+      font-family: "Consolas", monospace;
+      font-size: 0.95rem;
+      padding: 1rem;
+      border-right: 2px solid #333;
+      resize: none;
+      outline: none;
+    }
+
+    /* Preview on the right */
+    #preview {
+      width: 50%;
+      height: 100%;
+      border: none;
+      background-color: #2c2f31;
+      padding: 1rem;
+      color: #fff;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>HTML Editor & Renderer</h1>
+    <div class="buttons">
+      <button onclick="updatePreview()">Update Preview</button>
+    </div>
+  </header>
+
+  <div class="editor-container">
+    <!-- Text area for raw HTML input -->
+    <textarea id="editor" placeholder="Type or paste your HTML here...">
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Document</title>
+</head>
+<body>
+  <h1>Hello World!</h1>
+  <p>This is a sample preview.</p>
+</body>
+</html>
+    </textarea>
+
+    <!-- iFrame to render the HTML in real time -->
+    <iframe id="preview"></iframe>
+  </div>
+
+  <script>
+    const editor = document.getElementById("editor");
+    const preview = document.getElementById("preview");
+
+    // Live update the preview on input
+    editor.addEventListener("input", () => {
+      updatePreview();
+    });
+
+    function updatePreview() {
+      preview.srcdoc = editor.value;
+    }
+
+    // Initialize the preview on page load
+    window.addEventListener("DOMContentLoaded", updatePreview);
+  </script>
+</body>
+</html>
