@@ -15,10 +15,6 @@
             --exciton-color: #8040ff;
         }
 
-        /* Global Reset & Base */
-        * {
-            box-sizing: border-box;
-        }
         body {
             margin: 0;
             padding: 0;
@@ -31,16 +27,13 @@
             align-items: center;
         }
 
-        /* Title */
         .title {
             font-size: 32px;
             margin: 40px 0;
             color: var(--text-primary);
             text-shadow: 0 0 20px rgba(144, 144, 255, 0.5);
-            text-align: center;
         }
 
-        /* Container */
         #container {
             background: var(--bg-secondary);
             padding: 30px;
@@ -48,55 +41,56 @@
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
             max-width: 900px;
             width: 90%;
-            margin-bottom: 40px;
         }
 
-        /* Controls Layout */
         .controls {
             display: grid;
             grid-template-columns: 200px 1fr;
             gap: 20px;
             margin-bottom: 30px;
         }
+
         .buttons {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        /* Buttons */
         button {
             padding: 12px 20px;
             border: none;
             border-radius: 12px;
             background: var(--button-bg);
-            color: #fff;
+            color: white;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+
         button:hover {
-            background: #2d2dad;
+            background-color: #2d2dad;
         }
 
-        /* Sliders */
         .sliders {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
+
         .slider-group {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
+
         .slider-group label {
             font-size: 14px;
             opacity: 0.8;
         }
+
         input[type="range"] {
             -webkit-appearance: none;
             width: 100%;
@@ -105,6 +99,7 @@
             border-radius: 2px;
             outline: none;
         }
+
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 20px;
@@ -115,7 +110,6 @@
             box-shadow: 0 0 10px rgba(64, 64, 255, 0.5);
         }
 
-        /* Layers */
         .layer {
             position: relative;
             width: 100%;
@@ -125,6 +119,7 @@
             border-radius: 16px;
             overflow: hidden;
         }
+
         .layer-label {
             position: absolute;
             top: 15px;
@@ -134,7 +129,6 @@
             opacity: 0.8;
         }
 
-        /* Particles */
         .particle {
             position: absolute;
             width: 10px;
@@ -142,14 +136,17 @@
             border-radius: 50%;
             filter: blur(4px);
         }
+
         .electron {
             background: var(--electron-color);
             box-shadow: 0 0 15px var(--electron-color);
         }
+
         .hole {
             background: var(--hole-color);
             box-shadow: 0 0 15px var(--hole-color);
         }
+
         .exciton-line {
             position: absolute;
             height: 2px;
@@ -159,7 +156,6 @@
             transform-origin: left center;
         }
 
-        /* Transport Canvas */
         canvas {
             width: 100%;
             height: 200px;
@@ -169,41 +165,36 @@
     </style>
 </head>
 <body>
-    <!-- Title Section -->
+    <!-- Title -->
     <div class="title">Quantum Hall Bilayer Visualization</div>
-
-    <!-- Main Container -->
+    
     <div id="container">
-        <!-- Control Section -->
+        <!-- Controls -->
         <div class="controls">
             <div class="buttons">
-                <!-- Retaining your inline onclick for simplicity -->
-                <button onclick="toggleSimulation()" id="simButton" aria-label="Toggle Simulation">
-                    Stop Simulation
-                </button>
-                <button onclick="toggleExcitons()" aria-label="Toggle Excitons">
-                    Toggle Excitons
-                </button>
+                <!-- Inline onclick is preserved -->
+                <button onclick="toggleSimulation()" id="simButton">Stop Simulation</button>
+                <button onclick="toggleExcitons()">Toggle Excitons</button>
             </div>
             <div class="sliders">
                 <div class="slider-group">
                     <label for="magnetic">Magnetic Field Strength</label>
-                    <input 
-                        type="range" 
-                        id="magnetic" 
-                        min="0" 
-                        max="100" 
+                    <input
+                        type="range"
+                        id="magnetic"
+                        min="0"
+                        max="100"
                         value="50"
                         aria-label="Magnetic Field Strength Slider"
                     />
                 </div>
                 <div class="slider-group">
                     <label for="temperature">Temperature</label>
-                    <input 
-                        type="range" 
-                        id="temperature" 
-                        min="0" 
-                        max="100" 
+                    <input
+                        type="range"
+                        id="temperature"
+                        min="0"
+                        max="100"
                         value="20"
                         aria-label="Temperature Slider"
                     />
@@ -211,70 +202,195 @@
             </div>
         </div>
 
-        <!-- Layer 1 -->
+        <!-- Layers -->
         <div class="layer" id="layer1">
             <div class="layer-label">Layer 1 - Electrons</div>
-            <!-- Dynamically rendered electron particles go here -->
         </div>
-
-        <!-- Layer 2 -->
         <div class="layer" id="layer2">
             <div class="layer-label">Layer 2 - Holes</div>
-            <!-- Dynamically rendered hole particles go here -->
         </div>
 
         <!-- Transport Canvas -->
         <canvas id="transportCanvas"></canvas>
     </div>
 
-    <!-- JavaScript: Insert Your Existing Simulation Logic Here -->
+    <!-- Simulation Logic (Combined JavaScript) -->
     <script>
-        "use strict";
+    "use strict";
 
-        /**
-         * Below are placeholder function definitions for your existing logic.
-         * If you already have them in a separate file, simply remove or replace
-         * them with your own logic.
-         */
+    /**
+     * Simulation variables and toggles
+     */
+    let isSimRunning = true;
+    let excitonsVisible = false;
 
-        // Example toggling functions
-        function toggleSimulation() {
-            // Insert your simulation start/stop code
-            console.log("Simulation toggled.");
-            // E.g., if the simulation is running, stop it; otherwise, start it.
+    // Query DOM elements
+    const simButton       = document.getElementById("simButton");
+    const layer1          = document.getElementById("layer1");
+    const layer2          = document.getElementById("layer2");
+    const transportCanvas = document.getElementById("transportCanvas");
+    const magneticSlider  = document.getElementById("magnetic");
+    const temperatureSlider = document.getElementById("temperature");
+
+    // Canvas rendering context
+    const ctx = transportCanvas.getContext("2d");
+
+    // Particle arrays
+    let electrons = [];
+    let holes = [];
+    let excitonLines = [];
+
+    // Generate some random positions for electrons / holes
+    function initParticles() {
+        const electronCount = 20;
+        const holeCount     = 20;
+
+        // Clear arrays if re-initializing
+        electrons = [];
+        holes = [];
+
+        for (let i = 0; i < electronCount; i++) {
+            const e = document.createElement("div");
+            e.className = "particle electron";
+            // Random position within layer
+            e.style.left = Math.random() * (layer1.clientWidth - 10) + "px";
+            e.style.top = Math.random() * (layer1.clientHeight - 10) + "px";
+            electrons.push(e);
+            layer1.appendChild(e);
         }
 
-        function toggleExcitons() {
-            // Insert your exciton lines toggle logic
-            console.log("Excitons toggled.");
-            // E.g., show or hide exciton lines or related visuals.
+        for (let i = 0; i < holeCount; i++) {
+            const h = document.createElement("div");
+            h.className = "particle hole";
+            h.style.left = Math.random() * (layer2.clientWidth - 10) + "px";
+            h.style.top  = Math.random() * (layer2.clientHeight - 10) + "px";
+            holes.push(h);
+            layer2.appendChild(h);
+        }
+    }
+
+    // Create excitons (lines connecting electron-hole pairs for visual demonstration)
+    function createExcitonLines() {
+        excitonLines.forEach(line => line.remove());
+        excitonLines = [];
+
+        // For demonstration, pair up same indexes in electrons and holes arrays
+        const pairs = Math.min(electrons.length, holes.length);
+
+        for (let i = 0; i < pairs; i++) {
+            const line = document.createElement("div");
+            line.className = "exciton-line";
+            // Initially hidden; update positions in animation loop
+            line.style.display = excitonsVisible ? "block" : "none";
+            document.body.appendChild(line);
+            excitonLines.push(line);
+        }
+    }
+
+    // Toggle simulation run/stop
+    function toggleSimulation() {
+        isSimRunning = !isSimRunning;
+        simButton.textContent = isSimRunning ? "Stop Simulation" : "Start Simulation";
+    }
+
+    // Toggle exciton visibility
+    function toggleExcitons() {
+        excitonsVisible = !excitonsVisible;
+        // Show or hide exciton lines
+        excitonLines.forEach(line => {
+            line.style.display = excitonsVisible ? "block" : "none";
+        });
+    }
+
+    // Main animation loop
+    function animate() {
+        if (isSimRunning) {
+            // Update positions in each layer or perform physics calculations
+
+            // Simple random "jitter" for demonstration
+            electrons.forEach(e => {
+                const x = parseFloat(e.style.left);
+                const y = parseFloat(e.style.top);
+                e.style.left = clamp(x + (Math.random() - 0.5) * 2, 0, layer1.clientWidth - 10) + "px";
+                e.style.top  = clamp(y + (Math.random() - 0.5) * 2, 0, layer1.clientHeight - 10) + "px";
+            });
+            holes.forEach(h => {
+                const x = parseFloat(h.style.left);
+                const y = parseFloat(h.style.top);
+                h.style.left = clamp(x + (Math.random() - 0.5) * 2, 0, layer2.clientWidth - 10) + "px";
+                h.style.top  = clamp(y + (Math.random() - 0.5) * 2, 0, layer2.clientHeight - 10) + "px";
+            });
+
+            // Update exciton lines (connect electron[i] and hole[i])
+            for (let i = 0; i < excitonLines.length; i++) {
+                const e = electrons[i];
+                const h = holes[i];
+                if (!e || !h) continue;
+
+                const exLine = excitonLines[i];
+                if (!exLine) continue;
+
+                // Get electron position in page coords
+                const eRect = e.getBoundingClientRect();
+                // Get hole position in page coords
+                const hRect = h.getBoundingClientRect();
+
+                // Calculate line position
+                const exX = eRect.left + eRect.width / 2;
+                const exY = eRect.top + eRect.height / 2;
+                const hx  = hRect.left + hRect.width / 2;
+                const hy  = hRect.top + hRect.height / 2;
+
+                const dx = hx - exX;
+                const dy = hy - exY;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle  = Math.atan2(dy, dx) * (180 / Math.PI);
+
+                exLine.style.left   = exX + "px";
+                exLine.style.top    = exY + "px";
+                exLine.style.width  = length + "px";
+                exLine.style.transform = `rotate(${angle}deg)`;
+            }
+
+            // Update transportCanvas if needed
+            drawCanvas();
         }
 
-        // You can also add your existing event handlers, particle creation, 
-        // animation loops, or data binding here as needed.
+        requestAnimationFrame(animate);
+    }
 
-        // If you prefer event listeners instead of inline onclick:
-        // --------------------------------------------------------
-        // document.getElementById("simButton").addEventListener("click", toggleSimulation);
-        // document.getElementById("excitonButton").addEventListener("click", toggleExcitons);
-        // --------------------------------------------------------
-        
-        /**
-         * Example / placeholder: 
-         * 
-         * function initParticles() {
-         *   // create electrons, holes, and excitons...
-         * }
-         * 
-         * function animate() {
-         *   // requestAnimationFrame(animate);
-         *   // update positions, draw or render to canvas...
-         * }
-         * 
-         * // Start or set up your simulation:
-         * initParticles();
-         * animate();
-         */
+    // Canvas drawing logic (optional example)
+    function drawCanvas() {
+        ctx.clearRect(0, 0, transportCanvas.width, transportCanvas.height);
+
+        // Example: Draw a “signal” that depends on the slider values
+        const magVal   = parseFloat(magneticSlider.value);
+        const tempVal  = parseFloat(temperatureSlider.value);
+        const midY     = transportCanvas.height / 2;
+
+        ctx.beginPath();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth   = 2;
+
+        // Just a wave that changes with slider values
+        for (let x = 0; x < transportCanvas.width; x++) {
+            const wave = Math.sin((x / 20) + magVal / 10) * (10 + tempVal / 5);
+            ctx.lineTo(x, midY + wave);
+        }
+        ctx.stroke();
+    }
+
+    // Helper function: keep values in range
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    // Initialize everything once page is loaded
+    window.addEventListener("load", () => {
+        initParticles();
+        createExcitonLines();
+        animate();
+    });
     </script>
 </body>
 </html>
