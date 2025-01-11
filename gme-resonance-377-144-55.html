@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Cycle Fibonacci Resonance</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        #date-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="date-display"></div>
+<div id="controls">
+    <button id="pause-btn">Pause</button>
+    <button id="reset-btn">Reset</button>
+    <button id="speed-down-btn">Slower</button>
+    <button id="speed-up-btn">Faster</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const dateDisplay = document.getElementById('date-display');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const speedDownBtn = document.getElementById('speed-down-btn');
+    const speedUpBtn = document.getElementById('speed-up-btn');
+
+    let isPaused = false;
+    let speedMultiplier = 0.25; // Slows down the animation for clarity
+    let isScrubbing = false;
+    let scrubStartX = 0;
+    let scrubbedTimeDelta = 0;
+
+    // Cycle constants:
+    // MAIN: 1461 days ~ 4 years
+    // We'll use 377, 144, 55 for three Fibonacci-based sub-cycles
+    const CYCLES = {
+        MAIN: 1461,
+        FIRST: 377,
+        SECOND: 144,
+        THIRD: 55
+    };
+
+    // Start date anchor (Jan 28, 2021)
+    const START_DATE = new Date(2021, 0, 28);
+
+    // Some crucial dates to highlight near 2025
+    const CRUCIAL_DATES = [
+        new Date(2025, 0, 9),  // Jan 9, 2025
+        new Date(2025, 0, 12), // Jan 12, 2025
+        new Date(2025, 0, 28), // Jan 28, 2025
+    ];
+
+    // Calculate days since START_DATE
+    let time = (Date.now() - START_DATE) / (1000 * 60 * 60 * 24);
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    function formatDate(date) {
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    // Draws a full cycle circle and a marker for current progress
+    function drawCycle(x, y, radius, progress, color) {
+        const angle = progress * Math.PI * 2;
+
+        // Outer circle
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Marker for the current progress
+        const markerX = x + Math.cos(angle) * radius;
+        const markerY = y + Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.arc(markerX, markerY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
+
+    // Checks whether we're near any crucial date
+    function checkAlignment(currentDate) {
+        return CRUCIAL_DATES.some(date => {
+            return Math.abs((currentDate - date) / (1000 * 60 * 60 * 24)) < 1;
+        });
+    }
+
+    // Draws a resonance highlight if two cycles align
+    function drawResonance(x, y, radius, progressA, progressB, currentDate) {
+        const threshold = 0.02;
+        const diff = Math.abs(progressA - progressB);
+
+        // Also highlights if we're near a crucial date
+        if (diff < threshold || Math.abs(1 - diff) < threshold || checkAlignment(currentDate)) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 1.2, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(canvas.width, canvas.height) / 4;
+
+        // Fractional progress of each cycle
+        const mainProgress = (time % CYCLES.MAIN) / CYCLES.MAIN;
+        const firstProgress = (time % CYCLES.FIRST) / CYCLES.FIRST;
+        const secondProgress = (time % CYCLES.SECOND) / CYCLES.SECOND;
+        const thirdProgress = (time % CYCLES.THIRD) / CYCLES.THIRD;
+
+        // Draw each cycle
+        drawCycle(centerX, centerY, radius, mainProgress, 'rgba(255, 0, 0, 0.8)');
+        drawCycle(centerX, centerY, radius * 0.8, firstProgress, 'rgba(255, 215, 0, 0.8)');
+        drawCycle(centerX, centerY, radius * 0.6, secondProgress, 'rgba(135, 206, 250, 0.8)');
+        drawCycle(centerX, centerY, radius * 0.4, thirdProgress, 'rgba(50, 205, 50, 0.8)');
+
+        // Check for resonances among them
+        const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+
+        // Compare main vs first
+        drawResonance(centerX, centerY, radius, mainProgress, firstProgress, currentDate);
+        // Compare main vs second
+        drawResonance(centerX, centerY, radius * 0.8, mainProgress, secondProgress, currentDate);
+        // Compare first vs third
+        drawResonance(centerX, centerY, radius * 0.6, firstProgress, thirdProgress, currentDate);
+
+        dateDisplay.textContent = `Current: ${formatDate(currentDate)}`;
+
+        // Advance the timeline if not paused or scrubbing
+        if (!isPaused && !isScrubbing) {
+            time += speedMultiplier;
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // Touch events for scrubbing
+    canvas.addEventListener('touchstart', (e) => {
+        isScrubbing = true;
+        scrubStartX = e.touches[0].clientX;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        const currentX = e.touches[0].clientX;
+        const deltaX = currentX - scrubStartX;
+        scrubbedTimeDelta = deltaX / 10; // Adjust sensitivity
+        time += scrubbedTimeDelta;
+        scrubStartX = currentX;
+    });
+
+    canvas.addEventListener('touchend', () => {
+        isScrubbing = false;
+    });
+
+    // Button events
+    pauseBtn.addEventListener('click', () => {
+        isPaused = !isPaused;
+        pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
+    });
+
+    resetBtn.addEventListener('click', () => {
+        time = 0;
+    });
+
+    speedDownBtn.addEventListener('click', () => {
+        speedMultiplier = Math.max(speedMultiplier / 2, 0.1);
+    });
+
+    speedUpBtn.addEventListener('click', () => {
+        speedMultiplier = Math.min(speedMultiplier * 2, 8);
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    animate();
+</script>
+</body>
+</html>
