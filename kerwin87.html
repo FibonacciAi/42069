@@ -1,0 +1,222 @@
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Calendar, Clock, Target, Zap, LineChart, AlertTriangle, Twitter } from 'lucide-react';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+const emojiData = [
+  { date: 'Jan 5', emoji: '🚀', significance: 'Initial momentum', detail: 'Beginning of the anticipated cycle with strong upward momentum signals.' },
+  { date: 'Jan 6', emoji: '🍄', significance: 'Organic growth phase', detail: 'Natural market discovery and price appreciation expected.' },
+  { date: 'Jan 7', emoji: '💥', significance: 'First breakout', detail: 'Initial resistance levels tested with potential for significant movement.' },
+  { date: 'Jan 8', emoji: '🍏', significance: 'Green day expected', detail: 'Positive price action anticipated based on historical patterns.' },
+  { date: 'Jan 9', emoji: '😐', significance: 'Consolidation', detail: 'Period of price stabilization and accumulation.' },
+  { date: 'Jan 10', emoji: '🌀', significance: 'Cyclical pattern forms', detail: 'Formation of recognizable trading patterns aligned with previous cycles.' },
+  { date: 'Jan 11', emoji: '💜', significance: 'Community support', detail: 'Strong community engagement and support levels established.' },
+  { date: 'Jan 12', emoji: '👥', significance: 'Institutional interest', detail: 'Expected increase in institutional participation and volume.' },
+  { date: 'Jan 13', emoji: '👌', significance: 'Confirmation signal', detail: 'Technical confirmation of trend direction and strength.' },
+  { date: 'Jan 14', emoji: '🤝', significance: 'Partnership/collaboration', detail: 'Potential announcement or strategic partnership revelation.' },
+  { date: 'Jan 15', emoji: '⛺', significance: 'Base formation', detail: 'Establishment of strong support levels for next move.' },
+  { date: 'Jan 16', emoji: '😼', significance: 'Strategic positioning', detail: 'Key market participants taking strategic positions.' },
+  { date: 'Jan 17', emoji: '🎯', significance: 'Target acquired', detail: 'Price targets and technical objectives coming into focus.' },
+  { date: 'Jan 18', emoji: '👀', significance: 'High attention', detail: 'Increased market attention and volume expected.' },
+  { date: 'Jan 19', emoji: '🐶', significance: 'Retail involvement', detail: 'Strong retail participation and sentiment.' },
+  { date: 'Jan 20', emoji: '🇺🇸', significance: 'Market holiday', detail: 'US Market Holiday - Modified trading hours.' },
+  { date: 'Jan 21', emoji: '🔥', significance: 'Heat building', detail: 'Momentum building toward major catalyst.' },
+  { date: 'Jan 22', emoji: '💥', significance: 'Major catalyst', detail: 'Convergence of multiple catalysts including FTD settlements.' },
+  { date: 'Jan 24', emoji: '🍻', significance: 'Celebration expected', detail: 'Culmination of cycle with potential significant price action.' }
+];
+
+const cyclicalData = [
+  { date: 'Jan 5', value: 100, volatility: 15 },
+  { date: 'Jan 10', value: 120, volatility: 18 },
+  { date: 'Jan 15', value: 115, volatility: 22 },
+  { date: 'Jan 20', value: 140, volatility: 25 },
+  { date: 'Jan 24', value: 180, volatility: 30 }
+];
+
+const catalystData = [
+  {
+    title: "FTD Settlement Window",
+    date: "January 22-24",
+    impact: "High",
+    description: "Critical settlement period coinciding with multiple technical factors"
+  },
+  {
+    title: "BOJ Policy Announcement",
+    date: "January 23",
+    impact: "High",
+    description: "Potential impact on Yen carry trade and market liquidity"
+  },
+  {
+    title: "Options Expiration",
+    date: "January 19",
+    impact: "Medium",
+    description: "Monthly options expiration with significant open interest"
+  }
+];
+
+const Dashboard = () => {
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  return (
+    <div className="min-h-screen bg-gray-900 p-6">
+      <Card className="bg-gray-800 text-white mb-6">
+        <CardHeader>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-2xl font-bold text-yellow-400">
+                GME Timeline & Cycle Resonance Analysis
+              </CardTitle>
+              <p className="text-gray-400 mt-2">
+                Based on @kerwin87's Emoji Interpretation Analysis
+              </p>
+            </div>
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              <a href="https://x.com/kerwin87" target="_blank" rel="noopener noreferrer" 
+                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors">
+                <Twitter className="h-4 w-4" />
+                Follow @kerwin87
+              </a>
+              <a href="https://x.com/_d_741stef" target="_blank" rel="noopener noreferrer"
+                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors">
+                <Twitter className="h-4 w-4" />
+                Follow @_d_741stef
+              </a>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          <Tabs defaultValue="timeline" className="space-y-6">
+            <TabsList className="bg-gray-800 p-1">
+              <TabsTrigger value="timeline" className="text-white">
+                <Calendar className="h-4 w-4 mr-2" />
+                Timeline
+              </TabsTrigger>
+              <TabsTrigger value="cycles" className="text-white">
+                <LineChart className="h-4 w-4 mr-2" />
+                Cycle Analysis
+              </TabsTrigger>
+              <TabsTrigger value="catalysts" className="text-white">
+                <Zap className="h-4 w-4 mr-2" />
+                Catalysts
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="timeline">
+              <Card className="bg-gray-800">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
+                    {emojiData.map((item) => (
+                      <div
+                        key={item.date}
+                        className="bg-gray-700 p-4 rounded-lg text-center cursor-pointer hover:bg-gray-600 transition-colors"
+                        onClick={() => setSelectedDate(item)}
+                      >
+                        <div className="text-3xl mb-2">{item.emoji}</div>
+                        <div className="text-sm text-gray-300">{item.date}</div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="cycles">
+              <Card className="bg-gray-800">
+                <CardContent className="p-6">
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsLineChart data={cyclicalData}>
+                        <XAxis dataKey="date" stroke="#fff" />
+                        <YAxis stroke="#fff" />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#1f2937', border: 'none' }}
+                          labelStyle={{ color: '#fff' }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="value" 
+                          stroke="#fbbf24" 
+                          strokeWidth={2}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="volatility" 
+                          stroke="#60a5fa" 
+                          strokeWidth={2}
+                        />
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="catalysts">
+              <Card className="bg-gray-800">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {catalystData.map((catalyst, index) => (
+                      <div key={index} className="flex items-start space-x-4 bg-gray-700 p-4 rounded-lg">
+                        <Target className="h-6 w-6 text-yellow-400 mt-1" />
+                        <div>
+                          <h3 className="font-bold text-lg">{catalyst.title}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-300">{catalyst.date}</span>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              catalyst.impact === 'High' ? 'bg-red-500' : 'bg-yellow-500'
+                            }`}>
+                              {catalyst.impact} Impact
+                            </span>
+                          </div>
+                          <p className="text-gray-300 mt-2">{catalyst.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="lg:col-span-1">
+          {selectedDate ? (
+            <Card className="bg-gray-800 sticky top-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">{selectedDate.emoji}</span>
+                  <span>{selectedDate.date}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <h3 className="font-bold text-yellow-400 mb-2">{selectedDate.significance}</h3>
+                <p className="text-gray-300">{selectedDate.detail}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-gray-800">
+              <CardContent className="p-6">
+                <p className="text-gray-400">Select a date from the timeline to view detailed analysis</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      <Card className="bg-gray-800 mt-6">
+        <CardContent className="p-6">
+          <div className="text-sm text-gray-400">
+            Disclaimer: This dashboard is for educational and entertainment purposes only. 
+            Not financial advice. All analysis is speculative and based on @kerwin87's interpretations.
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Dashboard;
