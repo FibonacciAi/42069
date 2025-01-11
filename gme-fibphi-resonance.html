@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Cycle Visualization</title>
+    <style>
+        :root {
+            --primary: #f5a623;
+            --text-primary: #ffffff;
+            --text-secondary: #cfcfcf;
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --border: #333;
+            --resonance: rgba(0, 255, 0, 0.7);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #date-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        #info {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            max-width: 300px;
+            font-size: 14px;
+            line-height: 1.5;
+            display: none; /* Initially hidden */
+        }
+
+        #info.visible {
+            display: block;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="date-display"></div>
+    <div id="info" class="visible">
+        <h1>Fibonacci Cycle Visualization</h1>
+        <p>Explore how cycles based on Fibonacci numbers align and resonate over time.</p>
+        <ul>
+            <li><b>610-Day Main Cycle:</b> Largest trend.</li>
+            <li><b>377-Day Sub-Cycle:</b> Intermediate movements.</li>
+            <li><b>144-Day Sub-Cycle:</b> Granular pattern.</li>
+            <li><b>55-Day Sub-Cycle:</b> Short-term dynamics.</li>
+        </ul>
+        <h2>Rationale for Using Fibonacci Cycles</h2>
+        <p>
+            The numbers 55, 144, 377, and 610 are Fibonacci numbers, reflecting natural growth and decay patterns. 
+            They align better with observed cyclical behaviors in markets and natural phenomena, providing a 
+            more predictable framework compared to arbitrarily selected numbers like 55,741 or 147. Fibonacci numbers 
+            exhibit fractal and self-replicating properties, making them ideal for visualizing resonance and 
+            alignment over time.
+        </p>
+    </div>
+    <div id="controls">
+        <button id="toggle-info-btn">Hide Info</button>
+        <button id="pause-btn">Pause</button>
+        <button id="reset-btn">Reset</button>
+        <button id="speed-down-btn">Slower</button>
+        <button id="speed-up-btn">Faster</button>
+    </div>
+
+    <script>
+        class FibonacciCycle {
+            constructor(canvasId, dateDisplayId, infoId, toggleInfoBtnId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.dateDisplay = document.getElementById(dateDisplayId);
+                this.info = document.getElementById(infoId);
+                this.toggleInfoBtn = document.getElementById(toggleInfoBtnId);
+
+                this.START_DATE = new Date(2021, 0, 28);
+                this.CRUCIAL_DATES = [
+                    new Date(2025, 0, 9),
+                    new Date(2025, 0, 12),
+                    new Date(2025, 0, 28)
+                ];
+
+                this.time = (Date.now() - this.START_DATE) / (1000 * 60 * 60 * 24); // Days since start
+                this.isPaused = false;
+                this.speed = 0.5;
+
+                this.cycles = [
+                    { period: 610, color: 'rgba(255, 0, 0, 0.8)', radius: 1.0 },
+                    { period: 377, color: 'rgba(255, 215, 0, 0.8)', radius: 0.8 },
+                    { period: 144, color: 'rgba(135, 206, 250, 0.8)', radius: 0.6 },
+                    { period: 55, color: 'rgba(50, 205, 50, 0.8)', radius: 0.4 }
+                ];
+
+                this.isScrubbing = false;
+                this.lastScrubX = 0;
+
+                this.init();
+            }
+
+            init() {
+                window.addEventListener('resize', () => this.resizeCanvas());
+                this.resizeCanvas();
+                this.setupControls();
+                this.setupScrubbing();
+                this.animate();
+            }
+
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            setupControls() {
+                document.getElementById('pause-btn').addEventListener('click', () => {
+                    this.isPaused = !this.isPaused;
+                });
+                document.getElementById('reset-btn').addEventListener('click', () => {
+                    this.time = 0;
+                });
+                document.getElementById('speed-down-btn').addEventListener('click', () => {
+                    this.speed = Math.max(0.1, this.speed / 2);
+                });
+                document.getElementById('speed-up-btn').addEventListener('click', () => {
+                    this.speed *= 2;
+                });
+                this.toggleInfoBtn.addEventListener('click', () => {
+                    this.info.classList.toggle('visible');
+                    this.toggleInfoBtn.textContent = this.info.classList.contains('visible')
+                        ? 'Hide Info'
+                        : 'Show Info';
+                });
+            }
+
+            setupScrubbing() {
+                const handleScrubStart = (event) => {
+                    this.isScrubbing = true;
+                    this.lastScrubX = this.getEventX(event);
+                };
+
+                const handleScrubMove = (event) => {
+                    if (!this.isScrubbing) return;
+
+                    const currentX = this.getEventX(event);
+                    const deltaX = currentX - this.lastScrubX;
+                    this.lastScrubX = currentX;
+
+                    this.time += deltaX * 0.1; // Adjust time by dragging
+                };
+
+                const handleScrubEnd = () => {
+                    this.isScrubbing = false;
+                };
+
+                this.canvas.addEventListener('mousedown', handleScrubStart);
+                this.canvas.addEventListener('mousemove', handleScrubMove);
+                this.canvas.addEventListener('mouseup', handleScrubEnd);
+
+                this.canvas.addEventListener('touchstart', handleScrubStart);
+                this.canvas.addEventListener('touchmove', handleScrubMove);
+                this.canvas.addEventListener('touchend', handleScrubEnd);
+            }
+
+            getEventX(event) {
+                return event.touches ? event.touches[0].clientX : event.clientX;
+            }
+
+            checkAlignment(currentDate) {
+                return this.CRUCIAL_DATES.some(date =>
+                    Math.abs((currentDate - date) / (1000 * 60 * 60 * 24)) < 1
+                );
+            }
+
+            drawCycle(x, y, baseRadius, cycle, progress) {
+                const radius = baseRadius * cycle.radius;
+                const angle = progress * Math.PI * 2;
+
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+                this.ctx.strokeStyle = cycle.color;
+                this.ctx.stroke();
+
+                const markerX = x + Math.cos(angle) * radius;
+                const markerY = y + Math.sin(angle) * radius;
+
+                this.ctx.beginPath();
+                this.ctx.arc(markerX, markerY, 5, 0, Math.PI * 2);
+                this.ctx.fillStyle = cycle.color;
+                this.ctx.fill();
+            }
+
+            drawResonance(x, y, radius, progress1, progress2, currentDate) {
+                const threshold = 0.02;
+                const diff = Math.abs(progress1 - progress2);
+
+                if (diff < threshold || Math.abs(1 - diff) < threshold || this.checkAlignment(currentDate)) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, radius * 1.2, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.stroke();
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                const baseRadius = Math.min(this.canvas.width, this.canvas.height) / 4;
+
+                const progresses = this.cycles.map(cycle => (this.time % cycle.period) / cycle.period);
+
+                this.cycles.forEach((cycle, i) =>
+                    this.drawCycle(centerX, centerY, baseRadius, cycle, progresses[i])
+                );
+
+                this.drawResonance(centerX, centerY, baseRadius, progresses[0], progresses[1], new Date(this.START_DATE.getTime() + this.time * 86400000));
+
+                const currentDate = new Date(this.START_DATE.getTime() + this.time * 86400000);
+                this.dateDisplay.textContent = `Current: ${currentDate.toDateString()}`;
+
+                if (!this.isPaused && !this.isScrubbing) {
+                    this.time += this.speed;
+                }
+
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        new FibonacciCycle('canvas', 'date-display', 'info', 'toggle-info-btn');
+    </script>
+</body>
+</html>
