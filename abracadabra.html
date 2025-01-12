@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enhanced Abracadabra Triangle</title>
+  <title>Abracadabra Triangle</title>
   <style>
     * {
       margin: 0;
@@ -20,331 +20,113 @@
       background: radial-gradient(circle at center, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       color: #00fff0;
       font-family: 'Courier New', Courier, monospace;
-      overflow: hidden;
+      overflow-x: hidden;
       padding: 20px;
-    }
-
-    .controls {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 15px;
-      border-radius: 10px;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .controls button {
-      background: rgba(0, 255, 240, 0.1);
-      color: #00fff0;
-      border: 1px solid #00fff0;
-      padding: 8px 15px;
-      margin: 5px 0;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .controls button:hover {
-      background: rgba(0, 255, 240, 0.2);
-      transform: scale(1.05);
-    }
-
-    .controls button:active {
-      transform: scale(0.95);
-    }
-
-    h1 {
-      font-size: clamp(2rem, 5vw, 3rem);
-      margin-bottom: 20px;
-      text-align: center;
-      animation: colorCycle 10s infinite;
-      text-shadow: 0 0 15px rgba(0, 255, 240, 0.5);
     }
 
     .triangle-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 15px;
-      perspective: 1000px;
-      transform-style: preserve-3d;
-      transition: transform 1s ease;
+      gap: 10px;
     }
 
     .triangle-row {
       display: flex;
       justify-content: center;
-      gap: 15px;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeIn 0.5s forwards;
+      gap: 5px;
     }
 
     .triangle-number {
-      font-size: clamp(1rem, 3vw, 1.5rem);
+      font-size: 1.2rem;
       font-weight: bold;
-      padding: 10px 15px;
       color: #00fff0;
       background: rgba(0, 255, 240, 0.1);
-      border-radius: 8px;
+      border: 1px solid rgba(0, 255, 240, 0.5);
+      border-radius: 5px;
+      padding: 8px 12px;
+      text-align: center;
       cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      border: 1px solid rgba(0, 255, 240, 0.3);
-      backdrop-filter: blur(5px);
+      transition: transform 0.3s ease, background 0.3s ease;
     }
 
     .triangle-number:hover {
-      transform: scale(1.2) translateZ(20px);
-      background: rgba(0, 255, 240, 0.2);
-      box-shadow: 0 0 20px rgba(0, 255, 240, 0.5);
-      animation: glow 1.5s infinite alternate;
-    }
-
-    .triangle-number::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(45deg, #00fff0, transparent);
-      border-radius: 10px;
-      z-index: -1;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .triangle-number:hover::before {
-      opacity: 0.5;
-      animation: rotate 2s linear infinite;
+      transform: scale(1.2);
+      background: rgba(0, 255, 240, 0.3);
+      box-shadow: 0 0 10px rgba(0, 255, 240, 0.5);
     }
 
     .tooltip {
       position: absolute;
       display: none;
-      padding: 12px 16px;
-      font-size: 0.9rem;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.8);
       color: #00fff0;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      font-size: 0.9rem;
       text-align: center;
-      box-shadow: 0 0 15px rgba(0, 255, 240, 0.3);
-      z-index: 1000;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(0, 255, 240, 0.3);
-      max-width: 250px;
-      transform: translateY(0);
-      transition: transform 0.3s ease;
-    }
-
-    .tooltip.show {
-      transform: translateY(-5px);
-    }
-
-    .easter-egg {
-      color: #ff00ff;
-      text-shadow: 0 0 10px #ff00ff;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes colorCycle {
-      0% { color: #00fff0; }
-      33% { color: #00ffaa; }
-      66% { color: #00aaff; }
-      100% { color: #00fff0; }
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.1); }
-      100% { opacity: 0.5; transform: scale(1); }
-    }
-
-    @keyframes glow {
-      from { box-shadow: 0 0 5px #00fff0, 0 0 10px #00fff0, 0 0 15px #00fff0; }
-      to { box-shadow: 0 0 10px #00fff0, 0 0 20px #00fff0, 0 0 30px #00fff0; }
-    }
-
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .particle {
-      position: absolute;
-      pointer-events: none;
-      background: #00fff0;
-      border-radius: 50%;
-      opacity: 0;
-    }
-
-    @media (max-width: 768px) {
-      .controls {
-        top: auto;
-        bottom: 20px;
-        right: 50%;
-        transform: translateX(50%);
-        flex-direction: row;
-        gap: 10px;
-      }
-
-      .triangle-container {
-        margin-bottom: 80px;
-      }
+      box-shadow: 0 0 10px rgba(0, 255, 240, 0.5);
     }
   </style>
 </head>
 <body>
-  <div class="controls">
-    <button onclick="toggleRotation()">Toggle 3D Rotation</button>
-    <button onclick="resetView()">Reset View</button>
-    <button onclick="toggleParticles()">Toggle Particles</button>
-  </div>
-
-  <h1>Enhanced Abracadabra Triangle</h1>
+  <h1>Abracadabra Triangle</h1>
   <div class="triangle-container" id="triangle"></div>
   <div class="tooltip" id="tooltip"></div>
 
   <script>
     const triangleContainer = document.getElementById('triangle');
     const tooltip = document.getElementById('tooltip');
-    let isRotating = false;
-    let particlesEnabled = false;
-    let rotationFrame;
-    let particles = [];
 
-    const sequence = [
-      [1],
-      [1, 2],
-      [1, 2, 18],
-      [1, 2, 18, 1],
-      [1, 2, 18, 1, 3],
-      [1, 2, 18, 1, 3, 1],
-      [1, 2, 18, 1, 3, 1, 4],
-    ];
+    // Sequence to spell "ABRACADABRA" fully horizontally and diagonally
+    const letters = "ABRACADABRA";
+    const sequence = [];
 
-    sequence.forEach((row, rowIndex) => {
-      setTimeout(() => {
-        const rowDiv = document.createElement('div');
-        rowDiv.classList.add('triangle-row');
-        row.forEach((num) => {
-          const numberSpan = document.createElement('span');
-          numberSpan.classList.add('triangle-number');
-          numberSpan.textContent = num;
-          numberSpan.dataset.value = num;
-          numberSpan.addEventListener('click', createParticles);
-          rowDiv.appendChild(numberSpan);
-        });
-        triangleContainer.appendChild(rowDiv);
-      }, rowIndex * 200);
-    });
-
-    function createParticles(e) {
-      if (!particlesEnabled) return;
-      
-      const rect = e.target.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      for (let i = 0; i < 10; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        document.body.appendChild(particle);
-
-        const size = Math.random() * 5 + 2;
-        const angle = Math.random() * Math.PI * 2;
-        const velocity = Math.random() * 4 + 2;
-        const lifetime = Math.random() * 1000 + 500;
-
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${centerX}px`;
-        particle.style.top = `${centerY}px`;
-
-        const animation = particle.animate([
-          {
-            transform: 'translate(0, 0)',
-            opacity: 1
-          },
-          {
-            transform: `translate(${Math.cos(angle) * 100 * velocity}px, ${Math.sin(angle) * 100 * velocity}px)`,
-            opacity: 0
-          }
-        ], {
-          duration: lifetime,
-          easing: 'ease-out'
-        });
-
-        animation.onfinish = () => particle.remove();
+    // Generate triangle rows dynamically
+    for (let i = 0; i < letters.length; i++) {
+      const row = [];
+      for (let j = 0; j <= i; j++) {
+        row.push(letters[j]); // Add letters to match diagonal and horizontal spelling
       }
+      sequence.push(row);
     }
 
+    // Render triangle rows
+    sequence.forEach((row, rowIndex) => {
+      const rowDiv = document.createElement('div');
+      rowDiv.classList.add('triangle-row');
+      row.forEach((letter, colIndex) => {
+        const numberSpan = document.createElement('span');
+        numberSpan.classList.add('triangle-number');
+        numberSpan.textContent = letter;
+        numberSpan.dataset.value = letter;
+
+        // Add tooltip highlighting diagonals
+        if (rowIndex === colIndex) {
+          numberSpan.dataset.diagonal = "true";
+        }
+
+        rowDiv.appendChild(numberSpan);
+      });
+      triangleContainer.appendChild(rowDiv);
+    });
+
+    // Tooltip logic
     function handleTooltip(e, show) {
       const target = e.target.closest('.triangle-number');
       if (!target) return;
 
       const value = target.dataset.value;
-
-      if (show && value) {
-        const mod26 = value % 26;
-        const letter = mod26 === 0 ? 'Z' : String.fromCharCode(64 + mod26);
-        const meaning = value === '18' ? '<span class="easter-egg">R = Abracadabra</span>' : '';
-        
-        tooltip.innerHTML = `
-          <b>Value:</b> ${value}<br>
-          <b>Mod 26:</b> ${mod26} → ${letter}<br>
-          ${meaning}
-        `;
+      const isDiagonal = target.dataset.diagonal === "true";
+      if (show) {
+        tooltip.innerHTML = `<b>Letter:</b> ${value}<br>${isDiagonal ? '<i>Diagonal</i>' : ''}`;
         tooltip.style.display = 'block';
-        tooltip.classList.add('show');
-        
         const rect = target.getBoundingClientRect();
         tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
         tooltip.style.top = `${rect.top - tooltip.offsetHeight - 10}px`;
       } else {
-        tooltip.classList.remove('show');
-        setTimeout(() => {
-          tooltip.style.display = 'none';
-        }, 300);
+        tooltip.style.display = 'none';
       }
-    }
-
-    function rotate() {
-      if (!isRotating) return;
-      const angle = (Date.now() / 50) % 360;
-      triangleContainer.style.transform = `rotateY(${angle}deg)`;
-      rotationFrame = requestAnimationFrame(rotate);
-    }
-
-    function toggleRotation() {
-      isRotating = !isRotating;
-      if (isRotating) {
-        rotate();
-      } else {
-        cancelAnimationFrame(rotationFrame);
-      }
-    }
-
-    function resetView() {
-      isRotating = false;
-      cancelAnimationFrame(rotationFrame);
-      triangleContainer.style.transform = 'none';
-    }
-
-    function toggleParticles() {
-      particlesEnabled = !particlesEnabled;
     }
 
     document.addEventListener('mouseover', (e) => handleTooltip(e, true));
