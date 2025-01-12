@@ -20,15 +20,24 @@
       background: radial-gradient(circle at center, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       color: #00fff0;
       font-family: 'Courier New', Courier, monospace;
-      overflow-x: hidden;
+      overflow: hidden;
       padding: 20px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00fff0;
+      text-shadow: 0 0 10px rgba(0, 255, 240, 0.5);
     }
 
     .triangle-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 5px;
+      transition: transform 0.3s ease-in-out;
     }
 
     .triangle-row {
@@ -37,35 +46,57 @@
       gap: 5px;
     }
 
-    .triangle-number {
-      font-size: 1.2rem;
+    .triangle-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1rem, 2vw, 1.5rem);
       font-weight: bold;
       color: #00fff0;
       background: rgba(0, 255, 240, 0.1);
-      border: 1px solid rgba(0, 255, 240, 0.5);
+      border: 1px solid rgba(0, 255, 240, 0.3);
       border-radius: 5px;
-      padding: 8px 12px;
+      width: clamp(30px, 5vw, 50px);
+      height: clamp(30px, 5vw, 50px);
       text-align: center;
       cursor: pointer;
-      transition: transform 0.3s ease, background 0.3s ease;
+      transition: transform 0.2s ease, background 0.3s ease;
     }
 
-    .triangle-number:hover {
-      transform: scale(1.2);
+    .triangle-cell:hover,
+    .triangle-cell:active {
+      transform: scale(1.1);
       background: rgba(0, 255, 240, 0.3);
-      box-shadow: 0 0 10px rgba(0, 255, 240, 0.5);
+      box-shadow: 0 0 15px rgba(0, 255, 240, 0.5);
     }
 
     .tooltip {
       position: absolute;
       display: none;
+      padding: 8px 12px;
       background: rgba(0, 0, 0, 0.8);
       color: #00fff0;
-      padding: 8px 12px;
       border-radius: 5px;
       font-size: 0.9rem;
       text-align: center;
       box-shadow: 0 0 10px rgba(0, 255, 240, 0.5);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .triangle-container {
+        gap: 3px;
+      }
+
+      .triangle-cell {
+        width: 40px;
+        height: 40px;
+      }
     }
   </style>
 </head>
@@ -78,59 +109,56 @@
     const triangleContainer = document.getElementById('triangle');
     const tooltip = document.getElementById('tooltip');
 
-    // Sequence to spell "ABRACADABRA" fully horizontally and diagonally
+    // Sequence for "ABRACADABRA"
     const letters = "ABRACADABRA";
     const sequence = [];
 
-    // Generate triangle rows dynamically
+    // Create triangle rows dynamically
     for (let i = 0; i < letters.length; i++) {
       const row = [];
       for (let j = 0; j <= i; j++) {
-        row.push(letters[j]); // Add letters to match diagonal and horizontal spelling
+        row.push(letters[j]);
       }
       sequence.push(row);
     }
 
-    // Render triangle rows
+    // Render the triangle
     sequence.forEach((row, rowIndex) => {
       const rowDiv = document.createElement('div');
       rowDiv.classList.add('triangle-row');
       row.forEach((letter, colIndex) => {
-        const numberSpan = document.createElement('span');
-        numberSpan.classList.add('triangle-number');
-        numberSpan.textContent = letter;
-        numberSpan.dataset.value = letter;
+        const cell = document.createElement('div');
+        cell.classList.add('triangle-cell');
+        cell.textContent = letter;
 
-        // Add tooltip highlighting diagonals
+        // Add data attributes for diagonal highlights
         if (rowIndex === colIndex) {
-          numberSpan.dataset.diagonal = "true";
+          cell.dataset.diagonal = "true";
         }
 
-        rowDiv.appendChild(numberSpan);
+        // Attach touch and hover event handlers
+        cell.addEventListener('mouseover', () => showTooltip(cell, letter, rowIndex, colIndex));
+        cell.addEventListener('mouseout', hideTooltip);
+        cell.addEventListener('touchstart', () => showTooltip(cell, letter, rowIndex, colIndex));
+        cell.addEventListener('touchend', hideTooltip);
+
+        rowDiv.appendChild(cell);
       });
       triangleContainer.appendChild(rowDiv);
     });
 
     // Tooltip logic
-    function handleTooltip(e, show) {
-      const target = e.target.closest('.triangle-number');
-      if (!target) return;
-
-      const value = target.dataset.value;
-      const isDiagonal = target.dataset.diagonal === "true";
-      if (show) {
-        tooltip.innerHTML = `<b>Letter:</b> ${value}<br>${isDiagonal ? '<i>Diagonal</i>' : ''}`;
-        tooltip.style.display = 'block';
-        const rect = target.getBoundingClientRect();
-        tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
-        tooltip.style.top = `${rect.top - tooltip.offsetHeight - 10}px`;
-      } else {
-        tooltip.style.display = 'none';
-      }
+    function showTooltip(cell, letter, row, col) {
+      tooltip.innerHTML = `<b>Letter:</b> ${letter}<br><b>Row:</b> ${row + 1}, <b>Col:</b> ${col + 1}`;
+      tooltip.style.display = "block";
+      const rect = cell.getBoundingClientRect();
+      tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
+      tooltip.style.top = `${rect.top - tooltip.offsetHeight - 10}px`;
     }
 
-    document.addEventListener('mouseover', (e) => handleTooltip(e, true));
-    document.addEventListener('mouseout', (e) => handleTooltip(e, false));
+    function hideTooltip() {
+      tooltip.style.display = "none";
+    }
   </script>
 </body>
 </html>
