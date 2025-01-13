@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Touch Interactive Model (Dark Mode)</title>
+  <!-- Load Three.js and OrbitControls from unpkg to ensure proper module loading -->
+  <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.149.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #111;
+      color: #ccc;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #infoPanel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      max-width: 300px;
+      padding: 15px;
+      background-color: rgba(30, 30, 30, 0.8);
+      border-radius: 5px;
+      line-height: 1.4em;
+      font-size: 0.9em;
+      z-index: 1000;
+    }
+    #equation {
+      font-family: "Times New Roman", serif;
+      font-style: italic;
+      margin-bottom: 10px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .highlight {
+      color: #5ad1aa;
+    }
+    #errorMessage {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 0, 0, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+<div id="infoPanel">
+  <div id="equation">
+    ⟨p_k⟩ = √(N)/2 * sinh(r/(ξ√2)) / (cosh(r/(ξ√2)) + 1)
+  </div>
+  <p>
+    <span class="highlight">Samadhi</span>: Unified Focus <br/>
+    <span class="highlight">Chaos/Turbulence</span>: Embrace Complexity <br/>
+    <span class="highlight">Perception</span>: Boundaries & Understanding <br/>
+    <span class="highlight">Repetition</span>: Mantra & Iteration <br/>
+    <span class="highlight">Possible Encodings</span>: Hidden Layers of Meaning <br/>
+    <span class="highlight">Philosophical Undertones</span>: Dance of Order & Chaos
+  </p>
+</div>
+
+<div id="errorMessage"></div>
+<canvas id="threeCanvas"></canvas>
+
+<script>
+  // Wait for both Three.js and OrbitControls to load
+  window.addEventListener('load', () => {
+    // Verify Three.js is loaded
+    if (typeof THREE === 'undefined') {
+      showError('Three.js failed to load');
+      return;
+    }
+    
+    // Verify OrbitControls is loaded
+    if (typeof THREE.OrbitControls === 'undefined') {
+      showError('OrbitControls failed to load');
+      return;
+    }
+
+    init();
+  });
+
+  let scene, camera, renderer, controls;
+
+  function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    setTimeout(() => {
+      errorDiv.style.display = 'none';
+    }, 5000);
+  }
+
+  function init() {
+    try {
+      // Create scene
+      scene = new THREE.Scene();
+      
+      // Setup camera
+      camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(0, 1, 5);
+
+      // Setup renderer
+      renderer = new THREE.WebGLRenderer({
+        canvas: document.getElementById('threeCanvas'),
+        antialias: true
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x111111);
+
+      // Setup OrbitControls
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxDistance = 10;
+      controls.minDistance = 2;
+
+      // Add lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+      
+      const pointLight = new THREE.PointLight(0xffffff, 0.8);
+      pointLight.position.set(5, 5, 5);
+      scene.add(pointLight);
+
+      // Create objects
+      createRepetitiveObjects();
+      createParticleField();
+      createCentralSphere();
+
+      // Handle window resize
+      window.addEventListener('resize', onWindowResize, false);
+
+      // Start animation loop
+      animate();
+    } catch (error) {
+      showError('Initialization error: ' + error.message);
+      console.error(error);
+    }
+  }
+
+  // Create repetitive geometry (for "Repetition" concept)
+  function createRepetitiveObjects() {
+    const geometry = new THREE.TorusKnotGeometry(0.2, 0.05, 100, 16);
+    const material = new THREE.MeshStandardMaterial({ color: 0x5ad1aa });
+    
+    // Place multiple torus knots in a line
+    for (let i = -3; i <= 3; i++) {
+      const torusKnot = new THREE.Mesh(geometry, material);
+      torusKnot.position.set(i, 0, -2);
+      scene.add(torusKnot);
+    }
+  }
+
+  // Create a particle field (for "Chaos/Turbulence" concept)
+  function createParticleField() {
+    const particleCount = 200;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount * 3; i += 3) {
+      positions[i]   = (Math.random() - 0.5) * 10;  // x
+      positions[i+1] = (Math.random() - 0.5) * 10;  // y
+      positions[i+2] = (Math.random() - 0.5) * 10;  // z
+    }
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const material = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.04
+    });
+    
+    const particleSystem = new THREE.Points(geometry, material);
+    scene.add(particleSystem);
+  }
+
+  // Create a central sphere (for "Samadhi" concept)
+  function createCentralSphere() {
+    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      metalness: 0.2,
+      roughness: 0.7
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(0, 0, 0);
+    scene.add(sphere);
+  }
+
+  // Handle window resize
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  // Animation loop
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+</script>
+</body>
+</html>
