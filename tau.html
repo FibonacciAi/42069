@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waveCanvas"></canvas>
+    <script>
+        const TAU = Math.PI * 2;
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Derive all numbers from TAU
+        const derive = {
+            zero: TAU - TAU,
+            one: TAU/TAU,
+            two: TAU/Math.PI,
+            three: TAU/2 + TAU/TAU,
+            four: TAU/Math.PI * TAU/TAU,
+            six: TAU,
+            eight: TAU * (TAU/(Math.PI*Math.PI))
+        };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let time = derive.zero;
+        
+        // Create waves array using TAU-derived lengths
+        const waves = Array(Math.floor(TAU)).fill().map((_, i) => ({
+            amplitude: TAU / (derive.two + Math.sin(i/TAU)),
+            frequency: TAU / (TAU * (i/TAU + derive.one)),
+            phase: TAU / (i/TAU + derive.one),
+            speed: TAU / (TAU * TAU),
+            thickness: TAU / (derive.four * (i/TAU + derive.one))
+        }));
+
+        function animate() {
+            // Clear with opacity derived from TAU
+            ctx.fillStyle = `rgba(15, 23, 42, ${TAU/100})`;
+            ctx.fillRect(derive.zero, derive.zero, canvas.width, canvas.height);
+
+            waves.forEach((wave, index) => {
+                ctx.beginPath();
+                
+                // Color derived from TAU
+                const hue = ((index * TAU + time * TAU) % TAU) * (360/TAU);
+                ctx.strokeStyle = `hsla(${hue}, ${TAU*10}%, ${TAU*10}%, ${TAU/10})`;
+                ctx.lineWidth = wave.thickness;
+
+                for (let x = derive.zero; x < canvas.width; x += derive.one) {
+                    const xOffset = x * wave.frequency;
+                    
+                    // Y position using only TAU-based calculations
+                    const y = canvas.height/derive.two + 
+                        Math.sin(xOffset + time + wave.phase) * 
+                        wave.amplitude * canvas.height/TAU;
+
+                    if (x === derive.zero) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                // Update wave properties using TAU
+                wave.phase += wave.speed;
+                wave.amplitude = TAU / (derive.two + Math.sin(time + index/TAU));
+                
+                ctx.stroke();
+            });
+
+            time += TAU/1000;
+            requestAnimationFrame(animate);
+        }
+
+        // Mouse interaction using TAU-based calculations
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) / canvas.width * TAU;
+            const mouseY = (e.clientY - rect.top) / canvas.height * TAU;
+
+            waves.forEach((wave, i) => {
+                wave.frequency = TAU / (TAU * (i/TAU + derive.one)) * 
+                    (derive.one + Math.sin(mouseX));
+                wave.amplitude = TAU / (derive.two + Math.sin(mouseY + i/TAU));
+            });
+        });
+
+        animate();
+    </script>
+</body>
+</html>
