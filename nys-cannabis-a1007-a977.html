@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NY Cannabis Legislation: A1007 & A977</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary: #34d399;
+            --primary-hover: #10b981;
+            --critical: #f87171;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        .card {
+            background-color: #111111;
+            border: 1px solid #1f2937;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .critical {
+            color: var(--critical);
+            font-weight: bold;
+        }
+
+        .disclaimer {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .link {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .link:hover {
+            color: var(--primary-hover);
+        }
+
+        .impact-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .impact-high {
+            background-color: var(--critical);
+            color: white;
+        }
+
+        .impact-medium {
+            background-color: #fbbf24;
+            color: white;
+        }
+
+        .impact-low {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .social-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <header class="card">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-green-400">NY Cannabis Legislation: Bills A1007 & A977</h1>
+                <p class="text-gray-400 mt-2">The War on Marijuana Continues: Overregulation in a Legal State</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="mt-8">
+        <!-- Bill A1007 -->
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4">Assembly Bill A1007</h2>
+            <p class="text-gray-300 mb-4">
+                This bill proposes banning smoking or vaping cannabis within 
+                <span class="highlight">30 feet of children</span> or any location where they reside, learn, or play. While it claims to protect children from secondhand cannabis smoke, in practice it 
+                <span class="critical">criminalizes cannabis users</span> in densely populated areas and urban settings, where legal consumption becomes impossible.
+            </p>
+            <ul class="list-disc list-inside text-gray-300 mb-4">
+                <li><span class="highlight">Thinly Veiled Goal</span>: Lawmakers continue to stigmatize cannabis use, treating it as more dangerous than tobacco or alcohol.</li>
+                <li><span class="critical">Problem</span>: Urban renters with no private outdoor spaces are effectively banned from legally consuming a product New York says is legal.</li>
+                <li><span class="highlight">Deceptive Framing</span>: Masked as "child protection," this bill ignores that parents already have discretion over cannabis use in their households.</li>
+            </ul>
+            <a href="https://nyassembly.gov/leg/?default_fld=&leg_video=1&bn=A01007&term=2025&Summary=Y&Memo=Y&Text=Y" 
+               target="_blank" rel="noopener noreferrer" 
+               class="link">
+                Read Full Bill A1007 on NY Assembly Website
+            </a>
+        </div>
+
+        <!-- Bill A977 -->
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4">Assembly Bill A977</h2>
+            <p class="text-gray-300 mb-4">
+                This bill caps THC potency to <span class="highlight">15% for cannabis flower</span> and 
+                <span class="highlight">25% for other cannabis products</span>, claiming to address adverse health effects. But the reality is that this restriction would 
+                <span class="critical">cripple the legal cannabis market</span> while driving consumers to the unregulated black market.
+            </p>
+            <ul class="list-disc list-inside text-gray-300 mb-4">
+                <li><span class="highlight">Disastrous Consequences</span>: Lower THC limits would make New York dispensaries uncompetitive, leaving consumers seeking higher-THC products elsewhere.</li>
+                <li><span class="critical">Health Risks</span>: Pushing users to untested and unregulated black-market products creates more harm than good.</li>
+                <li><span class="highlight">Hypocrisy</span>: Alcohol strength isn't capped, yet cannabis continues to face unfair scrutiny despite being legalized.</li>
+            </ul>
+            <a href="https://nyassembly.gov/leg/?default_fld=%0D%0A&leg_video=1&bn=A977&term=2025&Summary=Y&Memo=Y&Text=Y" 
+               target="_blank" rel="noopener noreferrer" 
+               class="link">
+                Read Full Bill A977 on NY Assembly Website
+            </a>
+        </div>
+
+        <!-- Implications -->
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4">Why This Matters</h2>
+            <ul class="list-disc list-inside text-gray-300 mb-4">
+                <li><span class="impact-badge impact-high">High Impact</span>: These bills attempt to re-criminalize marijuana use, disproportionately targeting renters, urban residents, and low-income communities.</li>
+                <li><span class="impact-badge impact-medium">Medium Impact</span>: Restrictive potency caps undermine New York's cannabis industry, threatening jobs and tax revenue.</li>
+                <li><span class="impact-badge impact-low">Low Impact</span>: Proponents claim these measures are about health and safety, but the actual benefits are minimal compared to the harm of driving users to unregulated products.</li>
+            </ul>
+            <p class="text-gray-300 mt-4">
+                Legalizing cannabis was supposed to end the criminalization of users and create a safe, regulated market. Overregulation like this undoes that progress and reinforces the stigma against cannabis. 
+                <span class="critical">Hands off our weed!</span>
+            </p>
+        </div>
+
+        <!-- Disclaimer -->
+        <footer class="card mt-8">
+            <p class="disclaimer">
+                This analysis is for informational purposes only and does not constitute legal or financial advice.
+                The impacts and outcomes are speculative and based on publicly available information.
+            </p>
+        </footer>
+    </main>
+</body>
+</html>
