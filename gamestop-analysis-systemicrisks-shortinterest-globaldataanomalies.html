@@ -3,106 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameStop Analysis: Short Interest, Systemic Risks & Global Data Anomalies</title>
+    <title>GameStop Analysis - Systemic Risks & Short Interest</title>
     <style>
-        :root {
-            --primary-color: #FFD700;
-            --secondary-color: #1E90FF;
-            --background-color: #121212;
-            --card-color: #1E1E1E;
-            --text-color: #FFFFFF;
-            --highlight-color: #FF4500;
-        }
-
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
+            background-color: #000000;
+            color: #ffffff;
             font-family: Arial, sans-serif;
+            line-height: 1.6;
             margin: 0;
             padding: 0;
         }
 
-        header, footer {
-            background-color: var(--card-color);
-            padding: 20px;
+        header {
             text-align: center;
-            border-bottom: 2px solid var(--primary-color);
+            padding: 2rem 0;
         }
 
-        header h1, footer p {
-            margin: 0;
-        }
-
-        main {
-            padding: 20px;
-        }
-
-        .section {
-            background-color: var(--card-color);
-            margin-bottom: 20px;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid var(--primary-color);
-        }
-
-        .section h2 {
-            color: var(--primary-color);
-        }
-
-        .screenshot {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px 0;
-        }
-
-        .screenshot img {
+        img {
             max-width: 100%;
-            border: 2px solid var(--secondary-color);
-            border-radius: 10px;
+            height: auto;
+            margin-bottom: 1rem;
         }
 
-        .highlight {
-            color: var(--highlight-color);
-            font-weight: bold;
+        .content {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
 
-        .important-note {
-            background-color: var(--highlight-color);
-            color: var(--text-color);
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .key-point {
-            margin: 10px 0;
-            font-size: 1.1em;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .data-table th, .data-table td {
-            padding: 10px;
-            border: 1px solid var(--primary-color);
-        }
-
-        .data-table th {
-            background-color: var(--secondary-color);
-            color: var(--text-color);
-        }
-
-        .data-table td {
+        .image-container {
             text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #121212;
+            color: #888888;
+            font-size: 0.9rem;
         }
 
         a {
-            color: var(--primary-color);
+            color: #fbbf24;
             text-decoration: none;
         }
 
@@ -113,87 +56,36 @@
 </head>
 <body>
     <header>
-        <h1>GameStop Analysis: Short Interest, Systemic Risks & Global Data Anomalies</h1>
-        <p>Deep dive into recent revelations surrounding short interest, derivatives data, and institutional actions.</p>
+        <h1>GameStop Analysis - Systemic Risks & Short Interest</h1>
+        <p>Deep dive into global data anomalies and their implications for GameStop.</p>
     </header>
 
-    <main>
-        <section class="section">
-            <h2>Background: The SEC Report & Short Interest</h2>
-            <p>The SEC's report on GameStop's January 2021 run provided insights into market mechanics but stopped short of stating that "investment firms closed their short positions." This omission is critical and aligns with recent data indicating the persistence of short interest through sophisticated tools like <span class="highlight">derivatives and offshore transfers.</span></p>
-            <div class="important-note">Key Takeaway: Shorts never closed. Instead, they leveraged complex financial instruments to obscure their positions.</div>
-        </section>
-
-        <section class="section">
-            <h2>Global Data Anomalies</h2>
-            <p>Recent data leaks from the DTCC repositories, particularly in Ireland and Brazil, reveal unusual patterns:</p>
-            <ul>
-                <li>Equity derivatives reporting <span class="highlight">quadrillions</span> in notional value—an implausible figure.</li>
-                <li>Significant jumps in reported derivatives value, coinciding with key GameStop events.</li>
-                <li>Use of London and Sao Paulo markets to potentially obfuscate short interest.</li>
-            </ul>
-            <div class="screenshot">
-                <img src="C53F7AB1-217D-4E98-975D-DA412ADD6F64.webp" alt="DTCC Data Snapshot">
-                <p>Figure 1: DTCC reported derivatives data with massive anomalies.</p>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Institutional Moves & Implications</h2>
-            <p>Institutions like Citadel Securities have leveraged regulatory exemptions in the UK and Ireland to potentially shift and hide short positions. The timing of these moves is highly suspect, aligning with critical events like Ryan Cohen's appointment as GameStop chairman.</p>
-            <div class="screenshot">
-                <img src="A518FBB5-F440-4F95-B4B3-37D625BB1CDE.jpeg" alt="Citadel Securities UK Registration">
-                <p>Figure 2: Citadel Securities registrations and their use of regulatory loopholes.</p>
-            </div>
-            <p>These actions highlight the need for vigilance and transparency in global financial markets.</p>
-        </section>
-
-        <section class="section">
-            <h2>GameStop's Strategic Position</h2>
-            <p>With <span class="highlight">$4.5 billion in cash</span>, zero debt, and institutional buy-in, GameStop is uniquely positioned for idiosyncratic growth. Retail investors continue to hold over 70 million shares through the Direct Registration System (DRS), further limiting available float for shorts.</p>
-            <div class="important-note">This structural setup creates an environment where a short squeeze becomes increasingly probable under sustained buying pressure.</div>
-        </section>
-
-        <section class="section">
-            <h2>Next Steps</h2>
-            <p>As data leaks continue to expose systemic weaknesses, the following questions remain critical:</p>
-            <ul>
-                <li>What other loopholes are being exploited to obscure short interest?</li>
-                <li>How will institutions respond to increasing retail pressure and data transparency?</li>
-                <li>What role will global regulators play in addressing these anomalies?</li>
-            </ul>
-        </section>
-
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Key Date</th>
-                    <th>Event</th>
-                    <th>Implication</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>April 2021</td>
-                    <td>Equity derivatives spike in DTCC data</td>
-                    <td>Potential offshore transfer of short positions</td>
-                </tr>
-                <tr>
-                    <td>May 2021</td>
-                    <td>GameStop trades on London Stock Exchange</td>
-                    <td>Use of foreign markets to obscure float</td>
-                </tr>
-                <tr>
-                    <td>January 2025</td>
-                    <td>Leaked DTCC reports</td>
-                    <td>Revelation of systemic weaknesses</td>
-                </tr>
-            </tbody>
-        </table>
-    </main>
+    <div class="content">
+        <h2>Key Figures</h2>
+        <div class="image-container">
+            <img src="IMG_0925.WEBP" alt="GameStop Exempted Shares List">
+            <p>Figure 1: GameStop listed among exempted shares.</p>
+        </div>
+        <div class="image-container">
+            <img src="IMG_0926.WEBP" alt="Authorized Dealers Exemption Details">
+            <p>Figure 2: List of authorized dealers and exemptions.</p>
+        </div>
+        <div class="image-container">
+            <img src="IMG_0934.JPG" alt="GME on the London Stock Exchange">
+            <p>Figure 3: GME’s stock performance on the London Stock Exchange.</p>
+        </div>
+        <div class="image-container">
+            <img src="IMG_0938.JPG" alt="DTCC Derivative Reporting Data">
+            <p>Figure 4: DTCC repository anomalies indicating potential loopholes.</p>
+        </div>
+        <div class="image-container">
+            <img src="IMG_0939.JPG" alt="Correlation of Anomalies with GME Price Movements">
+            <p>Figure 5: Timings of reported anomalies correlated with GME price activity.</p>
+        </div>
+    </div>
 
     <footer>
-        <p>This analysis is speculative and for educational purposes only. Not financial advice.</p>
+        <p>&copy; 2025 GameStop Analysis. All rights reserved. <a href="https://github.com/your-repo">View on GitHub</a>.</p>
     </footer>
 </body>
 </html>
