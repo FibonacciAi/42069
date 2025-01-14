@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>High-Energy Einstein Field Visualization</title>
+    <title>Einstein Field Equations - Mathematical Visualization</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; }
         canvas { width: 100vw; height: 100vh; }
@@ -9,18 +9,14 @@
             position: fixed;
             top: 10px;
             left: 10px;
-            background: rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.8);
             padding: 15px;
             border-radius: 8px;
             color: #fff;
             font-family: monospace;
         }
-        .parameter {
-            margin: 10px 0;
-        }
-        input[type="range"] {
-            width: 150px;
-        }
+        .parameter { margin: 10px 0; }
+        input[type="range"] { width: 150px; }
         #stats {
             position: fixed;
             top: 10px;
@@ -33,13 +29,10 @@
 <body>
     <div id="controls">
         <div class="parameter">
-            <label>Field Strength (α²): <input type="range" id="fieldStrength" min="1" max="200" value="100"></label>
+            <label>∂ξ/∂x₄: <input type="range" id="dxi" min="0" max="100" value="50"></label>
         </div>
         <div class="parameter">
-            <label>Spacetime Curvature (∂ξ): <input type="range" id="curvature" min="0" max="150" value="50"></label>
-        </div>
-        <div class="parameter">
-            <label>Tensor Flow (∂x₄): <input type="range" id="flow" min="0" max="200" value="100"></label>
+            <label>α²: <input type="range" id="alpha" min="0" max="100" value="50"></label>
         </div>
     </div>
     <div id="stats"></div>
@@ -51,158 +44,78 @@
         
         let width, height;
         let particles = [];
-        let fieldPoints = [];
-        const numParticles = 7000; // Increased particles
-        const numFieldPoints = 20;  // Increased field points
+        const numParticles = 10000;
 
-        // Enhanced field parameters
-        let fieldStrength = 1.0;
-        let curvature = 0.5;
-        let flow = 1.0;
+        // Parameters from Einstein's equations
+        let dxi = 0.5; // ∂ξ/∂x₄
+        let alpha = 0.5; // α²
 
         class Particle {
             constructor() {
                 this.reset();
-                this.alpha = Math.random() * 0.7 + 0.3;
-                this.size = Math.random() * 2 + 0.5;
-                this.mass = Math.random() * 0.5 + 0.5;
             }
 
             reset() {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = (Math.random() - 0.5) * 2;
-                this.life = Math.random() * 200 + 200;
-                this.maxSpeed = 5.0; // Increased max speed
-                this.energy = Math.random();
+                this.vx = 0;
+                this.vy = 0;
+                this.life = Math.random() * 200 + 100;
+                
+                // Initialize tensor components
+                this.xi = Math.random() * 2 - 1;
+                this.eta = Math.random() * 2 - 1;
             }
 
             update() {
-                let totalForceX = 0;
-                let totalForceY = 0;
+                // Implementing the field equations from Einstein's notes:
+                // α²∂ξ/∂x₄ + α²∂η/∂x₄ = 0
 
-                // Enhanced field calculations
-                fieldPoints.forEach(point => {
-                    const dx = point.x - this.x;
-                    const dy = point.y - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    
-                    // Enhanced field equations with relativistic effects
-                    const force = (fieldStrength * point.mass * this.mass) / 
-                                (Math.pow(dist, 1.5) + 0.1);
-                    const tensorFlow = flow * Math.sin(dist * 0.02 + point.phase) * 
-                                     Math.cos(this.energy * point.phase);
-                    
-                    // Apply relativistic corrections
-                    const relativisticFactor = 1 + (this.energy * curvature * 0.1);
-                    
-                    totalForceX += (force * Math.cos(angle) * tensorFlow) / relativisticFactor;
-                    totalForceY += (force * Math.sin(angle) * tensorFlow) / relativisticFactor;
-                });
+                // Calculate tensor derivatives
+                const dxiTerm = alpha * alpha * dxi * this.xi;
+                const detaTerm = alpha * alpha * dxi * this.eta;
 
-                // Apply quantum fluctuations
-                totalForceX += (Math.random() - 0.5) * 0.1 * fieldStrength;
-                totalForceY += (Math.random() - 0.5) * 0.1 * fieldStrength;
+                // Apply field equations
+                const fieldStrength = dxiTerm + detaTerm;
+                
+                // Calculate vector field components
+                this.vx += fieldStrength * Math.cos(this.xi * Math.PI);
+                this.vy += fieldStrength * Math.sin(this.eta * Math.PI);
 
-                // Update velocity with enhanced physics
-                this.vx += totalForceX * 0.2;
-                this.vy += totalForceY * 0.2;
+                // Apply tensor transformation
+                const transformedX = this.x + this.vx * (1 + alpha * dxi);
+                const transformedY = this.y + this.vy * (1 + alpha * dxi);
 
-                // Apply relativistic speed limit
-                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-                if (speed > this.maxSpeed) {
-                    const factor = this.maxSpeed / speed;
-                    this.vx *= factor;
-                    this.vy *= factor;
-                }
+                // Update position with tensor transformation
+                this.x = transformedX;
+                this.y = transformedY;
 
-                // Apply spacetime curvature with enhanced effects
-                const curvatureFactor = 1 - (curvature * 0.01 * this.energy);
-                this.vx *= curvatureFactor;
-                this.vy *= curvatureFactor;
+                // Update tensor components
+                this.xi += dxi * 0.01;
+                this.eta += dxi * 0.01;
 
-                // Update position
-                this.x += this.vx;
-                this.y += this.vy;
                 this.life--;
-
-                // Update particle energy
-                this.energy += (Math.random() - 0.5) * 0.1;
-                this.energy = Math.max(0, Math.min(1, this.energy));
 
                 // Reset conditions
                 if (this.life < 0 || 
-                    this.x < -100 || this.x > width + 100 || 
-                    this.y < -100 || this.y > height + 100) {
+                    this.x < 0 || this.x > width || 
+                    this.y < 0 || this.y > height) {
                     this.reset();
                 }
             }
 
             draw() {
-                const intensity = (this.life / 400) * this.alpha;
-                // Color based on energy level
-                const r = Math.floor(this.energy * 255);
-                const g = Math.floor(128 + this.energy * 127);
-                const b = 255;
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${intensity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size * (1 + this.energy), 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        class FieldPoint {
-            constructor() {
-                this.reset();
-            }
-
-            reset() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.mass = Math.random() * 4 + 2; // Increased mass range
-                this.phase = Math.random() * Math.PI * 2;
-                this.velocity = (Math.random() * 0.04 - 0.02) * fieldStrength;
-                this.radius = Math.random() * 150 + 100;
-                this.centerX = this.x;
-                this.centerY = this.y;
-                this.angle = Math.random() * Math.PI * 2;
-                this.angularVelocity = (Math.random() * 0.002 + 0.001) * 
-                                     (Math.random() < 0.5 ? 1 : -1);
-                this.energy = Math.random();
-            }
-
-            update() {
-                this.phase += this.velocity * (1 + this.energy * 0.5);
-                this.angle += this.angularVelocity * fieldStrength;
-                this.energy += (Math.random() - 0.5) * 0.02;
-                this.energy = Math.max(0, Math.min(1, this.energy));
-
-                // Enhanced orbital motion
-                this.x = this.centerX + Math.cos(this.angle) * this.radius * (1 + Math.sin(this.phase) * 0.2);
-                this.y = this.centerY + Math.sin(this.angle) * this.radius * (1 + Math.cos(this.phase) * 0.2);
-
-                // Screen wrapping with padding
-                const padding = 150;
-                if (this.x < -padding) this.x = width + padding;
-                if (this.x > width + padding) this.x = -padding;
-                if (this.y < -padding) this.y = height + padding;
-                if (this.y > height + padding) this.y = -padding;
-            }
-
-            draw() {
-                // Visualize field points with energy-based colors
-                const gradient = ctx.createRadialGradient(
-                    this.x, this.y, 0,
-                    this.x, this.y, this.mass * 5
-                );
-                gradient.addColorStop(0, `rgba(255, ${200 + this.energy * 55}, 0, 0.2)`);
-                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                // Intensity based on field equations
+                const fieldIntensity = Math.abs(alpha * this.xi + alpha * this.eta);
+                const intensity = (this.life / 300) * Math.min(1, fieldIntensity);
                 
-                ctx.fillStyle = gradient;
+                // Color based on tensor components
+                const blueComponent = Math.floor(255 * Math.abs(this.xi));
+                const greenComponent = Math.floor(200 * Math.abs(this.eta));
+                
+                ctx.fillStyle = `rgba(50, ${greenComponent}, ${blueComponent}, ${intensity})`;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.mass * 5, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 1, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -212,47 +125,31 @@
             height = canvas.height = window.innerHeight;
 
             particles = [];
-            fieldPoints = [];
-
-            // Create particles
             for (let i = 0; i < numParticles; i++) {
                 particles.push(new Particle());
-            }
-
-            // Create field points
-            for (let i = 0; i < numFieldPoints; i++) {
-                fieldPoints.push(new FieldPoint());
             }
         }
 
         let frameCount = 0;
         let lastTime = performance.now();
-        let fps = 0;
 
         function animate(currentTime) {
             // FPS calculation
             frameCount++;
             if (currentTime - lastTime >= 1000) {
-                fps = frameCount;
+                const fps = frameCount;
                 frameCount = 0;
                 lastTime = currentTime;
-                stats.textContent = `FPS: ${fps} | Particles: ${numParticles} | Field Points: ${numFieldPoints}`;
+                stats.textContent = `FPS: ${fps} | Particles: ${numParticles}`;
             }
 
-            // Enhanced trail effect
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+            // Subtle trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
             ctx.fillRect(0, 0, width, height);
 
-            // Update field parameters from controls
-            fieldStrength = document.getElementById('fieldStrength').value / 50;
-            curvature = document.getElementById('curvature').value / 100;
-            flow = document.getElementById('flow').value / 50;
-
-            // Update and draw field points
-            fieldPoints.forEach(point => {
-                point.update();
-                point.draw();
-            });
+            // Update parameters from controls
+            dxi = document.getElementById('dxi').value / 100;
+            alpha = document.getElementById('alpha').value / 100;
 
             // Update and draw particles
             particles.forEach(particle => {
