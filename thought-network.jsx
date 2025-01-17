@@ -52,6 +52,63 @@ const ThoughtNetwork = () => {
         }
     }, []);
 
+    // Analyze new connections using OpenAI API
+    const analyzeNewConnections = async (newThought) => {
+        const newConnections = [];
+        for (const thought of thoughts) {
+            const relationship = await analyzeRelationship(newThought.text, thought.text);
+            if (relationship.strength > 0) {
+                newConnections.push({
+                    source: newThought.id,
+                    target: thought.id,
+                    strength: relationship.strength,
+                    type: relationship.type,
+                });
+            }
+        }
+        setConnections(prev => [...prev, ...newConnections]);
+    };
+
+    // Analyze relationship between two thoughts using OpenAI API
+    const analyzeRelationship = async (text1, text2) => {
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4",
+                    messages: [{
+                        role: "system",
+                        content: `You are a precise semantic relationship analyzer. Analyze the relationship between concepts and return a JSON object with:
+                        - strength: number between 0 and 1 (4 decimal places)
+                        - type: one of "direct", "hierarchical", "functional", "contextual", "causal"
+                        - explanation: brief explanation (max 100 chars)
+                        Be conservative with strength values - use the full range.`
+                    }, {
+                        role: "user",
+                        content: `Analyze the relationship between: "${text1}" and "${text2}"`
+                    }],
+                    temperature: 0.2,
+                    max_tokens: 100
+                })
+            });
+
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
+            
+            return JSON.parse(data.choices[0].message.content);
+
+        } catch (error) {
+            console.error('Error analyzing relationship:', error);
+            return { strength: 0, type: null, explanation: "Analysis failed" };
+        }
+    };
+
     return (
         <div className="relative w-full h-screen bg-gray-900 overflow-hidden">
             {/* Top Controls */}
