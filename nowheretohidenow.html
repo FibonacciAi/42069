@@ -1,0 +1,298 @@
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const ThoughtNetwork = () => {
+  const [thoughts, setThoughts] = useState([]);
+  const [connections, setConnections] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [isApiKeySet, setIsApiKeySet] = useState(false);
+  const [threshold, setThreshold] = useState(0.1);
+  const [showIcons, setShowIcons] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [status, setStatus] = useState('Waiting for API key...');
+
+  const analyzeRelationship = async (text1, text2) => {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [{
+            role: 'system',
+            content: 'You are a semantic relationship analyzer. For the two concepts provided, return ONLY a JSON object with: strength (0-1), type (direct/hierarchical/functional/contextual/causal), and explanation (brief). No other text.'
+          }, {
+            role: 'user',
+            content: `Analyze: "${text1}" and "${text2}"`
+          }],
+          temperature: 0.3
+        })
+      });
+
+      if (!response.ok) throw new Error('API request failed');
+      const data = await response.json();
+      return JSON.parse(data.choices[0].message.content);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      setStatus(`Error: ${error.message}`);
+      return null;
+    }
+  };
+
+  const addThought = async () => {
+    if (!inputValue.trim()) return;
+
+    const newThought = {
+      id: Date.now(),
+      text: inputValue.trim(),
+      x: window.innerWidth / 2 + (Math.random() - 0.5) * 300,
+      y: window.innerHeight / 2 + (Math.random() - 0.5) * 300
+    };
+
+    setThoughts(prev => [...prev, newThought]);
+    setInputValue('');
+
+    if (thoughts.length > 0) {
+      setStatus('Analyzing relationships...');
+      for (const thought of thoughts) {
+        const relationship = await analyzeRelationship(newThought.text, thought.text);
+        if (relationship && relationship.strength >= threshold) {
+          setConnections(prev => [...prev, {
+            id: `${newThought.id}-${thought.id}`,
+            from: newThought.id,
+            to: thought.id,
+            ...relationship
+          }]);
+        }
+      }
+      setStatus('Analysis complete');
+    }
+  };
+
+  const updateThoughtPosition = (id, position) => {
+    setThoughts(prev => prev.map(t => 
+      t.id === id ? { ...t, x: position.x, y: position.y } : t
+    ));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
+      {/* Controls */}
+      <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm p-4 z-50 flex gap-4 items-center">
+        {!isApiKeySet ? (
+          <div className="flex gap-4 w-full">
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="flex-grow bg-gray-800 rounded px-4 py-2"
+              placeholder="Enter OpenAI API Key"
+            />
+            <button
+              onClick={() => apiKey && setIsApiKeySet(true)}
+              className="bg-green-500 px-6 py-2 rounded"
+            >
+              Set Key
+            </button>
+          </div>
+        ) : (
+          <>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addThought()}
+              className="flex-grow bg-gray-800 rounded px-4 py-2"
+              placeholder="Enter a thought..."
+            />
+            <div className="flex items-center gap-4">
+              <label>
+                Threshold: 
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={threshold * 100}
+                  onChange={(e) => setThreshold(e.target.value / 100)}
+                  className="mx-2"
+                />
+                {threshold.toFixed(2)}
+              </label>
+              <button
+                onClick={() => setShowIcons(!showIcons)}
+                className={`px-4 py-2 rounded ${showIcons ? 'bg-green-500' : 'bg-gray-600'}`}
+              >
+                Icons
+              </button>
+              <button
+                onClick={() => setShowAnalysis(true)}
+                className="bg-blue-500 px-4 py-2 rounded"
+              >
+                Analyze
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Status */}
+      <div className="fixed bottom-4 left-4 bg-black/80 backdrop-blur-sm px-4 py-2 rounded">
+        {status}
+      </div>
+
+      {/* Connection Lines */}
+      <svg className="fixed inset-0 w-full h-full pointer-events-none">
+        <AnimatePresence>
+          {connections
+            .filter(conn => conn.strength >= threshold)
+            .map(conn => {
+              const from = thoughts.find(t => t.id === conn.from);
+              const to = thoughts.find(t => t.id === conn.to);
+              if (!from || !to) return null;
+
+              const color = {
+                direct: '#ff3e3e',
+                hierarchical: '#4caf50',
+                functional: '#2196f3',
+                contextual: '#9c27b0',
+                causal: '#ff9800'
+              }[conn.type] || '#ffffff';
+
+              return (
+                <g key={conn.id}>
+                  <motion.line
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: conn.strength }}
+                    exit={{ opacity: 0 }}
+                    x1={from.x}
+                    y1={from.y}
+                    x2={to.x}
+                    y2={to.y}
+                    stroke={color}
+                    strokeWidth={conn.strength * 3}
+                  />
+                  {showIcons && (
+                    <motion.text
+                      x={(from.x + to.x) / 2}
+                      y={(from.y + to.y) / 2}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="white"
+                      fontSize="12"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      {conn.type === 'direct' ? '🔗' :
+                        conn.type === 'hierarchical' ? '⬆️' :
+                        conn.type === 'functional' ? '⚙️' :
+                        conn.type === 'contextual' ? '🤝' : '➡️'}
+                    </motion.text>
+                  )}
+                </g>
+              );
+            })}
+        </AnimatePresence>
+      </svg>
+
+      {/* Thoughts */}
+      <AnimatePresence>
+        {thoughts.map(thought => (
+          <motion.div
+            key={thought.id}
+            className="absolute bg-gray-800/80 backdrop-blur px-4 py-2 rounded-xl cursor-move"
+            initial={{ scale: 0 }}
+            animate={{
+              scale: 1,
+              x: thought.x,
+              y: thought.y,
+            }}
+            exit={{ scale: 0 }}
+            style={{ transform: 'translate(-50%, -50%)' }}
+            drag
+            dragMomentum={false}
+            onDrag={(_, info) => {
+              updateThoughtPosition(thought.id, {
+                x: thought.x + info.delta.x,
+                y: thought.y + info.delta.y
+              });
+            }}
+          >
+            {thought.text}
+            <button
+              onClick={() => {
+                setThoughts(prev => prev.filter(t => t.id !== thought.id));
+                setConnections(prev => prev.filter(c => 
+                  c.from !== thought.id && c.to !== thought.id
+                ));
+              }}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 rounded-full
+                         flex items-center justify-center opacity-0 hover:opacity-100
+                         transition-opacity"
+            >
+              ×
+            </button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+
+      {/* Analysis Modal */}
+      {showAnalysis && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50
+                     flex items-center justify-center"
+        >
+          <div className="bg-gray-800 rounded-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto">
+            <button
+              onClick={() => setShowAnalysis(false)}
+              className="absolute top-4 right-4 text-2xl"
+            >
+              ×
+            </button>
+            <h2 className="text-2xl font-bold mb-6">Network Analysis</h2>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-700/50 p-4 rounded">
+                  <div className="text-2xl">{thoughts.length}</div>
+                  <div className="text-gray-400">Total Thoughts</div>
+                </div>
+                <div className="bg-gray-700/50 p-4 rounded">
+                  <div className="text-2xl">
+                    {connections.filter(c => c.strength >= threshold).length}
+                  </div>
+                  <div className="text-gray-400">Active Connections</div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl">Strong Connections</h3>
+                {connections
+                  .filter(c => c.strength >= threshold)
+                  .sort((a, b) => b.strength - a.strength)
+                  .map(conn => {
+                    const from = thoughts.find(t => t.id === conn.from);
+                    const to = thoughts.find(t => t.id === conn.to);
+                    if (!from || !to) return null;
+                    return (
+                      <div key={conn.id} className="bg-gray-700/50 p-3 rounded flex justify-between">
+                        <div>{from.text} ↔ {to.text}</div>
+                        <div>{conn.type} ({(conn.strength * 100).toFixed(1)}%)</div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+export default ThoughtNetwork;
