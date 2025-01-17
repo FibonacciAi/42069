@@ -1,0 +1,117 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;"><script src="https://puc.poecdn.net/standard.c8d3df4d67dddca2ccac.js"></script>
+    <meta charset="utf-8">
+    <title>Poe</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://puc.poecdn.net/tw.b9024aecac666455e183.js"></script><script src="https://puc.poecdn.net/deps.ac7e4de820f1e47e84a2.js"></script><script src="https://puc.poecdn.net/exports.b0f0f482cdeb5302b0b9.js"></script><script src="https://puc.poecdn.net/renderer.6065bf6c6271ccf44fe1.js"></script><script>Object.defineProperty(exports, "__esModule", {value: true}); function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; } function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) { return undefined; } if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value = fn(value); } else if (op === 'call' || op === 'optionalCall') { value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; } } return value; }var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+var _lucidereact = require('lucide-react');
+
+const categories = {
+  "Quantum & Physics": ["quantum", "einstein", "physics", "neutron"],
+  "Mathematics": ["fibonacci", "math", "reimann", "kaprekar"],
+  "Sacred Geometry": ["sacred", "metatron", "geometry", "flower"],
+  "Financial Analysis": ["gme", "moass", "analysis", "cycles"],
+  "Consciousness & Metaphysics": ["consciousness", "frequency", "mind", "resonance"],
+  "Visualization": ["3d", "viz", "visual", "vortex"],
+  "Networks & Systems": ["network", "system", "grid"],
+  "Images & Media": [".jpg", ".png", ".webp"],
+};
+
+const formatDate = (dateStr) => {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return "today";
+  if (diffDays === 1) return "yesterday";
+  if (diffDays <= 7) return `${diffDays} days ago`;
+  if (diffDays <= 30) return "last month";
+  return date.toLocaleDateString();
+};
+
+ function Portfolio() {
+  const [search, setSearch] = _react.useState.call(void 0, "");
+  const [selectedCategory, setSelectedCategory] = _react.useState.call(void 0, "All");
+  
+  const files = _react.useMemo.call(void 0, () => {
+    // Your file list data here as an array of objects
+    const fileList = [
+      { name: "FibonacciAi", lastCommit: "Create nowheretohidenow.html", date: "2025-01-17" },
+      // ... add all your files here
+    ];
+
+    return fileList.map(file => {
+      const category = _optionalChain([Object, 'access', _2 => _2.entries, 'call', _3 => _3(categories), 'access', _4 => _4.find, 'call', _5 => _5(([_, keywords]) =>
+        keywords.some(keyword => file.name.toLowerCase().includes(keyword.toLowerCase()))
+      ), 'optionalAccess', _6 => _6[0]]) || "Other";
+      return { ...file, category };
+    });
+  }, []);
+
+  const filteredFiles = _react.useMemo.call(void 0, () => {
+    return files.filter(file => {
+      const matchesSearch = file.name.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = selectedCategory === "All" || file.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [files, search, selectedCategory]);
+
+  return (
+    _react2.default.createElement('div', { className: "min-h-screen bg-gray-900 text-gray-100 p-6"   ,}
+      , _react2.default.createElement('div', { className: "max-w-7xl mx-auto" ,}
+        , _react2.default.createElement('h1', { className: "text-3xl font-bold mb-8"  ,}, "Portfolio")
+
+        , _react2.default.createElement('div', { className: "flex flex-col md:flex-row gap-4 mb-6"    ,}
+          , _react2.default.createElement('div', { className: "relative flex-1" ,}
+            , _react2.default.createElement(_lucidereact.Search, { className: "absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"     ,} )
+            , _react2.default.createElement('input', {
+              type: "text",
+              placeholder: "Search files..." ,
+              className: "w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-10 focus:outline-none focus:ring-2 focus:ring-blue-500"         ,
+              value: search,
+              onChange: (e) => setSearch(e.target.value),}
+            )
+          )
+
+          , _react2.default.createElement('select', {
+            className: "bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"        ,
+            value: selectedCategory,
+            onChange: (e) => setSelectedCategory(e.target.value),}
+
+            , _react2.default.createElement('option', { value: "All",}, "All Categories" )
+            , Object.keys(categories).map(category => (
+              _react2.default.createElement('option', { key: category, value: category,}, category)
+            ))
+            , _react2.default.createElement('option', { value: "Other",}, "Other")
+          )
+        )
+
+        , _react2.default.createElement('div', { className: "bg-gray-800 rounded-lg overflow-hidden"  ,}
+          , _react2.default.createElement('div', { className: "grid grid-cols-12 gap-4 p-4 border-b border-gray-700 font-semibold"      ,}
+            , _react2.default.createElement('div', { className: "col-span-6",}, "Name")
+            , _react2.default.createElement('div', { className: "col-span-3",}, "Category")
+            , _react2.default.createElement('div', { className: "col-span-3",}, "Last Updated" )
+          )
+
+          , _react2.default.createElement('div', { className: "divide-y divide-gray-700" ,}
+            , filteredFiles.map((file, index) => (
+              _react2.default.createElement('div', { key: index, className: "grid grid-cols-12 gap-4 p-4 hover:bg-gray-700"    ,}
+                , _react2.default.createElement('div', { className: "col-span-6 font-medium" ,}, file.name)
+                , _react2.default.createElement('div', { className: "col-span-3 text-gray-400" ,}, file.category)
+                , _react2.default.createElement('div', { className: "col-span-3 text-gray-400" ,}, formatDate(file.date))
+              )
+            ))
+          )
+        )
+
+        , _react2.default.createElement('div', { className: "mt-4 text-gray-400 text-sm"  ,}, "Showing "
+           , filteredFiles.length, " of "  , files.length, " files"
+        )
+      )
+    )
+  );
+} exports.default = Portfolio;
+</script></head>
+  <body>
+  
+
+<div id="preview-app"></div></body></html>
