@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            color: white;
+        }
+
+        #controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input, button {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #2a2a2a;
+            color: white;
+            font-size: 1rem;
+        }
+
+        button {
+            cursor: pointer;
+            background: #444;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        .toggle-button {
+            background: #555;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: 1px solid #666;
+            color: white;
+            cursor: pointer;
+        }
+
+        .toggle-button.active {
+            background: #4CAF50;
+        }
+
+        .analysis-button {
+            background: #4CAF50;
+            margin-left: auto;
+        }
+
+        .analysis-button:hover {
+            background: #45a049;
+        }
+
+        .thought {
+            position: absolute;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            cursor: move;
+            min-width: 100px;
+            text-align: center;
+            transform: translate(-50%, -50%);
+            user-select: none;
+            background: rgba(80, 80, 80, 0.8);
+            backdrop-filter: blur(4px);
+            font-size: 1rem;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: box-shadow 0.2s;
+        }
+
+        .thought:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .thought-delete {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 68, 68, 0.8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.2s;
+            z-index: 3;
+        }
+
+        .thought:hover .thought-delete {
+            opacity: 1;
+        }
+
+        .thought-delete:hover {
+            background: rgb(255, 68, 68);
+            transform: scale(1.1);
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #status {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #aaa;
+            z-index: 50;
+        }
+
+        .connection-icon {
+            position: absolute;
+            background: rgba(42, 42, 42, 0.8);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.6;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .connection-icon:hover {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.2);
+            z-index: 4;
+        }
+
+        .icon-direct::after { content: "🔗"; }
+        .icon-hierarchical::after { content: "⬆️"; }
+        .icon-functional::after { content: "⚙️"; }
+        .icon-contextual::after { content: "🤝"; }
+        .icon-causal::after { content: "➡️"; }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #aaa;
+        }
+
+        #threshold-slider {
+            width: 200px;
+            accent-color: #4CAF50;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #aaa;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .analysis-section {
+            margin-bottom: 2rem;
+        }
+
+        .analysis-section h2 {
+            margin-bottom: 1rem;
+            color: #4CAF50;
+        }
+
+        .connection-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .connection-item {
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .connection-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            color: #4CAF50;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <input type="text" id="thought-input" placeholder="Enter a thought...">
+        <input type="password" id="openai-key" placeholder="Enter your OpenAI API key">
+        <button id="save-key">Set API Key</button>
+        <div class="slider-container">
+            <label for="threshold-slider">Threshold:</label>
+            <input type="range" id="threshold-slider" min="0" max="100" value="10" step="1">
+            <span id="threshold-value">0.1</span>
+        </div>
+        <button id="toggle-icons" class="toggle-button">Toggle Icons</button>
+        <button class="analysis-button" id="analyze-button">Analyze Network</button>
+    </div>
+    <div id="status">Waiting for API key...</div>
+    <canvas id="canvas"></canvas>
+
+    <div class="modal-overlay" id="analysis-modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div id="analysis-results"></div>
+        </div>
+    </div>
+    <script>
+        class AISemanticBrain {
+            constructor() {
+                this.apiKey = '';
+                this.thoughtRelations = new Map();
+                this.status = document.getElementById('status');
+                this.setupKeyHandler();
+            }
+
+            setupKeyHandler() {
+                document.getElementById('save-key').addEventListener('click', () => {
+                    const key = document.getElementById('openai-key').value;
+                    if (key) {
+                        this.apiKey = key;
+                        document.getElementById('openai-key').value = '';
+                        this.status.textContent = 'API Key set! Ready to analyze relationships.';
+                    }
+                });
+            }
+
+            async analyzeRelationship(text1, text2) {
+                if (!this.apiKey) {
+                    this.status.textContent = 'Please set your OpenAI API key first.';
+                    return { strength: 0, type: null };
+                }
+
+                const cacheKey = `${text1}|||${text2}`;
+                if (this.thoughtRelations.has(cacheKey)) {
+                    return this.thoughtRelations.get(cacheKey);
+                }
+
+                this.status.textContent = `Analyzing relationship between "${text1}" and "${text2}"...`;
+
+                try {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "gpt-4",
+                            messages: [{
+                                role: "system",
+                                content: `You are a precise semantic relationship analyzer. Analyze the relationship between concepts and return a JSON object with:
+                                - strength: number between 0 and 1 (4 decimal places)
+                                - type: one of "direct", "hierarchical", "functional", "contextual", "causal"
+                                - explanation: brief explanation (max 100 chars)
+                                Be conservative with strength values - use the full range.`
+                            }, {
+                                role: "user",
+                                content: `Analyze the relationship between: "${text1}" and "${text2}"`
+                            }],
+                            temperature: 0.2,
+                            max_tokens: 100
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+                    
+                    const result = JSON.parse(data.choices[0].message.content);
+                    this.thoughtRelations.set(cacheKey, result);
+                    this.status.textContent = 'Analysis complete.';
+                    return result;
+
+                } catch (error) {
+                    this.status.textContent = `Error: ${error.message}`;
+                    return { strength: 0, type: null, explanation: "Analysis failed" };
+                }
+            }
+        }
+
+        class MindMap {
+            constructor() {
+                this.thoughts = [];
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.input = document.getElementById('thought-input');
+                this.brain = new AISemanticBrain();
+                this.threshold = 0.1;
+                this.connections = [];
+                this.showIcons = false;
+                this.iconThreshold = 0.5;
+                
+                this.handleResize = this.handleResize.bind(this);
+                this.handleResize();
+                this.setupEventListeners();
+                this.draw();
+            }
+
+            handleResize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            setupEventListeners() {
+                window.addEventListener('resize', this.handleResize);
+                
+                this.input.addEventListener('keydown', async (e) => {
+                    if (e.key === 'Enter' && this.input.value.trim()) {
+                        await this.addThought(this.input.value.trim());
+                        this.input.value = '';
+                    }
+                });
+
+                const slider = document.getElementById('threshold-slider');
+                const thresholdValue = document.getElementById('threshold-value');
+                
+                slider.addEventListener('input', (e) => {
+                    this.threshold = e.target.value / 100;
+                    thresholdValue.textContent = this.threshold.toFixed(2);
+                    this.updateConnectionVisibility();
+                });
+
+                document.getElementById('toggle-icons').addEventListener('click', (e) => {
+                    this.showIcons = !this.showIcons;
+                    e.target.classList.toggle('active');
+                    this.updateConnectionVisibility();
+                });
+
+                document.getElementById('analyze-button').addEventListener('click', () => {
+                    this.showAnalysis();
+                });
+
+                document.querySelector('.modal-close').addEventListener('click', () => {
+                    document.getElementById('analysis-modal').style.display = 'none';
+                });
+            }
+
+            createThoughtElement(text) {
+                const element = document.createElement('div');
+                element.className = 'thought';
+                element.textContent = text;
+                
+                const deleteButton = document.createElement('div');
+                deleteButton.className = 'thought-delete';
+                deleteButton.innerHTML = '×';
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.removeThought(element);
+                });
+                
+                element.appendChild(deleteButton);
+                document.body.appendChild(element);
+
+                let isDragging = false;
+                let startX, startY;
+
+                element.addEventListener('mousedown', (e) => {
+                    if (e.target !== deleteButton) {
+                        isDragging = true;
+                        const rect = element.getBoundingClientRect();
+                        startX = e.clientX - rect.left;
+                        startY = e.clientY - rect.top;
+                        element.style.zIndex = '1000';
+                    }
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    const thought = this.thoughts.find(t => t.element === element);
+                    if (!thought) return;
+
+                    thought.x = e.clientX;
+                    thought.y = e.clientY;
+                    this.updateThoughtPosition(thought);
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        element.style.zIndex = '2';
+                    }
+                });
+
+                return element;
+            }
+
+            removeThought(element) {
+                const index = this.thoughts.findIndex(t => t.element === element);
+                if (index !== -1) {
+                    this.connections = this.connections.filter(conn => {
+                        if (conn.from === this.thoughts[index] || conn.to === this.thoughts[index]) {
+                            conn.icon?.remove();
+                            return false;
+                        }
+                        return true;
+                    });
+                    
+                    element.remove();
+                    this.thoughts.splice(index, 1);
+                }
+            }
+
+            updateThoughtPosition(thought) {
+                thought.element.style.left = `${thought.x}px`;
+                thought.element.style.top = `${thought.y}px`;
+            }
+
+            async addThought(text) {
+                const angle = this.thoughts.length * (Math.PI * 2 / 8) + Math.random() * 0.5;
+                const radius = 150;
+                const thought = {
+                    id: Date.now(),
+                    text: text,
+                    x: window.innerWidth / 2 + Math.cos(angle) * radius,
+                    y: window.innerHeight / 2 + Math.sin(angle) * radius,
+                    element: this.createThoughtElement(text)
+                };
+
+                this.thoughts.push(thought);
+                this.updateThoughtPosition(thought);
+                await this.updateConnections();
+            }
+
+            async updateConnections() {
+                for (let i = 0; i < this.thoughts.length; i++) {
+                    for (let j = i + 1; j < this.thoughts.length; j++) {
+                        const relationship = await this.brain.analyzeRelationship(
+                            this.thoughts[i].text,
+                            this.thoughts[j].text
+                        );
+                        
+                        if (relationship.strength >= this.threshold) {
+                            const connection = {
+                                from: this.thoughts[i],
+                                to: this.thoughts[j],
+                                ...relationship
+                            };
+                            this.connections.push(connection);
+                            this.createConnectionIcon(connection);
+                        }
+                    }
+                }
+            }
+
+            updateConnectionVisibility() {
+                this.connections.forEach(conn => {
+                    if (conn.icon) {
+                        conn.icon.style.display = 
+                            (this.showIcons && conn.strength >= this.iconThreshold) ? 'flex' : 'none';
+                    }
+                });
+            }
+
+            createConnectionIcon(connection) {
+                const icon = document.createElement('div');
+                icon.className = `connection-icon icon-${connection.type}`;
+                icon.title = connection.explanation || 
+                    `${connection.type} relationship (${(connection.strength * 100).toFixed(1)}%)`;
+                
+                const updatePosition = () => {
+                    const x = (connection.from.x + connection.to.x) / 2;
+                    const y = (connection.from.y + connection.to.y) / 2;
+                    icon.style.left = `${x}px`;
+                    icon.style.top = `${y}px`;
+                };
+                
+                updatePosition();
+                icon.style.display = (this.showIcons && connection.strength >= this.iconThreshold) ? 'flex' : 'none';
+                document.body.appendChild(icon);
+                
+                connection.icon = icon;
+                connection.updateIconPosition = updatePosition;
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.connections.forEach(conn => {
+                    if (conn.strength >= this.threshold) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(conn.from.x, conn.from.y);
+                        this.ctx.lineTo(conn.to.x, conn.to.y);
+                        
+                        const colors = {
+                            direct: [200, 60, 50],
+                            hierarchical: [120, 60, 50],
+                            functional: [40, 60, 50],
+                            contextual: [280, 60, 50],
+                            causal: [0, 60, 50]
+                        };
+                        
+                        const [hue, sat, light] = colors[conn.type] || [200, 60, 50];
+                        const alpha = conn.strength * 0.5;
+                        const width = conn.strength * 3;
+                        
+                        this.ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
+                        this.ctx.lineWidth = width;
+                        this.ctx.stroke();
+                        
+                        conn.updateIconPosition?.();
+                    }
+                });
+                
+                requestAnimationFrame(() => this.draw());
+            }
+
+            showAnalysis() {
+                const modal = document.getElementById('analysis-modal');
+                const results = document.getElementById('analysis-results');
+                
+                const totalConnections = this.connections.length;
+                const activeConnections = this.connections.filter(c => c.strength >= this.threshold).length;
+                const avgStrength = this.connections.reduce((sum, c) => sum + c.strength, 0) / totalConnections || 0;
+                
+                const typeCount = this.connections.reduce((acc, conn) => {
+                    acc[conn.type] = (acc[conn.type] || 0) + 1;
+                    return acc;
+                }, {});
+
+                let html = `
+                    <div class="analysis-section">
+                        <h2>Network Statistics</h2>
+                        <div class="statistics-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">${this.thoughts.length}</div>
+                                <div class="stat-label">Total Thoughts</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${activeConnections}</div>
+                                <div class="stat-label">Active Connections</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${(avgStrength * 100).toFixed(1)}%</div>
+                                <div class="stat-label">Average Strength</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h2>Connection Types</h2>
+                        <div class="statistics-grid">
+                            ${Object.entries(typeCount).map(([type, count]) => `
+                                <div class="stat-card">
+                                    <div class="stat-value">${count}</div>
+                                    <div class="stat-label">${type} Relationships</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h2>Strong Connections</h2>
+                        <div class="connection-list">
+                            ${this.connections
+                                .filter(c => c.strength >= this.threshold)
+                                .sort((a, b) => b.strength - a.strength)
+                                .map(conn => `
+                                    <div class="connection-item">
+                                        <span>${conn.from.text} ↔ ${conn.to.text}</span>
+                                        <span>${conn.type} (${(conn.strength * 100).toFixed(1)}%)</span>
+                                    </div>
+                                `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                results.innerHTML = html;
+                modal.style.display = 'flex';
+            }
+        }
+
+        // Initialize the mind map
+        const mindMap = new MindMap();
+    </script>
+</body>
+</html>
