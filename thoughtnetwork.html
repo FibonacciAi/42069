@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thought Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/force-graph"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --background: #1a1a1a;
+            --surface: #2a2a2a;
+            --text: #ffffff;
+            --text-secondary: #9ca3af;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            position: relative;
+            flex-grow: 1;
+            max-width: 600px;
+        }
+
+        input, button, textarea {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #444;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+
+        #thought-input {
+            width: 100%;
+            padding-right: 3rem;
+        }
+
+        button {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #444;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        #graph-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .toolbar button {
+            padding: 0.5rem;
+        }
+
+        #status {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        .thought-node {
+            padding: 0.75rem 1.5rem;
+            background: var(--surface);
+            border-radius: 1rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .thought-node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            #controls {
+                flex-direction: column;
+                padding: 0.5rem;
+            }
+
+            .toolbar {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div class="input-wrapper">
+            <input type="text" id="thought-input" placeholder="Type a thought and press Enter...">
+        </div>
+        <div class="toolbar">
+            <button id="zoom-in" title="Zoom In">+</button>
+            <button id="zoom-out" title="Zoom Out">-</button>
+            <button id="center" title="Center View">⌖</button>
+            <button id="save" title="Save Network">💾</button>
+            <button id="load" title="Load Network">📂</button>
+            <button id="settings" title="Settings">⚙️</button>
+        </div>
+    </div>
+
+    <div id="graph-container"></div>
+    <div id="status">Ready</div>
+
+    <script>
+        class ThoughtNetwork {
+            constructor() {
+                this.nodes = [];
+                this.links = [];
+                this.apiKey = localStorage.getItem('openai-key');
+                this.graph = null;
+                this.status = document.getElementById('status');
+                
+                this.initGraph();
+                this.setupEventListeners();
+                this.loadFromLocalStorage();
+            }
+
+            initGraph() {
+                this.graph = ForceGraph()(document.getElementById('graph-container'))
+                    .graphData({ nodes: this.nodes, links: this.links })
+                    .nodeId('id')
+                    .nodeLabel('text')
+                    .nodeColor(() => '#3b82f6')
+                    .nodeRelSize(8)
+                    .linkWidth(link => link.strength * 5)
+                    .linkColor(link => `rgba(59, 130, 246, ${link.strength})`)
+                    .onNodeDragEnd(node => {
+                        this.saveToLocalStorage();
+                    })
+                    .onNodeClick(node => {
+                        this.showNodeDetails(node);
+                    });
+
+                // Enable WebGL for better performance
+                this.graph.nodeThreeObject(node => {
+                    const sprite = new THREE.Sprite(
+                        new THREE.SpriteMaterial({ color: '#3b82f6' })
+                    );
+                    sprite.scale.set(16, 16, 1);
+                    return sprite;
+                });
+            }
+
+            setupEventListeners() {
+                const input = document.getElementById('thought-input');
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.addThought(input.value);
+                        input.value = '';
+                    }
+                });
+
+                document.getElementById('zoom-in').onclick = () => this.graph.zoom(1.2);
+                document.getElementById('zoom-out').onclick = () => this.graph.zoom(0.8);
+                document.getElementById('center').onclick = () => this.graph.zoomToFit(400);
+                document.getElementById('save').onclick = () => this.saveToFile();
+                document.getElementById('load').onclick = () => this.loadFromFile();
+                document.getElementById('settings').onclick = () => this.showSettings();
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    this.graph.width(window.innerWidth);
+                    this.graph.height(window.innerHeight);
+                });
+            }
+
+            async addThought(text) {
+                if (!text.trim()) return;
+
+                const newNode = {
+                    id: Date.now(),
+                    text: text.trim(),
+                    timestamp: new Date().toISOString()
+                };
+
+                this.nodes.push(newNode);
+                this.status.textContent = 'Analyzing connections...';
+
+                if (this.apiKey) {
+                    await this.analyzeConnections(newNode);
+                }
+
+                this.graph.graphData({ nodes: this.nodes, links: this.links });
+                this.saveToLocalStorage();
+                this.status.textContent = 'Ready';
+            }
+
+            async analyzeConnections(newNode) {
+                for (const existingNode of this.nodes) {
+                    if (existingNode.id === newNode.id) continue;
+
+                    try {
+                        const strength = await this.getSemanticStrength(
+                            newNode.text,
+                            existingNode.text
+                        );
+
+                        if (strength > 0.2) {
+                            this.links.push({
+                                source: newNode.id,
+                                target: existingNode.id,
+                                strength
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Analysis error:', error);
+                    }
+                }
+            }
+
+            async getSemanticStrength(text1, text2) {
+                if (!this.apiKey) return 0;
+
+                try {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "gpt-4",
+                            messages: [{
+                                role: "system",
+                                content: `You are a semantic relationship analyzer. Analyze the relationship between concepts and return ONLY a number between 0 and 1.`
+                            }, {
+                                role: "user",
+                                content: `Rate the semantic relationship between: "${text1}" and "${text2}"`
+                            }],
+                            temperature: 0.2,
+                            max_tokens: 10
+                        })
+                    });
+
+                    const data = await response.json();
+                    return parseFloat(data.choices[0].message.content);
+                } catch (error) {
+                    console.error('API error:', error);
+                    return 0;
+                }
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem('thought-network', JSON.stringify({
+                    nodes: this.nodes,
+                    links: this.links
+                }));
+            }
+
+            loadFromLocalStorage() {
+                const saved = localStorage.getItem('thought-network');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    this.nodes = data.nodes;
+                    this.links = data.links;
+                    this.graph.graphData({ nodes: this.nodes, links: this.links });
+                }
+            }
+
+            saveToFile() {
+                const data = JSON.stringify({
+                    nodes: this.nodes,
+                    links: this.links
+                }, null, 2);
+                
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'thought-network.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            loadFromFile() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        const data = JSON.parse(event.target.result);
+                        this.nodes = data.nodes;
+                        this.links = data.links;
+                        this.graph.graphData({ nodes: this.nodes, links: this.links });
+                        this.saveToLocalStorage();
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            showSettings() {
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <h2>Settings</h2>
+                    <div style="margin: 1rem 0;">
+                        <label>OpenAI API Key:</label>
+                        <input type="password" id="api-key" value="${this.apiKey || ''}" 
+                               style="width: 100%; margin-top: 0.5rem;">
+                    </div>
+                    <button onclick="this.closest('.modal').remove();
+                                   document.querySelector('.modal-backdrop').remove();">
+                        Close
+                    </button>
+                `;
+
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop';
+                backdrop.onclick = () => {
+                    modal.remove();
+                    backdrop.remove();
+                };
+
+                document.body.appendChild(backdrop);
+                document.body.appendChild(modal);
+
+                const apiKeyInput = modal.querySelector('#api-key');
+                apiKeyInput.onchange = e => {
+                    this.apiKey = e.target.value;
+                    localStorage.setItem('openai-key', this.apiKey);
+                };
+            }
+        }
+
+        // Initialize the application
+        const network = new ThoughtNetwork();
+    </script>
+</body>
+</html>
