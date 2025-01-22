@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Market Risk Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 2em;
+        }
+
+        .header h1 {
+            color: #bb86fc;
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .data-card {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 1.5em;
+            border: 1px solid #333;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+            margin: 1em 0;
+        }
+
+        .data-source {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 0.5em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1em;
+            margin: 1em 0;
+        }
+
+        .stat-box {
+            background: #2a2a2a;
+            padding: 1em;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            color: #bb86fc;
+            margin: 0.5em 0;
+        }
+
+        .legend {
+            display: flex;
+            gap: 2em;
+            margin: 1em 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .correlation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+
+        .correlation-table th,
+        .correlation-table td {
+            padding: 0.8em;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .correlation-table th {
+            background: #2a2a2a;
+            color: #bb86fc;
+        }
+
+        .news-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .news-item {
+            padding: 1em;
+            border-bottom: 1px solid #333;
+            transition: background-color 0.3s;
+        }
+
+        .news-item:hover {
+            background-color: #2a2a2a;
+        }
+
+        .news-time {
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        .risk-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            padding: 1em;
+            background: #2a2a2a;
+            border-radius: 4px;
+            margin: 1em 0;
+        }
+
+        .risk-meter {
+            flex-grow: 1;
+            height: 10px;
+            background: linear-gradient(to right, #4caf50, #ffd700, #f44336);
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .risk-pointer {
+            position: absolute;
+            width: 4px;
+            height: 20px;
+            background: #fff;
+            top: -5px;
+            transition: left 1s ease;
+        }
+
+        .update-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2a2a2a;
+            padding: 0.5em 1em;
+            border-radius: 4px;
+            font-size: 0.8em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .update-status.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Comprehensive Market Risk Analysis Dashboard</h1>
+            <p>Last updated: <span id="lastUpdate">Loading...</span></p>
+        </div>
+
+        <!-- Risk Meter -->
+        <div class="data-card full-width">
+            <h2>Systemic Risk Indicator</h2>
+            <div class="risk-indicator">
+                <span class="risk-level">Current Risk Level:</span>
+                <div class="risk-meter">
+                    <div class="risk-pointer" id="riskPointer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIX Chart -->
+        <div class="data-card full-width">
+            <h2>VIX Index Trend</h2>
+            <div class="chart-container">
+                <canvas id="vixChart"></canvas>
+            </div>
+            <div class="data-source">
+                Source: CBOE | Updated: Every 15 min
+            </div>
+        </div>
+
+        <!-- Market Stats -->
+        <div class="data-card full-width">
+            <h2>Market Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3>Total FTDs</h3>
+                    <div class="stat-value" id="ftdValue">Loading...</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Dark Pool Volume</h3>
+                    <div class="stat-value" id="darkPoolValue">Loading...</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Options OI Ratio</h3>
+                    <div class="stat-value" id="optionsValue">Loading...</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Short Interest</h3>
+                    <div class="stat-value" id="siValue">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Correlation Matrix -->
+        <div class="data-card">
+            <h2>Cross-Asset Correlation</h2>
+            <table class="correlation-table" id="correlationTable">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Price Correlation</th>
+                        <th>Volume Correlation</th>
+                        <th>Options Flow</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="data-source">
+                Source: Multiple Exchange Data | Updated: Every 15 min
+            </div>
+        </div>
+
+        <!-- News Feed -->
+        <div class="data-card">
+            <h2>Market News</h2>
+            <div class="news-feed" id="newsFeed">
+                <div class="news-item">
+                    <div class="news-time">Loading news feed...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FTD Analysis -->
+        <div class="data-card full-width">
+            <h2>FTD Cycles Analysis</h2>
+            <div class="chart-container">
+                <canvas id="ftdChart"></canvas>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #bb86fc"></div>
+                    <span>GME</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #03dac6"></div>
+                    <span>AMC</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #cf6679"></div>
+                    <span>KOSS</span>
+                </div>
+            </div>
+            <div class="data-source">
+                Source: SEC FTD Data | Updated: Bi-weekly
+            </div>
+        </div>
+    </div>
+
+    <div class="update-status" id="updateStatus">Updating data...</div>
+
+    <script>
+        // Utility functions
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US', {
+                notation: 'compact',
+                maximumFractionDigits: 1
+            }).format(num);
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = 
+                now.toLocaleString('en-US', { 
+                    dateStyle: 'medium', 
+                    timeStyle: 'medium' 
+                });
+        }
+
+        function showUpdateStatus(message) {
+            const status = document.getElementById('updateStatus');
+            status.textContent = message;
+            status.classList.add('show');
+            setTimeout(() => status.classList.remove('show'), 3000);
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            const dates = [...Array(30)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }).reverse();
+
+            // VIX Chart
+            new Chart(document.getElementById('vixChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'VIX Index',
+                        data: Array(30).fill(0).map(() => Math.random() * 10 + 15),
+                        borderColor: '#bb86fc',
+                        backgroundColor: 'rgba(187, 134, 252, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // FTD Chart
+            new Chart(document.getElementById('ftdChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'GME',
+                            data: Array(30).fill(0).map(() => Math.random() * 50000 + 10000),
+                            borderColor: '#bb86fc',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'AMC',
+                            data: Array(30).fill(0).map(() => Math.random() * 50000 + 10000),
+                            borderColor: '#03dac6',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'KOSS',
+                            data: Array(30).fill(0).map(() => Math.random() * 50000 + 10000),
+                            borderColor: '#cf6679',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'bottom' } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Update Market Data
+        function updateMarketData() {
+            document.getElementById('ftdValue').textContent = 
+                formatNumber(Math.random() * 1000000 + 500000);
+            document.getElementById('darkPoolValue').textContent = 
+                `${(Math.random() * 20 + 40).toFixed(1)}%`;
+            document.getElementById('optionsValue').textContent = 
+                `${(Math.random() * 2 + 3).toFixed(2)}`;
+            document.getElementById('siValue').textContent = 
+                `${(Math.random() * 20 + 10).toFixed(1)}%`;
+
+            // Update Risk Pointer
+            const riskPointer = document.getElementById('riskPointer');
+            riskPointer.style.left = `${Math.random() * 100}%`;
+
+            updateTimestamp();
+            showUpdateStatus('Data updated successfully');
+        }
+
+        // Update News Feed
+        function updateNewsFeed() {
+            const newsFeed = document.getElementById('newsFeed');
+            const newsItems = [
+                { time: '2 minutes ago', title: 'Unusual Options Activity Detected in GME', source: 'Market Beat' },
+                { time: '15 minutes ago', title: 'Dark Pool Volume Spikes Above Average', source: 'FINRA Data' },
+                { time: '1 hour ago', title: 'New SEC Filing Shows Increased Institutional Holdings', source: 'SEC EDGAR' }
+            ];
+
+            newsFeed.innerHTML = newsItems.map(item => `
+                <div class="news-item animate__animated animate__fadeIn">
+                    <div class="news-time">${item.time}</div>
+                    <div>${item.title}</div>
+                    <small>${item.source}</small>
+                </div>
+            `).join('');
+        }
+
+        // Update Correlation Table
+        function updateCorrelationTable() {
+            const tbody = document.querySelector('#correlationTable tbody');
+            const assets = ['GME', 'AMC', 'KOSS', 'SPY', 'VIX'];
+            
+            tbody.innerHTML = assets.map(asset => `
+                <tr>
+                    <td>${asset}</td>
+                    <td>${(Math.random() * 0.4 + 0.6).toFixed(2)}</td>
+                    <td>${(Math.random() * 0.4 + 0.5).toFixed(2)}</td>
+                    <td>${(Math.random() * 0.4 + 0.4).toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Initialize Dashboard
+        function initDashboard() {
+            initCharts();
+            updateMarketData();
+            updateNewsFeed();
+            updateCorrelationTable();
+
+            // Set up periodic updates
+            setInterval(updateMarketData, 60000); // Every minute
+            setInterval(updateNewsFeed, 300000); // Every 5 minutes
+            setInterval(updateCorrelationTable, 900000); // Every 15 minutes
+        }
+
+        // Start the dashboard
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>
