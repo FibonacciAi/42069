@@ -1,4 +1,599 @@
-setupControls() {
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dual Tone Universal Matrix</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .ui-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .controls {
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            min-width: 250px;
+            max-width: 300px;
+        }
+
+        .controls.left {
+            border-left: 2px solid #4488ff;
+        }
+
+        .controls.right {
+            border-left: 2px solid #ff8844;
+        }
+
+        .harmony-display {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 15px 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            text-align: center;
+            pointer-events: auto;
+            border-bottom: 2px solid #88ff88;
+        }
+
+        .ratio-display {
+            font-size: 24px;
+            color: #88ff88;
+            margin: 5px 0;
+        }
+
+        .relationship-info {
+            font-size: 14px;
+            color: #aaffaa;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            width: 100%;
+        }
+
+        button:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .slider-container {
+            margin: 15px 0;
+        }
+
+        .slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 5px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+        }
+
+        .left .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #4488ff;
+            cursor: pointer;
+        }
+
+        .right .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ff8844;
+            cursor: pointer;
+        }
+
+        .frequency-display {
+            font-size: 28px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .left .frequency-display {
+            color: #4488ff;
+        }
+
+        .right .frequency-display {
+            color: #ff8844;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .frequency-input {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px;
+            border-radius: 4px;
+            width: 70%;
+            font-size: 16px;
+        }
+
+        .left .frequency-input {
+            color: #4488ff;
+        }
+
+        .right .frequency-input {
+            color: #ff8844;
+        }
+
+        .frequency-input:focus {
+            outline: none;
+        }
+
+        .left .frequency-input:focus {
+            border-color: #4488ff;
+        }
+
+        .right .frequency-input:focus {
+            border-color: #ff8844;
+        }
+
+        #setFrequencyBtn {
+            width: 30%;
+            padding: 8px;
+        }
+
+        .mode-select {
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .volume-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .sync-indicator {
+            text-align: center;
+            font-size: 12px;
+            color: #88ff88;
+            margin-top: 5px;
+        }
+
+        .separator {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="ui-container">
+        <div class="controls left">
+            <div class="frequency-display" id="freq1Display">432 Hz</div>
+            <div class="input-group">
+                <input type="number" id="frequency1Input" 
+                       min="20" max="20000" step="0.1" 
+                       placeholder="Enter Hz" 
+                       class="frequency-input">
+                <button id="setFrequency1Btn">Set</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" class="slider" id="frequency1Slider" 
+                       min="20" max="20000" value="432" step="0.1">
+            </div>
+            <div class="volume-container">
+                <label>Volume</label>
+                <input type="range" class="volume-slider" id="volume1Slider"
+                       min="0" max="1" value="0.5" step="0.01">
+            </div>
+            <div class="button-group">
+                <button id="play1Btn">Play/Stop</button>
+            </div>
+            <select class="mode-select" id="waveform1Select">
+                <option value="sine">Sine Wave</option>
+                <option value="triangle">Triangle Wave</option>
+                <option value="square">Square Wave</option>
+                <option value="sawtooth">Sawtooth Wave</option>
+            </select>
+            <div class="button-group">
+                <button id="octaveDown1Btn">Octave Down</button>
+                <button id="octaveUp1Btn">Octave Up</button>
+            </div>
+            <div class="button-group">
+                <button id="fineTuneDown1Btn">-1 Hz</button>
+                <button id="fineTuneUp1Btn">+1 Hz</button>
+            </div>
+        </div>
+
+        <div class="harmony-display">
+            <div class="ratio-display" id="ratioDisplay">1:1</div>
+            <div class="relationship-info" id="relationshipInfo">Perfect Unison</div>
+            <div class="button-group">
+                <button id="syncBtn">Sync Visualizations</button>
+            </div>
+            <select class="mode-select" id="geometrySelect">
+                <option value="metatron">Metatron's Cube</option>
+                <option value="flower">Flower of Life</option>
+                <option value="sri">Sri Yantra</option>
+                <option value="merkaba">Merkaba</option>
+                <option value="lissajous">Lissajous Pattern</option>
+            </select>
+            <div class="sync-indicator" id="syncStatus">Independent Visualization</div>
+        </div>
+
+        <div class="controls right">
+            <div class="frequency-display" id="freq2Display">528 Hz</div>
+            <div class="input-group">
+                <input type="number" id="frequency2Input" 
+                       min="20" max="20000" step="0.1" 
+                       placeholder="Enter Hz" 
+                       class="frequency-input">
+                <button id="setFrequency2Btn">Set</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" class="slider" id="frequency2Slider" 
+                       min="20" max="20000" value="528" step="0.1">
+            </div>
+            <div class="volume-container">
+                <label>Volume</label>
+                <input type="range" class="volume-slider" id="volume2Slider"
+                       min="0" max="1" value="0.5" step="0.01">
+            </div>
+            <div class="button-group">
+                <button id="play2Btn">Play/Stop</button>
+            </div>
+            <select class="mode-select" id="waveform2Select">
+                <option value="sine">Sine Wave</option>
+                <option value="triangle">Triangle Wave</option>
+                <option value="square">Square Wave</option>
+                <option value="sawtooth">Sawtooth Wave</option>
+            </select>
+            <div class="button-group">
+                <button id="octaveDown2Btn">Octave Down</button>
+                <button id="octaveUp2Btn">Octave Up</button>
+            </div>
+            <div class="button-group">
+                <button id="fineTuneDown2Btn">-1 Hz</button>
+                <button id="fineTuneUp2Btn">+1 Hz</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Previous code remains the same -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+<script>
+        class DualToneMatrix {
+            constructor() {
+                // Audio Context Setup
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.setupAudioNodes();
+                
+                // Three.js Setup
+                this.setupThreeJS();
+                
+                // State Management
+                this.state = {
+                    freq1: 432,
+                    freq2: 528,
+                    isPlaying1: false,
+                    isPlaying2: false,
+                    syncVisualization: false,
+                    currentGeometry: 'metatron',
+                    phase1: 0,
+                    phase2: 0,
+                    volume1: 0.5,
+                    volume2: 0.5
+                };
+
+                // Initialize Controls
+                this.setupControls();
+                this.setupEventListeners();
+                this.animate();
+            }
+
+            setupAudioNodes() {
+                // Oscillator 1
+                this.oscillator1 = this.audioCtx.createOscillator();
+                this.gainNode1 = this.audioCtx.createGain();
+                this.oscillator1.connect(this.gainNode1);
+                this.gainNode1.connect(this.audioCtx.destination);
+                this.oscillator1.frequency.setValueAtTime(this.state.freq1, this.audioCtx.currentTime);
+                this.gainNode1.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                this.oscillator1.start();
+
+                // Oscillator 2
+                this.oscillator2 = this.audioCtx.createOscillator();
+                this.gainNode2 = this.audioCtx.createGain();
+                this.oscillator2.connect(this.gainNode2);
+                this.gainNode2.connect(this.audioCtx.destination);
+                this.oscillator2.frequency.setValueAtTime(this.state.freq2, this.audioCtx.currentTime);
+                this.gainNode2.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                this.oscillator2.start();
+            }
+
+            setupThreeJS() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(this.renderer.domElement);
+
+                // Camera position
+                this.camera.position.z = 5;
+
+                // Controls
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+
+                // Create base geometry
+                this.createGeometry();
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                this.scene.add(ambientLight);
+                const pointLight = new THREE.PointLight(0xffffff, 1);
+                pointLight.position.set(5, 5, 5);
+                this.scene.add(pointLight);
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+            createGeometry() {
+                // Clear existing geometry
+                while(this.scene.children.length > 0) { 
+                    if(this.scene.children[0].type === "Light") break;
+                    this.scene.remove(this.scene.children[0]); 
+                }
+
+                switch(this.state.currentGeometry) {
+                    case 'metatron':
+                        this.createMetatronsCube();
+                        break;
+                    case 'flower':
+                        this.createFlowerOfLife();
+                        break;
+                    case 'sri':
+                        this.createSriYantra();
+                        break;
+                    case 'merkaba':
+                        this.createMerkaba();
+                        break;
+                    case 'lissajous':
+                        this.createLissajousGeometry();
+                        break;
+                }
+            }
+
+            createMetatronsCube() {
+                const geometry = new THREE.BufferGeometry();
+                const vertices = [];
+                const radius = 2;
+                
+                // Create 13 spheres for Metatron's Cube
+                const spherePositions = [
+                    [0, 0, 0],  // Center
+                    [1, 0, 0], [-1, 0, 0], [0, 1, 0], 
+                    [0, -1, 0], [0, 0, 1], [0, 0, -1],
+                    [1, 1, 1], [-1, 1, 1], [1, -1, 1],
+                    [-1, -1, 1], [1, 1, -1], [-1, 1, -1]
+                ];
+
+                this.geometryGroup = new THREE.Group();
+
+                // Create spheres
+                spherePositions.forEach((pos, index) => {
+                    const sphereGeom = new THREE.SphereGeometry(0.1, 16, 16);
+                    const material = new THREE.MeshPhongMaterial({
+                        color: index === 0 ? 0xffffff : 0x88aaff,
+                        emissive: 0x112244,
+                        shininess: 100
+                    });
+                    const sphere = new THREE.Mesh(sphereGeom, material);
+                    sphere.position.set(pos[0], pos[1], pos[2]);
+                    this.geometryGroup.add(sphere);
+                });
+
+                // Create lines connecting spheres
+                const linesMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0x4488ff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                for(let i = 1; i < spherePositions.length; i++) {
+                    for(let j = i + 1; j < spherePositions.length; j++) {
+                        const lineGeom = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(...spherePositions[i]),
+                            new THREE.Vector3(...spherePositions[j])
+                        ]);
+                        const line = new THREE.Line(lineGeom, linesMaterial);
+                        this.geometryGroup.add(line);
+                    }
+                }
+
+                this.scene.add(this.geometryGroup);
+            }
+
+            createFlowerOfLife() {
+                const geometry = new THREE.BufferGeometry();
+                const radius = 0.5;
+                const circles = [];
+                
+                // Create center circle
+                const centerCircle = new THREE.CircleGeometry(radius, 32);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: 0x4488ff,
+                    transparent: true,
+                    opacity: 0.5,
+                    side: THREE.DoubleSide
+                });
+
+                // Create pattern of circles
+                for(let ring = 0; ring < 3; ring++) {
+                    const numCircles = ring === 0 ? 1 : 6 * ring;
+                    for(let i = 0; i < numCircles; i++) {
+                        const angle = (i * 2 * Math.PI) / numCircles;
+                        const x = ring * radius * Math.cos(angle) * 2;
+                        const y = ring * radius * Math.sin(angle) * 2;
+                        
+                        const circle = new THREE.Mesh(centerCircle, material);
+                        circle.position.set(x, y, 0);
+                        circles.push(circle);
+                    }
+                }
+
+                this.geometryGroup = new THREE.Group();
+                circles.forEach(circle => this.geometryGroup.add(circle));
+                this.scene.add(this.geometryGroup);
+            }
+
+            createSriYantra() {
+                this.geometryGroup = new THREE.Group();
+                const material = new THREE.LineBasicMaterial({ 
+                    color: 0x4488ff,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                // Create triangles
+                const createTriangle = (size, y) => {
+                    const points = [];
+                    points.push(new THREE.Vector3(-size, y, 0));
+                    points.push(new THREE.Vector3(size, y, 0));
+                    points.push(new THREE.Vector3(0, y + size * 1.732, 0));
+                    points.push(new THREE.Vector3(-size, y, 0));
+                    
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    return new THREE.Line(geometry, material);
+                };
+
+                // Add upward and downward pointing triangles
+                for(let i = 0; i < 4; i++) {
+                    const size = 1 - i * 0.2;
+                    const upTriangle = createTriangle(size, -size/2);
+                    const downTriangle = createTriangle(size, size/2);
+                    downTriangle.rotation.z = Math.PI;
+                    this.geometryGroup.add(upTriangle);
+                    this.geometryGroup.add(downTriangle);
+                }
+
+                this.scene.add(this.geometryGroup);
+            }
+
+            createMerkaba() {
+                this.geometryGroup = new THREE.Group();
+                
+                // Create two tetrahedrons
+                const size = 1.5;
+                const tetraGeom = new THREE.TetrahedronGeometry(size);
+                
+                // Upward tetrahedron
+                const upMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x4488ff,
+                    transparent: true,
+                    opacity: 0.6,
+                    wireframe: true
+                });
+                const upTetra = new THREE.Mesh(tetraGeom, upMaterial);
+                
+                // Downward tetrahedron
+                const downMaterial = new THREE.MeshPhongMaterial({
+                    color: 0xff8844,
+                    transparent: true,
+                    opacity: 0.6,
+                    wireframe: true
+                });
+                const downTetra = new THREE.Mesh(tetraGeom, downMaterial);
+                downTetra.rotation.z = Math.PI;
+                
+                this.geometryGroup.add(upTetra);
+                this.geometryGroup.add(downTetra);
+                this.scene.add(this.geometryGroup);
+            }
+
+            createLissajousGeometry() {
+                const points = [];
+                const numPoints = 1000;
+                const size = 2;
+
+                for(let i = 0; i < numPoints; i++) {
+                    const t = (i / numPoints) * Math.PI * 2;
+                    const x = size * Math.sin(this.state.freq1 * t + this.state.phase1);
+                    const y = size * Math.sin(this.state.freq2 * t + this.state.phase2);
+                    points.push(new THREE.Vector3(x, y, 0));
+                }
+
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({ 
+                    color: 0x88ff88,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                this.geometryGroup = new THREE.Group();
+                const curve = new THREE.Line(geometry, material);
+                this.geometryGroup.add(curve);
+                this.scene.add(this.geometryGroup);
+            }
+            setupControls() {
                 // Get DOM elements
                 this.elements = {
                     freq1Display: document.getElementById('freq1Display'),
