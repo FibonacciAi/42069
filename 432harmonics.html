@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dual Tone Universal Matrix - Enhanced Visualization</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* CSS Variables for Theme Management */
+        :root {
+            --background-color: #121212;
+            --primary-color: #4488ff;
+            --secondary-color: #ff8844;
+            --accent-color: #88ff88;
+            --text-color: #ffffff;
+            --control-bg: rgba(0, 0, 0, 0.7);
+            --control-border: rgba(255, 255, 255, 0.2);
+            --button-hover-bg: rgba(255, 255, 255, 0.1);
+            --font-family: 'Arial', sans-serif;
+            --viz-bg: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --background-color: #121212;
+            --primary-color: #4488ff;
+            --secondary-color: #ff8844;
+            --accent-color: #88ff88;
+            --text-color: #ffffff;
+            --control-bg: rgba(0, 0, 0, 0.7);
+            --control-border: rgba(255, 255, 255, 0.2);
+            --button-hover-bg: rgba(255, 255, 255, 0.1);
+            --viz-bg: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Light Mode Variables */
+        [data-theme="light"] {
+            --background-color: #f0f0f0;
+            --primary-color: #4488ff;
+            --secondary-color: #ff8844;
+            --accent-color: #88ff88;
+            --text-color: #000000;
+            --control-bg: rgba(255, 255, 255, 0.9);
+            --control-border: rgba(0, 0, 0, 0.2);
+            --button-hover-bg: rgba(0, 0, 0, 0.1);
+            --viz-bg: rgba(255, 255, 255, 0.8);
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--background-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        canvas {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .ui-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .controls {
+            background: var(--control-bg);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            min-width: 250px;
+            max-width: 300px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .controls.left {
+            border-left: 2px solid var(--primary-color);
+        }
+
+        .controls.right {
+            border-left: 2px solid var(--secondary-color);
+        }
+
+        .frequency-display {
+            font-size: 24px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .left .frequency-display {
+            color: var(--primary-color);
+        }
+
+        .right .frequency-display {
+            color: var(--secondary-color);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+
+        .frequency-input {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--control-border);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--text-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .frequency-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(255,255,255,0.2);
+        }
+
+        button {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-color);
+            border: 1px solid var(--control-border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease, background 0.3s, border-color 0.3s;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+        }
+
+        button:hover {
+            background: var(--button-hover-bg);
+            border-color: var(--control-border);
+        }
+
+        .slider {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .volume-slider {
+            margin-top: 10px;
+        }
+
+        label {
+            font-size: 14px;
+            opacity: 0.8;
+            display: block;
+            margin-top: 10px;
+        }
+
+        .harmony-display {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--control-bg);
+            padding: 15px 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            text-align: center;
+            pointer-events: auto;
+            border-bottom: 2px solid var(--accent-color);
+            max-width: 300px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: background 0.3s, box-shadow 0.3s;
+            z-index: 2; /* Ensure it's above visualization */
+        }
+
+        .ratio-display {
+            font-size: 22px;
+            color: var(--accent-color);
+            margin: 5px 0;
+        }
+
+        .relationship-info {
+            font-size: 14px;
+            color: var(--accent-color);
+        }
+
+        .sync-indicator {
+            text-align: center;
+            font-size: 12px;
+            color: var(--accent-color);
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-select {
+            margin: 10px 0;
+            padding: 6px;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-color);
+            border: 1px solid var(--control-border);
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .mode-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(255,255,255,0.2);
+        }
+
+        .extras {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .extras label {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .presets-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 140px;
+            background-color: var(--control-bg);
+            color: var(--text-color);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%; /* Position above */
+            left: 50%;
+            margin-left: -70px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-switch {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--control-border);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--background-color);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-switch {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .slider-switch:before {
+            transform: translateX(26px);
+        }
+
+        /* Preset Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 20;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--control-bg);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 300px;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .preset-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .preset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .preset-item:last-child {
+            border-bottom: none;
+        }
+
+        .preset-name {
+            flex: 1;
+            text-align: left;
+        }
+
+        .preset-actions button {
+            margin-left: 5px;
+        }
+
+        /* Dark/Light Mode Toggle Button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle button {
+            padding: 6px 12px;
+            background: var(--control-bg);
+            border: 1px solid var(--control-border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .theme-toggle button:hover {
+            background: var(--button-hover-bg);
+        }
+
+        /* Visualization Overlay */
+        .visualization-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--viz-bg);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 90%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+
+        .visualization {
+            width: 100%;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--control-border);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .visualization canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .viz-title {
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            font-size: 14px;
+            color: var(--text-color);
+            background: rgba(0,0,0,0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .visualization-overlay {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .visualization {
+                width: 100%;
+                height: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .ui-container {
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 10px;
+            }
+
+            .controls {
+                width: 90%;
+                max-width: none;
+            }
+
+            .harmony-display {
+                width: 90%;
+                top: 10px;
+            }
+
+            .visualization {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <span>Dark Mode</span>
+        <label class="switch">
+            <input type="checkbox" id="themeSwitch">
+            <span class="slider-switch"></span>
+        </label>
+    </div>
+
+    <!-- Preset Modal -->
+    <div class="modal" id="presetModal" aria-hidden="true" role="dialog" aria-labelledby="presetModalTitle">
+        <div class="modal-header">
+            <h2 id="presetModalTitle">Manage Presets</h2>
+            <button class="close-modal" id="closePresetModal" aria-label="Close">&times;</button>
+        </div>
+        <div class="preset-list" id="presetList">
+            <!-- Preset items will be dynamically added here -->
+        </div>
+        <div class="input-group">
+            <input type="text" id="newPresetName" class="frequency-input" placeholder="Preset Name">
+            <button id="savePresetBtn">Save</button>
+        </div>
+    </div>
+
+    <div class="ui-container">
+        <!-- LEFT CONTROLS -->
+        <div class="controls left" aria-labelledby="leftControlsTitle">
+            <h3 id="leftControlsTitle">Tone 1 Controls</h3>
+            <div class="frequency-display" id="freq1Display">432 Hz</div>
+            <div class="input-group">
+                <input 
+                    type="number" 
+                    id="frequency1Input" 
+                    class="frequency-input" 
+                    min="20" max="20000" step="1" 
+                    placeholder="Enter Hz"
+                    aria-label="Frequency 1 Input"
+                >
+                <button id="setFrequency1Btn" class="tooltip" aria-label="Set Frequency 1">
+                    Set
+                    <span class="tooltiptext">Set Frequency</span>
+                </button>
+            </div>
+            <input 
+                type="range" 
+                class="slider" 
+                id="frequency1Slider" 
+                min="20" 
+                max="20000" 
+                value="432" 
+                step="1"
+                aria-label="Frequency 1 Slider"
+            >
+            <label for="volume1Slider">Volume</label>
+            <input 
+                type="range" 
+                class="slider volume-slider" 
+                id="volume1Slider" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                value="0.5"
+                aria-label="Volume 1 Slider"
+            >
+            <div class="button-group">
+                <button id="play1Btn" class="tooltip" aria-label="Play or Stop Tone 1">Play
+                    <span class="tooltiptext">Toggle Tone 1</span>
+                </button>
+            </div>
+            <select class="mode-select" id="waveform1Select" aria-label="Waveform 1 Select">
+                <option value="sine">Sine Wave</option>
+                <option value="triangle">Triangle Wave</option>
+                <option value="square">Square Wave</option>
+                <option value="sawtooth">Sawtooth Wave</option>
+            </select>
+            <div class="button-group">
+                <button id="octaveDown1Btn" class="tooltip" aria-label="Decrease Octave">Octave -
+                    <span class="tooltiptext">Decrease Octave</span>
+                </button>
+                <button id="octaveUp1Btn" class="tooltip" aria-label="Increase Octave">Octave +
+                    <span class="tooltiptext">Increase Octave</span>
+                </button>
+            </div>
+            <div class="button-group">
+                <button id="fineTuneDown1Btn" class="tooltip" aria-label="Decrease Frequency by 1 Hz">-1 Hz
+                    <span class="tooltiptext">Decrease Frequency by 1 Hz</span>
+                </button>
+                <button id="fineTuneUp1Btn" class="tooltip" aria-label="Increase Frequency by 1 Hz">+1 Hz
+                    <span class="tooltiptext">Increase Frequency by 1 Hz</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CENTRAL DISPLAY -->
+        <div class="harmony-display" aria-labelledby="harmonyDisplayTitle">
+            <h3 id="harmonyDisplayTitle">Harmony Display</h3>
+            <div class="ratio-display" id="ratioDisplay">1:1</div>
+            <div class="relationship-info" id="relationshipInfo">Perfect Unison</div>
+            <div class="button-group">
+                <button id="syncBtn" class="tooltip" aria-label="Toggle Sync Visualization">Sync Visualization
+                    <span class="tooltiptext">Toggle Synchronize Visualizations</span>
+                </button>
+            </div>
+            <div class="sync-indicator" id="syncStatus">Independent Visualization</div>
+
+            <!-- EXTRAS: Binaural Toggle & Presets -->
+            <div class="extras">
+                <label class="tooltip" aria-label="Toggle Binaural Mode">
+                    <input type="checkbox" id="binauralToggle">
+                    Binaural Mode
+                    <span class="tooltiptext">Enable Stereo Panning for Binaural Effect</span>
+                </label>
+
+                <div class="presets-group">
+                    <button class="presetBtn tooltip" data-interval="1.25" aria-label="Major Third Preset">Major Third (5:4)
+                        <span class="tooltiptext">Set Interval to Major Third (5:4)</span>
+                    </button>
+                    <button class="presetBtn tooltip" data-interval="1.3333" aria-label="Perfect Fourth Preset">Perfect Fourth (4:3)
+                        <span class="tooltiptext">Set Interval to Perfect Fourth (4:3)</span>
+                    </button>
+                    <button class="presetBtn tooltip" data-interval="1.5" aria-label="Perfect Fifth Preset">Perfect Fifth (3:2)
+                        <span class="tooltiptext">Set Interval to Perfect Fifth (3:2)</span>
+                    </button>
+                    <button class="presetBtn tooltip" data-interval="2" aria-label="Octave Preset">Octave (2:1)
+                        <span class="tooltiptext">Set Interval to Octave (2:1)</span>
+                    </button>
+                    <button id="managePresetsBtn" class="tooltip" aria-label="Manage Presets">Manage Presets
+                        <span class="tooltiptext">Open Preset Manager</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT CONTROLS -->
+        <div class="controls right" aria-labelledby="rightControlsTitle">
+            <h3 id="rightControlsTitle">Tone 2 Controls</h3>
+            <div class="frequency-display" id="freq2Display">528 Hz</div>
+            <div class="input-group">
+                <input 
+                    type="number" 
+                    id="frequency2Input" 
+                    class="frequency-input" 
+                    min="20" max="20000" step="1" 
+                    placeholder="Enter Hz"
+                    aria-label="Frequency 2 Input"
+                >
+                <button id="setFrequency2Btn" class="tooltip" aria-label="Set Frequency 2">
+                    Set
+                    <span class="tooltiptext">Set Frequency</span>
+                </button>
+            </div>
+            <input 
+                type="range" 
+                class="slider" 
+                id="frequency2Slider" 
+                min="20" 
+                max="20000" 
+                value="528" 
+                step="1"
+                aria-label="Frequency 2 Slider"
+            >
+            <label for="volume2Slider">Volume</label>
+            <input 
+                type="range" 
+                class="slider volume-slider" 
+                id="volume2Slider" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                value="0.5"
+                aria-label="Volume 2 Slider"
+            >
+            <div class="button-group">
+                <button id="play2Btn" class="tooltip" aria-label="Play or Stop Tone 2">Play
+                    <span class="tooltiptext">Toggle Tone 2</span>
+                </button>
+            </div>
+            <select class="mode-select" id="waveform2Select" aria-label="Waveform 2 Select">
+                <option value="sine">Sine Wave</option>
+                <option value="triangle">Triangle Wave</option>
+                <option value="square">Square Wave</option>
+                <option value="sawtooth">Sawtooth Wave</option>
+            </select>
+            <div class="button-group">
+                <button id="octaveDown2Btn" class="tooltip" aria-label="Decrease Octave">Octave -
+                    <span class="tooltiptext">Decrease Octave</span>
+                </button>
+                <button id="octaveUp2Btn" class="tooltip" aria-label="Increase Octave">Octave +
+                    <span class="tooltiptext">Increase Octave</span>
+                </button>
+            </div>
+            <div class="button-group">
+                <button id="fineTuneDown2Btn" class="tooltip" aria-label="Decrease Frequency by 1 Hz">-1 Hz
+                    <span class="tooltiptext">Decrease Frequency by 1 Hz</span>
+                </button>
+                <button id="fineTuneUp2Btn" class="tooltip" aria-label="Increase Frequency by 1 Hz">+1 Hz
+                    <span class="tooltiptext">Increase Frequency by 1 Hz</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization Overlay -->
+    <div class="visualization-overlay">
+        <!-- Central Lissajous Curve Visualization -->
+        <div class="visualization" id="lissajousViz">
+            <div class="viz-title">Lissajous Curve</div>
+            <canvas id="lissajousCanvas"></canvas>
+        </div>
+        <!-- Waveform Visualization -->
+        <div class="visualization" id="waveformViz">
+            <div class="viz-title">Waveforms</div>
+            <canvas id="waveformCanvas"></canvas>
+        </div>
+        <!-- Frequency Spectrum Visualization -->
+        <div class="visualization" id="spectrumViz">
+            <div class="viz-title">Frequency Spectrum</div>
+            <canvas id="spectrumCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- FFT.js Library for Frequency Analysis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fft.js/0.3.0/fft.min.js"></script>
+
+    <script>
+    class DualToneMatrix {
+        constructor() {
+            // Basic State
+            this.state = {
+                freq1: 432,
+                freq2: 528,
+                volume1: 0.5,
+                volume2: 0.5,
+                isPlaying1: false,
+                isPlaying2: false,
+                phase1: 0,
+                phase2: 0,
+                syncVisualization: false,
+                binauralMode: false,
+                presets: {}
+            };
+
+            // Audio Setup
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            this.audioReady = false;
+
+            // Analyser Nodes for Visualization
+            this.analyser1 = this.audioCtx.createAnalyser();
+            this.analyser2 = this.audioCtx.createAnalyser();
+            this.analyserCombined = this.audioCtx.createAnalyser();
+            this.analyser1.fftSize = 2048;
+            this.analyser2.fftSize = 2048;
+            this.analyserCombined.fftSize = 2048;
+            this.bufferLength = this.analyserCombined.frequencyBinCount;
+            this.dataArray1 = new Uint8Array(this.bufferLength);
+            this.dataArray2 = new Uint8Array(this.bufferLength);
+            this.dataArrayCombined = new Uint8Array(this.bufferLength);
+
+            // Pan Nodes for binaural
+            this.panner1 = this.audioCtx.createStereoPanner();
+            this.panner2 = this.audioCtx.createStereoPanner();
+
+            // Effects Nodes
+            this.reverb = this.audioCtx.createConvolver();
+            this.delay = this.audioCtx.createDelay();
+            this.delay.delayTime.value = 0.2; // 200ms delay
+
+            // Load impulse response for reverb (simple white noise as placeholder)
+            this.loadReverb();
+
+            this.setupAudioNodes();
+            this.setupUIElements();
+            this.setupVisualizationElements();
+            this.setupEventListeners();
+            this.updateUI(); // Initial UI update
+
+            // Start render loops
+            this.animateVisualizations();
+        }
+
+        loadReverb() {
+            // For simplicity, we'll use a generated impulse response
+            const length = this.audioCtx.sampleRate * 3;
+            const impulse = this.audioCtx.createBuffer(2, length, this.audioCtx.sampleRate);
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < length; i++) {
+                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+                }
+            }
+            this.reverb.buffer = impulse;
+        }
+
+        setupAudioNodes() {
+            // Oscillator 1
+            this.osc1 = this.audioCtx.createOscillator();
+            this.gain1 = this.audioCtx.createGain();
+            // Chain: osc1 -> gain1 -> panner1 -> analyser1 -> delay -> reverb -> destination
+            this.osc1.connect(this.gain1).connect(this.panner1).connect(this.analyser1).connect(this.delay).connect(this.reverb).connect(this.audioCtx.destination);
+            this.osc1.frequency.value = this.state.freq1;
+            this.gain1.gain.value = 0;
+            this.osc1.start();
+
+            // Oscillator 2
+            this.osc2 = this.audioCtx.createOscillator();
+            this.gain2 = this.audioCtx.createGain();
+            // Chain: osc2 -> gain2 -> panner2 -> analyser2 -> delay -> reverb -> destination
+            this.osc2.connect(this.gain2).connect(this.panner2).connect(this.analyser2).connect(this.delay).connect(this.reverb).connect(this.audioCtx.destination);
+            this.osc2.frequency.value = this.state.freq2;
+            this.gain2.gain.value = 0;
+            this.osc2.start();
+
+            // Combined Analyser for Spectrum
+            const merger = this.audioCtx.createChannelMerger(2);
+            this.osc1.connect(merger, 0, 0);
+            this.osc2.connect(merger, 0, 1);
+            merger.connect(this.analyserCombined);
+        }
+
+        resumeAudioContext() {
+            if (!this.audioReady && this.audioCtx.state === "suspended") {
+                this.audioCtx.resume();
+            }
+            this.audioReady = true;
+        }
+
+        setupUIElements() {
+            this.ui = {
+                freq1Display: document.getElementById('freq1Display'),
+                freq2Display: document.getElementById('freq2Display'),
+                frequency1Slider: document.getElementById('frequency1Slider'),
+                frequency2Slider: document.getElementById('frequency2Slider'),
+                frequency1Input: document.getElementById('frequency1Input'),
+                frequency2Input: document.getElementById('frequency2Input'),
+                volume1Slider: document.getElementById('volume1Slider'),
+                volume2Slider: document.getElementById('volume2Slider'),
+                play1Btn: document.getElementById('play1Btn'),
+                play2Btn: document.getElementById('play2Btn'),
+                waveform1Select: document.getElementById('waveform1Select'),
+                waveform2Select: document.getElementById('waveform2Select'),
+                octaveDown1Btn: document.getElementById('octaveDown1Btn'),
+                octaveUp1Btn: document.getElementById('octaveUp1Btn'),
+                fineTuneDown1Btn: document.getElementById('fineTuneDown1Btn'),
+                fineTuneUp1Btn: document.getElementById('fineTuneUp1Btn'),
+                octaveDown2Btn: document.getElementById('octaveDown2Btn'),
+                octaveUp2Btn: document.getElementById('octaveUp2Btn'),
+                fineTuneDown2Btn: document.getElementById('fineTuneDown2Btn'),
+                fineTuneUp2Btn: document.getElementById('fineTuneUp2Btn'),
+                ratioDisplay: document.getElementById('ratioDisplay'),
+                relationshipInfo: document.getElementById('relationshipInfo'),
+                syncBtn: document.getElementById('syncBtn'),
+                syncStatus: document.getElementById('syncStatus'),
+                binauralToggle: document.getElementById('binauralToggle'),
+                presetButtons: document.querySelectorAll('.presetBtn'),
+                managePresetsBtn: document.getElementById('managePresetsBtn'),
+                presetModal: document.getElementById('presetModal'),
+                closePresetModal: document.getElementById('closePresetModal'),
+                presetList: document.getElementById('presetList'),
+                savePresetBtn: document.getElementById('savePresetBtn'),
+                newPresetName: document.getElementById('newPresetName'),
+                themeSwitch: document.getElementById('themeSwitch')
+            };
+        }
+
+        setupVisualizationElements() {
+            // Lissajous Curve Canvas
+            this.lissajousCanvas = document.getElementById('lissajousCanvas');
+            this.lissajousCtx = this.lissajousCanvas.getContext('2d');
+            this.resizeCanvas(this.lissajousCanvas);
+
+            // Waveform Canvas
+            this.waveformCanvas = document.getElementById('waveformCanvas');
+            this.waveformCtx = this.waveformCanvas.getContext('2d');
+            this.resizeCanvas(this.waveformCanvas);
+
+            // Frequency Spectrum Canvas
+            this.spectrumCanvas = document.getElementById('spectrumCanvas');
+            this.spectrumCtx = this.spectrumCanvas.getContext('2d');
+            this.resizeCanvas(this.spectrumCanvas);
+
+            window.addEventListener('resize', () => {
+                this.resizeCanvas(this.lissajousCanvas);
+                this.resizeCanvas(this.waveformCanvas);
+                this.resizeCanvas(this.spectrumCanvas);
+            });
+        }
+
+        resizeCanvas(canvas) {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+
+        setupEventListeners() {
+            // Frequency sliders with debouncing
+            this.ui.frequency1Slider.addEventListener('input', this.debounce((e) => {
+                this.updateFrequency(1, parseFloat(e.target.value));
+            }, 100));
+
+            this.ui.frequency2Slider.addEventListener('input', this.debounce((e) => {
+                this.updateFrequency(2, parseFloat(e.target.value));
+            }, 100));
+
+            // Frequency inputs with debouncing
+            this.ui.setFrequency1Btn.addEventListener('click', () => {
+                const val = parseFloat(this.ui.frequency1Input.value);
+                if (!isNaN(val)) this.updateFrequency(1, val);
+            });
+            this.ui.setFrequency2Btn.addEventListener('click', () => {
+                const val = parseFloat(this.ui.frequency2Input.value);
+                if (!isNaN(val)) this.updateFrequency(2, val);
+            });
+
+            // Volume sliders
+            this.ui.volume1Slider.addEventListener('input', (e) => {
+                this.state.volume1 = parseFloat(e.target.value);
+                if (this.state.isPlaying1) {
+                    this.gain1.gain.setValueAtTime(this.state.volume1, this.audioCtx.currentTime);
+                }
+            });
+            this.ui.volume2Slider.addEventListener('input', (e) => {
+                this.state.volume2 = parseFloat(e.target.value);
+                if (this.state.isPlaying2) {
+                    this.gain2.gain.setValueAtTime(this.state.volume2, this.audioCtx.currentTime);
+                }
+            });
+
+            // Play/Stop buttons
+            this.ui.play1Btn.addEventListener('click', () => this.toggleTone(1));
+            this.ui.play2Btn.addEventListener('click', () => this.toggleTone(2));
+
+            // Waveform selectors
+            this.ui.waveform1Select.addEventListener('change', (e) => {
+                this.osc1.type = e.target.value;
+                // No need to update canvas color since visualizations are canvas-based
+            });
+            this.ui.waveform2Select.addEventListener('change', (e) => {
+                this.osc2.type = e.target.value;
+                // No need to update canvas color since visualizations are canvas-based
+            });
+
+            // Sync visualization
+            this.ui.syncBtn.addEventListener('click', () => {
+                this.state.syncVisualization = !this.state.syncVisualization;
+                this.ui.syncStatus.textContent = this.state.syncVisualization
+                    ? "Synchronized Visualization"
+                    : "Independent Visualization";
+            });
+
+            // Binaural toggle
+            this.ui.binauralToggle.addEventListener('change', (e) => {
+                this.state.binauralMode = e.target.checked;
+                this.applyBinauralMode();
+            });
+
+            // Preset buttons
+            this.ui.presetButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const interval = parseFloat(btn.dataset.interval);
+                    if (!isNaN(interval)) {
+                        // freq2 = freq1 * interval
+                        const newFreq2 = this.state.freq1 * interval;
+                        this.updateFrequency(2, newFreq2);
+                    }
+                });
+            });
+
+            // Manage presets
+            this.ui.managePresetsBtn.addEventListener('click', () => {
+                this.openPresetModal();
+            });
+            this.ui.closePresetModal.addEventListener('click', () => {
+                this.closePresetModal();
+            });
+            this.ui.savePresetBtn.addEventListener('click', () => {
+                this.saveCurrentPreset();
+            });
+
+            // Fine-tuning & Octaves
+            this.ui.fineTuneDown1Btn.addEventListener('click', () => {
+                this.updateFrequency(1, this.state.freq1 - 1);
+            });
+            this.ui.fineTuneUp1Btn.addEventListener('click', () => {
+                this.updateFrequency(1, this.state.freq1 + 1);
+            });
+            this.ui.octaveDown1Btn.addEventListener('click', () => {
+                this.updateFrequency(1, this.state.freq1 / 2);
+            });
+            this.ui.octaveUp1Btn.addEventListener('click', () => {
+                this.updateFrequency(1, this.state.freq1 * 2);
+            });
+
+            this.ui.fineTuneDown2Btn.addEventListener('click', () => {
+                this.updateFrequency(2, this.state.freq2 - 1);
+            });
+            this.ui.fineTuneUp2Btn.addEventListener('click', () => {
+                this.updateFrequency(2, this.state.freq2 + 1);
+            });
+            this.ui.octaveDown2Btn.addEventListener('click', () => {
+                this.updateFrequency(2, this.state.freq2 / 2);
+            });
+            this.ui.octaveUp2Btn.addEventListener('click', () => {
+                this.updateFrequency(2, this.state.freq2 * 2);
+            });
+
+            // Theme toggle
+            this.ui.themeSwitch.addEventListener('change', (e) => {
+                const theme = e.target.checked ? 'light' : 'dark';
+                document.body.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            });
+
+            // Load saved theme
+            this.loadSavedTheme();
+        }
+
+        // Debounce function to limit the rate of function calls
+        debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func.apply(this, args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        toggleTone(oscNum) {
+            // Resume audio if needed
+            this.resumeAudioContext();
+
+            if (oscNum === 1) {
+                this.state.isPlaying1 = !this.state.isPlaying1;
+                this.gain1.gain.setValueAtTime(
+                    this.state.isPlaying1 ? this.state.volume1 : 0,
+                    this.audioCtx.currentTime
+                );
+                this.ui.play1Btn.textContent = this.state.isPlaying1 ? 'Stop' : 'Play';
+            } else {
+                this.state.isPlaying2 = !this.state.isPlaying2;
+                this.gain2.gain.setValueAtTime(
+                    this.state.isPlaying2 ? this.state.volume2 : 0,
+                    this.audioCtx.currentTime
+                );
+                this.ui.play2Btn.textContent = this.state.isPlaying2 ? 'Stop' : 'Play';
+            }
+        }
+
+        updateFrequency(oscNum, val) {
+            const freq = Math.max(20, Math.min(20000, val));
+            if (oscNum === 1) {
+                this.state.freq1 = freq;
+                this.osc1.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+            } else {
+                this.state.freq2 = freq;
+                this.osc2.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+            }
+            this.updateUI();
+        }
+
+        // Apply panning if binaural mode is on
+        applyBinauralMode() {
+            if (this.state.binauralMode) {
+                // Pan left & right
+                this.panner1.pan.setValueAtTime(-1, this.audioCtx.currentTime);
+                this.panner2.pan.setValueAtTime(+1, this.audioCtx.currentTime);
+            } else {
+                // Center both
+                this.panner1.pan.setValueAtTime(0, this.audioCtx.currentTime);
+                this.panner2.pan.setValueAtTime(0, this.audioCtx.currentTime);
+            }
+        }
+
+        updateUI() {
+            // Display
+            this.ui.freq1Display.textContent = `${this.state.freq1.toFixed(1)} Hz`;
+            this.ui.freq2Display.textContent = `${this.state.freq2.toFixed(1)} Hz`;
+
+            // Sliders
+            this.ui.frequency1Slider.value = this.state.freq1;
+            this.ui.frequency2Slider.value = this.state.freq2;
+            this.ui.frequency1Input.value = this.state.freq1;
+            this.ui.frequency2Input.value = this.state.freq2;
+
+            // Ratio and relationship
+            const ratio = this.state.freq1 / this.state.freq2;
+            const [num, den] = this.simplifyRatio(ratio);
+            this.ui.ratioDisplay.textContent = `${num}:${den}`;
+            this.ui.relationshipInfo.textContent = this.getHarmonicRelationship(ratio);
+        }
+
+        // Simple ratio finder
+        simplifyRatio(ratio) {
+            const maxDen = 16;
+            let bestNum = 1, bestDen = 1;
+            let minError = Math.abs(ratio - 1);
+            for (let d = 1; d <= maxDen; d++) {
+                const n = Math.round(ratio * d);
+                const err = Math.abs(ratio - n / d);
+                if (err < minError) {
+                    minError = err;
+                    bestNum = n;
+                    bestDen = d;
+                }
+            }
+            return [bestNum, bestDen];
+        }
+
+        // Approx relationship
+        getHarmonicRelationship(ratio) {
+            const relationships = {
+                1: "Perfect Unison",
+                1.25: "Major Third",
+                1.3333: "Perfect Fourth",
+                1.5: "Perfect Fifth",
+                1.6666: "Major Sixth",
+                1.875: "Major Seventh",
+                2: "Perfect Octave"
+            };
+            let closest = Object.entries(relationships).reduce((prev, curr) => {
+                return Math.abs(curr[0] - ratio) < Math.abs(prev[0] - ratio) ? curr : prev;
+            });
+            return closest[1];
+        }
+
+        // Real-time Visualization Updates
+        animateVisualizations() {
+            requestAnimationFrame(() => this.animateVisualizations());
+
+            this.drawLissajous();
+            this.drawWaveforms();
+            this.drawFrequencySpectrum();
+        }
+
+        // Lissajous Curve Drawing
+        drawLissajous() {
+            const ctx = this.lissajousCtx;
+            ctx.clearRect(0, 0, this.lissajousCanvas.width, this.lissajousCanvas.height);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const numPoints = 1000;
+            for (let i = 0; i < numPoints; i++) {
+                const t = (i / numPoints) * Math.PI * 2;
+                const x = (Math.sin(this.state.freq1 * t + this.state.phase1) + 1) * (this.lissajousCanvas.width / 4) + this.lissajousCanvas.width / 4;
+                const y = (Math.sin(this.state.freq2 * t + this.state.phase2) + 1) * (this.lissajousCanvas.height / 4) + this.lissajousCanvas.height / 4;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        // Waveform Drawing
+        drawWaveforms() {
+            const ctx = this.waveformCtx;
+            ctx.clearRect(0, 0, this.waveformCanvas.width, this.waveformCanvas.height);
+
+            // Get time-domain data
+            this.analyser1.getByteTimeDomainData(this.dataArray1);
+            this.analyser2.getByteTimeDomainData(this.dataArray2);
+            this.analyserCombined.getByteTimeDomainData(this.dataArrayCombined);
+
+            // Draw Tone 1 Waveform
+            ctx.strokeStyle = 'rgba(68, 136, 255, 0.7)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 0; i < this.bufferLength; i++) {
+                const v = this.dataArray1[i] / 128.0;
+                const y = v * this.waveformCanvas.height / 2;
+                if (i === 0) {
+                    ctx.moveTo(i * (this.waveformCanvas.width / this.bufferLength), y);
+                } else {
+                    ctx.lineTo(i * (this.waveformCanvas.width / this.bufferLength), y);
+                }
+            }
+            ctx.stroke();
+
+            // Draw Tone 2 Waveform
+            ctx.strokeStyle = 'rgba(255, 136, 68, 0.7)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 0; i < this.bufferLength; i++) {
+                const v = this.dataArray2[i] / 128.0;
+                const y = v * this.waveformCanvas.height / 2;
+                if (i === 0) {
+                    ctx.moveTo(i * (this.waveformCanvas.width / this.bufferLength), y);
+                } else {
+                    ctx.lineTo(i * (this.waveformCanvas.width / this.bufferLength), y);
+                }
+            }
+            ctx.stroke();
+
+            // Draw Combined Waveform
+            ctx.strokeStyle = '#88ff88';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < this.bufferLength; i++) {
+                const combined = this.dataArrayCombined[i];
+                const v = combined / 128.0;
+                const y = v * this.waveformCanvas.height / 2;
+                if (i === 0) {
+                    ctx.moveTo(i * (this.waveformCanvas.width / this.bufferLength), y);
+                } else {
+                    ctx.lineTo(i * (this.waveformCanvas.width / this.bufferLength), y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        // Frequency Spectrum Drawing
+        drawFrequencySpectrum() {
+            const ctx = this.spectrumCtx;
+            ctx.clearRect(0, 0, this.spectrumCanvas.width, this.spectrumCanvas.height);
+
+            // Get frequency data
+            this.analyserCombined.getByteFrequencyData(this.dataArrayCombined);
+
+            const barWidth = (this.spectrumCanvas.width / this.bufferLength) * 2.5;
+            let x = 0;
+
+            for(let i = 0; i < this.bufferLength; i++) {
+                const barHeight = this.dataArrayCombined[i] / 2;
+                ctx.fillStyle = 'rgba(68, 136, 255, 0.8)';
+                ctx.fillRect(x, this.spectrumCanvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+
+        // Preset Management
+        openPresetModal() {
+            this.ui.presetModal.classList.add('active');
+            this.ui.presetModal.setAttribute('aria-hidden', 'false');
+            this.renderPresetList();
+        }
+
+        closePresetModal() {
+            this.ui.presetModal.classList.remove('active');
+            this.ui.presetModal.setAttribute('aria-hidden', 'true');
+        }
+
+        saveCurrentPreset() {
+            const presetName = this.ui.newPresetName.value.trim();
+            if (presetName === "") {
+                alert("Please enter a valid preset name.");
+                return;
+            }
+            if (this.state.presets[presetName]) {
+                if (!confirm("Preset already exists. Overwrite?")) {
+                    return;
+                }
+            }
+            this.state.presets[presetName] = {
+                freq1: this.state.freq1,
+                freq2: this.state.freq2,
+                volume1: this.state.volume1,
+                volume2: this.state.volume2,
+                waveform1: this.osc1.type,
+                waveform2: this.osc2.type
+            };
+            this.savePresetsToLocalStorage();
+            this.renderPresetList();
+            this.ui.newPresetName.value = "";
+        }
+
+        renderPresetList() {
+            const presetList = this.ui.presetList;
+            presetList.innerHTML = "";
+
+            for (const [name, preset] of Object.entries(this.state.presets)) {
+                const presetItem = document.createElement('div');
+                presetItem.classList.add('preset-item');
+
+                const presetName = document.createElement('span');
+                presetName.classList.add('preset-name');
+                presetName.textContent = name;
+
+                const presetActions = document.createElement('div');
+                presetActions.classList.add('preset-actions');
+
+                const loadBtn = document.createElement('button');
+                loadBtn.textContent = 'Load';
+                loadBtn.addEventListener('click', () => this.loadPreset(name));
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.addEventListener('click', () => this.deletePreset(name));
+
+                presetActions.appendChild(loadBtn);
+                presetActions.appendChild(deleteBtn);
+
+                presetItem.appendChild(presetName);
+                presetItem.appendChild(presetActions);
+
+                presetList.appendChild(presetItem);
+            }
+        }
+
+        loadPreset(name) {
+            const preset = this.state.presets[name];
+            if (preset) {
+                this.updateFrequency(1, preset.freq1);
+                this.updateFrequency(2, preset.freq2);
+                this.state.volume1 = preset.volume1;
+                this.state.volume2 = preset.volume2;
+                this.ui.volume1Slider.value = preset.volume1;
+                this.ui.volume2Slider.value = preset.volume2;
+                this.gain1.gain.setValueAtTime(preset.volume1, this.audioCtx.currentTime);
+                this.gain2.gain.setValueAtTime(preset.volume2, this.audioCtx.currentTime);
+                this.osc1.type = preset.waveform1;
+                this.osc2.type = preset.waveform2;
+                this.ui.waveform1Select.value = preset.waveform1;
+                this.ui.waveform2Select.value = preset.waveform2;
+                this.closePresetModal();
+            }
+        }
+
+        deletePreset(name) {
+            if (confirm(`Are you sure you want to delete the preset "${name}"?`)) {
+                delete this.state.presets[name];
+                this.savePresetsToLocalStorage();
+                this.renderPresetList();
+            }
+        }
+
+        savePresetsToLocalStorage() {
+            localStorage.setItem('dualTonePresets', JSON.stringify(this.state.presets));
+        }
+
+        loadPresetsFromLocalStorage() {
+            const presets = localStorage.getItem('dualTonePresets');
+            if (presets) {
+                this.state.presets = JSON.parse(presets);
+            }
+        }
+
+        // Theme Management
+        loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.body.setAttribute('data-theme', savedTheme);
+                this.ui.themeSwitch.checked = savedTheme === 'light';
+            }
+        }
+    }
+
+    // Init
+    const dualToneMatrix = new DualToneMatrix();
+    dualToneMatrix.loadPresetsFromLocalStorage();
+    </script>
+</body>
+</html>
