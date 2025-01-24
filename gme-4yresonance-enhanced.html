@@ -66,15 +66,17 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.8rem;
       color: rgba(255, 255, 255, 0.7);
+      z-index: 2;
     }
 
-    /* Control panel, top-right */
+    /* Control panel, top-right (on larger screens) */
     .controls {
       top: 20px;
       right: 20px;
       display: flex;
       gap: 10px;
       align-items: center;
+      z-index: 2;
     }
 
     /* Panel for the date display, bottom-left */
@@ -82,6 +84,7 @@
       bottom: 20px;
       left: 20px;
       font-size: 0.9rem;
+      z-index: 2;
     }
 
     button {
@@ -98,6 +101,25 @@
       background: rgba(255, 255, 255, 0.2);
       transform: translateY(-1px);
       box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+
+    /* Mobile-specific adjustments */
+    @media (max-width: 600px) {
+      .controls {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .stats {
+        top: 20px;
+        left: 20px;
+      }
+      .date-panel {
+        bottom: 100px; /* leave space for controls */
+        left: 20px;
+      }
     }
   </style>
 </head>
@@ -146,25 +168,25 @@
     let lastTime = performance.now();
     let frameCount = 0;
 
-    // Speed multiplier for time progression
-    let speedMultiplier = 0.25;
+    // Slower starting speed
+    let speedMultiplier = 0.1;
 
     /**
      * Define cycle lengths (in days):
      * - main cycles
-     * - additional "shorter Fibonacci" subcycles: 35 & 21
+     * - shorter Fibonacci subcycles: 35 & 21
      */
     const CYCLES = [
-      { name: 'MAIN',    length: 1461,  color: 'rgba(255, 0, 0, 0.8)'    }, // ~4 years
-      { name: 'FIRST',   length: 741,   color: 'var(--gold-color)'       },
-      { name: 'SECOND',  length: 147,   color: 'var(--skyblue-color)'    },
-      { name: 'THIRD',   length: 55,    color: 'var(--limegreen-color)'  },
-      { name: 'F35',     length: 35,    color: 'var(--orange-color)'     }, // shorter fib sub-cycle
-      { name: 'F21',     length: 21,    color: 'var(--pink-color)'       }  // shorter fib sub-cycle
+      { name: 'MAIN',   length: 1461,  color: 'rgba(255, 0, 0, 0.8)'    }, // ~4 years
+      { name: 'FIRST',  length: 741,   color: 'var(--gold-color)'       },
+      { name: 'SECOND', length: 147,   color: 'var(--skyblue-color)'    },
+      { name: 'THIRD',  length: 55,    color: 'var(--limegreen-color)'  },
+      { name: 'F35',    length: 35,    color: 'var(--orange-color)'     }, 
+      { name: 'F21',    length: 21,    color: 'var(--pink-color)'       }
     ];
 
     // Start date & example “crucial” dates for resonance checks
-    const START_DATE = new Date(2021, 0, 28); // Jan 28, 2021, example MOASS origin
+    const START_DATE = new Date(2021, 0, 28); // Jan 28, 2021
     const CRUCIAL_DATES = [
       new Date(2025, 0, 9),
       new Date(2025, 0, 12),
@@ -174,14 +196,12 @@
     // Time in “days since START_DATE”
     let time = (Date.now() - START_DATE) / (1000 * 60 * 60 * 24);
 
+    // Resize canvas to fill the screen
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
 
-    /**
-     * Utility to format date
-     */
     function formatDate(date) {
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -192,7 +212,7 @@
     }
 
     /**
-     * Draw a single cycle ring + progress marker.
+     * Draw a single cycle ring + marker
      */
     function drawCycleRing(x, y, radius, progress, cycleColor) {
       const angle = progress * Math.PI * 2;
@@ -214,17 +234,17 @@
     }
 
     /**
-     * If the date is near any crucial date, or if two progress values
-     * are within threshold, highlight with a glow ring.
+     * If the date is near a crucial date, or if two cycle progress values
+     * are within threshold, we highlight with a glow ring.
      */
     function checkResonance(x, y, radius, progressA, progressB, currentDate) {
       const threshold = 0.02;
       const diff = Math.abs(progressA - progressB);
 
-      // Within threshold or near a CRUCIAL_DATE
+      // Are we near any crucial date?
       const nearCrucial = CRUCIAL_DATES.some(date => {
         const dayDiff = Math.abs(currentDate - date) / (1000 * 60 * 60 * 24);
-        return dayDiff < 1; // within 1 day
+        return dayDiff < 1;
       });
 
       if (diff < threshold || Math.abs(1 - diff) < threshold || nearCrucial) {
@@ -237,32 +257,30 @@
     }
 
     /**
-     * Draws all the cycles as concentric rings, checks for resonances.
+     * Draws all the cycles as concentric rings, checks for resonances
      */
     function drawAllCycles() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
-      // We'll space out the rings based on how many cycles we have.
-      // e.g., largest radius used for the first cycle, then smaller for each subsequent
       const ringSpacing = Math.min(canvas.width, canvas.height) / (2 * CYCLES.length);
 
-      // Convert “time” to a Date object
+      // Current date from time
       const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
 
-      // Calculate each cycle’s progress & draw
+      // 1) Calculate each cycle's progress & draw
       let cycleProgresses = [];
       CYCLES.forEach((cycle, idx) => {
         const progress = (time % cycle.length) / cycle.length;
         cycleProgresses.push(progress);
 
-        // Larger radius for the first cycle, smaller for each subsequent
+        // Largest radius for first cycle in array, smaller for subsequent
         const ringRadius = ringSpacing * (CYCLES.length - idx);
         drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
       });
 
-      // Check resonances for every pair of cycles
+      // 2) Check resonances for every pair of cycles
       for (let i = 0; i < CYCLES.length; i++) {
         for (let j = i + 1; j < CYCLES.length; j++) {
           const ringRadius = ringSpacing * (CYCLES.length - i);
@@ -270,12 +288,12 @@
         }
       }
 
-      // Update the date display
+      // Update date display
       dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
     }
 
     /**
-     * Main animation loop.
+     * Main animation loop
      */
     function animate() {
       drawAllCycles();
@@ -289,7 +307,7 @@
         lastTime = now;
       }
 
-      // Advance time if not paused or scrubbing
+      // Advance time if not paused/scrubbing
       if (!isPaused && !isScrubbing) {
         time += speedMultiplier;
       }
@@ -297,16 +315,11 @@
       requestAnimationFrame(animate);
     }
 
-    /**
-     * Canvas resizing
-     */
+    // Event handlers
     function onResize() {
       resizeCanvas();
     }
 
-    /**
-     * Touch-based scrubbing
-     */
     function onTouchStart(e) {
       isScrubbing = true;
       scrubStartX = e.touches[0].clientX;
@@ -325,9 +338,6 @@
       isScrubbing = false;
     }
 
-    /**
-     * Control button handlers
-     */
     function togglePause() {
       isPaused = !isPaused;
       pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
@@ -345,7 +355,7 @@
       speedMultiplier = Math.min(speedMultiplier * 2, 16);
     }
 
-    // Event Listeners
+    // Attach listeners
     window.addEventListener('resize', onResize);
     canvas.addEventListener('touchstart', onTouchStart);
     canvas.addEventListener('touchmove', onTouchMove);
