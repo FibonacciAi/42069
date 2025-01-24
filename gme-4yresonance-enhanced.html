@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Cycle Resonance Visualization (NFA)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cycle Resonance + Advanced UI (Fibonacci Subcycles)</title>
+  <style>
+    :root {
+      --bg-color: #0f0f13;
+      --text-color: #ffffff;
+      --panel-bg: rgba(15, 15, 19, 0.85);
+      --highlight: #2196F3;
+      --primary-color: #4CAF50;
+      --secondary-color: #FF5722;
+      --gold-color: #FFD700;
+      --skyblue-color: #87CEFA;
+      --limegreen-color: #32CD32;
+      --pink-color: #FF69B4;
+      --orange-color: #FFA500;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #cycleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .panel {
+      position: absolute;
+      background: var(--panel-bg);
+      padding: 1.25rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    /* FPS Panel, top-left */
+    .stats {
+      top: 20px;
+      left: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Control panel, top-right */
+    .controls {
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Panel for the date display, bottom-left */
+    .date-panel {
+      bottom: 20px;
+      left: 20px;
+      font-size: 0.9rem;
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s;
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <canvas id="cycleCanvas"></canvas>
+
+    <!-- FPS Panel (stats) -->
+    <div class="stats panel" id="stats">FPS: 60</div>
+
+    <!-- Controls Panel -->
+    <div class="controls panel" id="controls">
+      <button id="pause-btn">Pause</button>
+      <button id="reset-btn">Reset</button>
+      <button id="speed-down-btn">Slower</button>
+      <button id="speed-up-btn">Faster</button>
+    </div>
+
+    <!-- Date Display Panel -->
+    <div class="date-panel panel" id="date-display">
+      Current: 01/01/2021
+    </div>
+  </div>
+
+  <script>
+    /****************************************************
+     * Cycle Resonance + Shorter Fibonacci Subcycles Code
+     ****************************************************/
+    const canvas = document.getElementById('cycleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const statsPanel = document.getElementById('stats');
+    const dateDisplayPanel = document.getElementById('date-display');
+
+    const pauseBtn = document.getElementById('pause-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const speedDownBtn = document.getElementById('speed-down-btn');
+    const speedUpBtn = document.getElementById('speed-up-btn');
+
+    // Playback / scrubbing
+    let isPaused = false;
+    let isScrubbing = false;
+    let scrubStartX = 0;
+
+    // FPS Tracking
+    let lastTime = performance.now();
+    let frameCount = 0;
+
+    // Speed multiplier for time progression
+    let speedMultiplier = 0.25;
+
+    /**
+     * Define cycle lengths (in days):
+     * - main cycles
+     * - additional "shorter Fibonacci" subcycles: 35 & 21
+     */
+    const CYCLES = [
+      { name: 'MAIN',    length: 1461,  color: 'rgba(255, 0, 0, 0.8)'    }, // ~4 years
+      { name: 'FIRST',   length: 741,   color: 'var(--gold-color)'       },
+      { name: 'SECOND',  length: 147,   color: 'var(--skyblue-color)'    },
+      { name: 'THIRD',   length: 55,    color: 'var(--limegreen-color)'  },
+      { name: 'F35',     length: 35,    color: 'var(--orange-color)'     }, // shorter fib sub-cycle
+      { name: 'F21',     length: 21,    color: 'var(--pink-color)'       }  // shorter fib sub-cycle
+    ];
+
+    // Start date & example “crucial” dates for resonance checks
+    const START_DATE = new Date(2021, 0, 28); // Jan 28, 2021, example MOASS origin
+    const CRUCIAL_DATES = [
+      new Date(2025, 0, 9),
+      new Date(2025, 0, 12),
+      new Date(2025, 0, 28)
+    ];
+
+    // Time in “days since START_DATE”
+    let time = (Date.now() - START_DATE) / (1000 * 60 * 60 * 24);
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    /**
+     * Utility to format date
+     */
+    function formatDate(date) {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    /**
+     * Draw a single cycle ring + progress marker.
+     */
+    function drawCycleRing(x, y, radius, progress, cycleColor) {
+      const angle = progress * Math.PI * 2;
+
+      // Outer circle
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = cycleColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Marker dot
+      const markerX = x + Math.cos(angle) * radius;
+      const markerY = y + Math.sin(angle) * radius;
+      ctx.beginPath();
+      ctx.arc(markerX, markerY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = cycleColor;
+      ctx.fill();
+    }
+
+    /**
+     * If the date is near any crucial date, or if two progress values
+     * are within threshold, highlight with a glow ring.
+     */
+    function checkResonance(x, y, radius, progressA, progressB, currentDate) {
+      const threshold = 0.02;
+      const diff = Math.abs(progressA - progressB);
+
+      // Within threshold or near a CRUCIAL_DATE
+      const nearCrucial = CRUCIAL_DATES.some(date => {
+        const dayDiff = Math.abs(currentDate - date) / (1000 * 60 * 60 * 24);
+        return dayDiff < 1; // within 1 day
+      });
+
+      if (diff < threshold || Math.abs(1 - diff) < threshold || nearCrucial) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 1.2, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+
+    /**
+     * Draws all the cycles as concentric rings, checks for resonances.
+     */
+    function drawAllCycles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      // We'll space out the rings based on how many cycles we have.
+      // e.g., largest radius used for the first cycle, then smaller for each subsequent
+      const ringSpacing = Math.min(canvas.width, canvas.height) / (2 * CYCLES.length);
+
+      // Convert “time” to a Date object
+      const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+
+      // Calculate each cycle’s progress & draw
+      let cycleProgresses = [];
+      CYCLES.forEach((cycle, idx) => {
+        const progress = (time % cycle.length) / cycle.length;
+        cycleProgresses.push(progress);
+
+        // Larger radius for the first cycle, smaller for each subsequent
+        const ringRadius = ringSpacing * (CYCLES.length - idx);
+        drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
+      });
+
+      // Check resonances for every pair of cycles
+      for (let i = 0; i < CYCLES.length; i++) {
+        for (let j = i + 1; j < CYCLES.length; j++) {
+          const ringRadius = ringSpacing * (CYCLES.length - i);
+          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate);
+        }
+      }
+
+      // Update the date display
+      dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
+    }
+
+    /**
+     * Main animation loop.
+     */
+    function animate() {
+      drawAllCycles();
+
+      // FPS tracking
+      frameCount++;
+      const now = performance.now();
+      if (now - lastTime >= 1000) {
+        statsPanel.textContent = `FPS: ${frameCount}`;
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      // Advance time if not paused or scrubbing
+      if (!isPaused && !isScrubbing) {
+        time += speedMultiplier;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    /**
+     * Canvas resizing
+     */
+    function onResize() {
+      resizeCanvas();
+    }
+
+    /**
+     * Touch-based scrubbing
+     */
+    function onTouchStart(e) {
+      isScrubbing = true;
+      scrubStartX = e.touches[0].clientX;
+    }
+
+    function onTouchMove(e) {
+      if (!isScrubbing) return;
+      const currentX = e.touches[0].clientX;
+      const deltaX = currentX - scrubStartX;
+      const dayDelta = deltaX / 10; // sensitivity
+      time += dayDelta;
+      scrubStartX = currentX;
+    }
+
+    function onTouchEnd() {
+      isScrubbing = false;
+    }
+
+    /**
+     * Control button handlers
+     */
+    function togglePause() {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
+    }
+
+    function resetTime() {
+      time = 0;
+    }
+
+    function speedDown() {
+      speedMultiplier = Math.max(speedMultiplier / 2, 0.01);
+    }
+
+    function speedUp() {
+      speedMultiplier = Math.min(speedMultiplier * 2, 16);
+    }
+
+    // Event Listeners
+    window.addEventListener('resize', onResize);
+    canvas.addEventListener('touchstart', onTouchStart);
+    canvas.addEventListener('touchmove', onTouchMove);
+    canvas.addEventListener('touchend', onTouchEnd);
+
+    pauseBtn.addEventListener('click', togglePause);
+    resetBtn.addEventListener('click', resetTime);
+    speedDownBtn.addEventListener('click', speedDown);
+    speedUpBtn.addEventListener('click', speedUp);
+
+    // Init
+    resizeCanvas();
+    animate();
+  </script>
+</body>
+</html>
