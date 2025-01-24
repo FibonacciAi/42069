@@ -1,220 +1,222 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Mandelbrot Audio Reactive</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      overflow: hidden;
-      font-family: sans-serif;
-      color: #fff;
-    }
-    .ui-container {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 999;
-      background: rgba(0,0,0,0.7);
-      padding: 10px;
-      border-radius: 8px;
-    }
-    label {
-      display: block;
-      margin: 6px 0;
-    }
-    input[type=range] {
-      width: 200px;
-    }
-    #fractalCanvas {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      display: block;
-    }
-  </style>
-</head>
-<body>
-  <div class="ui-container">
-    <label>
-      Frequency: <span id="freqLabel">432</span> Hz
-      <input id="frequencySlider" type="range" min="220" max="880" step="1" value="432" />
-    </label>
-    <button id="playBtn">Play / Stop</button>
-  </div>
-  
-  <canvas id="fractalCanvas"></canvas>
-
-  <script>
-    class MandelbrotAudio {
-      constructor() {
-        // Canvas & context
-        this.canvas = document.getElementById('fractalCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        
-        // Resize to full window
-        this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-        
-        // Audio: Oscillator, Gain, Analyser
-        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        this.isPlaying = false;
-        
-        this.gainNode = this.audioCtx.createGain();
-        this.gainNode.gain.value = 0.2;  // slightly quiet by default
-        
-        this.analyser = this.audioCtx.createAnalyser();
-        this.analyser.fftSize = 1024;
-        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-
-        // Hook up the UI
-        this.freqSlider = document.getElementById('frequencySlider');
-        this.freqLabel  = document.getElementById('freqLabel');
-        this.playBtn    = document.getElementById('playBtn');
-        
-        this.freqSlider.addEventListener('input', e => {
-          this.freqLabel.textContent = e.target.value;
-          if (this.oscillator) {
-            this.oscillator.frequency.setValueAtTime(
-              parseFloat(e.target.value),
-              this.audioCtx.currentTime
-            );
-          }
-        });
-        
-        this.playBtn.addEventListener('click', () => {
-          if (!this.isPlaying) {
-            this.startSound();
-            this.playBtn.textContent = "Stop";
-          } else {
-            this.stopSound();
-            this.playBtn.textContent = "Play";
-          }
-        });
-        
-        // Start the animation loop
-        this.animate();
-      }
-      
-      resizeCanvas() {
-        this.canvas.width  = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-      }
-      
-      startSound() {
-        this.oscillator = this.audioCtx.createOscillator();
-        this.oscillator.type = 'sine';
-        // Use current slider value
-        this.oscillator.frequency.setValueAtTime(
-          parseFloat(this.freqSlider.value),
-          this.audioCtx.currentTime
-        );
-        
-        // Chain: oscillator -> gain -> analyser -> destination
-        this.oscillator.connect(this.gainNode);
-        this.gainNode.connect(this.analyser);
-        this.analyser.connect(this.audioCtx.destination);
-        
-        this.oscillator.start();
-        this.isPlaying = true;
-      }
-      
-      stopSound() {
-        if (this.oscillator) {
-          this.oscillator.stop();
-          this.oscillator.disconnect();
-        }
-        this.isPlaying = false;
-      }
-      
-      animate() {
-        requestAnimationFrame(() => this.animate());
-        
-        // Get audio data
-        this.analyser.getByteTimeDomainData(this.dataArray);
-        
-        // Compute average amplitude
-        let sum = 0;
-        for (let i = 0; i < this.dataArray.length; i++) {
-          sum += this.dataArray[i];
-        }
-        const avgAmplitude = sum / this.dataArray.length;  // ~128 is silent, higher means louder
-        
-        // Frequency from the slider
-        const freq = parseFloat(this.freqSlider.value);
-        
-        // Now draw the fractal with audio-driven parameters
-        this.drawMandelbrot(freq, avgAmplitude);
-      }
-      
-      drawMandelbrot(freq, amp) {
-        const w = this.canvas.width;
-        const h = this.canvas.height;
-        
-        // Example approach:
-        // - Let freq drive "zoom"
-        // - Let amp drive "maxIterations" or color shift
-        const baseFreq = 432; 
-        const freqRatio = freq / baseFreq; // e.g. ~1 if freq=432
-        const zoom = 2.5 / freqRatio; // dynamic zoom: lower freq -> bigger fractal
-        const maxIterations = Math.floor(50 + (amp - 128) * 0.5);
-        
-        // Center the fractal near (-0.5, 0)
-        // We'll also offset slightly based on freq to shift horizontally
-        const xCenter = -0.5 + (freqRatio - 1) * 0.3;
-        const yCenter = 0;
-        
-        // Each pixel => map to complex plane & iterate
-        const imageData = this.ctx.createImageData(w, h);
-        const data = imageData.data;
-        
-        for (let py = 0; py < h; py++) {
-          for (let px = 0; px < w; px++) {
-            
-            // Convert (px,py) to complex plane (cx,cy)
-            const cx = xCenter + (px - w/2) * (4 / w) * (1 / zoom);
-            const cy = yCenter + (py - h/2) * (4 / h) * (1 / zoom);
-            
-            let x = 0, y = 0;
-            let iteration = 0;
-            
-            while (x*x + y*y <= 4 && iteration < maxIterations) {
-              const xTemp = x*x - y*y + cx;
-              y = 2*x*y + cy;
-              x = xTemp;
-              iteration++;
+setupControls() {
+                // Get DOM elements
+                this.elements = {
+                    freq1Display: document.getElementById('freq1Display'),
+                    freq2Display: document.getElementById('freq2Display'),
+                    freq1Slider: document.getElementById('frequency1Slider'),
+                    freq2Slider: document.getElementById('frequency2Slider'),
+                    freq1Input: document.getElementById('frequency1Input'),
+                    freq2Input: document.getElementById('frequency2Input'),
+                    play1Btn: document.getElementById('play1Btn'),
+                    play2Btn: document.getElementById('play2Btn'),
+                    volume1Slider: document.getElementById('volume1Slider'),
+                    volume2Slider: document.getElementById('volume2Slider'),
+                    waveform1Select: document.getElementById('waveform1Select'),
+                    waveform2Select: document.getElementById('waveform2Select'),
+                    geometrySelect: document.getElementById('geometrySelect'),
+                    syncBtn: document.getElementById('syncBtn'),
+                    ratioDisplay: document.getElementById('ratioDisplay'),
+                    relationshipInfo: document.getElementById('relationshipInfo'),
+                    syncStatus: document.getElementById('syncStatus')
+                };
             }
-            
-            const idx = (py * w + px) * 4;
-            
-            // Simple color scheme
-            if (iteration === maxIterations) {
-              // Inside the set => black
-              data[idx+0] = 0;
-              data[idx+1] = 0;
-              data[idx+2] = 0;
-              data[idx+3] = 255;  // fully opaque
-            } else {
-              // Outside the set => color by iteration
-              // We'll scale it so color depends also on amplitude
-              const c = 255 - Math.floor((iteration / maxIterations) * 255);
-              data[idx+0] = (c + amp) % 255;   // R
-              data[idx+1] = (c + 2*amp) % 255; // G
-              data[idx+2] = (c + 4*amp) % 255; // B
-              data[idx+3] = 255;
+
+            setupEventListeners() {
+                // Frequency Control Listeners
+                this.elements.freq1Slider.addEventListener('input', (e) => {
+                    this.updateFrequency(1, parseFloat(e.target.value));
+                });
+
+                this.elements.freq2Slider.addEventListener('input', (e) => {
+                    this.updateFrequency(2, parseFloat(e.target.value));
+                });
+
+                // Play/Stop Buttons
+                this.elements.play1Btn.addEventListener('click', () => this.toggleTone(1));
+                this.elements.play2Btn.addEventListener('click', () => this.toggleTone(2));
+
+                // Volume Controls
+                this.elements.volume1Slider.addEventListener('input', (e) => {
+                    this.state.volume1 = parseFloat(e.target.value);
+                    if (this.state.isPlaying1) {
+                        this.gainNode1.gain.setValueAtTime(this.state.volume1, this.audioCtx.currentTime);
+                    }
+                });
+
+                this.elements.volume2Slider.addEventListener('input', (e) => {
+                    this.state.volume2 = parseFloat(e.target.value);
+                    if (this.state.isPlaying2) {
+                        this.gainNode2.gain.setValueAtTime(this.state.volume2, this.audioCtx.currentTime);
+                    }
+                });
+
+                // Waveform Selection
+                this.elements.waveform1Select.addEventListener('change', (e) => {
+                    this.oscillator1.type = e.target.value;
+                });
+
+                this.elements.waveform2Select.addEventListener('change', (e) => {
+                    this.oscillator2.type = e.target.value;
+                });
+
+                // Geometry Selection
+                this.elements.geometrySelect.addEventListener('change', (e) => {
+                    this.state.currentGeometry = e.target.value;
+                    this.createGeometry();
+                });
+
+                // Sync Button
+                this.elements.syncBtn.addEventListener('click', () => {
+                    this.state.syncVisualization = !this.state.syncVisualization;
+                    this.elements.syncStatus.textContent = this.state.syncVisualization ? 
+                        'Synchronized Visualization' : 'Independent Visualization';
+                });
+
+                // Fine Tuning Buttons
+                document.getElementById('fineTuneDown1Btn').addEventListener('click', () => {
+                    this.updateFrequency(1, this.state.freq1 - 1);
+                });
+
+                document.getElementById('fineTuneUp1Btn').addEventListener('click', () => {
+                    this.updateFrequency(1, this.state.freq1 + 1);
+                });
+
+                document.getElementById('fineTuneDown2Btn').addEventListener('click', () => {
+                    this.updateFrequency(2, this.state.freq2 - 1);
+                });
+
+                document.getElementById('fineTuneUp2Btn').addEventListener('click', () => {
+                    this.updateFrequency(2, this.state.freq2 + 1);
+                });
+
+                // Octave Buttons
+                document.getElementById('octaveDown1Btn').addEventListener('click', () => {
+                    this.updateFrequency(1, this.state.freq1 / 2);
+                });
+
+                document.getElementById('octaveUp1Btn').addEventListener('click', () => {
+                    this.updateFrequency(1, this.state.freq1 * 2);
+                });
+
+                document.getElementById('octaveDown2Btn').addEventListener('click', () => {
+                    this.updateFrequency(2, this.state.freq2 / 2);
+                });
+
+                document.getElementById('octaveUp2Btn').addEventListener('click', () => {
+                    this.updateFrequency(2, this.state.freq2 * 2);
+                });
             }
-          }
+
+            updateFrequency(oscillatorNumber, frequency) {
+                // Clamp frequency between 20 and 20000 Hz
+                frequency = Math.max(20, Math.min(20000, frequency));
+                
+                if (oscillatorNumber === 1) {
+                    this.state.freq1 = frequency;
+                    this.oscillator1.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+                    this.elements.freq1Display.textContent = `${frequency.toFixed(1)} Hz`;
+                    this.elements.freq1Slider.value = frequency;
+                    this.elements.freq1Input.value = frequency;
+                } else {
+                    this.state.freq2 = frequency;
+                    this.oscillator2.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+                    this.elements.freq2Display.textContent = `${frequency.toFixed(1)} Hz`;
+                    this.elements.freq2Slider.value = frequency;
+                    this.elements.freq2Input.value = frequency;
+                }
+
+                this.updateHarmonicRelationship();
+            }
+
+            toggleTone(oscillatorNumber) {
+                if (oscillatorNumber === 1) {
+                    this.state.isPlaying1 = !this.state.isPlaying1;
+                    this.gainNode1.gain.setValueAtTime(
+                        this.state.isPlaying1 ? this.state.volume1 : 0, 
+                        this.audioCtx.currentTime
+                    );
+                } else {
+                    this.state.isPlaying2 = !this.state.isPlaying2;
+                    this.gainNode2.gain.setValueAtTime(
+                        this.state.isPlaying2 ? this.state.volume2 : 0, 
+                        this.audioCtx.currentTime
+                    );
+                }
+            }
+
+            updateHarmonicRelationship() {
+                const ratio = this.state.freq1 / this.state.freq2;
+                const simplifiedRatio = this.simplifyRatio(ratio);
+                this.elements.ratioDisplay.textContent = 
+                    `${simplifiedRatio[0]}:${simplifiedRatio[1]}`;
+                
+                const relationship = this.getHarmonicRelationship(ratio);
+                this.elements.relationshipInfo.textContent = relationship;
+            }
+
+            simplifyRatio(ratio) {
+                const tolerance = 0.01;
+                const maxDenominator = 16;
+                let bestNum = 1;
+                let bestDen = 1;
+                let minError = Math.abs(ratio - 1);
+
+                for (let den = 1; den <= maxDenominator; den++) {
+                    const num = Math.round(ratio * den);
+                    const error = Math.abs(ratio - num/den);
+                    if (error < minError) {
+                        minError = error;
+                        bestNum = num;
+                        bestDen = den;
+                    }
+                }
+
+                return [bestNum, bestDen];
+            }
+
+            getHarmonicRelationship(ratio) {
+                const relationships = {
+                    1: "Perfect Unison",
+                    1.5: "Perfect Fifth",
+                    2: "Perfect Octave",
+                    1.25: "Major Third",
+                    1.3333: "Perfect Fourth",
+                    1.6666: "Major Sixth",
+                    1.875: "Major Seventh"
+                };
+
+                let closest = Object.entries(relationships).reduce((prev, curr) => {
+                    return Math.abs(curr[0] - ratio) < Math.abs(prev[0] - ratio) ? curr : prev;
+                });
+
+                return closest[1];
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                if (this.geometryGroup) {
+                    if (this.state.syncVisualization) {
+                        const rotationSpeed = 0.001;
+                        this.geometryGroup.rotation.x += rotationSpeed;
+                        this.geometryGroup.rotation.y += rotationSpeed;
+                    } else {
+                        this.state.phase1 += 0.01 * (this.state.isPlaying1 ? 1 : 0);
+                        this.state.phase2 += 0.01 * (this.state.isPlaying2 ? 1 : 0);
+                        
+                        if (this.state.currentGeometry === 'lissajous') {
+                            this.createLissajousGeometry();
+                        }
+                    }
+                }
+
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
         }
-        
-        this.ctx.putImageData(imageData, 0, 0);
-      }
-    }
-    
-    // Initialize
-    const app = new MandelbrotAudio();
-  </script>
+
+        // Initialize the application
+        const dualToneMatrix = new DualToneMatrix();
+    </script>
 </body>
 </html>
