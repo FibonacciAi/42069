@@ -12,13 +12,12 @@
       --panel-bg: rgba(15, 15, 19, 0.85);
       --highlight: #2196F3;
 
-      /* Color references */
-      --red-color: rgba(255, 0, 0, 0.8);
-      --gold-color: #FFD700;
-      --skyblue-color: #87CEFA;
+      /* Some color references */
       --limegreen-color: #32CD32;
+      --skyblue-color: #87CEFA;
       --orange-color: #FFA500;
       --pink-color: #FF69B4;
+      --gold-color: #FFD700;
     }
 
     * {
@@ -61,7 +60,6 @@
       z-index: 2;
     }
 
-    /* FPS Panel, top-left */
     .stats {
       top: 20px;
       left: 20px;
@@ -70,7 +68,6 @@
       color: rgba(255, 255, 255, 0.7);
     }
 
-    /* Control panel, top-right (desktop) */
     .controls {
       top: 20px;
       right: 20px;
@@ -79,7 +76,6 @@
       align-items: center;
     }
 
-    /* Date display, bottom-left */
     .date-panel {
       bottom: 20px;
       left: 20px;
@@ -102,7 +98,6 @@
       box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
     }
 
-    /* Mobile: stack controls at bottom */
     @media (max-width: 600px) {
       .controls {
         top: auto;
@@ -170,40 +165,35 @@
     let speedMultiplier = 0.1;
 
     /**
-     * Define cycle lengths (days):
-     *  - e.g. 4-year main cycle, plus fib subcycles
+     * Cycles including a special highlight for 741 days -> gold
      */
     const CYCLES = [
-      { name: 'MAIN(4yrs)', length: 1461, color: 'var(--limegreen-color)' },
-      { name: '741-day',    length: 741,  color: 'var(--limegreen-color)' },
-      { name: '147-day',    length: 147,  color: 'var(--limegreen-color)' },
-      { name: '55-day',     length: 55,   color: 'var(--limegreen-color)' },
-      { name: '35-day',     length: 35,   color: 'var(--limegreen-color)' },
-      { name: '21-day',     length: 21,   color: 'var(--limegreen-color)' }
+      { name: 'Main ~4yrs (1461)', length: 1461, color: 'var(--limegreen-color)' },
+      { name: '741-day',           length: 741,  color: 'var(--gold-color)'      },
+      { name: '147-day',           length: 147,  color: 'var(--skyblue-color)'   },
+      { name: '55-day',            length: 55,   color: 'var(--limegreen-color)' },
+      { name: '35-day',            length: 35,   color: 'var(--orange-color)'    },
+      { name: '21-day',            length: 21,   color: 'var(--pink-color)'      }
     ];
 
-    /**
-     * Key dates (crucial or speculative)
-     */
+    // “Crucial” or interesting dates
     const START_DATE = new Date(2021, 0, 28);
     const CRUCIAL_DATES = [
       new Date(2025, 0, 9),
       new Date(2025, 0, 12),
-      new Date(2025, 0, 23), 
+      new Date(2025, 0, 23),
       new Date(2025, 0, 28),
-      new Date(2024, 4, 1)
+      new Date(2024, 4, 1) 
     ];
 
     // Time in “days since START_DATE”
     let time = 0;
 
-    /** Resize the canvas to fill the window */
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
 
-    /** Utility to format date in a readable form */
     function formatDate(date) {
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -215,8 +205,7 @@
 
     /**
      * Draw a single cycle ring + its “progress” marker
-     * -> The ring uses cycleColor
-     * -> The marker is set to white so it’s clearly visible
+     * Marker is white so it’s visible on dark background
      */
     function drawCycleRing(x, y, radius, progress, cycleColor) {
       const angle = progress * 2 * Math.PI;
@@ -227,29 +216,25 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Marker dot: White fill so it doesn't blend into the background
+      // Marker dot
       const markerX = x + Math.cos(angle) * radius;
       const markerY = y + Math.sin(angle) * radius;
       ctx.beginPath();
       ctx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
-      ctx.fillStyle = '#fff'; // White marker
+      ctx.fillStyle = '#fff'; 
       ctx.fill();
     }
 
-    /**
-     * Check if date is near a “crucial” date or if 2 cycles align
-     */
     function checkResonance(x, y, radius, progressA, progressB, currentDate) {
       const threshold = 0.02;
       const diff = Math.abs(progressA - progressB);
 
-      // Is currentDate near any crucial date?
       const nearCrucial = CRUCIAL_DATES.some(cd => {
         const dayDiff = Math.abs(currentDate - cd) / (1000 * 60 * 60 * 24);
         return dayDiff < 1;
       });
 
-      // If cycles line up or near crucial date, highlight with green glow
+      // If cycles align or we’re near a crucial date, highlight w/ green glow
       if (diff < threshold || Math.abs(1 - diff) < threshold || nearCrucial) {
         ctx.beginPath();
         ctx.arc(x, y, radius * 1.2, 0, 2 * Math.PI);
@@ -267,10 +252,8 @@
 
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
-      // Space out rings based on how many cycles we have
       const ringSpacing = Math.min(canvas.width, canvas.height) / (2 * CYCLES.length);
 
-      // Convert “time” to date object
       const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
 
       // 1) Compute cycle progress & draw each ring
@@ -284,7 +267,7 @@
         drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
       });
 
-      // 2) Check resonances between every pair of cycles
+      // 2) Check resonances for every pair of cycles
       for (let i = 0; i < CYCLES.length; i++) {
         for (let j = i + 1; j < CYCLES.length; j++) {
           const ringRadius = ringSpacing * (CYCLES.length - i);
@@ -292,17 +275,14 @@
         }
       }
 
-      // Update the date display
+      // Update date display
       dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
     }
 
-    /**
-     * Main animation loop
-     */
     function animate() {
       drawAllCycles();
 
-      // FPS tracking
+      // FPS
       frameCount++;
       const now = performance.now();
       if (now - lastTime >= 1000) {
@@ -311,7 +291,7 @@
         lastTime = now;
       }
 
-      // Advance time if not paused/scrubbing
+      // Advance time
       if (!isPaused && !isScrubbing) {
         time += speedMultiplier;
       }
@@ -334,7 +314,7 @@
       if (!isScrubbing) return;
       const currentX = e.touches[0].clientX;
       const deltaX = currentX - scrubStartX;
-      const dayDelta = deltaX / 10; // horizontal drag sensitivity
+      const dayDelta = deltaX / 10;
       time += dayDelta;
       scrubStartX = currentX;
     }
@@ -343,7 +323,7 @@
       isScrubbing = false;
     }
 
-    /** Button event handlers */
+    /* Button event handlers */
     function togglePause() {
       isPaused = !isPaused;
       pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
@@ -361,7 +341,6 @@
       speedMultiplier = Math.min(speedMultiplier * 2, 16);
     }
 
-    /* Attach listeners */
     window.addEventListener('resize', onResize);
     canvas.addEventListener('touchstart', onTouchStart);
     canvas.addEventListener('touchmove', onTouchMove);
@@ -372,7 +351,6 @@
     speedDownBtn.addEventListener('click', speedDown);
     speedUpBtn.addEventListener('click', speedUp);
 
-    /* Init */
     resizeCanvas();
     animate();
   </script>
