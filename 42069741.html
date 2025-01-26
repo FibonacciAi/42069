@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Cycle Resonance Visualization (NFA)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cycle Resonance + Advanced UI (Fibonacci Subcycles)</title>
+  <style>
+    :root {
+      /* Dark Theme Variables */
+      --bg-color: #0f0f13;
+      --text-color: #ffffff;
+      --panel-bg: rgba(15, 15, 19, 0.85);
+      --highlight: #2196F3;
+
+      /* Color References */
+      --limegreen-color: #32CD32;
+      --skyblue-color: #87CEFA;
+      --orange-color: #FFA500;
+      --pink-color: #FF69B4;
+      --gold-color: #FFD700;
+    }
+
+    body.light-theme {
+      --bg-color: #ffffff;
+      --text-color: #000000;
+      --panel-bg: rgba(255, 255, 255, 0.85);
+      --highlight: #1E90FF;
+
+      /* Adjusted Color References for Light Theme */
+      --limegreen-color: #32CD32;
+      --skyblue-color: #87CEFA;
+      --orange-color: #FFA500;
+      --pink-color: #FF69B4;
+      --gold-color: #FFD700;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #cycleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1; /* Behind the logo container */
+    }
+
+    /* Logo Container Styling */
+    .logo-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3; /* Above the canvas and panels */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    /* The main logo styling */
+    #custom-logo {
+      width: 150px;   /* Increased size for better prominence */
+      border-radius: 50%; /* Makes the image circular */
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      object-fit: cover;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Show the image once it's loaded */
+    #custom-logo.loaded {
+      opacity: 1;
+    }
+
+    /* Follow Link Styling (Removed from here) */
+    /* .follow-link {
+      margin-top: 15px; 
+      font-size: 1rem; 
+      color: var(--highlight);
+      text-decoration: none;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .follow-link:hover {
+      color: var(--skyblue-color);
+      text-decoration: underline;
+      transform: translateY(-1px);
+    } */
+
+    .panel {
+      position: absolute;
+      background: var(--panel-bg);
+      padding: 1.25rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 2; /* Below the logo container */
+    }
+
+    .stats {
+      top: 20px;
+      left: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .controls {
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .date-panel {
+      bottom: 20px;
+      left: 20px;
+      font-size: 0.9rem;
+    }
+
+    /* Legend Panel */
+    .legend {
+      bottom: 20px;
+      left: 20px; /* Positioned at bottom-left corner */
+      width: 220px; /* Increased width to accommodate follow link */
+      font-size: 0.8rem;
+      background: rgba(15, 15, 19, 0.85); /* Ensure background matches */
+    }
+
+    .legend h3 {
+      margin-bottom: 10px;
+      font-size: 1rem;
+      color: var(--highlight);
+    }
+
+    .legend ul {
+      list-style: none;
+    }
+
+    .legend li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .legend li span {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+      border-radius: 50%;
+    }
+
+    /* Toggle Switch Styles */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+      margin-left: 10px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--highlight);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    /* Optional: Hover Effects */
+    .slider:hover {
+      background-color: #b3b3b3;
+    }
+
+    /* Focus Styles for Toggle Switch */
+    .switch input:focus + .slider {
+      box-shadow: 0 0 1px var(--highlight);
+    }
+
+    /* Legend Additional Items */
+    .legend li:nth-child(5) span {
+      background: rgba(138, 43, 226, 0.8); /* BlueViolet for 1470-day cycle */
+    }
+    .legend li:nth-child(6) span {
+      background: rgba(255, 69, 0, 0.8); /* OrangeRed for 1471-day cycle */
+    }
+    .legend li.follow-link span {
+      background: var(--highlight); /* Highlight color for follow link */
+    }
+
+    /* Responsive Enhancements */
+    @media (max-width: 600px) {
+      .controls {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end; /* Align buttons to the end for better aesthetics */
+      }
+      .stats {
+        top: 20px;
+        left: 20px;
+        font-size: 0.7rem; /* Slightly smaller font for mobile */
+      }
+      .logo-container {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        /* No change needed since already centered */
+      }
+      .date-panel {
+        bottom: 100px; 
+        left: 20px;
+        font-size: 0.8rem; /* Adjust font size for readability */
+      }
+      .legend {
+        bottom: 10px;
+        left: 10px;
+        width: 180px;
+        font-size: 0.7rem;
+      }
+      .legend ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .legend li {
+        flex: 1 1 45%; /* Allow two items per row */
+        display: flex;
+        align-items: center;
+      }
+      .legend li span {
+        margin-right: 5px;
+      }
+
+      /* Adjust Toggle Switch Size */
+      .switch {
+        width: 40px;
+        height: 20px;
+      }
+
+      .slider:before {
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+
+      /* Button Size Adjustments for Mobile */
+      .controls button {
+        padding: 6px 12px; /* Smaller padding for mobile */
+        font-size: 0.8rem;
+      }
+
+      /* Adjust central image size for smaller screens */
+      .logo-container #custom-logo {
+        width: 100px;
+        height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <canvas id="cycleCanvas"></canvas>
+
+    <!-- Logo Container with Circular Image (Follow Link Removed) -->
+    <div class="logo-container">
+      <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">
+        <img
+          id="custom-logo"
+          src="https://pbs.twimg.com/profile_images/1874116995991359488/olXssn9f_400x400.jpg"
+          alt="Visit @_D_741Stef's X Profile"
+          loading="lazy"
+          onload="this.classList.add('loaded')"
+        />
+      </a>
+      <!-- Removed the follow-link here -->
+    </div>
+
+    <!-- FPS Panel (stats) -->
+    <div class="stats panel" id="stats">FPS: 60</div>
+
+    <!-- Controls Panel -->
+    <div class="controls panel" id="controls">
+      <button id="pause-btn" aria-label="Pause Animation">Pause</button>
+      <button id="reset-btn" aria-label="Reset Animation">Reset</button>
+      <button id="speed-down-btn" aria-label="Decrease Speed">Slower</button>
+      <button id="speed-up-btn" aria-label="Increase Speed">Faster</button>
+      
+      <!-- Accessible Toggle Switch -->
+      <label class="switch" aria-label="Toggle Dark Mode">
+        <input type="checkbox" id="theme-toggle">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <!-- Date Display Panel -->
+    <div class="date-panel panel" id="date-display">
+      Current: 01/28/2021
+    </div>
+
+    <!-- Legend Panel with Follow Link Added -->
+    <div class="legend panel" id="legend">
+      <h3>Resonance Legend</h3>
+      <ul>
+        <li><span></span> Cycle Alignment</li>
+        <li><span></span> Crucial Date Proximity</li>
+        <li><span></span> Alignment & Crucial Date</li>
+        <li><span></span> Multiple Resonances</li>
+        <li><span></span> 1470-Day Cycle</li>
+        <li><span></span> 1471-Day Cycle</li>
+        <!-- Added Follow Link as a new list item -->
+        <li class="follow-link">
+          <span></span>
+          <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer" style="color: var(--highlight); text-decoration: none;">
+            Follow @_D_741Stef
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    /****************************************************
+     * Cycle Resonance + Shorter Fibonacci Subcycles Code
+     ****************************************************/
+    const canvas = document.getElementById('cycleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const statsPanel = document.getElementById('stats');
+    const dateDisplayPanel = document.getElementById('date-display');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const speedDownBtn = document.getElementById('speed-down-btn');
+    const speedUpBtn = document.getElementById('speed-up-btn');
+    // const resonanceList = document.getElementById('resonance-list'); // Commented out as Upcoming Resonances panel is removed
+
+    let isPaused = false;
+    let isScrubbing = false;
+    let scrubStartX = 0;
+
+    let lastTime = performance.now();
+    let frameCount = 0;
+
+    let speedMultiplier = 0.1;
+
+    // Theme Toggle Functionality
+    const themeToggle = document.getElementById('theme-toggle');
+
+    // Check for saved user preference, if any, on load of the website
+    if (localStorage.getItem('theme') === 'light') {
+      document.body.classList.add('light-theme');
+      themeToggle.checked = true;
+    } else {
+      document.body.classList.remove('light-theme');
+      themeToggle.checked = false;
+    }
+
+    // Listen for toggle changes
+    themeToggle.addEventListener('change', function() {
+      if (this.checked) {
+        document.body.classList.add('light-theme');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.body.classList.remove('light-theme');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+
+    // Cycles
+    const CYCLES = [
+      { name: 'Main ~4yrs (1461)', length: 1461, color: 'var(--limegreen-color)' },
+      { name: '1470-day',         length: 1470, color: 'rgba(138, 43, 226, 0.8)' }, // BlueViolet
+      { name: '1471-day',         length: 1471, color: 'rgba(255, 69, 0, 0.8)' },   // OrangeRed
+      { name: '741-day',           length: 741,  color: 'var(--gold-color)'      },
+      { name: '147-day',           length: 147,  color: 'var(--skyblue-color)'   },
+      { name: '55-day',            length: 55,   color: 'var(--limegreen-color)' },
+      { name: '35-day',            length: 35,   color: 'var(--orange-color)'    },
+      { name: '21-day',            length: 21,   color: 'var(--pink-color)'      }
+    ];
+
+    // “Crucial” or interesting dates
+    const START_DATE = new Date(2021, 0, 28);
+    const CRUCIAL_DATES = [
+      new Date(2025, 0, 9),
+      new Date(2025, 0, 12),
+      new Date(2025, 0, 23),
+      new Date(2025, 0, 28),
+      new Date(2024, 4, 1),
+      new Date(2025, 0, 29), // Lunar New Year
+      new Date(2024, 11, 25) // Christmas Gift Box Meme
+    ];
+
+    // Time in “days since START_DATE”
+    let time = 0;
+
+    // Resonances Data
+    const resonances = [
+      // Pairwise Resonances
+      {
+        name: "E & F (35-day & 21-day)",
+        lcm: 105, // days
+        dates: [
+          new Date("2021-05-13"),
+          new Date("2021-08-26"),
+          new Date("2021-12-09"),
+          new Date("2022-03-23"),
+          new Date("2022-07-07"),
+          new Date("2022-10-21"),
+          new Date("2023-02-03"),
+          new Date("2023-05-18"),
+          new Date("2023-09-01"),
+          new Date("2023-12-16"),
+          new Date("2024-04-29"),
+          new Date("2024-08-13"),
+          new Date("2024-11-27"),
+          new Date("2025-03-11")
+        ]
+      },
+      {
+        name: "D & E (55-day & 35-day)",
+        lcm: 385,
+        dates: [
+          new Date("2022-02-17"),
+          new Date("2023-02-17"),
+          new Date("2024-02-17"),
+          new Date("2025-02-16") // Adjusted for leap year
+        ]
+      },
+      {
+        name: "C & E (147-day & 35-day)",
+        lcm: 735,
+        dates: [
+          new Date("2023-02-02"),
+          new Date("2025-02-02")
+        ]
+      },
+      {
+        name: "D & F (55-day & 21-day)",
+        lcm: 1155,
+        dates: [
+          new Date("2024-03-28")
+        ]
+      },
+      
+      // Triplet Resonances
+      {
+        name: "C, E & F (147-day, 35-day & 21-day)",
+        lcm: 735,
+        dates: [
+          new Date("2023-02-02"),
+          new Date("2025-02-02")
+        ]
+      },
+      {
+        name: "D, E & F (55-day, 35-day & 21-day)",
+        lcm: 1155,
+        dates: [
+          new Date("2024-03-28")
+        ]
+      },
+
+      // New 1470 and 1471-day cycles
+      {
+        name: "1470-Day Cycle Resonance",
+        lcm: 1470,
+        dates: [
+          new Date("2025-01-27"), // 4 years minus 1 day from Jan 28, 2021
+          new Date("2029-01-26"), // Next occurrence
+          // Add more dates as needed
+        ]
+      },
+      {
+        name: "1471-Day Cycle Resonance",
+        lcm: 1471,
+        dates: [
+          new Date("2025-01-29"), // 4 years plus 1 day from Jan 28, 2021
+          new Date("2029-01-28"), // Next occurrence
+          // Add more dates as needed
+        ]
+      }
+    ];
+
+    // Resonance Log
+    const resonanceLog = [];
+
+    function logResonance(type, date, details) {
+      resonanceLog.push({ type, date, details });
+      console.log(`Resonance Triggered: ${type} on ${formatDate(date)} - ${details}`);
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    // Draw a single cycle ring + marker
+    function drawCycleRing(x, y, radius, progress, cycleColor) {
+      const angle = progress * 2 * Math.PI;
+      // Outer circle
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = cycleColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Marker dot -> white fill so visible
+      const markerX = x + Math.cos(angle) * radius;
+      const markerY = y + Math.sin(angle) * radius;
+      ctx.beginPath();
+      ctx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = '#fff'; 
+      ctx.fill();
+    }
+
+    function checkResonance(x, y, radius, progressA, progressB, currentDate) {
+      const alignmentThreshold = 0.02;
+      const dayThreshold = 1; // days
+      
+      const diff = Math.abs(progressA - progressB);
+
+      // Check for cycle alignment
+      const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
+
+      // Check for proximity to crucial dates
+      const nearCrucial = CRUCIAL_DATES.some(cd => {
+        const dayDiff = Math.abs((currentDate - cd) / (1000 * 60 * 60 * 24));
+        return dayDiff < dayThreshold;
+      });
+
+      // Determine resonance type
+      if (isAlignment && nearCrucial) {
+        // High significance: Both alignment and crucial date proximity
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 1.3, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)'; // Gold for high significance
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        
+        // Log or display resonance
+        logResonance("Alignment & Crucial Date", currentDate, "High significance resonance.");
+      } else if (isAlignment) {
+        // Medium significance: Cycle alignment
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 1.2, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)'; // Green for alignment
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        logResonance("Alignment", currentDate, "Cycle alignment resonance.");
+      } 
+
+      if (nearCrucial) {
+        // Medium significance: Crucial date proximity
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)'; // Orange for date proximity
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        logResonance("Crucial Date Proximity", currentDate, "Near a crucial date resonance.");
+      }
+    }
+
+    function checkMultiCycleResonance(x, y, currentDate) {
+      // Check if multiple resonances occur on the same date
+      let resonanceCount = 0;
+      
+      resonances.forEach(resonance => {
+        resonance.dates.forEach(resDate => {
+          const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
+          if (dayDiff < speedMultiplier) {
+            resonanceCount++;
+          }
+        });
+      });
+      
+      if (resonanceCount >= 2) {
+        // High significance: Multiple resonances on the same date
+        ctx.beginPath();
+        ctx.arc(x, y, 150, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)'; // Red for multiple resonances
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        
+        logResonance("Multiple Resonances", currentDate, `${resonanceCount} resonances on the same date.`);
+      }
+    }
+
+    function checkThirtyFiveDayCycle(x, y, currentDate) {
+      const startDate = new Date(2024, 11, 25); // December 25, 2024
+      const targetDate = new Date(startDate.getTime() + 35 * 24 * 60 * 60 * 1000); // 35 days later
+
+      const dayDiff = Math.abs((currentDate - targetDate) / (1000 * 60 * 60 * 24));
+
+      if (dayDiff < speedMultiplier) { // Within threshold
+        // Highlight the 35-day cycle resonance
+        ctx.beginPath();
+        ctx.arc(x, y, 120, 0, 2 * Math.PI); // Example: adjustable radius
+        ctx.strokeStyle = 'rgba(138, 43, 226, 0.8)'; // BlueViolet for differentiation
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Label the resonance
+        ctx.font = '16px Arial';
+        ctx.fillStyle = 'rgba(138, 43, 226, 0.9)';
+        ctx.fillText(`35-Day Cycle Resonance`, x + 130, y);
+    
+        // Log the resonance
+        logResonance("35-Day Cycle", currentDate, "35 days post Christmas gift box meme.");
+      }
+    }
+
+    function check1470And1471Cycles(x, y, currentDate) {
+      resonances.forEach(resonance => {
+        resonance.dates.forEach(resDate => {
+          const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
+          if (dayDiff < speedMultiplier) {
+            // Draw a special marker or highlight
+            ctx.beginPath();
+            ctx.arc(x, y, 100, 0, 2 * Math.PI); // Example: a fixed radius circle
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Optionally, display resonance name
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'yellow';
+            ctx.fillText(resonance.name, x + 120, y);
+          }
+        });
+      });
+
+      // Specific Resonances for 1470 and 1471-day cycles
+      const cycle1470 = new Date(START_DATE.getTime() + 1470 * 24 * 60 * 60 * 1000); // 1470 days after start
+      const cycle1471 = new Date(START_DATE.getTime() + 1471 * 24 * 60 * 60 * 1000); // 1471 days after start
+
+      const dayDiff1470 = Math.abs((currentDate - cycle1470) / (1000 * 60 * 60 * 24));
+      const dayDiff1471 = Math.abs((currentDate - cycle1471) / (1000 * 60 * 60 * 24));
+
+      if (dayDiff1470 < speedMultiplier) {
+        // Draw a distinct marker for 1470-day cycle
+        ctx.beginPath();
+        ctx.arc(x, y, 130, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(138, 43, 226, 0.8)'; // BlueViolet
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Label the resonance
+        ctx.font = '14px Arial';
+        ctx.fillStyle = 'rgba(138, 43, 226, 0.9)';
+        ctx.fillText(`1470-Day Cycle Resonance`, x + 140, y - 20);
+
+        // Log the resonance
+        logResonance("1470-Day Cycle", currentDate, "4 years minus 1 day cycle.");
+      }
+
+      if (dayDiff1471 < speedMultiplier) {
+        // Draw a distinct marker for 1471-day cycle
+        ctx.beginPath();
+        ctx.arc(x, y, 140, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 69, 0, 0.8)'; // OrangeRed
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Label the resonance
+        ctx.font = '14px Arial';
+        ctx.fillStyle = 'rgba(255, 69, 0, 0.9)';
+        ctx.fillText(`1471-Day Cycle Resonance`, x + 150, y - 20);
+
+        // Log the resonance
+        logResonance("1471-Day Cycle", currentDate, "4 years plus 1 day cycle.");
+      }
+    }
+
+    function drawAnnotations(x, y) {
+      const annotationDates = [
+        new Date(2025, 0, 28), // January 28, 2025
+        new Date(2025, 0, 29)  // January 29, 2025
+      ];
+
+      annotationDates.forEach(date => {
+        const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+        const dayDiff = Math.abs((currentDate - date) / (1000 * 60 * 60 * 24));
+
+        if (dayDiff < speedMultiplier) {
+          // Draw a star marker
+          ctx.beginPath();
+          ctx.moveTo(x, y - 100); // Adjust position as needed
+          // Define star points
+          ctx.lineTo(x + 10, y - 80);
+          ctx.lineTo(x + 30, y - 80);
+          ctx.lineTo(x + 15, y - 60);
+          ctx.lineTo(x + 20, y - 40);
+          ctx.lineTo(x, y - 50);
+          ctx.lineTo(x - 20, y - 40);
+          ctx.lineTo(x - 15, y - 60);
+          ctx.lineTo(x - 30, y - 80);
+          ctx.lineTo(x - 10, y - 80);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(255, 215, 0, 0.9)'; // Gold color
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 215, 0, 1)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Label the annotation
+          ctx.font = '14px Arial';
+          ctx.fillStyle = 'rgba(255, 215, 0, 1)';
+          ctx.fillText(`Significant Event`, x + 35, y - 70);
+
+          // Draw the Ozymandias quote near the marker
+          ctx.font = '12px Arial';
+          ctx.fillStyle = 'rgba(255, 215, 0, 1)';
+          ctx.fillText(`"Look on My Works, Ye Mighty, and Despair"`, x - 150, y + 180);
+        }
+      });
+    }
+
+    // Highlighting Resonances on the Canvas
+    function drawAllCycles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const ringSpacing = Math.min(canvas.width, canvas.height) / (2 * CYCLES.length);
+
+      const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+
+      // Compute cycle progress & draw each ring
+      let cycleProgresses = [];
+      CYCLES.forEach((cycle, idx) => {
+        const progress = (time % cycle.length) / cycle.length;
+        cycleProgresses.push(progress);
+
+        const ringRadius = ringSpacing * (CYCLES.length - idx);
+        drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
+      });
+
+      // Check resonances for all pairs
+      for (let i = 0; i < CYCLES.length; i++) {
+        for (let j = i + 1; j < CYCLES.length; j++) {
+          const ringRadius = ringSpacing * (CYCLES.length - i);
+          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate);
+        }
+      }
+
+      // Check for multiple resonances
+      checkMultiCycleResonance(centerX, centerY, currentDate);
+
+      // Check for 35-day cycle resonance
+      checkThirtyFiveDayCycle(centerX, centerY, currentDate);
+
+      // Check for 1470 and 1471-day cycles
+      check1470And1471Cycles(centerX, centerY, currentDate);
+
+      // Draw Annotations
+      drawAnnotations(centerX, centerY);
+
+      // Highlight Resonances from Resonances Data
+      resonances.forEach(resonance => {
+        resonance.dates.forEach(resDate => {
+          // Check if currentDate is within +/- speedMultiplier days of resonance date
+          const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
+          if (dayDiff < speedMultiplier) {
+            // Draw a special marker or highlight
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 100, 0, 2 * Math.PI); // Example: a fixed radius circle
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Optionally, display resonance name
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'yellow';
+            ctx.fillText(resonance.name, centerX + 120, centerY);
+          }
+        });
+      });
+
+      // Update date display
+      dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
+    }
+
+    // Main animation
+    function animate() {
+      drawAllCycles();
+
+      frameCount++;
+      const now = performance.now();
+      if (now - lastTime >= 1000) {
+        statsPanel.textContent = `FPS: ${frameCount}`;
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      if (!isPaused && !isScrubbing) {
+        time += speedMultiplier;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Canvas resizing with Debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(onResize, 200);
+    });
+
+    function onResize() {
+      resizeCanvas();
+    }
+
+    // Touch-based scrubbing with Enhanced Sensitivity
+    function onTouchStart(e) {
+      isScrubbing = true;
+      scrubStartX = e.touches[0].clientX;
+    }
+
+    function onTouchMove(e) {
+      if (!isScrubbing) return;
+      const currentX = e.touches[0].clientX;
+      const deltaX = currentX - scrubStartX;
+      const dayDelta = deltaX / 5; // Increased sensitivity for smaller screens
+      time += dayDelta;
+      scrubStartX = currentX;
+    }
+
+    function onTouchEnd() {
+      isScrubbing = false;
+    }
+
+    // Button events
+    function togglePause() {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
+    }
+
+    function resetTime() {
+      time = 0;
+    }
+
+    function speedDown() {
+      speedMultiplier = Math.max(speedMultiplier / 2, 0.01);
+    }
+
+    function speedUp() {
+      speedMultiplier = Math.min(speedMultiplier * 2, 16);
+    }
+
+    // Populate Resonance List (optional, can be removed if not needed)
+    /*
+    resonances.forEach(resonance => {
+      const nextDates = getNextResonances(resonance);
+      nextDates.forEach(date => {
+        const listItem = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = "https://x.com/_D_741Stef"; // Optionally, link to resonance details
+        link.textContent = `${resonance.name} on ${formatDate(date)}`;
+        listItem.appendChild(link);
+        resonanceList.appendChild(listItem);
+      });
+    });
+    */
+
+    // Function to calculate next N resonance dates within 7 years
+    function getNextResonances(resonance, count = 5) {
+      const nextDates = [];
+      let current = new Date(START_DATE.getTime() + resonance.lcm * 24 * 60 * 60 * 1000); // First occurrence
+      const endDate = new Date(START_DATE.getTime() + 2555 * 24 * 60 * 60 * 1000); // 7 years later
+      while (nextDates.length < count && current <= endDate) {
+        if (current >= new Date()) { // Only future dates
+          nextDates.push(new Date(current));
+        }
+        current = new Date(current.getTime() + resonance.lcm * 24 * 60 * 60 * 1000);
+      }
+      return nextDates;
+    }
+
+    // Listeners
+    canvas.addEventListener('touchstart', onTouchStart);
+    canvas.addEventListener('touchmove', onTouchMove);
+    canvas.addEventListener('touchend', onTouchEnd);
+
+    pauseBtn.addEventListener('click', togglePause);
+    resetBtn.addEventListener('click', resetTime);
+    speedDownBtn.addEventListener('click', speedDown);
+    speedUpBtn.addEventListener('click', speedUp);
+
+    // Init
+    resizeCanvas();
+    animate();
+  </script>
+</body>
+</html>
