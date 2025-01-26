@@ -49,6 +49,45 @@
       display: block;
     }
 
+    /* Logo Container Styling */
+    .logo-container {
+      position: absolute;
+      top: 60px;      /* just below the stats panel (which is top: 20px) */
+      left: 20px;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* The main logo styling */
+    #custom-logo {
+      width: 120px;   /* adjust as needed for size */
+      border-radius: 50%; /* Makes the image circular */
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+    }
+
+    /* Show the image once it's loaded */
+    #custom-logo.loaded {
+      opacity: 1;
+    }
+
+    /* Follow Link Styling */
+    .follow-link {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--highlight);
+      text-decoration: none;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .follow-link:hover {
+      color: var(--skyblue-color);
+      text-decoration: underline;
+      transform: translateY(-1px);
+    }
+
     .panel {
       position: absolute;
       background: var(--panel-bg);
@@ -110,6 +149,10 @@
         top: 20px;
         left: 20px;
       }
+      .logo-container {
+        top: 70px; /* push it down a bit more so it doesn't overlap stats on small screens */
+        left: 20px;
+      }
       .date-panel {
         bottom: 100px; 
         left: 20px;
@@ -120,6 +163,22 @@
 <body>
   <div id="container">
     <canvas id="cycleCanvas"></canvas>
+
+    <!-- Logo Container with Circular Image and Follow Link -->
+    <div class="logo-container">
+      <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">
+        <img
+          id="custom-logo"
+          src="https://pbs.twimg.com/profile_images/1874116995991359488/olXssn9f_400x400.jpg"
+          alt="Visit @_D_741Stef's X Profile"
+          loading="lazy"
+          onload="this.classList.add('loaded')"
+        />
+      </a>
+      <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer" class="follow-link">
+        Follow @_D_741Stef
+      </a>
+    </div>
 
     <!-- FPS Panel (stats) -->
     <div class="stats panel" id="stats">FPS: 60</div>
@@ -152,21 +211,16 @@
     const speedDownBtn = document.getElementById('speed-down-btn');
     const speedUpBtn = document.getElementById('speed-up-btn');
 
-    // Playback / scrubbing
     let isPaused = false;
     let isScrubbing = false;
     let scrubStartX = 0;
 
-    // FPS tracking
     let lastTime = performance.now();
     let frameCount = 0;
 
-    // Slower starting speed
     let speedMultiplier = 0.1;
 
-    /**
-     * Cycles including a special highlight for 741 days -> gold
-     */
+    // Cycles
     const CYCLES = [
       { name: 'Main ~4yrs (1461)', length: 1461, color: 'var(--limegreen-color)' },
       { name: '741-day',           length: 741,  color: 'var(--gold-color)'      },
@@ -203,10 +257,7 @@
       });
     }
 
-    /**
-     * Draw a single cycle ring + its “progress” marker
-     * Marker is white so it’s visible on dark background
-     */
+    // Draw a single cycle ring + marker
     function drawCycleRing(x, y, radius, progress, cycleColor) {
       const angle = progress * 2 * Math.PI;
       // Outer circle
@@ -216,7 +267,7 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Marker dot
+      // Marker dot -> white fill so visible
       const markerX = x + Math.cos(angle) * radius;
       const markerY = y + Math.sin(angle) * radius;
       ctx.beginPath();
@@ -234,7 +285,7 @@
         return dayDiff < 1;
       });
 
-      // If cycles align or we’re near a crucial date, highlight w/ green glow
+      // If cycles align or near crucial date, highlight w/ green glow
       if (diff < threshold || Math.abs(1 - diff) < threshold || nearCrucial) {
         ctx.beginPath();
         ctx.arc(x, y, radius * 1.2, 0, 2 * Math.PI);
@@ -244,9 +295,7 @@
       }
     }
 
-    /**
-     * Draw all cycles & check resonances
-     */
+    // Draw all cycles & check resonances
     function drawAllCycles() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -256,18 +305,17 @@
 
       const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
 
-      // 1) Compute cycle progress & draw each ring
+      // compute cycle progress & draw each ring
       let cycleProgresses = [];
       CYCLES.forEach((cycle, idx) => {
         const progress = (time % cycle.length) / cycle.length;
         cycleProgresses.push(progress);
 
-        // Largest radius for the first cycle, smaller for subsequent
         const ringRadius = ringSpacing * (CYCLES.length - idx);
         drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
       });
 
-      // 2) Check resonances for every pair of cycles
+      // check resonances for all pairs
       for (let i = 0; i < CYCLES.length; i++) {
         for (let j = i + 1; j < CYCLES.length; j++) {
           const ringRadius = ringSpacing * (CYCLES.length - i);
@@ -275,14 +323,14 @@
         }
       }
 
-      // Update date display
+      // update date display
       dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
     }
 
+    // Main animation
     function animate() {
       drawAllCycles();
 
-      // FPS
       frameCount++;
       const now = performance.now();
       if (now - lastTime >= 1000) {
@@ -291,7 +339,6 @@
         lastTime = now;
       }
 
-      // Advance time
       if (!isPaused && !isScrubbing) {
         time += speedMultiplier;
       }
@@ -299,12 +346,12 @@
       requestAnimationFrame(animate);
     }
 
-    /** Canvas resizing */
+    // Canvas resizing
     function onResize() {
       resizeCanvas();
     }
 
-    /** Touch-based scrubbing */
+    // Touch-based scrubbing
     function onTouchStart(e) {
       isScrubbing = true;
       scrubStartX = e.touches[0].clientX;
@@ -323,7 +370,7 @@
       isScrubbing = false;
     }
 
-    /* Button event handlers */
+    // Button events
     function togglePause() {
       isPaused = !isPaused;
       pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
@@ -341,6 +388,7 @@
       speedMultiplier = Math.min(speedMultiplier * 2, 16);
     }
 
+    // Listeners
     window.addEventListener('resize', onResize);
     canvas.addEventListener('touchstart', onTouchStart);
     canvas.addEventListener('touchmove', onTouchMove);
@@ -351,6 +399,7 @@
     speedDownBtn.addEventListener('click', speedDown);
     speedUpBtn.addEventListener('click', speedUp);
 
+    // Init
     resizeCanvas();
     animate();
   </script>
