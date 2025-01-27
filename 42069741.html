@@ -41,6 +41,11 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
     body {
       margin: 0;
       overflow: hidden;
@@ -53,6 +58,10 @@
       position: relative;
       width: 100vw;
       height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
 
     #cycleCanvas {
@@ -82,6 +91,7 @@
     /* The main logo styling */
     #custom-logo {
       width: 150px;   /* Increased size for better prominence */
+      height: 150px;  /* Ensure height matches width for a perfect circle */
       border-radius: 50%; /* Makes the image circular */
       transition: opacity 0.5s ease-in-out;
       opacity: 0;
@@ -551,8 +561,18 @@
     }
 
     function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      // Get device pixel ratio for high-DPR devices
+      const dpr = window.devicePixelRatio || 1;
+      
+      // Get the size of the canvas in CSS pixels
+      const rect = canvas.getBoundingClientRect();
+      
+      // Set the canvas width and height based on DPR
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      
+      // Scale the drawing context to account for DPR
+      ctx.scale(dpr, dpr);
     }
 
     function formatDate(date) {
@@ -791,9 +811,10 @@
     function drawAllCycles() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const ringSpacing = Math.min(canvas.width, canvas.height) / (2 * CYCLES.length);
+      const rect = canvas.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const ringSpacing = Math.min(rect.width, rect.height) / (2 * CYCLES.length);
 
       const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
 
@@ -879,6 +900,13 @@
     });
 
     function onResize() {
+      // Determine the smallest dimension to make the container square
+      const size = Math.min(window.innerWidth, window.innerHeight);
+      
+      // Apply the size to the container
+      document.getElementById('container').style.width = `${size}px`;
+      document.getElementById('container').style.height = `${size}px`;
+      
       resizeCanvas();
     }
 
