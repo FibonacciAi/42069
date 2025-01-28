@@ -91,6 +91,8 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .controls button {
@@ -111,6 +113,14 @@
       box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
     }
 
+    /* Date Display Styling */
+    .date-display {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+      text-align: center;
+    }
+
     /* Logo Container Styling */
     .logo-container {
       position: relative;
@@ -120,18 +130,18 @@
       align-items: center;
       justify-content: center;
       pointer-events: auto;
-      margin-top: 60px; /* Space below the controls */
+      /* Removed margin-top to center the logo */
     }
 
     /* The main logo styling */
     #custom-logo {
-      width: 80px;   /* Further reduced size to prevent overlap */
-      height: 80px;  /* Ensure height matches width for a perfect circle */
+      width: 40px;   /* Reduced size by 50% from 80px to 40px */
+      height: 40px;  /* Ensure height matches width for a perfect circle */
       border-radius: 50%; /* Makes the image circular */
       transition: opacity 0.5s ease-in-out;
       opacity: 0;
       object-fit: cover;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Reduced shadow */
     }
 
     /* Show the image once it's loaded */
@@ -139,11 +149,35 @@
       opacity: 1;
     }
 
-    /* Date Display Panel */
-    .date-display {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.9);
-      white-space: nowrap;
+    /* Emoji Styling */
+    .emoji {
+      position: absolute;
+      top: -30px; /* Position above the logo */
+      font-size: 24px;
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .emoji.active {
+      opacity: 1;
+      transform: translateY(-10px);
+    }
+
+    /* Specific Emojis */
+    .emoji.fire {
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .emoji.boom {
+      left: 60%;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .emoji.beer {
+      left: 40%;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* Legend Panel */
@@ -229,8 +263,16 @@
       }
 
       .logo-container #custom-logo {
-        width: 70px;
-        height: 70px;
+        width: 35px;
+        height: 35px;
+      }
+
+      .date-display {
+        font-size: 0.85rem;
+      }
+
+      .emoji {
+        font-size: 20px;
       }
     }
 
@@ -272,8 +314,12 @@
       }
 
       .logo-container #custom-logo {
-        width: 60px;
-        height: 60px;
+        width: 30px;
+        height: 30px;
+      }
+
+      .emoji {
+        font-size: 18px;
       }
     }
 
@@ -293,8 +339,12 @@
       }
 
       .logo-container #custom-logo {
-        width: 50px;
-        height: 50px;
+        width: 25px;
+        height: 25px;
+      }
+
+      .emoji {
+        font-size: 16px;
       }
     }
   </style>
@@ -315,7 +365,7 @@
       </div>
     </div>
 
-    <!-- Logo Container with Circular Image -->
+    <!-- Logo Container with Circular Image and Emojis -->
     <div class="logo-container">
       <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">
         <img
@@ -326,6 +376,10 @@
           onload="this.classList.add('loaded')"
         />
       </a>
+      <!-- Emojis Positioned Over the Logo -->
+      <span class="emoji fire">🔥</span>
+      <span class="emoji boom">💥</span>
+      <span class="emoji beer">🍻</span>
     </div>
 
     <!-- Canvas for Visualization -->
@@ -366,6 +420,10 @@
     const speedDownBtn = document.getElementById('speed-down-btn');
     const speedUpBtn = document.getElementById('speed-up-btn');
 
+    const fireEmoji = document.querySelector('.emoji.fire');
+    const boomEmoji = document.querySelector('.emoji.boom');
+    const beerEmoji = document.querySelector('.emoji.beer');
+
     let isPaused = false;
     let isScrubbing = false;
     let scrubStartX = 0;
@@ -398,6 +456,13 @@
       new Date(2025, 0, 29), // Lunar New Year
       new Date(2024, 11, 25) // Christmas Gift Box Meme
     ];
+
+    // Specific Emoji Dates
+    const EMOJI_DATES = {
+      "2025-01-27": "fire",
+      "2025-01-28": "boom",
+      "2025-01-29": "beer"
+    };
 
     // Time in “days since START_DATE”
     let time = 0;
@@ -814,6 +879,33 @@
 
       // Update date display
       dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
+
+      // Update Emojis based on current date
+      updateEmojis(currentDate);
+    }
+
+    // Update Emojis Visibility
+    function updateEmojis(currentDate) {
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const day = String(currentDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+
+      // Hide all emojis initially
+      fireEmoji.classList.remove('active');
+      boomEmoji.classList.remove('active');
+      beerEmoji.classList.remove('active');
+
+      // Check if the current date matches any of the emoji dates
+      if (EMOJI_DATES[formattedDate] === "fire") {
+        fireEmoji.classList.add('active');
+      }
+      if (EMOJI_DATES[formattedDate] === "boom") {
+        boomEmoji.classList.add('active');
+      }
+      if (EMOJI_DATES[formattedDate] === "beer") {
+        beerEmoji.classList.add('active');
+      }
     }
 
     // Main animation loop
