@@ -347,6 +347,16 @@
         font-size: 16px;
       }
     }
+
+    /* Fractal Resonance Styling */
+    .fractal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -433,16 +443,21 @@
 
     let speedMultiplier = 0.1;
 
-    // Cycles Definition
+    // Helper function to get CSS variable value
+    function getCSSVariable(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    // Cycles Definition with Resolved Colors
     const CYCLES = [
-      { name: 'Main ~4yrs (1461)', length: 1461, color: 'var(--limegreen-color)' },
-      { name: '1470-day',         length: 1470, color: 'var(--blueviolet-color)' },
-      { name: '1471-day',         length: 1471, color: 'var(--orangered-color)' },
-      { name: '741-day',           length: 741,  color: 'var(--gold-color)'      },
-      { name: '147-day',           length: 147,  color: 'var(--skyblue-color)'   },
-      { name: '55-day',            length: 55,   color: 'var(--turquoise-color)' },
-      { name: '35-day',            length: 35,   color: 'var(--orange-color)'    },
-      { name: '21-day',            length: 21,   color: 'var(--purple-color)'    }
+      { name: 'Main ~4yrs (1461)', length: 1461, color: getCSSVariable('--limegreen-color') },
+      { name: '1470-day',         length: 1470, color: getCSSVariable('--blueviolet-color') },
+      { name: '1471-day',         length: 1471, color: getCSSVariable('--orangered-color') },
+      { name: '741-day',           length: 741,  color: getCSSVariable('--gold-color')      },
+      { name: '147-day',           length: 147,  color: getCSSVariable('--skyblue-color')   },
+      { name: '55-day',            length: 55,   color: getCSSVariable('--turquoise-color') },
+      { name: '35-day',            length: 35,   color: getCSSVariable('--orange-color')    },
+      { name: '21-day',            length: 21,   color: getCSSVariable('--purple-color')    }
     ];
 
     // “Crucial” or interesting dates
@@ -607,6 +622,26 @@
       ctx.fill();
     }
 
+    // Recursive Fractal Resonance Drawing
+    function drawFractalResonance(x, y, radius, depth) {
+      if (depth === 0) return;
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)'; // Gold with transparency
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Recursive calls for child resonances
+      const newRadius = radius * 0.5;
+      for (let i = 0; i < 3; i++) { // Example: 3 child resonances
+        const angle = (i / 3) * 2 * Math.PI;
+        const childX = x + newRadius * Math.cos(angle);
+        const childY = y + newRadius * Math.sin(angle);
+        drawFractalResonance(childX, childY, newRadius, depth - 1);
+      }
+    }
+
     // Check and highlight resonances
     function checkResonance(x, y, radius, progressA, progressB, currentDate) {
       const alignmentThreshold = 0.02;
@@ -632,7 +667,10 @@
         ctx.lineWidth = 4;
         ctx.stroke();
         
-        // Log or display resonance
+        // Draw fractal resonances
+        drawFractalResonance(x, y, radius * 1.3, 2); // Depth of 2
+
+        // Log resonance
         logResonance("Alignment & Crucial Date", currentDate, "High significance resonance.");
       } else if (isAlignment) {
         // Medium significance: Cycle alignment
@@ -642,6 +680,9 @@
         ctx.lineWidth = 3;
         ctx.stroke();
         
+        // Draw fractal resonances
+        drawFractalResonance(x, y, radius * 1.2, 1); // Depth of 1
+
         logResonance("Alignment", currentDate, "Cycle alignment resonance.");
       } 
 
@@ -653,6 +694,9 @@
         ctx.lineWidth = 3;
         ctx.stroke();
         
+        // Optionally, draw fractal resonances
+        drawFractalResonance(x, y, radius * 1.1, 1); // Depth of 1
+
         logResonance("Crucial Date Proximity", currentDate, "Near a crucial date resonance.");
       }
     }
@@ -678,6 +722,7 @@
         ctx.lineWidth = 5;
         ctx.stroke();
         
+        // Log resonance
         logResonance("Multiple Resonances", currentDate, `${resonanceCount} resonances on the same date.`);
       }
     }
@@ -701,7 +746,7 @@
         ctx.font = '16px Arial';
         ctx.fillStyle = 'rgba(138, 43, 226, 0.9)';
         ctx.fillText(`35-Day Cycle Resonance`, x + 130, y);
-    
+
         // Log the resonance
         logResonance("35-Day Cycle", currentDate, "35 days post Christmas gift box meme.");
       }
