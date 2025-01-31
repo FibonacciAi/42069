@@ -5,6 +5,8 @@
   <meta name="description" content="Cycle Resonance Visualization (NFA)" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle Resonance Visualization</title>
+  <!-- Import Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       /* Base Theme Variables */
@@ -23,28 +25,22 @@
       --orangered-color: rgba(255, 69, 0, 0.8);
       --turquoise-color: #40E0D0; /* Unique color for 55-day Cycle */
       --purple-color: #800080;    /* Unique color for 21-day Cycle */
+      --backwards-color: #FF1493;
+      --roaringkitty-color: #FFD700;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-    }
-
+    /* Global Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; }
     body {
-      margin: 0;
-      overflow: hidden;
       background: var(--bg-color);
       color: var(--text-color);
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
       transition: background 0.3s, color 0.3s;
     }
 
+    /* Main Container */
     #container {
       position: relative;
       width: 100vw;
@@ -56,6 +52,7 @@
       overflow: hidden;
     }
 
+    /* Canvas Styling */
     #cycleCanvas {
       position: absolute;
       top: 50%;
@@ -64,10 +61,10 @@
       width: 100%;
       height: 100%;
       display: block;
-      z-index: 1; /* Behind the logo container */
+      z-index: 1;
     }
 
-    /* Controls Panel Styling */
+    /* Controls Panel */
     .controls {
       position: absolute;
       top: 20px;
@@ -86,7 +83,6 @@
       flex-wrap: wrap;
       gap: 10px;
     }
-
     .control-buttons {
       display: flex;
       gap: 10px;
@@ -94,7 +90,6 @@
       flex-wrap: wrap;
       justify-content: center;
     }
-
     .controls button {
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -106,14 +101,11 @@
       transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
       min-width: 80px;
     }
-
     .controls button:hover {
       background: rgba(255, 255, 255, 0.2);
       transform: translateY(-1px);
       box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
     }
-
-    /* Date Display Styling */
     .date-display {
       font-size: 0.9rem;
       color: rgba(255, 255, 255, 0.9);
@@ -121,69 +113,52 @@
       text-align: center;
     }
 
-    /* Logo Container Styling */
+    /* Logo Container */
     .logo-container {
-      position: relative;
-      z-index: 3; /* Above the canvas and controls */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       pointer-events: auto;
-      /* Removed margin-top to center the logo */
     }
-
-    /* The main logo styling */
+    /* Logo Image Styling */
     #custom-logo {
-      width: 40px;   /* Reduced size by 50% from 80px to 40px */
-      height: 40px;  /* Ensure height matches width for a perfect circle */
-      border-radius: 50%; /* Makes the image circular */
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       transition: opacity 0.5s ease-in-out;
       opacity: 0;
       object-fit: cover;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Reduced shadow */
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     }
-
-    /* Show the image once it's loaded */
-    #custom-logo.loaded {
-      opacity: 1;
-    }
+    #custom-logo.loaded { opacity: 1; }
 
     /* Emoji Styling */
     .emoji {
       position: absolute;
-      top: -30px; /* Position above the logo */
+      top: -30px;
       font-size: 24px;
       transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
       opacity: 0;
       pointer-events: none;
     }
-
     .emoji.active {
       opacity: 1;
       transform: translateY(-10px);
     }
-
-    /* Specific Emojis */
-    .emoji.fire {
-      left: 50%;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .emoji.boom {
-      left: 60%;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .emoji.beer {
-      left: 40%;
-      transform: translateX(-50%) translateY(0);
-    }
+    .emoji.fire { left: 50%; transform: translateX(-50%) translateY(0); }
+    .emoji.boom { left: 60%; transform: translateX(-50%) translateY(0); }
+    .emoji.beer { left: 40%; transform: translateX(-50%) translateY(0); }
 
     /* Legend Panel */
     .legend {
       position: absolute;
-      bottom: 60px; /* Positioned below the visualization */
+      bottom: 60px;
       width: 90%;
       max-width: 800px;
       font-size: 0.8rem;
@@ -199,11 +174,7 @@
       justify-content: space-around;
       flex-wrap: wrap;
     }
-
-    .legend h3 {
-      display: none; /* Hidden as legend is now horizontal */
-    }
-
+    .legend h3 { display: none; }
     .legend ul {
       display: flex;
       flex-wrap: wrap;
@@ -212,15 +183,13 @@
       justify-content: center;
       width: 100%;
     }
-
     .legend li {
       display: flex;
       align-items: center;
       gap: 5px;
-      flex: 1 1 120px; /* Allows items to wrap nicely */
+      flex: 1 1 120px;
       justify-content: center;
     }
-
     .legend li span {
       display: inline-block;
       width: 12px;
@@ -228,124 +197,71 @@
       border-radius: 50%;
       background: var(--highlight);
     }
-
-    .legend li.follow-link span {
-      background: var(--highlight); /* Highlight color for follow link */
-    }
-
+    .legend li.follow-link span { background: var(--highlight); }
     .legend a {
       color: var(--highlight);
       text-decoration: none;
       transition: color 0.2s, transform 0.2s;
     }
-
     .legend a:hover {
       color: var(--skyblue-color);
       text-decoration: underline;
       transform: translateY(-1px);
     }
 
+    /* Settings Panel */
+    #settingsPanel {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      background: var(--panel-bg);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 5;
+      font-size: 0.85rem;
+      color: var(--text-color);
+    }
+    #settingsPanel label { display: block; margin-bottom: 0.3rem; cursor: pointer; }
+    #settingsPanel input { margin-right: 0.5rem; }
+
+    /* Debug Overlay */
+    #debugOverlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 8px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      z-index: 6;
+      display: none;
+    }
+
     /* Responsive Enhancements */
-    @media (max-width: 1024px) {
-      .legend {
-        bottom: 50px;
-      }
-    }
-
     @media (max-width: 768px) {
-      .controls {
-        width: 95%;
-        top: 10px;
-      }
-
-      .legend {
-        bottom: 50px;
-      }
-
-      .logo-container #custom-logo {
-        width: 35px;
-        height: 35px;
-      }
-
-      .date-display {
-        font-size: 0.85rem;
-      }
-
-      .emoji {
-        font-size: 20px;
-      }
+      .controls { width: 95%; top: 10px; }
+      .legend { bottom: 50px; }
+      .logo-container #custom-logo { width: 35px; height: 35px; }
+      .date-display { font-size: 0.85rem; }
+      .emoji { font-size: 20px; }
     }
-
     @media (max-width: 480px) {
-      .controls {
-        flex-direction: column;
-        gap: 8px;
-        align-items: center;
-      }
-
-      .control-buttons {
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .controls button {
-        min-width: 70px;
-        padding: 6px 12px;
-        font-size: 0.8rem;
-      }
-
-      .date-display {
-        font-size: 0.8rem;
-        margin-top: 8px;
-      }
-
-      .legend {
-        bottom: 50px;
-        padding: 0.5rem 0.75rem;
-        gap: 10px;
-      }
-
-      .legend ul {
-        gap: 10px;
-      }
-
-      .legend li {
-        flex: 1 1 100px;
-      }
-
-      .logo-container #custom-logo {
-        width: 30px;
-        height: 30px;
-      }
-
-      .emoji {
-        font-size: 18px;
-      }
+      .controls { flex-direction: column; gap: 8px; align-items: center; }
+      .controls button { min-width: 70px; padding: 6px 12px; font-size: 0.8rem; }
+      .date-display { font-size: 0.8rem; margin-top: 8px; }
+      .legend { bottom: 50px; padding: 0.5rem 0.75rem; gap: 10px; }
+      .legend li { flex: 1 1 100px; }
+      .logo-container #custom-logo { width: 30px; height: 30px; }
+      .emoji { font-size: 18px; }
     }
-
     @media (max-width: 320px) {
-      .controls button {
-        min-width: 60px;
-        padding: 5px 8px;
-        font-size: 0.7rem;
-      }
-
-      .date-display {
-        font-size: 0.7rem;
-      }
-
-      .legend li {
-        flex: 1 1 80px;
-      }
-
-      .logo-container #custom-logo {
-        width: 25px;
-        height: 25px;
-      }
-
-      .emoji {
-        font-size: 16px;
-      }
+      .controls button { min-width: 60px; padding: 5px 8px; font-size: 0.7rem; }
+      .date-display { font-size: 0.7rem; }
+      .legend li { flex: 1 1 80px; }
+      .logo-container #custom-logo { width: 25px; height: 25px; }
+      .emoji { font-size: 16px; }
     }
 
     /* Fractal Resonance Styling */
@@ -357,10 +273,28 @@
       pointer-events: none;
       z-index: 2;
     }
+
+    /* Sound Wave Animation */
+    .sound-wave {
+      position: absolute;
+      border: 2px solid var(--highlight);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: expand 1s linear infinite;
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: 5;
+      display: none;
+    }
+    @keyframes expand {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
   </style>
 </head>
 <body>
-  <div id="container">
+  <div id="container" role="main">
     <!-- Controls Panel -->
     <div class="controls panel" id="controls">
       <div class="control-buttons">
@@ -369,33 +303,42 @@
         <button id="speed-down-btn" aria-label="Decrease Speed">Slower</button>
         <button id="speed-up-btn" aria-label="Increase Speed">Faster</button>
       </div>
-      <!-- Date Display Integrated into Controls -->
+      <!-- Date Display -->
       <div class="date-display" id="date-display">
         Current: 01/28/2021
       </div>
     </div>
 
-    <!-- Logo Container with Circular Image and Emojis -->
+    <!-- Settings Panel -->
+    <div id="settingsPanel" aria-label="Settings Panel">
+      <label>
+        <input type="checkbox" id="toggleMute"> Mute Audio
+      </label>
+      <label>
+        <input type="checkbox" id="toggleDebug"> Show Debug Overlay
+      </label>
+      <label>
+        <input type="checkbox" id="toggleFractal" checked> Show Fractal Details
+      </label>
+    </div>
+
+    <!-- Debug Overlay -->
+    <div id="debugOverlay" aria-live="polite"></div>
+
+    <!-- Logo Container -->
     <div class="logo-container">
       <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">
-        <img
-          id="custom-logo"
-          src="https://pbs.twimg.com/profile_images/1874116995991359488/olXssn9f_400x400.jpg"
-          alt="Visit @_D_741Stef's X Profile"
-          loading="lazy"
-          onload="this.classList.add('loaded')"
-        />
+        <img id="custom-logo" src="https://pbs.twimg.com/profile_images/1874116995991359488/olXssn9f_400x400.jpg" alt="Visit @_D_741Stef's X Profile" loading="lazy">
       </a>
-      <!-- Emojis Positioned Over the Logo -->
       <span class="emoji fire">🔥</span>
       <span class="emoji boom">💥</span>
       <span class="emoji beer">🍻</span>
     </div>
 
-    <!-- Canvas for Visualization -->
-    <canvas id="cycleCanvas"></canvas>
+    <!-- Canvas -->
+    <canvas id="cycleCanvas">Your browser does not support the canvas element.</canvas>
 
-    <!-- Legend Panel with Follow Link -->
+    <!-- Legend Panel -->
     <div class="legend panel" id="legend">
       <ul>
         <li><span style="background: var(--limegreen-color);"></span> Main ~4yrs Cycle</li>
@@ -406,635 +349,686 @@
         <li><span style="background: var(--turquoise-color);"></span> 55-day Cycle</li>
         <li><span style="background: var(--orange-color);"></span> 35-day Cycle</li>
         <li><span style="background: var(--purple-color);"></span> 21-day Cycle</li>
-        <!-- Follow Link as a new list item -->
         <li class="follow-link">
           <span style="background: var(--highlight);"></span>
-          <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">
-            Follow @_D_741Stef
-          </a>
+          <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">Follow @_D_741Stef</a>
         </li>
       </ul>
     </div>
   </div>
 
+  <!-- Sound Wave Element -->
+  <div class="sound-wave" id="soundWave"></div>
+
   <script>
-    /****************************************************
-     * Cycle Resonance Visualization Script
-     ****************************************************/
-    const canvas = document.getElementById('cycleCanvas');
-    const ctx = canvas.getContext('2d');
+    (function(){
+      "use strict";
 
-    const dateDisplayPanel = document.getElementById('date-display');
-    const pauseBtn = document.getElementById('pause-btn');
-    const resetBtn = document.getElementById('reset-btn');
-    const speedDownBtn = document.getElementById('speed-down-btn');
-    const speedUpBtn = document.getElementById('speed-up-btn');
+      /* === DOM ELEMENTS & INITIAL STATE === */
+      const canvas = document.getElementById('cycleCanvas');
+      const ctx = canvas.getContext('2d');
+      const dateDisplayPanel = document.getElementById('date-display');
+      const pauseBtn = document.getElementById('pause-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const speedDownBtn = document.getElementById('speed-down-btn');
+      const speedUpBtn = document.getElementById('speed-up-btn');
+      const fireEmoji = document.querySelector('.emoji.fire');
+      const boomEmoji = document.querySelector('.emoji.boom');
+      const beerEmoji = document.querySelector('.emoji.beer');
+      const soundWave = document.getElementById('soundWave');
+      const customLogo = document.getElementById('custom-logo');
+      const debugOverlay = document.getElementById('debugOverlay');
 
-    const fireEmoji = document.querySelector('.emoji.fire');
-    const boomEmoji = document.querySelector('.emoji.boom');
-    const beerEmoji = document.querySelector('.emoji.beer');
+      // Settings Panel Elements
+      const toggleMute = document.getElementById('toggleMute');
+      const toggleDebug = document.getElementById('toggleDebug');
+      const toggleFractal = document.getElementById('toggleFractal');
 
-    let isPaused = false;
-    let isScrubbing = false;
-    let scrubStartX = 0;
+      // Global state variables
+      let isPaused = false;
+      let isScrubbing = false;
+      let scrubStartX = 0;
+      let lastTime = performance.now();
+      let frameCount = 0;
+      let speedMultiplier = 0.05; // automatic time increment (days per frame)
+      let time = 0; // days elapsed since START_DATE
+      let particles = []; // array for particle bursts
 
-    let lastTime = performance.now();
-    let frameCount = 0;
+      // Variables for inertia-based wheel scrubbing
+      let wheelScrubVelocity = 0;
 
-    let speedMultiplier = 0.1;
+      // Variables for mouse dragging scrubbing
+      let isMouseDragging = false;
+      let mouseStartX = 0;
 
-    // Helper function to get CSS variable value
-    function getCSSVariable(name) {
-      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    }
+      // Settings (persisted via localStorage)
+      let settings = {
+        audioMuted: false,
+        debugOverlay: false,
+        fractalDetails: true
+      };
 
-    // Cycles Definition with Resolved Colors
-    const CYCLES = [
-      { name: 'Main ~4yrs (1461)', length: 1461, color: getCSSVariable('--limegreen-color') },
-      { name: '1470-day',         length: 1470, color: getCSSVariable('--blueviolet-color') },
-      { name: '1471-day',         length: 1471, color: getCSSVariable('--orangered-color') },
-      { name: '741-day',           length: 741,  color: getCSSVariable('--gold-color')      },
-      { name: '147-day',           length: 147,  color: getCSSVariable('--skyblue-color')   },
-      { name: '55-day',            length: 55,   color: getCSSVariable('--turquoise-color') },
-      { name: '35-day',            length: 35,   color: getCSSVariable('--orange-color')    },
-      { name: '21-day',            length: 21,   color: getCSSVariable('--purple-color')    }
-    ];
-
-    // “Crucial” or interesting dates
-    const START_DATE = new Date(2021, 0, 28);
-    const CRUCIAL_DATES = [
-      new Date(2025, 0, 9),
-      new Date(2025, 0, 12),
-      new Date(2025, 0, 23),
-      new Date(2025, 0, 28),
-      new Date(2024, 4, 1),
-      new Date(2025, 0, 29), // Lunar New Year
-      new Date(2024, 11, 25) // Christmas Gift Box Meme
-    ];
-
-    // Specific Emoji Dates
-    const EMOJI_DATES = {
-      "2025-01-27": "fire",
-      "2025-01-28": "boom",
-      "2025-01-29": "beer"
-    };
-
-    // Time in “days since START_DATE”
-    let time = 0;
-
-    // Resonances Data
-    const resonances = [
-      // Pairwise Resonances
-      {
-        name: "E & F (35-day & 21-day)",
-        lcm: 105, // days
-        dates: [
-          new Date("2021-05-13"),
-          new Date("2021-08-26"),
-          new Date("2021-12-09"),
-          new Date("2022-03-23"),
-          new Date("2022-07-07"),
-          new Date("2022-10-21"),
-          new Date("2023-02-03"),
-          new Date("2023-05-18"),
-          new Date("2023-09-01"),
-          new Date("2023-12-16"),
-          new Date("2024-04-29"),
-          new Date("2024-08-13"),
-          new Date("2024-11-27"),
-          new Date("2025-03-11")
-        ]
-      },
-      {
-        name: "D & E (55-day & 35-day)",
-        lcm: 385,
-        dates: [
-          new Date("2022-02-17"),
-          new Date("2023-02-17"),
-          new Date("2024-02-17"),
-          new Date("2025-02-16") // Adjusted for leap year
-        ]
-      },
-      {
-        name: "C & E (147-day & 35-day)",
-        lcm: 735,
-        dates: [
-          new Date("2023-02-02"),
-          new Date("2025-02-02")
-        ]
-      },
-      {
-        name: "D & F (55-day & 21-day)",
-        lcm: 1155,
-        dates: [
-          new Date("2024-03-28")
-        ]
-      },
-      
-      // Triplet Resonances
-      {
-        name: "C, E & F (147-day, 35-day & 21-day)",
-        lcm: 735,
-        dates: [
-          new Date("2023-02-02"),
-          new Date("2025-02-02")
-        ]
-      },
-      {
-        name: "D, E & F (55-day, 35-day & 21-day)",
-        lcm: 1155,
-        dates: [
-          new Date("2024-03-28")
-        ]
-      },
-
-      // New 1470 and 1471-day cycles
-      {
-        name: "1470-Day Cycle Resonance",
-        lcm: 1470,
-        dates: [
-          new Date("2025-01-27"), // 4 years minus 1 day from Jan 28, 2021
-          new Date("2029-01-26")  // Next occurrence
-        ]
-      },
-      {
-        name: "1471-Day Cycle Resonance",
-        lcm: 1471,
-        dates: [
-          new Date("2025-01-29"), // 4 years plus 1 day from Jan 28, 2021
-          new Date("2029-01-28")  // Next occurrence
-        ]
+      // Load settings from localStorage
+      const savedSettings = localStorage.getItem("cycleSettings");
+      if (savedSettings) {
+        settings = Object.assign(settings, JSON.parse(savedSettings));
       }
-    ];
+      // Set initial checkbox values
+      toggleMute.checked = settings.audioMuted;
+      toggleDebug.checked = settings.debugOverlay;
+      toggleFractal.checked = settings.fractalDetails;
+      debugOverlay.style.display = settings.debugOverlay ? "block" : "none";
 
-    // Resonance Log (for debugging purposes)
-    const resonanceLog = [];
-
-    function logResonance(type, date, details) {
-      resonanceLog.push({ type, date, details });
-      console.log(`Resonance Triggered: ${type} on ${formatDate(date)} - ${details}`);
-    }
-
-    // Resize the canvas to fit the window
-    function resizeCanvas() {
-      // Get device pixel ratio for high-DPR devices
-      const dpr = window.devicePixelRatio || 1;
-      
-      // Get the size of the canvas in CSS pixels
-      const rect = canvas.getBoundingClientRect();
-      
-      // Set the canvas width and height based on DPR
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      
-      // Clear any existing scaling
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      
-      // Scale the drawing context to account for DPR
-      ctx.scale(dpr, dpr);
-    }
-
-    function formatDate(date) {
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
-
-    // Draw a single cycle ring + marker
-    function drawCycleRing(x, y, radius, progress, cycleColor) {
-      const angle = progress * 2 * Math.PI;
-      // Outer circle
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI);
-      ctx.strokeStyle = cycleColor;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Marker dot -> white fill so visible
-      const markerX = x + Math.cos(angle) * radius;
-      const markerY = y + Math.sin(angle) * radius;
-      ctx.beginPath();
-      ctx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
-      ctx.fillStyle = '#fff'; 
-      ctx.fill();
-    }
-
-    // Recursive Fractal Resonance Drawing
-    function drawFractalResonance(x, y, radius, depth) {
-      if (depth === 0) return;
-
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI);
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)'; // Gold with transparency
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Recursive calls for child resonances
-      const newRadius = radius * 0.5;
-      for (let i = 0; i < 3; i++) { // Example: 3 child resonances
-        const angle = (i / 3) * 2 * Math.PI;
-        const childX = x + newRadius * Math.cos(angle);
-        const childY = y + newRadius * Math.sin(angle);
-        drawFractalResonance(childX, childY, newRadius, depth - 1);
-      }
-    }
-
-    // Check and highlight resonances
-    function checkResonance(x, y, radius, progressA, progressB, currentDate) {
-      const alignmentThreshold = 0.02;
-      const dayThreshold = 1; // days
-      
-      const diff = Math.abs(progressA - progressB);
-
-      // Check for cycle alignment
-      const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
-
-      // Check for proximity to crucial dates
-      const nearCrucial = CRUCIAL_DATES.some(cd => {
-        const dayDiff = Math.abs((currentDate - cd) / (1000 * 60 * 60 * 24));
-        return dayDiff < dayThreshold;
-      });
-
-      // Determine resonance type
-      if (isAlignment && nearCrucial) {
-        // High significance: Both alignment and crucial date proximity
-        ctx.beginPath();
-        ctx.arc(x, y, radius * 1.3, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)'; // Gold for high significance
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        
-        // Draw fractal resonances
-        drawFractalResonance(x, y, radius * 1.3, 2); // Depth of 2
-
-        // Log resonance
-        logResonance("Alignment & Crucial Date", currentDate, "High significance resonance.");
-      } else if (isAlignment) {
-        // Medium significance: Cycle alignment
-        ctx.beginPath();
-        ctx.arc(x, y, radius * 1.2, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)'; // Green for alignment
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        
-        // Draw fractal resonances
-        drawFractalResonance(x, y, radius * 1.2, 1); // Depth of 1
-
-        logResonance("Alignment", currentDate, "Cycle alignment resonance.");
-      } 
-
-      if (nearCrucial) {
-        // Medium significance: Crucial date proximity
-        ctx.beginPath();
-        ctx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)'; // Orange for date proximity
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        
-        // Optionally, draw fractal resonances
-        drawFractalResonance(x, y, radius * 1.1, 1); // Depth of 1
-
-        logResonance("Crucial Date Proximity", currentDate, "Near a crucial date resonance.");
-      }
-    }
-
-    // Check for multiple resonances on the same date
-    function checkMultiCycleResonance(x, y, currentDate) {
-      let resonanceCount = 0;
-      
-      resonances.forEach(resonance => {
-        resonance.dates.forEach(resDate => {
-          const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
-          if (dayDiff < speedMultiplier) {
-            resonanceCount++;
-          }
-        });
-      });
-      
-      if (resonanceCount >= 2) {
-        // High significance: Multiple resonances on the same date
-        ctx.beginPath();
-        ctx.arc(x, y, 150, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)'; // Red for multiple resonances
-        ctx.lineWidth = 5;
-        ctx.stroke();
-        
-        // Log resonance
-        logResonance("Multiple Resonances", currentDate, `${resonanceCount} resonances on the same date.`);
-      }
-    }
-
-    // Check for 35-day cycle resonance
-    function checkThirtyFiveDayCycle(x, y, currentDate) {
-      const startDate = new Date(2024, 11, 25); // December 25, 2024
-      const targetDate = new Date(startDate.getTime() + 35 * 24 * 60 * 60 * 1000); // 35 days later
-
-      const dayDiff = Math.abs((currentDate - targetDate) / (1000 * 60 * 60 * 24));
-
-      if (dayDiff < speedMultiplier) { // Within threshold
-        // Highlight the 35-day cycle resonance
-        ctx.beginPath();
-        ctx.arc(x, y, 120, 0, 2 * Math.PI); // Example: adjustable radius
-        ctx.strokeStyle = 'rgba(138, 43, 226, 0.8)'; // BlueViolet for differentiation
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        // Label the resonance
-        ctx.font = '16px Arial';
-        ctx.fillStyle = 'rgba(138, 43, 226, 0.9)';
-        ctx.fillText(`35-Day Cycle Resonance`, x + 130, y);
-
-        // Log the resonance
-        logResonance("35-Day Cycle", currentDate, "35 days post Christmas gift box meme.");
-      }
-    }
-
-    // Check for 1470 and 1471-day cycles
-    function check1470And1471Cycles(x, y, currentDate) {
-      resonances.forEach(resonance => {
-        resonance.dates.forEach(resDate => {
-          const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
-          if (dayDiff < speedMultiplier) {
-            // Draw a special marker or highlight
-            ctx.beginPath();
-            ctx.arc(x, y, 100, 0, 2 * Math.PI); // Example: a fixed radius circle
-            ctx.strokeStyle = 'yellow';
-            ctx.lineWidth = 4;
-            ctx.stroke();
-
-            // Optionally, display resonance name
-            ctx.font = '16px Arial';
-            ctx.fillStyle = 'yellow';
-            ctx.fillText(resonance.name, x + 120, y);
-          }
-        });
-      });
-
-      // Specific Resonances for 1470 and 1471-day cycles
-      const cycle1470 = new Date(START_DATE.getTime() + 1470 * 24 * 60 * 60 * 1000); // 1470 days after start
-      const cycle1471 = new Date(START_DATE.getTime() + 1471 * 24 * 60 * 60 * 1000); // 1471 days after start
-
-      const dayDiff1470 = Math.abs((currentDate - cycle1470) / (1000 * 60 * 60 * 24));
-      const dayDiff1471 = Math.abs((currentDate - cycle1471) / (1000 * 60 * 60 * 24));
-
-      if (dayDiff1470 < speedMultiplier) {
-        // Draw a distinct marker for 1470-day cycle
-        ctx.beginPath();
-        ctx.arc(x, y, 130, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(138, 43, 226, 0.8)'; // BlueViolet
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        // Label the resonance
-        ctx.font = '14px Arial';
-        ctx.fillStyle = 'rgba(138, 43, 226, 0.9)';
-        ctx.fillText(`1470-Day Cycle Resonance`, x + 140, y - 20);
-
-        // Log the resonance
-        logResonance("1470-Day Cycle", currentDate, "4 years minus 1 day cycle.");
+      // Persist settings function
+      function saveSettings() {
+        localStorage.setItem("cycleSettings", JSON.stringify(settings));
       }
 
-      if (dayDiff1471 < speedMultiplier) {
-        // Draw a distinct marker for 1471-day cycle
-        ctx.beginPath();
-        ctx.arc(x, y, 140, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(255, 69, 0, 0.8)'; // OrangeRed
-        ctx.lineWidth = 4;
-        ctx.stroke();
+      // Audio Context setup
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
+      let audioStarted = false;
 
-        // Label the resonance
-        ctx.font = '14px Arial';
-        ctx.fillStyle = 'rgba(255, 69, 0, 0.9)';
-        ctx.fillText(`1471-Day Cycle Resonance`, x + 150, y - 20);
-
-        // Log the resonance
-        logResonance("1471-Day Cycle", currentDate, "4 years plus 1 day cycle.");
+      // Helper: Get CSS variable value
+      function getCSSVariable(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
       }
-    }
 
-    // Draw annotations like significant events or quotes
-    function drawAnnotations(x, y) {
-      const annotationDates = [
-        new Date(2025, 0, 28), // January 28, 2025
-        new Date(2025, 0, 29)  // January 29, 2025
+      // Cycle definitions
+      const CYCLES = [
+        { name: 'Main ~4yrs (1461)', length: 1461, color: getCSSVariable('--limegreen-color') },
+        { name: '1470-day',         length: 1470, color: getCSSVariable('--blueviolet-color') },
+        { name: '1471-day',         length: 1471, color: getCSSVariable('--orangered-color') },
+        { name: '741-day',          length: 741,  color: getCSSVariable('--gold-color') },
+        { name: '147-day',          length: 147,  color: getCSSVariable('--skyblue-color') },
+        { name: '55-day',           length: 55,   color: getCSSVariable('--turquoise-color') },
+        { name: '35-day',           length: 35,   color: getCSSVariable('--orange-color') },
+        { name: '21-day',           length: 21,   color: getCSSVariable('--purple-color') }
       ];
 
-      annotationDates.forEach(date => {
-        const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
-        const dayDiff = Math.abs((currentDate - date) / (1000 * 60 * 60 * 24));
+      // Start date and crucial dates (all calculations use ms so leap years are handled automatically)
+      const START_DATE = new Date(2021, 0, 28);
+      const CRUCIAL_DATES = [
+        new Date(2025, 0, 9),
+        new Date(2025, 0, 12),
+        new Date(2025, 0, 23),
+        new Date(2025, 0, 28),
+        new Date(2024, 4, 1),
+        new Date(2025, 0, 29),
+        new Date(2024, 11, 25)
+      ];
 
-        if (dayDiff < speedMultiplier) {
-          // Draw a star marker
-          ctx.beginPath();
-          ctx.moveTo(x, y - 100); // Adjust position as needed
-          // Define star points
-          ctx.lineTo(x + 10, y - 80);
-          ctx.lineTo(x + 30, y - 80);
-          ctx.lineTo(x + 15, y - 60);
-          ctx.lineTo(x + 20, y - 40);
-          ctx.lineTo(x, y - 50);
-          ctx.lineTo(x - 20, y - 40);
-          ctx.lineTo(x - 15, y - 60);
-          ctx.lineTo(x - 30, y - 80);
-          ctx.lineTo(x - 10, y - 80);
-          ctx.closePath();
-          ctx.fillStyle = 'rgba(255, 215, 0, 0.9)'; // Gold color
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(255, 215, 0, 1)';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+      // Emoji dates mapping (YYYY-MM-DD: emoji type)
+      const EMOJI_DATES = {
+        "2025-01-27": "fire",
+        "2025-01-28": "boom",
+        "2025-01-29": "beer"
+      };
 
-          // Label the annotation
-          ctx.font = '14px Arial';
-          ctx.fillStyle = 'rgba(255, 215, 0, 1)';
-          ctx.fillText(`Significant Event`, x + 35, y - 70);
-
-          // Draw the Ozymandias quote near the marker
-          ctx.font = '12px Arial';
-          ctx.fillStyle = 'rgba(255, 215, 0, 1)';
-          ctx.fillText(`"Look on My Works, Ye Mighty, and Despair"`, x - 150, y + 180);
+      // Resonances definitions (note: "Backwards (741-day)" explicitly includes January 31, 2025)
+      const resonances = [
+        {
+          name: "E & F (35-day & 21-day)",
+          lcm: 105,
+          dates: [
+            new Date("2021-05-13"), new Date("2021-08-26"), new Date("2021-12-09"),
+            new Date("2022-03-23"), new Date("2022-07-07"), new Date("2022-10-21"),
+            new Date("2023-02-03"), new Date("2023-05-18"), new Date("2023-09-01"),
+            new Date("2023-12-16"), new Date("2024-04-29"), new Date("2024-08-13"),
+            new Date("2024-11-27"), new Date("2025-03-11")
+          ]
+        },
+        {
+          name: "D & E (55-day & 35-day)",
+          lcm: 385,
+          dates: [
+            new Date("2022-02-17"), new Date("2023-02-17"),
+            new Date("2024-02-17"), new Date("2025-02-16")
+          ]
+        },
+        {
+          name: "C & E (147-day & 35-day)",
+          lcm: 735,
+          dates: [ new Date("2023-02-02"), new Date("2025-02-02") ]
+        },
+        {
+          name: "D & F (55-day & 21-day)",
+          lcm: 1155,
+          dates: [ new Date("2024-03-28") ]
+        },
+        {
+          name: "C, E & F (147-day, 35-day & 21-day)",
+          lcm: 735,
+          dates: [ new Date("2023-02-02"), new Date("2025-02-02") ]
+        },
+        {
+          name: "D, E & F (55-day, 35-day & 21-day)",
+          lcm: 1155,
+          dates: [ new Date("2024-03-28") ]
+        },
+        {
+          name: "1470-Day Cycle Resonance",
+          lcm: 1470,
+          dates: [ new Date("2025-01-27"), new Date("2029-01-26") ]
+        },
+        {
+          name: "1471-Day Cycle Resonance",
+          lcm: 1471,
+          dates: [ new Date("2025-01-29"), new Date("2029-01-28") ]
+        },
+        {
+          name: "Backwards (741-day)",
+          lcm: 741,
+          dates: [ new Date("2025-01-31"), new Date("2027-12-17") ]
+        },
+        {
+          name: "Roaring Kitty's 110 Posts Requel",
+          lcm: 110,
+          dates: [ new Date("2025-02-18") ]
         }
-      });
-    }
+      ];
 
-    // Highlighting Resonances on the Canvas
-    function drawAllCycles() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // To avoid duplicate triggers
+      const triggeredResonances = new Set();
 
-      const rect = canvas.getBoundingClientRect();
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      const ringSpacing = Math.min(rect.width, rect.height) / (2 * CYCLES.length);
+      // Utility: Format a date for display
+      function formatDate(date) {
+        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
 
-      const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+      // Resize the canvas for high-DPR devices
+      function resizeCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+      }
 
-      // Compute cycle progress & draw each ring
-      let cycleProgresses = [];
-      CYCLES.forEach((cycle, idx) => {
-        const progress = (time % cycle.length) / cycle.length;
-        cycleProgresses.push(progress);
+      // Draw a cycle ring and its marker
+      function drawCycleRing(x, y, radius, progress, cycleColor) {
+        const angle = progress * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = cycleColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        const markerX = x + Math.cos(angle) * radius;
+        const markerY = y + Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+      }
 
-        const ringRadius = ringSpacing * (CYCLES.length - idx);
-        drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
-      });
-
-      // Check resonances for all pairs
-      for (let i = 0; i < CYCLES.length; i++) {
-        for (let j = i + 1; j < CYCLES.length; j++) {
-          const ringRadius = ringSpacing * (CYCLES.length - i);
-          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate);
+      // Recursively draw fractal resonances (only if enabled in settings)
+      function drawFractalResonance(x, y, radius, depth) {
+        if (depth === 0 || !settings.fractalDetails) return;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        const newRadius = radius * 0.5;
+        for (let i = 0; i < 3; i++) {
+          const angle = (i / 3) * 2 * Math.PI;
+          const childX = x + newRadius * Math.cos(angle);
+          const childY = y + newRadius * Math.sin(angle);
+          drawFractalResonance(childX, childY, newRadius, depth - 1);
         }
       }
 
-      // Check for multiple resonances
-      checkMultiCycleResonance(centerX, centerY, currentDate);
+      // Sound frequencies for resonance types
+      const RESONANCE_SOUNDS = {
+        "Alignment": { frequency: 261.63 },
+        "Alignment & Crucial Date": { frequency: 329.63 },
+        "Crucial Date Proximity": { frequency: 392.00 },
+        "Multiple Resonances": { frequency: 523.25 },
+        "35-Day Cycle": { frequency: 440.00 },
+        "1470-Day Cycle": { frequency: 349.23 },
+        "1471-Day Cycle": { frequency: 311.13 },
+        "Backwards (741-day)": { frequency: 311.13 },
+        "Roaring Kitty's 110 Posts Requel": { frequency: 392.00 }
+      };
+
+      // Play a tone (unless muted)
+      function playTone(frequency, duration = 0.5) {
+        if (settings.audioMuted) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        oscillator.stop(audioCtx.currentTime + duration);
+      }
+
+      // Play a chord (multiple tones)
+      function playChord(frequencies, duration = 1) {
+        frequencies.forEach(freq => playTone(freq, duration));
+      }
+
+      // Spawn particles at (x, y) for a burst effect
+      function spawnParticles(x, y) {
+        const numParticles = 10;
+        for (let i = 0; i < numParticles; i++) {
+          particles.push({
+            x,
+            y,
+            dx: (Math.random() - 0.5) * 4,
+            dy: (Math.random() - 0.5) * 4,
+            radius: Math.random() * 3 + 2,
+            alpha: 1,
+            life: 60
+          });
+        }
+      }
+
+      // Update and draw particles
+      function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.dx;
+          p.y += p.dy;
+          p.life--;
+          p.alpha = p.life / 60;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+          ctx.fillStyle = `rgba(255, 215, 0, ${p.alpha})`;
+          ctx.fill();
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+      }
+
+      // Trigger sound and particle burst for a resonance type
+      function triggerResonanceSound(type) {
+        const sound = RESONANCE_SOUNDS[type];
+        if (!sound) return;
+        triggerSoundWave();
+        spawnParticles(canvas.width / 2, canvas.height / 2);
+        if (type === "Alignment & Crucial Date" || type === "Multiple Resonances") {
+          playChord([RESONANCE_SOUNDS["Alignment"].frequency, sound.frequency, RESONANCE_SOUNDS["Crucial Date Proximity"].frequency], 1);
+        } else {
+          playTone(sound.frequency, 0.5);
+        }
+      }
+
+      // Visual sound wave effect
+      function triggerSoundWave() {
+        soundWave.style.display = 'block';
+        soundWave.style.animation = 'none';
+        void soundWave.offsetWidth;
+        soundWave.style.animation = 'expand 1s linear infinite';
+        setTimeout(() => { soundWave.style.display = 'none'; }, 1000);
+      }
+
+      // Check resonance between cycles and trigger visuals/sounds
+      function checkResonance(x, y, radius, progressA, progressB, currentDate) {
+        const alignmentThreshold = 0.02;
+        const dayThreshold = 1; // in days
+        const diff = Math.abs(progressA - progressB);
+        const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
+        const nearCrucial = CRUCIAL_DATES.some(cd =>
+          Math.abs((currentDate - cd) / (1000 * 60 * 60 * 24)) < dayThreshold
+        );
+        let resonanceType = null;
+        if (isAlignment && nearCrucial) {
+          resonanceType = "Alignment & Crucial Date";
+        } else if (isAlignment) {
+          resonanceType = "Alignment";
+        }
+        if (nearCrucial) {
+          resonanceType = resonanceType || "Crucial Date Proximity";
+        }
+        if (resonanceType) {
+          const resonanceKey = `${resonanceType}-${currentDate.toDateString()}`;
+          if (!triggeredResonances.has(resonanceKey)) {
+            triggeredResonances.add(resonanceKey);
+            if (resonanceType === "Alignment & Crucial Date") {
+              ctx.beginPath();
+              ctx.arc(x, y, radius * 1.3, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)';
+              ctx.lineWidth = 4;
+              ctx.stroke();
+              drawFractalResonance(x, y, radius * 1.3, 2);
+            } else if (resonanceType === "Alignment") {
+              ctx.beginPath();
+              ctx.arc(x, y, radius * 1.2, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)';
+              ctx.lineWidth = 3;
+              ctx.stroke();
+              drawFractalResonance(x, y, radius * 1.2, 1);
+            } else if (resonanceType === "Crucial Date Proximity") {
+              ctx.beginPath();
+              ctx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)';
+              ctx.lineWidth = 3;
+              ctx.stroke();
+              drawFractalResonance(x, y, radius * 1.1, 1);
+            }
+            console.log(`Resonance Triggered: ${resonanceType} on ${formatDate(currentDate)}`);
+            triggerResonanceSound(resonanceType);
+          }
+        }
+      }
+
+      // Check for multiple resonances on the same date
+      function checkMultiCycleResonance(x, y, currentDate) {
+        let resonanceCount = 0;
+        resonances.forEach(resonance => {
+          resonance.dates.forEach(resDate => {
+            const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
+            if (dayDiff < speedMultiplier) resonanceCount++;
+          });
+        });
+        if (resonanceCount >= 2) {
+          const resonanceKey = `Multiple Resonances-${currentDate.toDateString()}`;
+          if (!triggeredResonances.has(resonanceKey)) {
+            triggeredResonances.add(resonanceKey);
+            ctx.beginPath();
+            ctx.arc(x, y, 150, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            console.log(`Resonance Triggered: Multiple Resonances on ${formatDate(currentDate)} (${resonanceCount} resonances)`);
+            triggerResonanceSound("Multiple Resonances");
+          }
+        }
+      }
 
       // Check for 35-day cycle resonance
-      checkThirtyFiveDayCycle(centerX, centerY, currentDate);
-
-      // Check for 1470 and 1471-day cycles
-      check1470And1471Cycles(centerX, centerY, currentDate);
-
-      // Draw Annotations
-      drawAnnotations(centerX, centerY);
-
-      // Highlight Resonances from Resonances Data
-      resonances.forEach(resonance => {
-        resonance.dates.forEach(resDate => {
-          // Check if currentDate is within +/- speedMultiplier days of resonance date
-          const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
-          if (dayDiff < speedMultiplier) {
-            // Draw a special marker or highlight
+      function checkThirtyFiveDayCycle(x, y, currentDate) {
+        const startDate = new Date(2024, 11, 25);
+        const targetDate = new Date(startDate.getTime() + 35 * 24 * 60 * 60 * 1000);
+        const dayDiff = Math.abs((currentDate - targetDate) / (1000 * 60 * 60 * 24));
+        if (dayDiff < speedMultiplier) {
+          const resonanceKey = `35-Day Cycle-${currentDate.toDateString()}`;
+          if (!triggeredResonances.has(resonanceKey)) {
+            triggeredResonances.add(resonanceKey);
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 100, 0, 2 * Math.PI); // Example: a fixed radius circle
-            ctx.strokeStyle = 'yellow';
+            ctx.arc(x, y, 120, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(138, 43, 226, 0.8)';
             ctx.lineWidth = 4;
             ctx.stroke();
-
-            // Optionally, display resonance name
             ctx.font = '16px Arial';
-            ctx.fillStyle = 'yellow';
-            ctx.fillText(resonance.name, centerX + 120, centerY);
+            ctx.fillStyle = 'rgba(138, 43, 226, 0.9)';
+            ctx.fillText(`35-Day Cycle Resonance`, x + 130, y);
+            console.log(`Resonance Triggered: 35-Day Cycle on ${formatDate(currentDate)}`);
+            triggerResonanceSound("35-Day Cycle");
+          }
+        }
+      }
+
+      // Check for 1470 and 1471-day cycles
+      function check1470And1471Cycles(x, y, currentDate) {
+        resonances.forEach(resonance => {
+          resonance.dates.forEach(resDate => {
+            const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
+            if (dayDiff < speedMultiplier) {
+              const resonanceKey = `${resonance.name}-${currentDate.toDateString()}`;
+              if (!triggeredResonances.has(resonanceKey)) {
+                triggeredResonances.add(resonanceKey);
+                ctx.beginPath();
+                ctx.arc(x, y, 100, 0, 2 * Math.PI);
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.font = '16px Arial';
+                ctx.fillStyle = 'yellow';
+                ctx.fillText(resonance.name, x + 120, y);
+                console.log(`Resonance Triggered: ${resonance.name} on ${formatDate(currentDate)}`);
+                triggerResonanceSound(resonance.name);
+              }
+            }
+          });
+        });
+      }
+
+      // Draw annotations for significant events
+      function drawAnnotations(x, y) {
+        const annotationDates = [ new Date(2025, 0, 28), new Date(2025, 0, 29), new Date(2025, 0, 31) ];
+        annotationDates.forEach(date => {
+          const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+          const dayDiff = Math.abs((currentDate - date) / (1000 * 60 * 60 * 24));
+          if (dayDiff < speedMultiplier) {
+            const annotationKey = `Annotation-${currentDate.toDateString()}`;
+            if (!triggeredResonances.has(annotationKey)) {
+              triggeredResonances.add(annotationKey);
+              ctx.beginPath();
+              ctx.moveTo(x, y - 100);
+              ctx.lineTo(x + 10, y - 80);
+              ctx.lineTo(x + 30, y - 80);
+              ctx.lineTo(x + 15, y - 60);
+              ctx.lineTo(x + 20, y - 40);
+              ctx.lineTo(x, y - 50);
+              ctx.lineTo(x - 20, y - 40);
+              ctx.lineTo(x - 15, y - 60);
+              ctx.lineTo(x - 30, y - 80);
+              ctx.lineTo(x - 10, y - 80);
+              ctx.closePath();
+              ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+              ctx.fill();
+              ctx.strokeStyle = 'rgba(255, 215, 0, 1)';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              ctx.font = '14px Arial';
+              ctx.fillStyle = 'rgba(255, 215, 0, 1)';
+              ctx.fillText(`Significant Event`, x + 35, y - 70);
+              ctx.font = '12px Arial';
+              ctx.fillStyle = 'rgba(255, 215, 0, 1)';
+              ctx.fillText(`"Look on My Works, Ye Mighty, and Despair"`, x - 150, y + 180);
+            }
           }
         });
+      }
+
+      // Main drawing routine: draws cycles, checks resonances, and updates display
+      function drawAllCycles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const rect = canvas.getBoundingClientRect();
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const ringSpacing = Math.min(rect.width, rect.height) / (2 * CYCLES.length);
+        const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+        let cycleProgresses = [];
+        CYCLES.forEach((cycle, idx) => {
+          const progress = (time % cycle.length) / cycle.length;
+          cycleProgresses.push(progress);
+          const ringRadius = ringSpacing * (CYCLES.length - idx);
+          drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
+        });
+        // Check pairwise resonances between cycles
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            const ringRadius = ringSpacing * (CYCLES.length - i);
+            checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate);
+          }
+        }
+        checkMultiCycleResonance(centerX, centerY, currentDate);
+        checkThirtyFiveDayCycle(centerX, centerY, currentDate);
+        check1470And1471Cycles(centerX, centerY, currentDate);
+        drawAnnotations(centerX, centerY);
+        resonances.forEach(resonance => {
+          resonance.dates.forEach(resDate => {
+            const dayDiff = Math.abs((currentDate - resDate) / (1000 * 60 * 60 * 24));
+            if (dayDiff < speedMultiplier) {
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, 100, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'yellow';
+              ctx.lineWidth = 4;
+              ctx.stroke();
+              ctx.font = '16px Arial';
+              ctx.fillStyle = 'yellow';
+              ctx.fillText(resonance.name, centerX + 120, centerY);
+            }
+          });
+        });
+        dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
+        updateEmojis(currentDate);
+      }
+
+      // Update emoji visibility based on current date
+      function updateEmojis(currentDate) {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        fireEmoji.classList.toggle('active', EMOJI_DATES[formattedDate] === "fire");
+        boomEmoji.classList.toggle('active', EMOJI_DATES[formattedDate] === "boom");
+        beerEmoji.classList.toggle('active', EMOJI_DATES[formattedDate] === "beer");
+      }
+
+      // Resume audio context on first user interaction
+      function resumeAudioContext() {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+          audioStarted = true;
+          document.removeEventListener('click', resumeAudioContext);
+          document.removeEventListener('touchstart', resumeAudioContext);
+        }
+      }
+      document.addEventListener('click', resumeAudioContext);
+      document.addEventListener('touchstart', resumeAudioContext);
+
+      /* --- Enhanced Scrubbing --- */
+
+      // Inertia-based wheel scrubbing for trackpads
+      function onWheelScrub(e) {
+        e.preventDefault();
+        const baseSensitivity = 0.0005; // tweak for finer control
+        const accelerationFactor = Math.log(Math.abs(e.deltaY) + 1); // acceleration increases with deltaY
+        // Update scrub velocity rather than time directly
+        wheelScrubVelocity += e.deltaY * baseSensitivity * accelerationFactor;
+      }
+      canvas.addEventListener('wheel', onWheelScrub, { passive: false });
+
+      // Mouse drag scrubbing (for pointer devices)
+      canvas.addEventListener('mousedown', (e) => {
+        isMouseDragging = true;
+        mouseStartX = e.clientX;
+      });
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isMouseDragging) return;
+        const deltaX = e.clientX - mouseStartX;
+        const dayDelta = deltaX / 5; // similar sensitivity as touch scrubbing
+        time += dayDelta;
+        mouseStartX = e.clientX;
+      });
+      canvas.addEventListener('mouseup', () => { isMouseDragging = false; });
+      canvas.addEventListener('mouseleave', () => { isMouseDragging = false; });
+
+      // Touch scrubbing for mobile devices (already implemented)
+      function onTouchStart(e) {
+        isScrubbing = true;
+        scrubStartX = e.touches[0].clientX;
+      }
+      function onTouchMove(e) {
+        if (!isScrubbing) return;
+        const currentX = e.touches[0].clientX;
+        const deltaX = currentX - scrubStartX;
+        const dayDelta = deltaX / 5;
+        time += dayDelta;
+        scrubStartX = currentX;
+      }
+      function onTouchEnd() { isScrubbing = false; }
+      canvas.addEventListener('touchstart', onTouchStart);
+      canvas.addEventListener('touchmove', onTouchMove);
+      canvas.addEventListener('touchend', onTouchEnd);
+
+      /* --- Button and Keyboard Handlers --- */
+      function togglePause() {
+        isPaused = !isPaused;
+        pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
+      }
+      function resetTime() {
+        time = 0;
+        triggeredResonances.clear();
+      }
+      function speedDown() { speedMultiplier = Math.max(speedMultiplier / 2, 0.01); }
+      function speedUp() { speedMultiplier = Math.min(speedMultiplier * 2, 16); }
+      pauseBtn.addEventListener('click', togglePause);
+      resetBtn.addEventListener('click', resetTime);
+      speedDownBtn.addEventListener('click', speedDown);
+      speedUpBtn.addEventListener('click', speedUp);
+      function handleKeyDown(e) {
+        switch(e.key) {
+          case ' ':
+            e.preventDefault();
+            togglePause();
+            break;
+          case 'r':
+          case 'R':
+            resetTime();
+            break;
+          case 'ArrowUp':
+            speedUp();
+            break;
+          case 'ArrowDown':
+            speedDown();
+            break;
+        }
+      }
+      document.addEventListener('keydown', handleKeyDown);
+
+      // Settings panel event listeners
+      toggleMute.addEventListener('change', (e) => { settings.audioMuted = e.target.checked; saveSettings(); });
+      toggleDebug.addEventListener('change', (e) => {
+        settings.debugOverlay = e.target.checked;
+        debugOverlay.style.display = settings.debugOverlay ? "block" : "none";
+        saveSettings();
+      });
+      toggleFractal.addEventListener('change', (e) => { settings.fractalDetails = e.target.checked; saveSettings(); });
+
+      // Logo load listener
+      customLogo.addEventListener('load', () => { customLogo.classList.add('loaded'); });
+
+      // Debug overlay update
+      function updateDebugOverlay() {
+        if (!settings.debugOverlay) return;
+        const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+        debugOverlay.textContent = `FPS: ${frameCount} | Time: ${time.toFixed(2)} | Triggered: ${triggeredResonances.size} | Date: ${formatDate(currentDate)}`;
+      }
+
+      /* --- Main Animation Loop --- */
+      function animate() {
+        // Apply inertia from wheel scrubbing
+        if (Math.abs(wheelScrubVelocity) > 0.00001) {
+          time += wheelScrubVelocity;
+          wheelScrubVelocity *= 0.95; // decay factor for smooth slowdown
+        } else {
+          wheelScrubVelocity = 0;
+        }
+
+        drawAllCycles();
+        updateParticles();
+        frameCount++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          updateDebugOverlay();
+          frameCount = 0;
+          lastTime = now;
+        }
+        if (!isPaused && !isScrubbing && !isMouseDragging) {
+          time += speedMultiplier;
+        }
+        requestAnimationFrame(animate);
+      }
+
+      // Resize handling
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(resizeCanvas, 200);
       });
 
-      // Update date display
-      dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
-
-      // Update Emojis based on current date
-      updateEmojis(currentDate);
-    }
-
-    // Update Emojis Visibility
-    function updateEmojis(currentDate) {
-      const year = currentDate.getFullYear();
-      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-      const day = String(currentDate.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-
-      // Hide all emojis initially
-      fireEmoji.classList.remove('active');
-      boomEmoji.classList.remove('active');
-      beerEmoji.classList.remove('active');
-
-      // Check if the current date matches any of the emoji dates
-      if (EMOJI_DATES[formattedDate] === "fire") {
-        fireEmoji.classList.add('active');
-      }
-      if (EMOJI_DATES[formattedDate] === "boom") {
-        boomEmoji.classList.add('active');
-      }
-      if (EMOJI_DATES[formattedDate] === "beer") {
-        beerEmoji.classList.add('active');
-      }
-    }
-
-    // Main animation loop
-    function animate() {
-      drawAllCycles();
-
-      frameCount++;
-      const now = performance.now();
-      if (now - lastTime >= 1000) {
-        // Update FPS display if statsPanel is used
-        // statsPanel.textContent = `FPS: ${frameCount}`;
-        frameCount = 0;
-        lastTime = now;
-      }
-
-      if (!isPaused && !isScrubbing) {
-        time += speedMultiplier;
-      }
-
-      requestAnimationFrame(animate);
-    }
-
-    // Handle window resize with debouncing
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(onResize, 200);
-    });
-
-    function onResize() {
-      // Resize canvas
+      // Initialize canvas size and start the animation loop
       resizeCanvas();
-    }
-
-    // Touch-based scrubbing with Enhanced Sensitivity
-    function onTouchStart(e) {
-      isScrubbing = true;
-      scrubStartX = e.touches[0].clientX;
-    }
-
-    function onTouchMove(e) {
-      if (!isScrubbing) return;
-      const currentX = e.touches[0].clientX;
-      const deltaX = currentX - scrubStartX;
-      const dayDelta = deltaX / 5; // Increased sensitivity for smaller screens
-      time += dayDelta;
-      scrubStartX = currentX;
-    }
-
-    function onTouchEnd() {
-      isScrubbing = false;
-    }
-
-    // Button event handlers
-    function togglePause() {
-      isPaused = !isPaused;
-      pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
-    }
-
-    function resetTime() {
-      time = 0;
-    }
-
-    function speedDown() {
-      speedMultiplier = Math.max(speedMultiplier / 2, 0.01);
-    }
-
-    function speedUp() {
-      speedMultiplier = Math.min(speedMultiplier * 2, 16);
-    }
-
-    // Listeners
-    canvas.addEventListener('touchstart', onTouchStart);
-    canvas.addEventListener('touchmove', onTouchMove);
-    canvas.addEventListener('touchend', onTouchEnd);
-
-    pauseBtn.addEventListener('click', togglePause);
-    resetBtn.addEventListener('click', resetTime);
-    speedDownBtn.addEventListener('click', speedDown);
-    speedUpBtn.addEventListener('click', speedUp);
-
-    // Init
-    resizeCanvas();
-    animate();
+      animate();
+    })();
   </script>
 </body>
 </html>
