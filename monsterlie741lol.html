@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Advanced Cycle Resonance & Monster Moonshine Visualization" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Moonshine Cycle Resonance Visualization</title>
+  <!-- Import Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Base Theme Variables */
+      --bg-color: #0f0f13;
+      --text-color: #ffffff;
+      --panel-bg: rgba(15, 15, 19, 0.85);
+      --highlight: #2196F3;
+
+      /* Color References */
+      --limegreen-color: #32CD32;
+      --skyblue-color: #87CEFA;
+      --orange-color: #FFA500;
+      --pink-color: #FF69B4;
+      --gold-color: #FFD700;
+      --blueviolet-color: rgba(138, 43, 226, 0.8);
+      --orangered-color: rgba(255, 69, 0, 0.8);
+      --turquoise-color: #40E0D0; /* Unique color for 55-day Cycle */
+      --purple-color: #800080;    /* Unique color for 21-day Cycle */
+      --backwards-color: #FF1493;
+      --roaringkitty-color: #FFD700;
+    }
+
+    /* Global Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Main Container */
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Canvas Styling */
+    #cycleCanvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Controls Panel */
+    .controls {
+      position: absolute;
+      top: 20px;
+      width: 90%;
+      max-width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 4;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .control-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .controls button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      min-width: 80px;
+    }
+
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+
+    .date-display {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    /* Moonshine Controls Panel */
+    #moonshineControls {
+      position: absolute;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 4;
+      gap: 8px;
+    }
+
+    #moonshineControls .input-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #moonshineControls label {
+      font-size: 0.9rem;
+    }
+
+    #moonshineControls input, 
+    #moonshineControls select {
+      padding: 4px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    /* New API Key Input */
+    #moonshineControls .api-key-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #moonshineControls .api-key-group label {
+      font-size: 0.9rem;
+    }
+
+    #moonshineControls .api-key-group input {
+      padding: 4px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      width: 250px;
+    }
+
+    /* Best Hits Panel */
+    #bestHitsPanel {
+      font-size: 0.85rem;
+      background: rgba(0,0,0,0.5);
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 5px;
+      max-height: 100px;
+      overflow-y: auto;
+      width: 100%;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+
+    /* Logo Container */
+    .logo-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    /* Logo Image Styling */
+    #custom-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      object-fit: cover;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Show loaded logo */
+    #custom-logo.loaded {
+      opacity: 1;
+    }
+
+    /* Emoji Styling */
+    .emoji {
+      position: absolute;
+      top: -30px;
+      font-size: 24px;
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .emoji.active {
+      opacity: 1;
+      transform: translateY(-10px);
+    }
+
+    .emoji.fire {
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .emoji.boom {
+      left: 60%;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .emoji.beer {
+      left: 40%;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Legend Panel */
+    .legend {
+      position: absolute;
+      bottom: 60px;
+      width: 90%;
+      max-width: 800px;
+      font-size: 0.8rem;
+      background: var(--panel-bg);
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+
+    .legend ul {
+      display: flex;
+      flex-wrap: wrap;
+      list-style: none;
+      gap: 15px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .legend li {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1 1 120px;
+      justify-content: center;
+    }
+
+    .legend li span {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--highlight);
+    }
+
+    .legend li.follow-link span {
+      background: var(--highlight);
+    }
+
+    .legend a {
+      color: var(--highlight);
+      text-decoration: none;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .legend a:hover {
+      color: var(--skyblue-color);
+      text-decoration: underline;
+      transform: translateY(-1px);
+    }
+
+    /* Settings Panel */
+    #settingsPanel {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      background: var(--panel-bg);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 5;
+      font-size: 0.85rem;
+      color: var(--text-color);
+    }
+    #settingsPanel label {
+      display: block;
+      margin-bottom: 0.3rem;
+      cursor: pointer;
+    }
+    #settingsPanel input {
+      margin-right: 0.5rem;
+    }
+
+    /* Debug Overlay */
+    #debugOverlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 8px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      z-index: 6;
+      display: none;
+    }
+
+    /* Responsive Enhancements */
+    @media (max-width: 768px) {
+      .controls { width: 95%; top: 10px; }
+      .legend { bottom: 50px; }
+      .logo-container #custom-logo { width: 35px; height: 35px; }
+      .date-display { font-size: 0.85rem; }
+      .emoji { font-size: 20px; }
+    }
+    @media (max-width: 480px) {
+      .controls { flex-direction: column; gap: 8px; align-items: center; }
+      .controls button { min-width: 70px; padding: 6px 12px; font-size: 0.8rem; }
+      .date-display { font-size: 0.8rem; margin-top: 8px; }
+      .legend { bottom: 50px; padding: 0.5rem 0.75rem; gap: 10px; }
+      .legend li { flex: 1 1 100px; }
+      .logo-container #custom-logo { width: 30px; height: 30px; }
+      .emoji { font-size: 18px; }
+    }
+    @media (max-width: 320px) {
+      .controls button { min-width: 60px; padding: 5px 8px; font-size: 0.7rem; }
+      .date-display { font-size: 0.7rem; }
+      .legend li { flex: 1 1 80px; }
+      .logo-container #custom-logo { width: 25px; height: 25px; }
+      .emoji { font-size: 16px; }
+    }
+
+    /* Sound Wave Animation */
+    .sound-wave {
+      position: absolute;
+      border: 2px solid var(--highlight);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: expand 1s linear infinite;
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: 5;
+      display: none;
+    }
+    @keyframes expand {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="container" role="main">
+    <!-- Controls Panel -->
+    <div class="controls panel" id="controls">
+      <div class="control-buttons">
+        <button id="pause-btn" aria-label="Pause Animation">Pause</button>
+        <button id="reset-btn" aria-label="Reset Animation">Reset</button>
+        <button id="speed-down-btn" aria-label="Decrease Speed">Slower</button>
+        <button id="speed-up-btn" aria-label="Increase Speed">Faster</button>
+      </div>
+      <div class="date-display" id="date-display">
+        Current: 01/28/2021
+      </div>
+    </div>
+
+    <!-- Moonshine Controls Panel (with advanced monster Lie algebra integration) -->
+    <div class="controls panel" id="moonshineControls">
+      <div class="input-group">
+        <label for="pInput">p:</label>
+        <input type="number" id="pInput" value="2.0" step="0.1" min="1.1">
+        <label for="qInput">q:</label>
+        <input type="number" id="qInput" value="3.0" step="0.1" min="1.1">
+        <label for="truncN">Truncation N:</label>
+        <select id="truncN">
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="7">7</option>
+          <option value="10">10</option>
+        </select>
+      </div>
+      <!-- New API Key Input Field -->
+      <div class="api-key-group">
+        <label for="apiKeyInput">OpenAI API Key:</label>
+        <input type="password" id="apiKeyInput" placeholder="Enter API Key">
+      </div>
+      <div class="control-buttons">
+        <button id="applyMoonshine" aria-label="Apply Moonshine Parameters">Apply Moonshine</button>
+        <button id="analyzeHitsBtn" aria-label="Analyze Best Hits">Analyze Hits</button>
+        <button id="clearHitsBtn" aria-label="Clear Best Hits">Clear Hits</button>
+      </div>
+      <div class="date-display" id="moonshineResult">
+        Moonshine Value: N/A
+      </div>
+      <div id="bestHitsPanel">
+        Best Hits: None
+      </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" aria-label="Settings Panel">
+      <label>
+        <input type="checkbox" id="toggleMute"> Mute Audio
+      </label>
+      <label>
+        <input type="checkbox" id="toggleDebug"> Show Debug Overlay
+      </label>
+      <label>
+        <input type="checkbox" id="toggleFractal" checked> Show Fractal Details
+      </label>
+    </div>
+
+    <!-- Debug Overlay -->
+    <div id="debugOverlay" aria-live="polite"></div>
+
+    <!-- Logo Container -->
+    <div class="logo-container">
+      <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">
+        <img id="custom-logo" src="https://pbs.twimg.com/profile_images/1874116995991359488/olXssn9f_400x400.jpg" alt="Visit @_D_741Stef's X Profile" loading="lazy">
+      </a>
+      <span class="emoji fire">🔥</span>
+      <span class="emoji boom">💥</span>
+      <span class="emoji beer">🍻</span>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="cycleCanvas">Your browser does not support the canvas element.</canvas>
+
+    <!-- Legend Panel -->
+    <div class="legend panel" id="legend">
+      <ul>
+        <li><span style="background: var(--limegreen-color);"></span> Main ~4yrs Cycle</li>
+        <li><span style="background: var(--blueviolet-color);"></span> 1470-day Cycle</li>
+        <li><span style="background: var(--orangered-color);"></span> 1471-day Cycle</li>
+        <li><span style="background: var(--gold-color);"></span> 741-day Cycle</li>
+        <li><span style="background: var(--skyblue-color);"></span> 147-day Cycle</li>
+        <li><span style="background: var(--turquoise-color);"></span> 55-day Cycle</li>
+        <li><span style="background: var(--orange-color);"></span> 35-day Cycle</li>
+        <li><span style="background: var(--purple-color);"></span> 21-day Cycle</li>
+        <li class="follow-link">
+          <span style="background: var(--highlight);"></span>
+          <a href="https://x.com/_D_741Stef" target="_blank" rel="noopener noreferrer">Follow @_D_741Stef</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Sound Wave Element -->
+  <div class="sound-wave" id="soundWave"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    (function(){
+      "use strict";
+
+      /**************************************
+       * DOM ELEMENTS & INITIAL STATE
+       **************************************/
+      const canvas = document.getElementById('cycleCanvas');
+      const ctx = canvas.getContext('2d');
+      const dateDisplayPanel = document.getElementById('date-display');
+      const pauseBtn = document.getElementById('pause-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const speedDownBtn = document.getElementById('speed-down-btn');
+      const speedUpBtn = document.getElementById('speed-up-btn');
+      const soundWave = document.getElementById('soundWave');
+      const customLogo = document.getElementById('custom-logo');
+      const debugOverlay = document.getElementById('debugOverlay');
+
+      // Moonshine controls
+      const applyMoonshineBtn = document.getElementById("applyMoonshine");
+      const pInput = document.getElementById("pInput");
+      const qInput = document.getElementById("qInput");
+      const truncNSelect = document.getElementById("truncN");
+      const moonshineResultDisplay = document.getElementById("moonshineResult");
+      const bestHitsPanel = document.getElementById("bestHitsPanel");
+      const analyzeHitsBtn = document.getElementById("analyzeHitsBtn");
+      const clearHitsBtn = document.getElementById("clearHitsBtn");
+      const apiKeyInput = document.getElementById("apiKeyInput");
+
+      // Settings Panel Elements
+      const toggleMute = document.getElementById('toggleMute');
+      const toggleDebug = document.getElementById('toggleDebug');
+      const toggleFractal = document.getElementById('toggleFractal');
+
+      // Global state variables
+      let isPaused = false;
+      let isScrubbing = false;
+      let scrubStartX = 0;
+      let lastTime = performance.now();
+      let frameCount = 0;
+      let baseSpeed = 0.05; // days per frame (default)
+      let speedMultiplier = baseSpeed; // modulated by moonshineMod
+      let time = 0; // days elapsed since START_DATE
+      let particles = []; // particle bursts array
+
+      // Global moonshine modulation factor (from monster Lie algebra denominator formula)
+      let moonshineMod = 1;
+
+      // Best Hits storage array
+      let bestHits = [];
+
+      // Settings (persisted via localStorage)
+      let settings = {
+        audioMuted: false,
+        debugOverlay: false,
+        fractalDetails: true
+      };
+
+      // Load settings from localStorage
+      const savedSettings = localStorage.getItem("cycleSettings");
+      if (savedSettings) {
+        settings = Object.assign(settings, JSON.parse(savedSettings));
+      }
+      // Set initial checkbox values
+      toggleMute.checked = settings.audioMuted;
+      toggleDebug.checked = settings.debugOverlay;
+      toggleFractal.checked = settings.fractalDetails;
+      debugOverlay.style.display = settings.debugOverlay ? "block" : "none";
+
+      // Persist settings function
+      function saveSettings() {
+        localStorage.setItem("cycleSettings", JSON.stringify(settings));
+      }
+
+      // Audio Context setup
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
+      let audioStarted = false;
+
+      // Helper: Format a date
+      function formatDate(date) {
+        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+
+      // Resize canvas for high-DPR devices
+      function resizeCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+      }
+
+      /**************************************
+       * Cycle & Resonance Definitions
+       **************************************/
+      const CYCLES = [
+        { name: 'Main ~4yrs (1461)', length: 1461, color: getComputedStyle(document.documentElement).getPropertyValue('--limegreen-color').trim() },
+        { name: '1470-day',         length: 1470, color: getComputedStyle(document.documentElement).getPropertyValue('--blueviolet-color').trim() },
+        { name: '1471-day',         length: 1471, color: getComputedStyle(document.documentElement).getPropertyValue('--orangered-color').trim() },
+        { name: '741-day',          length: 741,  color: getComputedStyle(document.documentElement).getPropertyValue('--gold-color').trim() },
+        { name: '147-day',          length: 147,  color: getComputedStyle(document.documentElement).getPropertyValue('--skyblue-color').trim() },
+        { name: '55-day',           length: 55,   color: getComputedStyle(document.documentElement).getPropertyValue('--turquoise-color').trim() },
+        { name: '35-day',           length: 35,   color: getComputedStyle(document.documentElement).getPropertyValue('--orange-color').trim() },
+        { name: '21-day',           length: 21,   color: getComputedStyle(document.documentElement).getPropertyValue('--purple-color').trim() }
+      ];
+
+      // Start date and crucial dates
+      const START_DATE = new Date(2021, 0, 28);
+      const CRUCIAL_DATES = [
+        new Date(2025, 0, 9),
+        new Date(2025, 0, 12),
+        new Date(2025, 0, 23),
+        new Date(2025, 0, 28),
+        new Date(2024, 4, 1),
+        new Date(2025, 0, 29),
+        new Date(2024, 11, 25)
+      ];
+
+      // Emoji dates mapping (YYYY-MM-DD: emoji type)
+      const EMOJI_DATES = {
+        "2025-01-27": "fire",
+        "2025-01-28": "boom",
+        "2025-01-29": "beer"
+      };
+
+      // Resonances definitions (sample set)
+      const resonances = [
+        {
+          name: "E & F (35-day & 21-day)",
+          lcm: 105,
+          dates: [
+            new Date("2021-05-13"), new Date("2021-08-26"), new Date("2021-12-09"),
+            new Date("2022-03-23"), new Date("2022-07-07"), new Date("2022-10-21"),
+            new Date("2023-02-03"), new Date("2023-05-18"), new Date("2023-09-01"),
+            new Date("2023-12-16"), new Date("2024-04-29"), new Date("2024-08-13"),
+            new Date("2024-11-27"), new Date("2025-03-11")
+          ]
+        },
+        {
+          name: "D & E (55-day & 35-day)",
+          lcm: 385,
+          dates: [
+            new Date("2022-02-17"), new Date("2023-02-17"),
+            new Date("2024-02-17"), new Date("2025-02-16")
+          ]
+        }
+      ];
+
+      // Set to avoid duplicate triggers
+      const triggeredResonances = new Set();
+
+      /**************************************
+       * Monster Moonshine Integration
+       **************************************/
+      // Compute an approximation of the denominator formula:
+      // j(p) - j(q) = (1/p - 1/q) ∏_{n,m=1}^{N} (1 - p^nq^m)^(c_nm)
+      // with simulated c_nm = ((n+m) mod 3) + 1.
+      function computeMoonshine(p, q, N) {
+        let prod = 1;
+        for (let n = 1; n <= N; n++) {
+          for (let m = 1; m <= N; m++) {
+            let c_nm = ((n + m) % 3) + 1;
+            let term = 1 - Math.pow(p, n) * Math.pow(q, m);
+            prod *= Math.pow(term, c_nm);
+          }
+        }
+        return (1 / p - 1 / q) * prod;
+      }
+
+      applyMoonshineBtn.addEventListener("click", () => {
+        const p = parseFloat(pInput.value);
+        const q = parseFloat(qInput.value);
+        const N = parseInt(truncNSelect.value);
+        if (p <= 1 || q <= 1) {
+          alert("Please enter values greater than 1 for p and q.");
+          return;
+        }
+        const result = computeMoonshine(p, q, N);
+        moonshineMod = result;
+        // Update speed multiplier: new speed = baseSpeed * moonshineMod
+        speedMultiplier = baseSpeed * moonshineMod;
+        moonshineResultDisplay.textContent = "Moonshine Value: " + result.toPrecision(8);
+      });
+
+      // Function to analyze best hits via GPT API using the entered API key
+      async function analyzeBestHits() {
+        if (bestHits.length === 0) {
+          alert("No best hits captured yet.");
+          return;
+        }
+        const apiKey = apiKeyInput.value.trim();
+        if (!apiKey) {
+          alert("Please enter your OpenAI API key.");
+          return;
+        }
+        const promptText = "Analyze the following resonance events from the advanced moonshine cycle visualization. Provide insights on potential patterns or recommendations for further exploration. Events:\n" +
+          bestHits.map(hit => `Resonance: ${hit.resonanceType}, Date: ${hit.date}, Moonshine Mod: ${hit.moonshineMod.toFixed(4)}, Time: ${hit.time.toFixed(2)}`).join("\n");
+        try {
+          const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + apiKey
+            },
+            body: JSON.stringify({
+              model: "gpt-4",
+              messages: [{ role: "user", content: promptText }],
+              temperature: 0.7,
+              max_tokens: 150
+            })
+          });
+          const data = await response.json();
+          const gptReply = data.choices[0].message.content;
+          alert("GPT Analysis:\n" + gptReply);
+        } catch (err) {
+          console.error("GPT API Error:", err);
+          alert("Error communicating with GPT API.");
+        }
+      }
+
+      analyzeHitsBtn.addEventListener("click", analyzeBestHits);
+      clearHitsBtn.addEventListener("click", () => {
+        bestHits = [];
+        bestHitsPanel.textContent = "Best Hits: None";
+        alert("Best hits cleared.");
+      });
+
+      /**************************************
+       * Drawing Functions (Canvas)
+       **************************************/
+      // Draw a cycle ring with marker; modulate using moonshineMod.
+      function drawCycleRing(x, y, radius, progress, cycleColor) {
+        const angle = progress * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        const modFactor = 1 + (Math.log(Math.max(moonshineMod, 1)) / 2);
+        ctx.strokeStyle = cycleColor;
+        ctx.lineWidth = 2 * modFactor;
+        ctx.stroke();
+        const markerX = x + Math.cos(angle) * radius;
+        const markerY = y + Math.sin(angle) * radius;
+        ctx.beginPath();
+        const markerSize = 6 * modFactor;
+        ctx.arc(markerX, markerY, markerSize, 0, 2 * Math.PI);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+      }
+
+      // Recursive fractal resonance drawing (if enabled)
+      function drawFractalResonance(x, y, radius, depth) {
+        if (depth === 0 || !settings.fractalDetails) return;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        const newRadius = radius * 0.5;
+        for (let i = 0; i < 3; i++) {
+          const angle = (i / 3) * 2 * Math.PI;
+          const childX = x + newRadius * Math.cos(angle);
+          const childY = y + newRadius * Math.sin(angle);
+          drawFractalResonance(childX, childY, newRadius, depth - 1);
+        }
+      }
+
+      // Update and draw particles
+      function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.dx;
+          p.y += p.dy;
+          p.life--;
+          p.alpha = p.life / 60;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+          ctx.fillStyle = `rgba(255, 215, 0, ${p.alpha})`;
+          ctx.fill();
+          if (p.life <= 0) {
+            particles.splice(i, 1);
+          }
+        }
+      }
+
+      // Spawn particle burst at (x, y)
+      function spawnParticles(x, y) {
+        const numParticles = 10;
+        for (let i = 0; i < numParticles; i++) {
+          particles.push({
+            x, y,
+            dx: (Math.random() - 0.5) * 4,
+            dy: (Math.random() - 0.5) * 4,
+            radius: Math.random() * 3 + 2,
+            alpha: 1,
+            life: 60
+          });
+        }
+      }
+
+      // Sound frequencies for resonance types
+      const RESONANCE_SOUNDS = {
+        "Alignment": { frequency: 261.63 },
+        "Alignment & Crucial Date": { frequency: 329.63 },
+        "Crucial Date Proximity": { frequency: 392.00 },
+        "Multiple Resonances": { frequency: 523.25 },
+        "35-Day Cycle": { frequency: 440.00 },
+        "1470-Day Cycle": { frequency: 349.23 },
+        "1471-Day Cycle": { frequency: 311.13 },
+        "Backwards (741-day)": { frequency: 311.13 },
+        "Roaring Kitty's 110 Posts Requel": { frequency: 392.00 }
+      };
+
+      // Play a tone (unless muted)
+      function playTone(frequency, duration = 0.5) {
+        if (settings.audioMuted) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        oscillator.stop(audioCtx.currentTime + duration);
+      }
+
+      // Play chord (multiple tones)
+      function playChord(frequencies, duration = 1) {
+        frequencies.forEach(freq => playTone(freq, duration));
+      }
+
+      // Trigger sound and visual burst for a resonance type;
+      // Also record the event in bestHits.
+      function triggerResonanceSound(type, x, y, radius, currentDate) {
+        const sound = RESONANCE_SOUNDS[type];
+        if (!sound) return;
+        triggerSoundWave();
+        spawnParticles(canvas.width / 2, canvas.height / 2);
+        if (type === "Alignment & Crucial Date" || type === "Multiple Resonances") {
+          playChord([RESONANCE_SOUNDS["Alignment"].frequency, sound.frequency, RESONANCE_SOUNDS["Crucial Date Proximity"].frequency], 1);
+        } else {
+          playTone(sound.frequency, 0.5);
+        }
+        // Record best hit event
+        const hit = {
+          resonanceType: type,
+          date: currentDate.toISOString(),
+          moonshineMod: moonshineMod,
+          time: time,
+          ringRadius: radius
+        };
+        bestHits.push(hit);
+        // Update best hits display
+        bestHitsPanel.textContent = "Best Hits:\n" + bestHits.map((h, i) => `${i+1}. ${h.resonanceType} on ${new Date(h.date).toLocaleDateString()} (Mod: ${h.moonshineMod.toFixed(4)})`).join("\n");
+      }
+
+      // Visual sound wave effect
+      function triggerSoundWave() {
+        soundWave.style.display = 'block';
+        soundWave.style.animation = 'none';
+        void soundWave.offsetWidth;
+        soundWave.style.animation = 'expand 1s linear infinite';
+        setTimeout(() => { soundWave.style.display = 'none'; }, 1000);
+      }
+
+      // Check for resonance between cycles and trigger visuals/sounds.
+      function checkResonance(x, y, radius, progressA, progressB, currentDate) {
+        const alignmentThreshold = 0.02;
+        const dayThreshold = 1; // in days
+        const diff = Math.abs(progressA - progressB);
+        const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
+        const nearCrucial = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / (1000 * 60 * 60 * 24)) < dayThreshold);
+        let resonanceType = null;
+        if (isAlignment && nearCrucial) {
+          resonanceType = "Alignment & Crucial Date";
+        } else if (isAlignment) {
+          resonanceType = "Alignment";
+        }
+        if (nearCrucial) {
+          resonanceType = resonanceType || "Crucial Date Proximity";
+        }
+        if (resonanceType) {
+          const resonanceKey = `${resonanceType}-${currentDate.toDateString()}`;
+          if (!triggeredResonances.has(resonanceKey)) {
+            triggeredResonances.add(resonanceKey);
+            if (resonanceType === "Alignment & Crucial Date") {
+              ctx.beginPath();
+              ctx.arc(x, y, radius * 1.3, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)';
+              ctx.lineWidth = 4;
+              ctx.stroke();
+              drawFractalResonance(x, y, radius * 1.3, 2);
+            } else if (resonanceType === "Alignment") {
+              ctx.beginPath();
+              ctx.arc(x, y, radius * 1.2, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)';
+              ctx.lineWidth = 3;
+              ctx.stroke();
+              drawFractalResonance(x, y, radius * 1.2, 1);
+            } else if (resonanceType === "Crucial Date Proximity") {
+              ctx.beginPath();
+              ctx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)';
+              ctx.lineWidth = 3;
+              ctx.stroke();
+              drawFractalResonance(x, y, radius * 1.1, 1);
+            }
+            console.log(`Resonance Triggered: ${resonanceType} on ${formatDate(currentDate)}`);
+            triggerResonanceSound(resonanceType, x, y, radius, currentDate);
+          }
+        }
+      }
+
+      // Update emoji visibility based on current date
+      function updateEmojis(currentDate) {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        document.querySelector('.emoji.fire').classList.toggle('active', EMOJI_DATES[formattedDate] === "fire");
+        document.querySelector('.emoji.boom').classList.toggle('active', EMOJI_DATES[formattedDate] === "boom");
+        document.querySelector('.emoji.beer').classList.toggle('active', EMOJI_DATES[formattedDate] === "beer");
+      }
+
+      // Draw annotations for significant events
+      function drawAnnotations(x, y) {
+        const annotationDates = [ new Date(2025, 0, 28), new Date(2025, 0, 29), new Date(2025, 0, 31) ];
+        annotationDates.forEach(date => {
+          const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+          const dayDiff = Math.abs((currentDate - date) / (1000 * 60 * 60 * 24));
+          if (dayDiff < speedMultiplier) {
+            const annotationKey = `Annotation-${currentDate.toDateString()}`;
+            if (!triggeredResonances.has(annotationKey)) {
+              triggeredResonances.add(annotationKey);
+              ctx.beginPath();
+              ctx.moveTo(x, y - 100);
+              ctx.lineTo(x + 10, y - 80);
+              ctx.lineTo(x + 30, y - 80);
+              ctx.lineTo(x + 15, y - 60);
+              ctx.lineTo(x + 20, y - 40);
+              ctx.lineTo(x, y - 50);
+              ctx.lineTo(x - 20, y - 40);
+              ctx.lineTo(x - 15, y - 60);
+              ctx.lineTo(x - 30, y - 80);
+              ctx.lineTo(x - 10, y - 80);
+              ctx.closePath();
+              ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+              ctx.fill();
+              ctx.strokeStyle = 'rgba(255, 215, 0, 1)';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              ctx.font = '14px Arial';
+              ctx.fillStyle = 'rgba(255, 215, 0, 1)';
+              ctx.fillText(`Significant Event`, x + 35, y - 70);
+              ctx.font = '12px Arial';
+              ctx.fillStyle = 'rgba(255, 215, 0, 1)';
+              ctx.fillText(`"Look on My Works, Ye Mighty, and Despair"`, x - 150, y + 180);
+            }
+          }
+        });
+      }
+
+      // Main drawing routine: draws cycle rings and checks resonances.
+      function drawAllCycles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const rect = canvas.getBoundingClientRect();
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const ringSpacing = Math.min(rect.width, rect.height) / (2 * CYCLES.length);
+        const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+        let cycleProgresses = [];
+        CYCLES.forEach((cycle, idx) => {
+          const progress = (time % cycle.length) / cycle.length;
+          cycleProgresses.push(progress);
+          const ringRadius = ringSpacing * (CYCLES.length - idx);
+          drawCycleRing(centerX, centerY, ringRadius, progress, cycle.color);
+        });
+        // Check pairwise resonances between cycles
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            const ringRadius = ringSpacing * (CYCLES.length - i);
+            checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate);
+          }
+        }
+        drawAnnotations(centerX, centerY);
+        updateEmojis(currentDate);
+        dateDisplayPanel.textContent = `Current: ${formatDate(currentDate)}`;
+      }
+
+      // Resume audio context on user interaction
+      function resumeAudioContext() {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+          audioStarted = true;
+          document.removeEventListener('click', resumeAudioContext);
+          document.removeEventListener('touchstart', resumeAudioContext);
+        }
+      }
+      document.addEventListener('click', resumeAudioContext);
+      document.addEventListener('touchstart', resumeAudioContext);
+
+      /**************************************
+       * Input Handling: Scrubbing & Buttons
+       **************************************/
+      function onWheelScrub(e) {
+        e.preventDefault();
+        const baseSensitivity = 0.0005;
+        const accelerationFactor = Math.log(Math.abs(e.deltaY) + 1);
+        let deltaTime = e.deltaY * baseSensitivity * accelerationFactor;
+        time += deltaTime;
+      }
+      canvas.addEventListener('wheel', onWheelScrub, { passive: false });
+
+      function onTouchStart(e) {
+        isScrubbing = true;
+        scrubStartX = e.touches[0].clientX;
+      }
+      function onTouchMove(e) {
+        if (!isScrubbing) return;
+        const currentX = e.touches[0].clientX;
+        const deltaX = currentX - scrubStartX;
+        const dayDelta = deltaX / 5;
+        time += dayDelta;
+        scrubStartX = currentX;
+      }
+      function onTouchEnd() { isScrubbing = false; }
+      canvas.addEventListener('touchstart', onTouchStart);
+      canvas.addEventListener('touchmove', onTouchMove);
+      canvas.addEventListener('touchend', onTouchEnd);
+
+      function togglePause() {
+        isPaused = !isPaused;
+        pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
+      }
+      function resetTime() {
+        time = 0;
+        triggeredResonances.clear();
+      }
+      function speedDown() { speedMultiplier = Math.max(speedMultiplier / 2, 0.01); }
+      function speedUp() { speedMultiplier = Math.min(speedMultiplier * 2, 16); }
+      pauseBtn.addEventListener('click', togglePause);
+      resetBtn.addEventListener('click', resetTime);
+      speedDownBtn.addEventListener('click', speedDown);
+      speedUpBtn.addEventListener('click', speedUp);
+
+      function handleKeyDown(e) {
+        switch(e.key) {
+          case ' ':
+            e.preventDefault();
+            togglePause();
+            break;
+          case 'r':
+          case 'R':
+            resetTime();
+            break;
+          case 'ArrowUp':
+            speedUp();
+            break;
+          case 'ArrowDown':
+            speedDown();
+            break;
+        }
+      }
+      document.addEventListener('keydown', handleKeyDown);
+
+      toggleMute.addEventListener('change', (e) => {
+        settings.audioMuted = e.target.checked;
+        saveSettings();
+      });
+      toggleDebug.addEventListener('change', (e) => {
+        settings.debugOverlay = e.target.checked;
+        debugOverlay.style.display = settings.debugOverlay ? "block" : "none";
+        saveSettings();
+      });
+      toggleFractal.addEventListener('change', (e) => {
+        settings.fractalDetails = e.target.checked;
+        saveSettings();
+      });
+
+      customLogo.addEventListener('load', () => {
+        customLogo.classList.add('loaded');
+      });
+
+      function updateDebugOverlay() {
+        if (!settings.debugOverlay) return;
+        const currentDate = new Date(START_DATE.getTime() + time * 24 * 60 * 60 * 1000);
+        debugOverlay.textContent = `FPS: ${frameCount} | Time: ${time.toFixed(2)} | Triggered: ${triggeredResonances.size} | Date: ${formatDate(currentDate)}`;
+      }
+
+      /**************************************
+       * Main Animation Loop
+       **************************************/
+      function animate() {
+        drawAllCycles();
+        updateParticles();
+        frameCount++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          updateDebugOverlay();
+          frameCount = 0;
+          lastTime = now;
+        }
+        if (!isPaused && !isScrubbing) {
+          time += speedMultiplier;
+        }
+        requestAnimationFrame(animate);
+      }
+
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(resizeCanvas, 200);
+      });
+
+      resizeCanvas();
+      animate();
+    })();
+  </script>
+</body>
+</html>
