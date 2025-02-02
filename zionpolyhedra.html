@@ -1,0 +1,326 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <title>Advanced Zion Polyhedra Resonance Explorer</title>
+    <style>
+        body {
+            background: #f1f1f1;
+            margin: 0;
+            padding: 20px;
+            font-family: monospace;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+        .canvas-wrapper {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        canvas {
+            border: 1px solid #333;
+            margin: 10px 0;
+            background: #fff;
+        }
+        #frequencyCanvas {
+            height: 200px;
+            width: 100%;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .control-group {
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        .slider {
+            width: 100%;
+            margin: 5px 0;
+        }
+        label {
+            display: block;
+            margin: 5px 0;
+        }
+        select {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            font-family: monospace;
+        }
+        .lambda-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2962ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>ZION POLYHEDRA - ADVANCED RESONANCE EXPLORER</h2>
+        <div class="controls">
+            <div class="control-group">
+                <button onclick="togglePattern('phi')">φ Pattern</button>
+                <button onclick="togglePattern('lambda')">λ Pattern</button>
+                <button onclick="togglePattern('cosmic')">Cosmic Spiral</button>
+            </div>
+            <div class="control-group">
+                <label>Waveform Type:</label>
+                <select id="waveformSelect" onchange="updateWaveforms()">
+                    <option value="sine">Sine</option>
+                    <option value="square">Square</option>
+                    <option value="sawtooth">Sawtooth</option>
+                    <option value="triangle">Triangle</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Base Frequency (φ): <span id="freqDisplay">1.618</span></label>
+                <input type="range" min="1" max="1618" value="618" class="slider" id="frequencySlider">
+                
+                <label>λ Resonance: <span id="resDisplay">333</span></label>
+                <input type="range" min="1" max="999" value="333" class="slider" id="resonanceSlider">
+            </div>
+            <div class="control-group">
+                <label>Current λ Value: <span id="lambdaDisplay" class="lambda-value">1.303577</span></label>
+            </div>
+        </div>
+        <button onclick="toggleSound()" id="soundToggle">Initialize Resonance</button>
+        
+        <div class="canvas-wrapper">
+            <canvas id="mainCanvas" width="600" height="600"></canvas>
+            <div>
+                <h3>Frequency Visualization</h3>
+                <canvas id="frequencyCanvas" width="400" height="200"></canvas>
+                <div id="frequencyData"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mainCanvas = document.getElementById('mainCanvas');
+        const freqCanvas = document.getElementById('frequencyCanvas');
+        const ctx = mainCanvas.getContext('2d');
+        const freqCtx = freqCanvas.getContext('2d');
+        let angle = 0;
+        let animationId;
+        let audioCtx;
+        let oscillators = [];
+        let analyser;
+        let gainNode;
+        let isPlaying = false;
+        let currentPattern = 'phi';
+
+        const PHI = 1.618033988749895;
+        const LAMBDA = 1.303577269034296;
+        const frequencies = {
+            phi: [PHI * 432, PHI * 528, PHI * 639],
+            lambda: [LAMBDA * 432, LAMBDA * 528, LAMBDA * 639],
+            cosmic: [432, 528, 639]
+        };
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.15;
+            
+            analyser.fftSize = 2048;
+            gainNode.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            const waveformType = document.getElementById('waveformSelect').value;
+            oscillators = frequencies[currentPattern].map(freq => {
+                const osc = audioCtx.createOscillator();
+                const oscGain = audioCtx.createGain();
+                oscGain.gain.value = 0.33;
+                osc.type = waveformType;
+                osc.frequency.value = freq;
+                osc.connect(oscGain);
+                oscGain.connect(gainNode);
+                osc.start();
+                return osc;
+            });
+
+            drawFrequencyVisualization();
+        }
+
+        function drawFrequencyVisualization() {
+            if (!analyser) return;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function draw() {
+                requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+                
+                freqCtx.fillStyle = 'rgb(0, 0, 0)';
+                freqCtx.fillRect(0, 0, freqCanvas.width, freqCanvas.height);
+                
+                const barWidth = (freqCanvas.width / bufferLength) * 2.5;
+                let barHeight;
+                let x = 0;
+                
+                for(let i = 0; i < bufferLength; i++) {
+                    barHeight = dataArray[i] / 2;
+                    
+                    const hue = (i / bufferLength) * 360;
+                    freqCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    freqCtx.fillRect(x, freqCanvas.height - barHeight, barWidth, barHeight);
+                    
+                    x += barWidth + 1;
+                }
+            }
+            
+            draw();
+        }
+
+        function updateWaveforms() {
+            if (!audioCtx) return;
+            const waveformType = document.getElementById('waveformSelect').value;
+            oscillators.forEach(osc => osc.type = waveformType);
+        }
+
+        function toggleSound() {
+            if (!audioCtx) {
+                initAudio();
+                document.getElementById('soundToggle').textContent = 'Stop Resonance';
+                isPlaying = true;
+            } else if (isPlaying) {
+                gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                document.getElementById('soundToggle').textContent = 'Resume Resonance';
+                isPlaying = false;
+            } else {
+                gainNode.gain.setTargetAtTime(0.15, audioCtx.currentTime, 0.1);
+                document.getElementById('soundToggle').textContent = 'Stop Resonance';
+                isPlaying = true;
+            }
+        }
+
+        function updateFrequencies() {
+            if (!audioCtx || !isPlaying) return;
+            
+            const baseMultiplier = document.getElementById('frequencySlider').value / 382;
+            const resonance = document.getElementById('resonanceSlider').value / 333;
+            const currentLambda = LAMBDA * resonance;
+            
+            document.getElementById('lambdaDisplay').textContent = currentLambda.toFixed(6);
+            
+            oscillators.forEach((osc, i) => {
+                const baseFreq = frequencies[currentPattern][i];
+                const modFreq = baseFreq * baseMultiplier * resonance;
+                osc.frequency.setTargetAtTime(modFreq, audioCtx.currentTime, 0.1);
+            });
+        }
+
+        function togglePattern(pattern) {
+            currentPattern = pattern;
+            if (audioCtx) {
+                updateFrequencies();
+            }
+            cancelAnimationFrame(animationId);
+            drawPattern();
+        }
+
+        function drawPattern() {
+            ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            
+            switch(currentPattern) {
+                case 'phi':
+                    drawPhiSpiral();
+                    break;
+                case 'lambda':
+                    drawLambdaGrid();
+                    break;
+                case 'cosmic':
+                    drawCosmicSpiral();
+                    break;
+            }
+            
+            angle += 0.01;
+            animationId = requestAnimationFrame(drawPattern);
+            updateFrequencies();
+        }
+
+        function drawPhiSpiral() {
+            ctx.beginPath();
+            const centerX = mainCanvas.width / 2;
+            const centerY = mainCanvas.height / 2;
+            
+            for (let i = 0; i < 300; i++) {
+                const radius = i * PHI;
+                const x = centerX + radius * Math.cos(i * PHI + angle);
+                const y = centerY + radius * Math.sin(i * PHI + angle);
+                
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function drawLambdaGrid() {
+            const resonance = document.getElementById('resonanceSlider').value / 333;
+            const currentLambda = LAMBDA * resonance;
+            const gridSize = 30 * currentLambda;
+            
+            ctx.strokeStyle = '#2962ff';
+            
+            for (let i = 0; i < mainCanvas.width; i += gridSize) {
+                for (let j = 0; j < mainCanvas.height; j += gridSize) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        i + Math.cos(angle * currentLambda) * gridSize,
+                        j + Math.sin(angle * currentLambda) * gridSize,
+                        2,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawCosmicSpiral() {
+            ctx.beginPath();
+            const centerX = mainCanvas.width / 2;
+            const centerY = mainCanvas.height / 2;
+            
+            for (let i = 0; i < 200; i++) {
+                const radius = i * 1.5;
+                const x = centerX + radius * Math.cos(i * 0.1 + angle);
+                const y = centerY + radius * Math.sin(i * 0.1 + angle);
+                
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        // Event listeners
+        document.getElementById('frequencySlider').addEventListener('input', updateFrequencies);
+        document.getElementById('resonanceSlider').addEventListener('input', updateFrequencies);
+
+        // Start initial pattern
+        drawPattern();
+    </script>
+
+
+</body></html>
