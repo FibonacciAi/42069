@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Healthcare Campaign Contributions 3D Visualization</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: rgba(30, 30, 30, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    #chart {
+      width: 100%;
+      height: 80vh;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: rgba(60, 60, 60, 0.8);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 15px;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
+
+    button:hover {
+      background: rgba(80, 80, 80, 0.9);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0px);
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+      }
+      #chart {
+        height: 60vh;
+      }
+      .controls {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">Healthcare Campaign Contributions</div>
+    <div class="controls">
+      <button onclick="rotateView('xy')">Top View</button>
+      <button onclick="rotateView('side')">Side View</button>
+      <button onclick="resetView()">Reset View</button>
+      <button onclick="zoom('in')">Zoom In</button>
+      <button onclick="zoom('out')">Zoom Out</button>
+    </div>
+  </div>
+  <div id="chart"></div>
+  <div class="footer">Visualization powered by Plotly</div>
+
+  <script>
+    // Original data arrays
+    const data = {
+      names: ['Sanders, Bernie (VT)', 'Warnock, Raphael (GA)', 'Warren, Elizabeth (MA)'],
+      total: [23189451, 14726875, 10477000],
+      pharma: [1953613, 1763425, 1224145],
+      insurance: [1695645, 1130127, 862912]
+    };
+
+    // Because scatter3d requires numeric values for the x‑axis,
+    // we convert the names to numeric indices.
+    // We then use tick labels to display the original names.
+    const xValues = data.names.map((_, i) => i);
+
+    // Global camera state to allow zooming/rotations
+    let currentCamera = { x: 1.5, y: 1.5, z: 1.5 };
+
+    function createVisualization() {
+      const trace = {
+        type: 'scatter3d',
+        mode: 'markers',
+        // Use numeric xValues, with tick labels showing the names
+        x: xValues,
+        // Directly use your original data for y and z
+        y: data.pharma,
+        z: data.insurance,
+        marker: {
+          size: 15,
+          color: data.total,
+          colorscale: [
+            [0, '#4A148C'],
+            [0.5, '#3F51B5'],
+            [1, '#FFC107']
+          ],
+          showscale: true,
+          colorbar: {
+            title: 'Total Contributions',
+            titleside: 'right',
+            tickprefix: '$',
+            xpad: 10,
+            outlinecolor: '#444'
+          },
+          opacity: 0.9,
+          symbol: 'circle'
+        },
+        // Tooltip with the original data details
+        text: data.names.map((name, i) =>
+          `<b>${name}</b><br>` +
+          `Total: $${data.total[i].toLocaleString()}<br>` +
+          `Pharma: $${data.pharma[i].toLocaleString()}<br>` +
+          `Insurance: $${data.insurance[i].toLocaleString()}`
+        ),
+        hoverinfo: 'text',
+        hoverlabel: {
+          bgcolor: '#222',
+          bordercolor: '#444',
+          font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }
+        }
+      };
+
+      const layout = {
+        paper_bgcolor: '#000',
+        plot_bgcolor: '#000',
+        scene: {
+          xaxis: {
+            title: 'Representatives',
+            gridcolor: '#222',
+            color: '#fff',
+            linecolor: '#444',
+            tickvals: xValues,
+            ticktext: data.names
+          },
+          yaxis: {
+            title: 'Pharma Contributions ($)',
+            gridcolor: '#222',
+            color: '#fff',
+            linecolor: '#444'
+          },
+          zaxis: {
+            title: 'Insurance Contributions ($)',
+            gridcolor: '#222',
+            color: '#fff',
+            linecolor: '#444'
+          },
+          camera: {
+            eye: { x: 1.5, y: 1.5, z: 1.5 }
+          },
+          aspectmode: 'cube'
+        },
+        margin: { l: 0, r: 0, t: 0, b: 0 },
+        showlegend: false
+      };
+
+      const config = {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['toImage', 'sendDataToCloud'],
+        displaylogo: false
+      };
+
+      Plotly.newPlot('chart', [trace], layout, config);
+    }
+
+    // Rotate view based on button selection
+    function rotateView(view) {
+      let newCamera;
+      if (view === 'xy') {
+        newCamera = { eye: { x: 0, y: 0, z: 2.5 }, up: { x: 0, y: 1, z: 0 } };
+      } else {
+        newCamera = { eye: { x: 2.5, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 } };
+      }
+      Plotly.relayout('chart', { 'scene.camera': newCamera });
+      currentCamera = newCamera.eye;
+    }
+
+    // Reset the camera to its default position
+    function resetView() {
+      const newCamera = { eye: { x: 1.5, y: 1.5, z: 1.5 }, up: { x: 0, y: 0, z: 1 } };
+      Plotly.relayout('chart', { 'scene.camera': newCamera });
+      currentCamera = newCamera.eye;
+    }
+
+    // Zoom in or out based on current camera settings
+    function zoom(direction) {
+      const factor = direction === 'in' ? 0.8 : 1.2;
+      const newCamera = {
+        x: currentCamera.x * factor,
+        y: currentCamera.y * factor,
+        z: currentCamera.z * factor
+      };
+      Plotly.relayout('chart', { 'scene.camera.eye': newCamera });
+      currentCamera = newCamera;
+    }
+
+    // (Optional) Update the global camera state on user interaction
+    const chartDiv = document.getElementById('chart');
+    chartDiv.on('plotly_relayout', function(eventdata) {
+      if (eventdata['scene.camera.eye']) {
+        currentCamera = eventdata['scene.camera.eye'];
+      }
+    });
+
+    createVisualization();
+
+    window.addEventListener('resize', () => {
+      Plotly.Plots.resize('chart');
+    });
+  </script>
+</body>
+</html>
