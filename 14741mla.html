@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Cycle Resonance Visualization (Radial Wave Effect)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cycle Resonance (Key/Fib Only) + Radial Waves</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =====================
+       :root Variables & Global (Dark Theme by default)
+    ===================== */
+    :root {
+      --bg-color: #0f0f13;
+      --text-color: #ffffff;
+      --panel-bg: rgba(15, 15, 19, 0.85);
+      --highlight: #2196F3;
+
+      /* Cycle Colors */
+      --limegreen-color: #32CD32;
+      --skyblue-color: #87CEFA;
+      --orange-color: #FFA500;
+      --pink-color: #FF69B4;
+      --gold-color: #FFD700;
+      --blueviolet-color: rgba(138, 43, 226, 0.8);
+      --orangered-color: rgba(255, 69, 0, 0.8);
+      --turquoise-color: #40E0D0;
+      --purple-color: #800080;
+    }
+
+    /* Light Theme Toggle */
+    html.light-theme {
+      --bg-color: #f9f9f9;
+      --text-color: #333;
+      --panel-bg: rgba(255, 255, 255, 0.85);
+      --highlight: #0275d8;
+    }
+
+    /* Reset & Base Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Layout Containers */
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Canvas */
+    #cycleCanvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Controls & Settings Panels */
+    .controls,
+    .legend {
+      position: absolute;
+      width: 90%;
+      max-width: 800px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .controls {
+      top: 20px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .legend {
+      bottom: 60px;
+      font-size: 0.8rem;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .control-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .controls button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      min-width: 80px;
+    }
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+    .date-display {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+      text-align: center;
+    }
+    #settingsPanel {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      background: var(--panel-bg);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 5;
+      font-size: 0.85rem;
+      color: var(--text-color);
+    }
+    #settingsPanel label {
+      display: block;
+      margin-bottom: 0.3rem;
+      cursor: pointer;
+    }
+    #settingsPanel input,
+    #settingsPanel select {
+      margin-right: 0.5rem;
+    }
+
+    /* Debug Overlay */
+    #debugOverlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 8px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      z-index: 6;
+      display: none;
+    }
+
+    /* Logo & Emoji */
+    .logo-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+    }
+    #custom-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      object-fit: cover;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+    #custom-logo.loaded {
+      opacity: 1;
+    }
+    .emoji {
+      position: absolute;
+      top: -30px;
+      font-size: 24px;
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .emoji.active {
+      opacity: 1;
+      transform: translateY(-10px);
+    }
+    .emoji.fire { left: 50%; transform: translateX(-50%); }
+    .emoji.boom { left: 60%; transform: translateX(-50%); }
+    .emoji.beer { left: 40%; transform: translateX(-50%); }
+
+    /* Legend */
+    .legend ul {
+      display: flex;
+      flex-wrap: wrap;
+      list-style: none;
+      gap: 15px;
+      justify-content: center;
+      width: 100%;
+    }
+    .legend li {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1 1 120px;
+      justify-content: center;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* Sound Wave Animation */
+    .sound-wave {
+      position: absolute;
+      border: 2px solid var(--highlight);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: expand 1s linear infinite;
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: 5;
+      display: none;
+    }
+    @keyframes expand {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+      }
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: absolute;
+      padding: 6px 10px;
+      background: var(--panel-bg);
+      color: var(--text-color);
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      z-index: 999;
+      display: none;
+      font-size: 0.8rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .controls {
+        width: 95%;
+        top: 10px;
+      }
+      .legend {
+        bottom: 50px;
+      }
+      #custom-logo {
+        width: 35px;
+        height: 35px;
+      }
+      .emoji {
+        font-size: 20px;
+      }
+    }
+    @media (max-width: 480px) {
+      .controls {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+      }
+      .controls button {
+        min-width: 70px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+      .date-display {
+        font-size: 0.8rem;
+        margin-top: 8px;
+      }
+      .legend {
+        bottom: 50px;
+        padding: 0.5rem 0.75rem;
+        gap: 10px;
+      }
+      .legend li {
+        flex: 1 1 100px;
+      }
+      #custom-logo {
+        width: 30px;
+        height: 30px;
+      }
+      .emoji {
+        font-size: 18px;
+      }
+    }
+    @media (max-width: 320px) {
+      .controls button {
+        min-width: 60px;
+        padding: 5px 8px;
+        font-size: 0.7rem;
+      }
+      .date-display {
+        font-size: 0.7rem;
+      }
+      .legend li {
+        flex: 1 1 80px;
+      }
+      #custom-logo {
+        width: 25px;
+        height: 25px;
+      }
+      .emoji {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Controls Panel -->
+    <div class="controls" id="controls" role="region" aria-label="Animation Controls">
+      <div class="control-buttons">
+        <button id="pause-btn" aria-label="Pause/Play">Pause</button>
+        <button id="reset-btn" aria-label="Reset Animation">Reset</button>
+        <button id="speed-down-btn" aria-label="Decrease Speed">Slower</button>
+        <button id="speed-up-btn" aria-label="Increase Speed">Faster</button>
+      </div>
+      <div class="date-display" id="date-display">Current: [Loading...]</div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" aria-label="Settings Panel">
+      <label>
+        <input type="checkbox" id="toggleMute"> 
+        <span data-i18n="muteAudioLabel">Mute Audio</span>
+      </label>
+      <label>
+        <input type="checkbox" id="toggleDebug">
+        <span data-i18n="showDebugLabel">Show Debug</span>
+      </label>
+      <label>
+        <input type="checkbox" id="toggleFractal" checked>
+        <span data-i18n="showFractalLabel">Show Fractals</span>
+      </label>
+      <label>
+        <input type="checkbox" id="toggleTheme">
+        <span data-i18n="toggleThemeLabel">Light Theme</span>
+      </label>
+      <label>
+        <select id="languageSelector" aria-label="Select Language">
+          <option value="en" selected>English</option>
+          <option value="es">Español</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Debug Overlay -->
+    <div id="debugOverlay" aria-live="polite"></div>
+
+    <!-- Logo & Emoji Container -->
+    <div class="logo-container">
+      <a href="#" target="_blank" rel="noopener noreferrer">
+        <img
+          id="custom-logo"
+          src="https://fibonacciai.github.io/42069/power-512.png"
+          alt="Power Logo"
+        />
+      </a>
+      <span class="emoji fire" aria-hidden="true">🔥</span>
+      <span class="emoji boom" aria-hidden="true">💥</span>
+      <span class="emoji beer" aria-hidden="true">🍻</span>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="cycleCanvas">Your browser does not support the canvas element.</canvas>
+
+    <!-- Legend Panel -->
+    <div class="legend" id="legend" role="region" aria-label="Cycle Legend">
+      <ul>
+        <li><span class="legend-dot" style="background: var(--limegreen-color);"></span> Main ~4yrs Cycle</li>
+        <li><span class="legend-dot" style="background: var(--blueviolet-color);"></span> 1470-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--orangered-color);"></span> 1471-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--gold-color);"></span> 741-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--skyblue-color);"></span> 147-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--turquoise-color);"></span> 55-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--orange-color);"></span> 35-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--purple-color);"></span> 21-day Cycle</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Sound Wave Element -->
+  <div class="sound-wave" id="soundWave"></div>
+
+  <!-- Tooltip Overlay -->
+  <div id="tooltip" class="tooltip" role="tooltip"></div>
+
+  <script type="module">
+    /************************************
+     * 1) CONFIG & INITIAL DATA
+    ************************************/
+    function initConfig() {}
+    const CYCLES = [
+      { name: 'Main ~4yrs (1461)', length: 1461, colorVar: '--limegreen-color' },
+      { name: '1470-day', length: 1470, colorVar: '--blueviolet-color' },
+      { name: '1471-day', length: 1471, colorVar: '--orangered-color' },
+      { name: '741-day',  length: 741,  colorVar: '--gold-color' },
+      { name: '147-day',  length: 147,  colorVar: '--skyblue-color' },
+      { name: '55-day',   length: 55,   colorVar: '--turquoise-color' },
+      { name: '35-day',   length: 35,   colorVar: '--orange-color' },
+      { name: '21-day',   length: 21,   colorVar: '--purple-color' }
+    ];
+
+    const CRUCIAL_DATES = [
+      new Date(2025, 0, 9),
+      new Date(2025, 0, 12),
+      new Date(2025, 0, 23),
+      new Date(2025, 0, 28),
+      new Date(2024, 4, 1),
+      new Date(2025, 0, 29),
+      new Date(2024, 11, 25)
+    ];
+
+    const EMOJI_DATES = {
+      '2025-01-27': 'fire',
+      '2025-01-28': 'boom',
+      '2025-01-29': 'beer'
+    };
+
+    const START_DATE = new Date(2021, 0, 28);
+
+    const LOCALSTORAGE_KEY = 'cycleSettingsAdv';
+    const defaultSettings = {
+      audioMuted: false,
+      debugOverlay: false,
+      fractalDetails: true,
+      lightTheme: false,
+      language: 'en'
+    };
+
+    // Key or Fibonacci only
+    const FIBONACCI_CYCLES = [21, 34, 55, 89, 144, 233, 377, 610, 987, 1597];
+    const KEY_CYCLES = [1461, 1470, 1471, 741, 147];
+    function isKeyOrFibonacci(n) {
+      return KEY_CYCLES.includes(n) || FIBONACCI_CYCLES.includes(n);
+    }
+
+    /************************************
+     * 2) MINIMAL i18n
+    ************************************/
+    const MESSAGES = {
+      en: {
+        muteAudioLabel: "Mute Audio",
+        showDebugLabel: "Show Debug",
+        showFractalLabel: "Show Fractals",
+        toggleThemeLabel: "Light Theme"
+      },
+      es: {
+        muteAudioLabel: "Silenciar Audio",
+        showDebugLabel: "Mostrar Depuración",
+        showFractalLabel: "Mostrar Fractales",
+        toggleThemeLabel: "Tema Claro"
+      }
+    };
+    function initI18n() {
+      const languageSelector = document.getElementById('languageSelector');
+      applyLanguage(languageSelector.value);
+      languageSelector.addEventListener('change', (e) => {
+        applyLanguage(e.target.value);
+      });
+    }
+    function applyLanguage(lang) {
+      const dict = MESSAGES[lang] || MESSAGES.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+
+    /************************************
+     * 3) AUDIO
+    ************************************/
+    let audioCtx;
+    let audioSettingsRef;
+
+    function initAudioContext() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+
+      document.addEventListener('click', resumeAudioContext);
+      document.addEventListener('touchstart', resumeAudioContext);
+    }
+
+    function resumeAudioContext() {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      document.removeEventListener('click', resumeAudioContext);
+      document.removeEventListener('touchstart', resumeAudioContext);
+    }
+
+    function setSettingsRef(ref) {
+      audioSettingsRef = ref;
+    }
+
+    function isAudioMuted() {
+      return !audioSettingsRef || audioSettingsRef.audioMuted;
+    }
+
+    function scheduleTone(frequency, startTime, duration = 0.5) {
+      if (isAudioMuted()) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+      oscillator.type = 'sine';
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.start(startTime);
+      gainNode.gain.setValueAtTime(0.3, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      oscillator.stop(startTime + duration);
+    }
+
+    function playPolyrhythm(frequencies, baseDuration = 0.5) {
+      if (isAudioMuted()) return;
+      const now = audioCtx.currentTime;
+      frequencies.forEach((freq, index) => {
+        scheduleTone(freq, now + index * 0.15, baseDuration);
+      });
+    }
+
+    /************************************
+     * 4) DRAWING UTILS
+    ************************************/
+    function drawCycleRing(ctx, x, y, radius, progress, color) {
+      const angle = progress * 2 * Math.PI;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Marker
+      const markerX = x + Math.cos(angle) * radius;
+      const markerY = y + Math.sin(angle) * radius;
+      ctx.beginPath();
+      ctx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    }
+
+    function drawFractal(ctx, x, y, radius, depth, active) {
+      if (!active || depth === 0) return;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const newRadius = radius * 0.5;
+      for (let i = 0; i < 3; i++) {
+        const angle = (i / 3) * 2 * Math.PI;
+        const childX = x + newRadius * Math.cos(angle);
+        const childY = y + newRadius * Math.sin(angle);
+        drawFractal(ctx, childX, childY, newRadius, depth - 1, active);
+      }
+    }
+
+    function showTooltip(tooltipEl, message, x, y) {
+      tooltipEl.textContent = message;
+      tooltipEl.style.left = `${x + 10}px`;
+      tooltipEl.style.top = `${y + 10}px`;
+      tooltipEl.style.display = 'block';
+      setTimeout(() => {
+        tooltipEl.style.display = 'none';
+      }, 2000);
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    function getCurrentDate(time) {
+      return new Date(START_DATE.getTime() + time * 86400000);
+    }
+
+    /************************************
+     * 5) MAIN LOGIC
+    ************************************/
+    let canvas, ctx;
+    let time = 0;
+    let isPaused = false;
+    let isScrubbing = false;
+    let scrubStartX = 0;
+    let speedMultiplier = 0.05;
+    let frameCount = 0;
+    let lastDebugTime = performance.now();
+    let triggeredResonances = new Set();
+
+    // We'll track expanding waves in an array: { x, y, radius, maxRadius, alpha }
+    let waves = [];
+
+    function loadSettings() {
+      return Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY) || '{}'));
+    }
+    const settings = loadSettings();
+
+    function saveSettings() {
+      localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function startVisualization() {
+      canvas = document.getElementById('cycleCanvas');
+      ctx = canvas.getContext('2d');
+
+      const pauseBtn      = document.getElementById('pause-btn');
+      const resetBtn      = document.getElementById('reset-btn');
+      const speedDownBtn  = document.getElementById('speed-down-btn');
+      const speedUpBtn    = document.getElementById('speed-up-btn');
+      const dateDisplay   = document.getElementById('date-display');
+      const toggleMute    = document.getElementById('toggleMute');
+      const toggleDebug   = document.getElementById('toggleDebug');
+      const toggleFractal = document.getElementById('toggleFractal');
+      const toggleTheme   = document.getElementById('toggleTheme');
+      const debugOverlay  = document.getElementById('debugOverlay');
+      const tooltipEl     = document.getElementById('tooltip');
+      const logo          = document.getElementById('custom-logo');
+
+      setSettingsRef(settings);
+
+      toggleMute.checked    = settings.audioMuted;
+      toggleDebug.checked   = settings.debugOverlay;
+      toggleFractal.checked = settings.fractalDetails;
+      toggleTheme.checked   = settings.lightTheme;
+
+      if (settings.lightTheme) {
+        document.documentElement.classList.add('light-theme');
+      }
+      debugOverlay.style.display = settings.debugOverlay ? 'block' : 'none';
+
+      // Listeners
+      toggleMute.addEventListener('change', (e) => {
+        settings.audioMuted = e.target.checked;
+        saveSettings();
+      });
+      toggleDebug.addEventListener('change', (e) => {
+        settings.debugOverlay = e.target.checked;
+        debugOverlay.style.display = settings.debugOverlay ? 'block' : 'none';
+        saveSettings();
+      });
+      toggleFractal.addEventListener('change', (e) => {
+        settings.fractalDetails = e.target.checked;
+        saveSettings();
+      });
+      toggleTheme.addEventListener('change', (e) => {
+        settings.lightTheme = e.target.checked;
+        document.documentElement.classList.toggle('light-theme', settings.lightTheme);
+        saveSettings();
+      });
+
+      pauseBtn.addEventListener('click', togglePause);
+      resetBtn.addEventListener('click', resetTime);
+      speedDownBtn.addEventListener('click', speedDown);
+      speedUpBtn.addEventListener('click', speedUp);
+
+      document.addEventListener('keydown', handleKeyDown);
+
+      canvas.addEventListener('wheel', onWheelScrub, { passive: false });
+      canvas.addEventListener('touchstart', onTouchStart);
+      canvas.addEventListener('touchmove', onTouchMove);
+      canvas.addEventListener('touchend', onTouchEnd);
+
+      logo.addEventListener('load', () => {
+        logo.classList.add('loaded');
+      });
+
+      window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(resizeCanvas, 200);
+      });
+      resizeCanvas();
+
+      animate(dateDisplay, tooltipEl, debugOverlay);
+    }
+
+    function togglePause() {
+      isPaused = !isPaused;
+      const btn = document.getElementById('pause-btn');
+      btn.textContent = isPaused ? 'Play' : 'Pause';
+    }
+
+    function resetTime() {
+      time = 0;
+      triggeredResonances.clear();
+      waves = [];
+    }
+
+    function speedDown() {
+      speedMultiplier = Math.max(speedMultiplier / 2, 0.01);
+    }
+
+    function speedUp() {
+      speedMultiplier = Math.min(speedMultiplier * 2, 16);
+    }
+
+    function handleKeyDown(e) {
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          togglePause();
+          break;
+        case 'r':
+        case 'R':
+          resetTime();
+          break;
+        case 'ArrowUp':
+          speedUp();
+          break;
+        case 'ArrowDown':
+          speedDown();
+          break;
+      }
+    }
+
+    function onWheelScrub(e) {
+      e.preventDefault();
+      const baseSensitivity = 0.0005;
+      const acceleration = Math.log(Math.abs(e.deltaY) + 1);
+      time += e.deltaY * baseSensitivity * acceleration;
+    }
+
+    function onTouchStart(e) {
+      isScrubbing = true;
+      scrubStartX = e.touches[0].clientX;
+    }
+    function onTouchMove(e) {
+      if (!isScrubbing) return;
+      const currentX = e.touches[0].clientX;
+      const dayDelta = (currentX - scrubStartX) / 5;
+      time += dayDelta;
+      scrubStartX = currentX;
+    }
+    function onTouchEnd() {
+      isScrubbing = false;
+    }
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+    }
+
+    function animate(dateDisplay, tooltipEl, debugOverlay) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawAllCycles(ctx, tooltipEl, dateDisplay);
+
+      updateWaves();
+
+      frameCount++;
+      const now = performance.now();
+      if (now - lastDebugTime >= 1000) {
+        if (settings.debugOverlay) {
+          const currentDate = getCurrentDate(time);
+          debugOverlay.textContent = `FPS: ${frameCount} | Time: ${time.toFixed(2)} | Date: ${formatDate(currentDate)}`;
+        }
+        frameCount = 0;
+        lastDebugTime = now;
+      }
+
+      if (!isPaused && !isScrubbing) {
+        time += speedMultiplier;
+      }
+      requestAnimationFrame(() => animate(dateDisplay, tooltipEl, debugOverlay));
+    }
+
+    function drawAllCycles(ctx, tooltipEl, dateDisplay) {
+      const rect = canvas.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const ringSpacing = Math.min(rect.width, rect.height) / (2 * CYCLES.length);
+
+      const currentDate = getCurrentDate(time);
+      dateDisplay.textContent = `Current: ${formatDate(currentDate)}`;
+
+      let cycleProgresses = [];
+
+      // Draw each ring
+      CYCLES.forEach((cycle, idx) => {
+        const progress = (time % cycle.length) / cycle.length;
+        cycleProgresses.push(progress);
+
+        const ringRadius = ringSpacing * (CYCLES.length - idx);
+        const color = getComputedStyle(document.documentElement)
+                      .getPropertyValue(cycle.colorVar)
+                      .trim();
+        drawCycleRing(ctx, centerX, centerY, ringRadius, progress, color);
+      });
+
+      // Only check alignments if one cycle is key/fib
+      for (let i = 0; i < CYCLES.length; i++) {
+        for (let j = i + 1; j < CYCLES.length; j++) {
+          const cycleA = CYCLES[i];
+          const cycleB = CYCLES[j];
+          if (!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) {
+            continue;
+          }
+          const ringRadius = ringSpacing * (CYCLES.length - i);
+          checkResonance(ctx, centerX, centerY, ringRadius,
+            cycleProgresses[i], cycleProgresses[j],
+            currentDate, tooltipEl,
+            cycleA, cycleB
+          );
+        }
+      }
+
+      checkCrucialDates(ctx, centerX, centerY, currentDate, tooltipEl);
+      checkEmojiEvents(currentDate);
+    }
+
+    function checkResonance(ctx, x, y, radius, progressA, progressB, currentDate, tooltipEl, cycleA, cycleB) {
+      const alignmentThreshold = 0.02;
+      const diff = Math.abs(progressA - progressB);
+      const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
+      if (!isAlignment) return;
+
+      const eventKey = `Align-${currentDate.toDateString()}-${radius}-${cycleA.name}-${cycleB.name}`;
+      if (triggeredResonances.has(eventKey)) return;
+
+      triggeredResonances.add(eventKey);
+
+      // Slight highlight ring
+      ctx.beginPath();
+      ctx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(0, 255, 0, 0.7)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      drawFractal(ctx, x, y, radius * 1.1, 1, settings.fractalDetails);
+
+      playPolyrhythm([261.63, 329.63, 392.0], 0.75);
+
+      showTooltip(tooltipEl, `Alignment: ${cycleA.name} & ${cycleB.name}\n on ${formatDate(currentDate)}`, x, y);
+
+      // *** Spawn wave(s) instead of spark/particles
+      spawnWave(x, y, radius * 1.1);
+    }
+
+    function checkCrucialDates(ctx, x, y, currentDate, tooltipEl) {
+      const dayThreshold = 1;
+      const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
+      if (found) {
+        const eventKey = `Crucial-${currentDate.toDateString()}`;
+        if (!triggeredResonances.has(eventKey)) {
+          triggeredResonances.add(eventKey);
+
+          ctx.beginPath();
+          ctx.arc(x, y, 150, 0, 2 * Math.PI);
+          ctx.strokeStyle = 'rgba(255, 165, 0, 0.8)';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+
+          scheduleTone(523.25, audioContextTime() + 0.1, 0.6);
+          showTooltip(tooltipEl, `Crucial Date near ${formatDate(currentDate)}`, x, y);
+
+          spawnWave(x, y, 150);
+        }
+      }
+    }
+
+    function checkEmojiEvents(currentDate) {
+      const formattedDate = currentDate.toISOString().split('T')[0];
+      document.querySelector('.emoji.fire')
+        .classList.toggle('active', EMOJI_DATES[formattedDate] === 'fire');
+      document.querySelector('.emoji.boom')
+        .classList.toggle('active', EMOJI_DATES[formattedDate] === 'boom');
+      document.querySelector('.emoji.beer')
+        .classList.toggle('active', EMOJI_DATES[formattedDate] === 'beer');
+    }
+
+    // Instead of sparks, we spawn a radial wave (or multiple). 
+    // The wave expands outward from a starting radius up to a max, fading out.
+    function spawnWave(x, y, startRadius = 0) {
+      // Possibly spawn one or multiple waves
+      waves.push({
+        x,
+        y,
+        radius: startRadius,
+        maxRadius: startRadius + 200, // how far to expand
+        alpha: 1
+      });
+    }
+
+    function updateWaves() {
+      for (let i = waves.length - 1; i >= 0; i--) {
+        const w = waves[i];
+        // expand
+        w.radius += 2;
+        w.alpha -= 0.015; // fade out
+
+        // draw wave
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(w.x, w.y, w.radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${w.alpha})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+
+        if (w.radius >= w.maxRadius || w.alpha <= 0) {
+          waves.splice(i, 1);
+        }
+      }
+    }
+
+    function audioContextTime() {
+      return audioCtx ? audioCtx.currentTime : performance.now() / 1000;
+    }
+
+    /************************************
+     * 6) INIT
+    ************************************/
+    initConfig();
+    initI18n();
+    initAudioContext();
+    startVisualization();
+  </script>
+</body>
+</html>
