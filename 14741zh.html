@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gateway Process Visualization</title>
+  <style>
+    /* Basic reset and styling */
+    html, body, #root {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import React, { useEffect, useRef, useState } from 'https://esm.sh/react@18';
+    import ReactDOM from 'https://esm.sh/react-dom@18';
+    import { motion, AnimatePresence } from 'https://esm.sh/framer-motion';
+    import { ChevronDown, ChevronUp, Play, Pause, RefreshCw } from 'https://esm.sh/lucide-react';
+
+    const GatewayVisualization = () => {
+      const canvasRef = useRef(null);
+      const particlesRef = useRef([]);
+      // Persist animation state across renders
+      const rotationRef = useRef(0);
+      const hueRef = useRef(0);
+
+      const [isAnimating, setIsAnimating] = useState(true);
+      const [viewMode, setViewMode] = useState('cosmic'); // cosmic, torus, quasar
+      const [showDetails, setShowDetails] = useState(false);
+      const [frequency, setFrequency] = useState(7.83); // Schumann resonance default
+      const [energyLevel, setEnergyLevel] = useState(50);
+      const [animationSpeed, setAnimationSpeed] = useState(1); // New animation speed control
+
+      // Particle class for dynamic effects
+      class Particle {
+        constructor(x, y, canvas) {
+          this.x = x;
+          this.y = y;
+          this.canvas = canvas;
+          this.size = Math.random() * 3;
+          this.speedX = Math.random() * 3 - 1.5;
+          this.speedY = Math.random() * 3 - 1.5;
+          this.life = 1;
+          this.color = `hsla(${Math.random() * 60 + 200}, 100%, 50%, ${this.life})`;
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.life -= 0.01;
+          this.color = `hsla(${Math.random() * 60 + 200}, 100%, 50%, ${this.life})`;
+        }
+
+        draw(ctx) {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        isAlive() {
+          return this.life > 0;
+        }
+      }
+
+      // Creates new particles at a given position
+      const createParticleSystem = (canvas, x, y, count) => {
+        for (let i = 0; i < count; i++) {
+          particlesRef.current.push(new Particle(x, y, canvas));
+        }
+      };
+
+      // Reset animation values and clear particles
+      const handleReset = () => {
+        rotationRef.current = 0;
+        hueRef.current = 0;
+        particlesRef.current = [];
+      };
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        let animationFrameId;
+
+        // Adjust canvas size based on its container
+        const handleResize = () => {
+          canvas.width = canvas.clientWidth;
+          canvas.height = canvas.clientHeight;
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+
+        // Draw the "Cosmic Egg" view mode
+        const drawCosmicEgg = () => {
+          const { width, height } = canvas;
+          const centerX = width / 2;
+          const centerY = height / 2;
+
+          // Create a radial gradient background
+          const gradient = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, height
+          );
+          gradient.addColorStop(0, `hsla(${hueRef.current}, 70%, 10%, 1)`);
+          gradient.addColorStop(1, `hsla(${(hueRef.current + 60) % 360}, 70%, 5%, 1)`);
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, width, height);
+
+          // Draw the cosmic egg structure
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          ctx.rotate(rotationRef.current);
+
+          // Outer ring
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 200, 100, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = `hsla(${hueRef.current}, 70%, 50%, 0.5)`;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          // Energy field lines
+          for (let i = 0; i < 360; i += 10) {
+            const angle = (i * Math.PI) / 180;
+            const radius = 220 + Math.sin(angle * 4 + rotationRef.current * 2) * 20;
+            ctx.beginPath();
+            ctx.moveTo(
+              Math.cos(angle) * radius,
+              Math.sin(angle) * (radius * 0.5)
+            );
+            ctx.lineTo(
+              Math.cos(angle) * (radius - 40),
+              Math.sin(angle) * ((radius - 40) * 0.5)
+            );
+            ctx.strokeStyle = `hsla(${(hueRef.current + i) % 360}, 70%, 50%, 0.2)`;
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          // Update and render particles
+          particlesRef.current = particlesRef.current.filter(particle => {
+            if (particle.isAlive()) {
+              particle.update();
+              particle.draw(ctx);
+              return true;
+            }
+            return false;
+          });
+
+          // Occasionally generate new particles
+          if (Math.random() < 0.1) {
+            createParticleSystem(
+              canvas,
+              centerX + Math.random() * 400 - 200,
+              centerY + Math.random() * 200 - 100,
+              5
+            );
+          }
+
+          // Update rotation and hue using the animationSpeed multiplier
+          if (isAnimating) {
+            rotationRef.current += 0.005 * animationSpeed;
+            hueRef.current = (hueRef.current + 0.1 * animationSpeed) % 360;
+            animationFrameId = requestAnimationFrame(drawCosmicEgg);
+          }
+        };
+
+        // Draw the "Torus Field" view mode
+        const drawTorus = () => {
+          const { width, height } = canvas;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, width, height);
+
+          const centerX = width / 2;
+          const centerY = height / 2;
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          ctx.rotate(rotationRef.current);
+
+          // Draw torus spiral
+          for (let i = 0; i < 200; i++) {
+            const angle = (i / 50) * Math.PI * 2 + rotationRef.current;
+            const radius = 150 + Math.sin(angle * frequency / 10) * 50;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius * 0.5;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${(hueRef.current + i) % 360}, 70%, 50%, 0.5)`;
+            ctx.fill();
+          }
+          ctx.restore();
+
+          if (isAnimating) {
+            rotationRef.current += 0.02 * animationSpeed;
+            hueRef.current = (hueRef.current + 0.5 * animationSpeed) % 360;
+            animationFrameId = requestAnimationFrame(drawTorus);
+          }
+        };
+
+        // Draw the "Quasar Emission" view mode
+        const drawQuasar = () => {
+          const { width, height } = canvas;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, width, height);
+
+          const centerX = width / 2;
+          const centerY = height / 2;
+
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          
+          // Draw core gradient
+          const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 100);
+          gradient.addColorStop(0, `hsla(${hueRef.current}, 70%, 50%, 1)`);
+          gradient.addColorStop(1, `hsla(${hueRef.current}, 70%, 50%, 0)`);
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(0, 0, 100, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw jets around the core
+          ctx.rotate(rotationRef.current);
+          for (let i = 0; i < energyLevel; i++) {
+            const angle = (i / energyLevel) * Math.PI * 2;
+            const x = Math.cos(angle) * 200;
+            const y = Math.sin(angle) * 200;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = `hsla(${(hueRef.current + i * 2) % 360}, 70%, 50%, 0.2)`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          if (isAnimating) {
+            rotationRef.current += 0.01 * animationSpeed;
+            hueRef.current = (hueRef.current + 0.2 * animationSpeed) % 360;
+            animationFrameId = requestAnimationFrame(drawQuasar);
+          }
+        };
+
+        // Dispatch the appropriate drawing function based on viewMode
+        const draw = () => {
+          switch (viewMode) {
+            case 'cosmic':
+              drawCosmicEgg();
+              break;
+            case 'torus':
+              drawTorus();
+              break;
+            case 'quasar':
+              drawQuasar();
+              break;
+            default:
+              drawCosmicEgg();
+          }
+        };
+
+        draw();
+
+        return () => {
+          window.removeEventListener('resize', handleResize);
+          cancelAnimationFrame(animationFrameId);
+        };
+      }, [isAnimating, viewMode, frequency, energyLevel, animationSpeed]);
+
+      return (
+        <div className="relative" style={{width: '100%', height: '100vh', background: '#000', overflow: 'hidden'}}>
+          <canvas 
+            ref={canvasRef}
+            style={{width: '100%', height: '100%'}}
+          />
+
+          <motion.div 
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              background: 'rgba(0, 0, 0, 0.8)',
+              padding: '1rem',
+              borderRadius: '0.5rem',
+              backdropFilter: 'blur(4px)'
+            }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem'}}>
+              <button
+                onClick={() => setIsAnimating(!isAnimating)}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '0.25rem',
+                  background: '#3b82f6',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {isAnimating ? <Pause size={20} /> : <Play size={20} />}
+              </button>
+              <button
+                onClick={handleReset}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '0.25rem',
+                  background: '#10b981',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <RefreshCw size={20} />
+              </button>
+              <button
+                onClick={() => setShowDetails(!showDetails)}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '0.25rem',
+                  background: '#8b5cf6',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {showDetails ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {showDetails && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}
+                >
+                  <div>
+                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>View Mode</label>
+                    <select 
+                      value={viewMode}
+                      onChange={(e) => setViewMode(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        background: '#1f2937',
+                        borderRadius: '0.25rem',
+                        border: 'none',
+                        color: '#fff'
+                      }}
+                    >
+                      <option value="cosmic">Cosmic Egg</option>
+                      <option value="torus">Torus Field</option>
+                      <option value="quasar">Quasar Emission</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>
+                      Frequency: {frequency.toFixed(2)} Hz
+                    </label>
+                    <input 
+                      type="range"
+                      min="1"
+                      max="40"
+                      step="0.1"
+                      value={frequency}
+                      onChange={(e) => setFrequency(Number(e.target.value))}
+                      style={{width: '100%'}}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>
+                      Energy Level: {energyLevel}%
+                    </label>
+                    <input 
+                      type="range"
+                      min="1"
+                      max="100"
+                      value={energyLevel}
+                      onChange={(e) => setEnergyLevel(Number(e.target.value))}
+                      style={{width: '100%'}}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>
+                      Animation Speed: {animationSpeed.toFixed(1)}x
+                    </label>
+                    <input 
+                      type="range"
+                      min="0.1"
+                      max="3"
+                      step="0.1"
+                      value={animationSpeed}
+                      onChange={(e) => setAnimationSpeed(Number(e.target.value))}
+                      style={{width: '100%'}}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          <div style={{position: 'absolute', bottom: '1rem', right: '1rem', color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem'}}>
+            Gateway Process Visualization
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<GatewayVisualization />);
+  </script>
+</body>
+</html>
