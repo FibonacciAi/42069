@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Cycle Resonance + Mandelbrot Fractal (Single-File, Fixed getCurrentDate)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cycle Resonance + Fractal (Fixed)</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =====================
+       :root Variables & Global (Dark Theme by default)
+    ===================== */
+    :root {
+      --bg-color: #0f0f13;
+      --text-color: #ffffff;
+      --panel-bg: rgba(15, 15, 19, 0.85);
+      --highlight: #2196F3;
+
+      /* Cycle Colors */
+      --limegreen-color: #32CD32;
+      --skyblue-color: #87CEFA;
+      --orange-color: #FFA500;
+      --pink-color: #FF69B4;
+      --gold-color: #FFD700;
+      --blueviolet-color: rgba(138, 43, 226, 0.8);
+      --orangered-color: rgba(255, 69, 0, 0.8);
+      --turquoise-color: #40E0D0;
+      --purple-color: #800080;
+    }
+
+    /* Light Theme Toggle */
+    html.light-theme {
+      --bg-color: #f9f9f9;
+      --text-color: #333;
+      --panel-bg: rgba(255, 255, 255, 0.85);
+      --highlight: #0275d8;
+    }
+
+    /* Reset & Base Styling */
+    * {
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Layout Containers */
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Fractal Canvas (background) */
+    #fractalCanvas {
+      position: absolute;
+      top: 0; 
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    /* Cycle Canvas (foreground) */
+    #cycleCanvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Controls & Settings Panels */
+    .controls,
+    .legend {
+      position: absolute;
+      width: 90%;
+      max-width: 800px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .controls {
+      top: 20px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .legend {
+      bottom: 60px;
+      font-size: 0.8rem;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .control-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .controls button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      min-width: 80px;
+    }
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+    .date-display {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+      text-align: center;
+    }
+    #settingsPanel {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      background: var(--panel-bg);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 5;
+      font-size: 0.85rem;
+      color: var(--text-color);
+    }
+    #settingsPanel label {
+      display: block;
+      margin-bottom: 0.3rem;
+      cursor: pointer;
+    }
+    #settingsPanel input,
+    #settingsPanel select {
+      margin-right: 0.5rem;
+    }
+
+    /* Debug Overlay */
+    #debugOverlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 8px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      z-index: 6;
+      display: none;
+    }
+
+    /* Logo & Emoji */
+    .logo-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+    }
+    #custom-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      object-fit: cover;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+    #custom-logo.loaded {
+      opacity: 1;
+    }
+    .emoji {
+      position: absolute;
+      top: -30px;
+      font-size: 24px;
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .emoji.active {
+      opacity: 1;
+      transform: translateY(-10px);
+    }
+    .emoji.fire { left: 50%; transform: translateX(-50%); }
+    .emoji.boom { left: 60%; transform: translateX(-50%); }
+    .emoji.beer { left: 40%; transform: translateX(-50%); }
+
+    /* Legend */
+    .legend ul {
+      display: flex;
+      flex-wrap: wrap;
+      list-style: none;
+      gap: 15px;
+      justify-content: center;
+      width: 100%;
+    }
+    .legend li {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1 1 120px;
+      justify-content: center;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: absolute;
+      padding: 6px 10px;
+      background: var(--panel-bg);
+      color: var(--text-color);
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      z-index: 999;
+      display: none;
+      font-size: 0.8rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .controls {
+        width: 95%;
+        top: 10px;
+      }
+      .legend {
+        bottom: 50px;
+      }
+      #custom-logo {
+        width: 35px;
+        height: 35px;
+      }
+      .emoji {
+        font-size: 20px;
+      }
+    }
+    @media (max-width: 480px) {
+      .controls {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+      }
+      .controls button {
+        min-width: 70px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+      .date-display {
+        font-size: 0.8rem;
+        margin-top: 8px;
+      }
+      .legend {
+        bottom: 50px;
+        padding: 0.5rem 0.75rem;
+        gap: 10px;
+      }
+      .legend li {
+        flex: 1 1 100px;
+      }
+      #custom-logo {
+        width: 30px;
+        height: 30px;
+      }
+      .emoji {
+        font-size: 18px;
+      }
+    }
+    @media (max-width: 320px) {
+      .controls button {
+        min-width: 60px;
+        padding: 5px 8px;
+        font-size: 0.7rem;
+      }
+      .date-display {
+        font-size: 0.7rem;
+      }
+      .legend li {
+        flex: 1 1 80px;
+      }
+      #custom-logo {
+        width: 25px;
+        height: 25px;
+      }
+      .emoji {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Fractal Canvas (background) -->
+    <canvas id="fractalCanvas"></canvas>
+
+    <!-- Cycle Canvas (foreground) -->
+    <canvas id="cycleCanvas"></canvas>
+
+    <!-- Controls Panel -->
+    <div class="controls" id="controls" role="region" aria-label="Animation Controls">
+      <div class="control-buttons">
+        <button id="pause-btn" aria-label="Pause/Play">Pause</button>
+        <button id="reset-btn" aria-label="Reset Animation">Reset</button>
+        <button id="speed-down-btn" aria-label="Decrease Speed">Slower</button>
+        <button id="speed-up-btn" aria-label="Increase Speed">Faster</button>
+      </div>
+      <div class="date-display" id="date-display">Current: [Loading...]</div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" aria-label="Settings Panel">
+      <label>
+        <input type="checkbox" id="toggleMute"> 
+        <span data-i18n="muteAudioLabel">Mute Audio</span>
+      </label>
+      <label>
+        <input type="checkbox" id="toggleDebug">
+        <span data-i18n="showDebugLabel">Show Debug</span>
+      </label>
+      <label>
+        <input type="checkbox" id="toggleFractal" checked>
+        <span data-i18n="showFractalLabel">Show Fractals</span>
+      </label>
+      <label>
+        <input type="checkbox" id="toggleTheme">
+        <span data-i18n="toggleThemeLabel">Light Theme</span>
+      </label>
+      <label>
+        <select id="languageSelector" aria-label="Select Language">
+          <option value="en" selected>English</option>
+          <option value="es">Español</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Debug Overlay -->
+    <div id="debugOverlay" aria-live="polite"></div>
+
+    <!-- Logo & Emoji Container -->
+    <div class="logo-container">
+      <a href="#" target="_blank" rel="noopener noreferrer">
+        <img
+          id="custom-logo"
+          src="https://fibonacciai.github.io/42069/power-512.png"
+          alt="Power Logo"
+        />
+      </a>
+      <span class="emoji fire" aria-hidden="true">🔥</span>
+      <span class="emoji boom" aria-hidden="true">💥</span>
+      <span class="emoji beer" aria-hidden="true">🍻</span>
+    </div>
+
+    <!-- Legend Panel -->
+    <div class="legend" id="legend" role="region" aria-label="Cycle Legend">
+      <ul>
+        <li><span class="legend-dot" style="background: var(--limegreen-color);"></span> Main ~4yrs Cycle</li>
+        <li><span class="legend-dot" style="background: var(--blueviolet-color);"></span> 1470-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--orangered-color);"></span> 1471-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--gold-color);"></span> 741-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--skyblue-color);"></span> 147-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--turquoise-color);"></span> 55-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--orange-color);"></span> 35-day Cycle</li>
+        <li><span class="legend-dot" style="background: var(--purple-color);"></span> 21-day Cycle</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tooltip Overlay -->
+  <div id="tooltip" class="tooltip" role="tooltip"></div>
+
+  <script type="module">
+    /* 
+      Single-file code with getCurrentDate() fix included.
+      Make sure to run via local server, not file:// 
+    */
+
+    /************************************
+     * 1) GLOBAL DEFINITIONS
+    ************************************/
+    function initConfig() {
+      // placeholder
+    }
+
+    // Sample cycles
+    const CYCLES = [
+      { name: 'Main ~4yrs (1461)', length: 1461, colorVar: '--limegreen-color' },
+      { name: '1470-day', length: 1470, colorVar: '--blueviolet-color' },
+      { name: '1471-day', length: 1471, colorVar: '--orangered-color' },
+      { name: '741-day',  length: 741,  colorVar: '--gold-color' },
+      { name: '147-day',  length: 147,  colorVar: '--skyblue-color' },
+      { name: '55-day',   length: 55,   colorVar: '--turquoise-color' },
+      { name: '35-day',   length: 35,   colorVar: '--orange-color' },
+      { name: '21-day',   length: 21,   colorVar: '--purple-color' }
+    ];
+
+    // Some crucial dates
+    const CRUCIAL_DATES = [
+      new Date(2025, 0, 9),
+      new Date(2025, 0, 12),
+      new Date(2025, 0, 23),
+      new Date(2025, 0, 28),
+      new Date(2024, 4, 1),
+      new Date(2025, 0, 29),
+      new Date(2024, 11, 25)
+    ];
+
+    // Emoji triggers
+    const EMOJI_DATES = {
+      '2025-01-27': 'fire',
+      '2025-01-28': 'boom',
+      '2025-01-29': 'beer'
+    };
+
+    // Starting date
+    const START_DATE = new Date(2021, 0, 28);
+
+    // Default settings
+    const LOCALSTORAGE_KEY = 'cycleSettingsAdv';
+    const defaultSettings = {
+      audioMuted: false,
+      debugOverlay: false,
+      fractalDetails: true,
+      lightTheme: false,
+      language: 'en'
+    };
+
+    // Key or fib
+    const FIBONACCI_CYCLES = [21, 34, 55, 89, 144, 233, 377, 610, 987, 1597];
+    const KEY_CYCLES = [1461, 1470, 1471, 741, 147];
+
+    function isKeyOrFibonacci(n) {
+      return KEY_CYCLES.includes(n) || FIBONACCI_CYCLES.includes(n);
+    }
+
+    // The crucial fix: getCurrentDate
+    function getCurrentDate(time) {
+      return new Date(START_DATE.getTime() + time * 86400000);
+    }
+
+    /************************************
+     * 2) MINIMAL i18n
+    ************************************/
+    const MESSAGES = {
+      en: {
+        muteAudioLabel: "Mute Audio",
+        showDebugLabel: "Show Debug",
+        showFractalLabel: "Show Fractals",
+        toggleThemeLabel: "Light Theme"
+      },
+      es: {
+        muteAudioLabel: "Silenciar Audio",
+        showDebugLabel: "Mostrar Depuración",
+        showFractalLabel: "Mostrar Fractales",
+        toggleThemeLabel: "Tema Claro"
+      }
+    };
+    function initI18n() {
+      const languageSelector = document.getElementById('languageSelector');
+      applyLanguage(languageSelector.value);
+      languageSelector.addEventListener('change', (e) => {
+        applyLanguage(e.target.value);
+      });
+    }
+    function applyLanguage(lang) {
+      const dict = MESSAGES[lang] || MESSAGES.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+
+    /************************************
+     * 3) AUDIO
+    ************************************/
+    let audioCtx;
+    let audioSettingsRef;
+
+    function initAudioContext() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+      document.addEventListener('click', resumeAudioContext);
+      document.addEventListener('touchstart', resumeAudioContext);
+    }
+    function resumeAudioContext() {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      document.removeEventListener('click', resumeAudioContext);
+      document.removeEventListener('touchstart', resumeAudioContext);
+    }
+    function setSettingsRef(ref) {
+      audioSettingsRef = ref;
+    }
+    function isAudioMuted() {
+      return !audioSettingsRef || audioSettingsRef.audioMuted;
+    }
+    function scheduleTone(frequency, startTime, duration = 0.5) {
+      if (isAudioMuted()) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+      oscillator.type = 'sine';
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.start(startTime);
+      gainNode.gain.setValueAtTime(0.3, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      oscillator.stop(startTime + duration);
+    }
+    function playPolyrhythm(frequencies, baseDuration = 0.5) {
+      if (isAudioMuted()) return;
+      const now = audioCtx.currentTime;
+      frequencies.forEach((freq, i) => {
+        scheduleTone(freq, now + i * 0.15, baseDuration);
+      });
+    }
+
+    /************************************
+     * 4) FRACTAL (SIMPLE MANDELBROT)
+    ************************************/
+    let fractalCanvas, fractalCtx, fractalWidth, fractalHeight;
+    let fractalCenterX = -0.75;
+    let fractalCenterY = 0.0;
+    let fractalZoom = 3.0;
+    let fractalMaxIterations = 100;
+
+    function initFractalCanvas() {
+      fractalCanvas = document.getElementById('fractalCanvas');
+      fractalCtx = fractalCanvas.getContext('2d');
+      resizeFractalCanvas();
+    }
+    function resizeFractalCanvas() {
+      fractalWidth = fractalCanvas.clientWidth;
+      fractalHeight = fractalCanvas.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+      fractalCanvas.width = fractalWidth * dpr;
+      fractalCanvas.height = fractalHeight * dpr;
+      fractalCtx.resetTransform();
+      fractalCtx.scale(dpr, dpr);
+      if (settings && settings.fractalDetails) {
+        renderMandelbrot();
+      } else {
+        fractalCtx.clearRect(0, 0, fractalWidth, fractalHeight);
+      }
+    }
+    function renderMandelbrot() {
+      const imageData = fractalCtx.createImageData(fractalWidth, fractalHeight);
+      const data = imageData.data;
+      for (let py = 0; py < fractalHeight; py++) {
+        const y0 = fractalCenterY + (py - fractalHeight/2) * (fractalZoom / fractalHeight);
+        for (let px = 0; px < fractalWidth; px++) {
+          const x0 = fractalCenterX + (px - fractalWidth/2) * (fractalZoom / fractalWidth);
+          let x = 0, y = 0;
+          let iteration = 0;
+          while (x*x + y*y <= 4 && iteration < fractalMaxIterations) {
+            const xTemp = x*x - y*y + x0;
+            y = 2*x*y + y0;
+            x = xTemp;
+            iteration++;
+          }
+          const idx = (py * fractalWidth + px) * 4;
+          if (iteration == fractalMaxIterations) {
+            data[idx+0] = 0;
+            data[idx+1] = 0;
+            data[idx+2] = 0;
+            data[idx+3] = 255;
+          } else {
+            const hue = (iteration * 10) % 360;
+            const c = hslToRgb(hue / 360, 1, 0.5);
+            data[idx+0] = c[0];
+            data[idx+1] = c[1];
+            data[idx+2] = c[2];
+            data[idx+3] = 255;
+          }
+        }
+      }
+      fractalCtx.putImageData(imageData, 0, 0);
+    }
+    // HSL -> RGB
+    function hslToRgb(h, s, l){
+      let r, g, b;
+      if(s === 0){
+        r = g = b = l; 
+      } else {
+        const hue2rgb = function(p, q, t){
+          if(t < 0) t += 1;
+          if(t > 1) t -= 1;
+          if(t < 1/6) return p + (q - p) * 6 * t;
+          if(t < 1/2) return q;
+          if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l*(1+s) : l+s - l*s;
+        const p = 2*l - q;
+        r = hue2rgb(p, q, h+1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h-1/3);
+      }
+      return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+    }
+    function fractalAlignmentShift(){
+      fractalZoom *= 0.9;
+      fractalCenterX += (Math.random()-0.5)*0.1*fractalZoom;
+      fractalCenterY += (Math.random()-0.5)*0.1*fractalZoom;
+      fractalMaxIterations += 5;
+      if(fractalMaxIterations > 300) fractalMaxIterations = 150;
+      renderMandelbrot();
+    }
+
+    /************************************
+     * 5) MAIN RING/CYCLE LOGIC
+    ************************************/
+    let cycleCanvas, cycleCtx, cycleWidth, cycleHeight;
+    let time = 0;
+    let isPaused = false;
+    let isScrubbing = false;
+    let scrubStartX = 0;
+    let speedMultiplier = 0.05;
+    let frameCount = 0;
+    let lastDebugTime = performance.now();
+    let triggeredResonances = new Set();
+
+    let waves = [];
+
+    let settings;
+
+    function loadSettings() {
+      return Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY) || '{}'));
+    }
+    function saveSettings() {
+      localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function startVisualization() {
+      settings = loadSettings();
+
+      cycleCanvas = document.getElementById('cycleCanvas');
+      cycleCtx = cycleCanvas.getContext('2d');
+      resizeCycleCanvas();
+
+      // fractal init
+      initFractalCanvas();
+
+      // Grab DOM
+      const pauseBtn        = document.getElementById('pause-btn');
+      const resetBtn        = document.getElementById('reset-btn');
+      const speedDownBtn    = document.getElementById('speed-down-btn');
+      const speedUpBtn      = document.getElementById('speed-up-btn');
+      const dateDisplay     = document.getElementById('date-display');
+      const toggleMute      = document.getElementById('toggleMute');
+      const toggleDebug     = document.getElementById('toggleDebug');
+      const toggleFractal   = document.getElementById('toggleFractal');
+      const toggleTheme     = document.getElementById('toggleTheme');
+      const debugOverlay    = document.getElementById('debugOverlay');
+      const logo            = document.getElementById('custom-logo');
+
+      setSettingsRef(settings);
+
+      toggleMute.checked    = settings.audioMuted;
+      toggleDebug.checked   = settings.debugOverlay;
+      toggleFractal.checked = settings.fractalDetails;
+      toggleTheme.checked   = settings.lightTheme;
+      debugOverlay.style.display = settings.debugOverlay ? 'block' : 'none';
+      if(settings.lightTheme){
+        document.documentElement.classList.add('light-theme');
+      }
+
+      // Listeners
+      toggleMute.addEventListener('change', e => {
+        settings.audioMuted = e.target.checked;
+        saveSettings();
+      });
+      toggleDebug.addEventListener('change', e => {
+        settings.debugOverlay = e.target.checked;
+        debugOverlay.style.display = settings.debugOverlay ? 'block' : 'none';
+        saveSettings();
+      });
+      toggleFractal.addEventListener('change', e => {
+        settings.fractalDetails = e.target.checked;
+        saveSettings();
+        if(settings.fractalDetails){
+          renderMandelbrot();
+        } else {
+          fractalCtx.clearRect(0,0, fractalWidth, fractalHeight);
+        }
+      });
+      toggleTheme.addEventListener('change', e => {
+        settings.lightTheme = e.target.checked;
+        document.documentElement.classList.toggle('light-theme', settings.lightTheme);
+        saveSettings();
+      });
+
+      pauseBtn.addEventListener('click', togglePause);
+      resetBtn.addEventListener('click', resetTime);
+      speedDownBtn.addEventListener('click', speedDown);
+      speedUpBtn.addEventListener('click', speedUp);
+
+      document.addEventListener('keydown', handleKeyDown);
+
+      cycleCanvas.addEventListener('wheel', onWheelScrub, { passive: false });
+      cycleCanvas.addEventListener('touchstart', onTouchStart);
+      cycleCanvas.addEventListener('touchmove', onTouchMove);
+      cycleCanvas.addEventListener('touchend', onTouchEnd);
+
+      logo.addEventListener('load', () => {
+        logo.classList.add('loaded');
+      });
+
+      window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(() => {
+          resizeCycleCanvas();
+          resizeFractalCanvas();
+        },200);
+      });
+
+      animate(dateDisplay, debugOverlay);
+    }
+
+    function resizeCycleCanvas(){
+      cycleWidth = cycleCanvas.clientWidth;
+      cycleHeight= cycleCanvas.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+      cycleCanvas.width = cycleWidth*dpr;
+      cycleCanvas.height= cycleHeight*dpr;
+      cycleCtx.resetTransform();
+      cycleCtx.scale(dpr,dpr);
+    }
+
+    function togglePause(){
+      isPaused = !isPaused;
+      const btn= document.getElementById('pause-btn');
+      btn.textContent = isPaused ? 'Play':'Pause';
+    }
+
+    function resetTime(){
+      time = 0;
+      triggeredResonances.clear();
+      waves=[];
+      fractalZoom=3.0;
+      fractalCenterX=-0.75;
+      fractalCenterY=0.0;
+      fractalMaxIterations=100;
+      if(settings.fractalDetails){
+        renderMandelbrot();
+      }
+    }
+
+    function speedDown(){
+      speedMultiplier= Math.max(speedMultiplier/2,0.01);
+    }
+    function speedUp(){
+      speedMultiplier= Math.min(speedMultiplier*2,16);
+    }
+
+    function handleKeyDown(e){
+      switch(e.key){
+        case ' ':
+          e.preventDefault();
+          togglePause();
+          break;
+        case 'r':
+        case 'R':
+          resetTime();
+          break;
+        case 'ArrowUp':
+          speedUp();
+          break;
+        case 'ArrowDown':
+          speedDown();
+          break;
+      }
+    }
+
+    function onWheelScrub(e){
+      e.preventDefault();
+      const baseSensitivity=0.0005;
+      const acceleration= Math.log(Math.abs(e.deltaY)+1);
+      time += e.deltaY* baseSensitivity*acceleration;
+    }
+    function onTouchStart(e){
+      isScrubbing=true;
+      scrubStartX=e.touches[0].clientX;
+    }
+    function onTouchMove(e){
+      if(!isScrubbing)return;
+      const currentX=e.touches[0].clientX;
+      const dayDelta=(currentX - scrubStartX)/5;
+      time+=dayDelta;
+      scrubStartX=currentX;
+    }
+    function onTouchEnd(){
+      isScrubbing=false;
+    }
+
+    function animate(dateDisplay, debugOverlay){
+      cycleCtx.clearRect(0,0,cycleWidth,cycleHeight);
+      drawAllCycles(dateDisplay);
+      updateWaves(cycleCtx);
+
+      frameCount++;
+      const now = performance.now();
+      if(now - lastDebugTime>=1000){
+        if(settings.debugOverlay){
+          const currentDate = getCurrentDate(time);
+          debugOverlay.textContent = `FPS: ${frameCount} | Time: ${time.toFixed(2)} | Date: ${formatDate(currentDate)}`;
+        }
+        frameCount=0;
+        lastDebugTime=now;
+      }
+
+      if(!isPaused && !isScrubbing){
+        time += speedMultiplier;
+      }
+      requestAnimationFrame(()=>animate(dateDisplay, debugOverlay));
+    }
+
+    function drawAllCycles(dateDisplay){
+      const centerX = cycleWidth/2;
+      const centerY = cycleHeight/2;
+      const ringSpacing = Math.min(cycleWidth, cycleHeight)/(2*CYCLES.length);
+
+      const currentDate = getCurrentDate(time);
+      dateDisplay.textContent=`Current: ${formatDate(currentDate)}`;
+
+      let cycleProgresses=[];
+      CYCLES.forEach((cycle, idx)=>{
+        const progress = (time % cycle.length)/cycle.length;
+        cycleProgresses.push(progress);
+
+        const ringRadius= ringSpacing*(CYCLES.length-idx);
+        const color= getComputedStyle(document.documentElement)
+                      .getPropertyValue(cycle.colorVar)
+                      .trim();
+        drawCycleRing(cycleCtx, centerX, centerY, ringRadius, progress, color);
+      });
+
+      for(let i=0;i<CYCLES.length;i++){
+        for(let j=i+1;j<CYCLES.length;j++){
+          const cycleA=CYCLES[i];
+          const cycleB=CYCLES[j];
+          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)){
+            continue;
+          }
+          const ringRadius= ringSpacing*(CYCLES.length-i);
+          checkResonance(cycleCtx, centerX, centerY, ringRadius,
+            cycleProgresses[i], cycleProgresses[j], currentDate,
+            cycleA, cycleB);
+        }
+      }
+
+      checkCrucialDates(cycleCtx, centerX, centerY, currentDate);
+      checkEmojiEvents(currentDate);
+    }
+
+    // Draw ring for cycle
+    function drawCycleRing(ctx, x, y, radius, progress, color){
+      const angle = progress*2*Math.PI;
+      ctx.beginPath();
+      ctx.arc(x,y, radius, 0,2*Math.PI);
+      ctx.strokeStyle=color;
+      ctx.lineWidth=2;
+      ctx.stroke();
+
+      // marker
+      const markerX = x+ Math.cos(angle)*radius;
+      const markerY = y+ Math.sin(angle)*radius;
+      ctx.beginPath();
+      ctx.arc(markerX, markerY,6,0,2*Math.PI);
+      ctx.fillStyle='#fff';
+      ctx.fill();
+    }
+
+    function checkResonance(ctx, x, y, radius, progressA, progressB, currentDate, cycleA, cycleB){
+      const alignmentThreshold=0.02;
+      const diff=Math.abs(progressA-progressB);
+      const isAlignment = diff<alignmentThreshold || Math.abs(1-diff)<alignmentThreshold;
+      if(!isAlignment) return;
+
+      const eventKey= `Align-${currentDate.toDateString()}-${radius}-${cycleA.name}-${cycleB.name}`;
+      if(triggeredResonances.has(eventKey)) return;
+      triggeredResonances.add(eventKey);
+
+      ctx.beginPath();
+      ctx.arc(x,y, radius*1.1, 0,2*Math.PI);
+      ctx.strokeStyle='rgba(0,255,0,0.7)';
+      ctx.lineWidth=3;
+      ctx.stroke();
+
+      playPolyrhythm([261.63,329.63,392],0.75);
+      spawnWave(x,y, radius*1.1);
+
+      if(settings.fractalDetails){
+        fractalAlignmentShift();
+      }
+
+      const tooltip=document.getElementById('tooltip');
+      showTooltip(tooltip, `Alignment: ${cycleA.name} & ${cycleB.name}\non ${formatDate(currentDate)}`, x, y);
+    }
+
+    function checkCrucialDates(ctx, x, y, currentDate){
+      const dayThreshold=1;
+      const found= CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd)/86400000)<dayThreshold);
+      if(found){
+        const eventKey= `Crucial-${currentDate.toDateString()}`;
+        if(!triggeredResonances.has(eventKey)){
+          triggeredResonances.add(eventKey);
+
+          ctx.beginPath();
+          ctx.arc(x,y,150,0,2*Math.PI);
+          ctx.strokeStyle='rgba(255,165,0,0.8)';
+          ctx.lineWidth=4;
+          ctx.stroke();
+
+          scheduleTone(523.25, audioContextTime()+0.1,0.6);
+          spawnWave(x,y,150);
+
+          if(settings.fractalDetails){
+            fractalAlignmentShift();
+          }
+
+          const tooltip=document.getElementById('tooltip');
+          showTooltip(tooltip, `Crucial Date near ${formatDate(currentDate)}`, x, y);
+        }
+      }
+    }
+
+    function checkEmojiEvents(currentDate){
+      const formattedDate= currentDate.toISOString().split('T')[0];
+      document.querySelector('.emoji.fire')
+        .classList.toggle('active', EMOJI_DATES[formattedDate]==='fire');
+      document.querySelector('.emoji.boom')
+        .classList.toggle('active', EMOJI_DATES[formattedDate]==='boom');
+      document.querySelector('.emoji.beer')
+        .classList.toggle('active', EMOJI_DATES[formattedDate]==='beer');
+    }
+
+    // Waves approach
+    function spawnWave(x,y, startRadius=0){
+      waves.push({
+        x,y,
+        radius:startRadius,
+        maxRadius: startRadius+200,
+        alpha:1
+      });
+    }
+    function updateWaves(ctx){
+      for(let i=waves.length-1;i>=0;i--){
+        const w=waves[i];
+        w.radius+=2;
+        w.alpha-=0.015;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(w.x,w.y,w.radius,0,2*Math.PI);
+        ctx.strokeStyle=`rgba(255,255,255,${w.alpha})`;
+        ctx.lineWidth=3;
+        ctx.stroke();
+        ctx.restore();
+
+        if(w.radius>= w.maxRadius || w.alpha<=0){
+          waves.splice(i,1);
+        }
+      }
+    }
+
+    // Utility: show a quick tooltip
+    function showTooltip(tooltipEl, message, x,y){
+      tooltipEl.textContent= message;
+      tooltipEl.style.left= `${x+10}px`;
+      tooltipEl.style.top=  `${y+10}px`;
+      tooltipEl.style.display='block';
+      setTimeout(()=> {
+        tooltipEl.style.display='none';
+      },2000);
+    }
+
+    function formatDate(date){
+      return date.toLocaleDateString('en-US',{
+        weekday:'long',
+        year:'numeric',
+        month:'long',
+        day:'numeric'
+      });
+    }
+
+    function audioContextTime(){
+      return audioCtx? audioCtx.currentTime: performance.now()/1000;
+    }
+
+    /************************************
+     * 6) LAUNCH
+    ************************************/
+    window.addEventListener('load', ()=>{
+      initConfig();
+      initI18n();
+      initAudioContext();
+      startVisualization();
+    });
+  </script>
+</body>
+</html>
