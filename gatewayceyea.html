@@ -1,0 +1,324 @@
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Pause, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
+
+const GatewayVisualization = () => {
+  const canvasRef = useRef(null);
+  const renderTimeoutRef = useRef(null);
+  const [isAnimating, setIsAnimating] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+  const [viewMode, setViewMode] = useState('cosmic');
+
+  const [fractalState, setFractalState] = useState({
+    zoom: 1,
+    centerX: -0.5,
+    centerY: 0,
+    maxIterations: 100,
+    colorScheme: 'psychedelic',
+    isRendering: false,
+  });
+
+  const colorSchemes = useMemo(
+    () => ({
+      psychedelic: (i, max) => {
+        if (i === max) return [0, 0, 0];
+        const hue = (i * 20) % 360;
+        return hslToRgb(hue / 360, 1, 0.5);
+      },
+      rainbow: (i, max) => {
+        if (i === max) return [0, 0, 0];
+        const hue = (i * 10) % 360;
+        return hslToRgb(hue / 360, 0.8, 0.5);
+      },
+      classic: (i, max) => {
+        if (i === max) return [0, 0, 0];
+        const shade = (i * 255) / max;
+        return [shade, shade, shade];
+      },
+    }),
+    []
+  );
+
+  function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * 6 * (2/3 - t);
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
+
+  const renderFractal = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const { zoom, centerX, centerY, maxIterations, colorScheme } = fractalState;
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
+    const colorFunc = colorSchemes[colorScheme];
+
+    for (let px = 0; px < width; px++) {
+      for (let py = 0; py < height; py++) {
+        const x0 = (px - width / 2) * (4 / width) / zoom + centerX;
+        const y0 = (py - height / 2) * (4 / height) / zoom + centerY;
+
+        let x = 0;
+        let y = 0;
+        let iteration = 0;
+
+        while (x * x + y * y <= 4 && iteration < maxIterations) {
+          const xtemp = x * x - y * y + x0;
+          y = 2 * x * y + y0;
+          x = xtemp;
+          iteration++;
+        }
+
+        const idx = (px + py * width) * 4;
+        const [r, g, b] = colorFunc(iteration, maxIterations);
+        data[idx] = r;
+        data[idx + 1] = g;
+        data[idx + 2] = b;
+        data[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }, [fractalState, colorSchemes]);
+
+  const debouncedRenderFractal = useCallback(() => {
+    if (renderTimeoutRef.current) {
+      clearTimeout(renderTimeoutRef.current);
+    }
+    setFractalState(prev => ({ ...prev, isRendering: true }));
+    renderTimeoutRef.current = setTimeout(() => {
+      renderFractal();
+      setFractalState(prev => ({ ...prev, isRendering: false }));
+    }, 100);
+  }, [renderFractal]);
+
+  const updateFractalParam = useCallback(
+    (updates) => {
+      setFractalState(prev => ({ ...prev, ...updates }));
+      debouncedRenderFractal();
+    },
+    [debouncedRenderFractal]
+  );
+
+  const drawCosmic = useCallback((ctx, width, height, time) => {
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(time * 0.001);
+    ctx.beginPath();
+    ctx.scale(1, 0.5);
+    ctx.arc(0, 0, 200, 0, Math.PI * 2);
+    ctx.restore();
+    ctx.strokeStyle = `hsl(${time % 360}, 70%, 50%)`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    for (let i = 0; i < 360; i += 15) {
+      const rad = (i * Math.PI) / 180;
+      ctx.beginPath();
+      ctx.moveTo(centerX + Math.cos(rad) * 180, centerY + Math.sin(rad) * 90);
+      ctx.lineTo(centerX + Math.cos(rad) * 220, centerY + Math.sin(rad) * 110);
+      ctx.strokeStyle = `hsla(${(time + i) % 360}, 70%, 50%, 0.3)`;
+      ctx.stroke();
+    }
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    let startTime = Date.now();
+
+    const resizeCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+      if (viewMode === 'fractal') {
+        debouncedRenderFractal();
+      }
+    };
+
+    const animate = () => {
+      if (!isAnimating) return;
+      const time = Date.now() - startTime;
+      const { width, height } = canvas.getBoundingClientRect();
+      drawCosmic(ctx, width, height, time);
+      animationId = requestAnimationFrame(animate);
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    if (viewMode === 'fractal') {
+      debouncedRenderFractal();
+    } else {
+      animate();
+    }
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resizeCanvas);
+      if (renderTimeoutRef.current) {
+        clearTimeout(renderTimeoutRef.current);
+      }
+    };
+  }, [isAnimating, viewMode, debouncedRenderFractal, drawCosmic]);
+
+  return (
+    <div className="relative w-full h-screen bg-black">
+      <canvas ref={canvasRef} className="w-full h-full" />
+
+      <motion.div
+        className="absolute top-4 left-4 p-4 bg-black/80 rounded-lg backdrop-blur-sm text-white"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setIsAnimating(prev => !prev)}
+            className="p-2 rounded bg-blue-500 hover:bg-blue-600 transition-colors"
+            aria-label={isAnimating ? 'Pause animation' : 'Play animation'}
+          >
+            {isAnimating ? <Pause size={20} /> : <Play size={20} />}
+          </button>
+          <button
+            onClick={() => setShowControls(prev => !prev)}
+            className="p-2 rounded bg-purple-500 hover:bg-purple-600 transition-colors"
+            aria-label={showControls ? 'Hide controls' : 'Show controls'}
+          >
+            {showControls ? 'Hide' : 'Show'} Controls
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showControls && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="space-y-4"
+            >
+              <select
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value)}
+                className="w-full bg-gray-800 rounded p-2 text-white"
+              >
+                <option value="cosmic">Cosmic Egg</option>
+                <option value="fractal">Fractal Pattern</option>
+              </select>
+
+              {viewMode === 'fractal' && (
+                <div className="space-y-4">
+                  <select
+                    value={fractalState.colorScheme}
+                    onChange={(e) =>
+                      updateFractalParam({ colorScheme: e.target.value })
+                    }
+                    className="w-full bg-gray-800 rounded p-2 text-white"
+                  >
+                    <option value="psychedelic">Psychedelic</option>
+                    <option value="rainbow">Rainbow</option>
+                    <option value="classic">Classic</option>
+                  </select>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <label className="text-sm">Detail Level</label>
+                      <span className="text-sm">{fractalState.maxIterations}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="50"
+                      max="500"
+                      step="50"
+                      value={fractalState.maxIterations}
+                      onChange={(e) =>
+                        updateFractalParam({ maxIterations: Number(e.target.value) })
+                      }
+                      className="w-full accent-purple-500 bg-gray-800 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() =>
+                        updateFractalParam({ zoom: fractalState.zoom * 1.5 })
+                      }
+                      className="p-2 rounded bg-blue-500 hover:bg-blue-600 transition-colors"
+                      aria-label="Zoom In"
+                    >
+                      <ZoomIn size={20} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateFractalParam({ zoom: fractalState.zoom / 1.5 })
+                      }
+                      className="p-2 rounded bg-blue-500 hover:bg-blue-600 transition-colors"
+                      aria-label="Zoom Out"
+                    >
+                      <ZoomOut size={20} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateFractalParam({
+                          zoom: 1,
+                          centerX: -0.5,
+                          centerY: 0,
+                        })
+                      }
+                      className="p-2 rounded bg-purple-500 hover:bg-purple-600 transition-colors"
+                      aria-label="Reset View"
+                    >
+                      <RotateCw size={20} />
+                    </button>
+                  </div>
+
+                  {fractalState.isRendering && (
+                    <div className="text-sm text-blue-400">Rendering...</div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {viewMode === 'fractal' && (
+        <div className="absolute bottom-4 right-4 text-white/60 text-sm">
+          Zoom: {fractalState.zoom.toFixed(2)}x
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GatewayVisualization;
