@@ -43,12 +43,21 @@
       height: 100%;
       overflow-y: auto;
       box-shadow: -5px 0 20px rgba(0, 0, 0, 0.7);
-      position: relative;
+      position: absolute;
+      top: 0;
+      right: 0;
       transform: translateX(100%);
       transition: transform 0.3s ease-in-out;
+      z-index: 2;
     }
     #details.show {
       transform: translateX(0);
+    }
+    /* On mobile, hide the details panel by default */
+    @media (max-width: 600px) {
+      #details {
+        display: none;
+      }
     }
     #details h2 {
       margin-top: 0;
@@ -83,6 +92,7 @@
       border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
       font-size: 14px;
+      z-index: 1;
     }
     .legend-item {
       display: flex;
@@ -103,6 +113,7 @@
       bottom: 20px;
       display: flex;
       gap: 10px;
+      z-index: 1;
     }
     .zoom-btn {
       background: rgba(20, 20, 20, 0.9);
