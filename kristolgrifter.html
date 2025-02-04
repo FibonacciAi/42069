@@ -10,7 +10,7 @@
     body {
       font-family: 'Roboto', sans-serif;
       margin: 0;
-      background: #111;
+      background: #111; /* Very dark background */
       display: flex;
       height: 100vh;
       overflow: hidden;
@@ -60,7 +60,7 @@
     }
     #details h2 {
       margin-top: 0;
-      color: #F9A825;
+      color: #F9A825; /* Dark Yellow accent */
       font-size: 20px;
       border-bottom: 1px solid #333;
       padding-bottom: 10px;
@@ -69,7 +69,7 @@
       position: absolute;
       top: 20px;
       right: 20px;
-      background: #FB8C00;
+      background: #FB8C00; /* Orange */
       border: none;
       color: #fff;
       padding: 8px 12px;
@@ -427,6 +427,9 @@
     /* ==========================
        Force Simulation Setup
        ========================== */
+    // Use a unified y-force that directs nodes to custom vertical positions:
+    // USAID -> target y = 30, Bill Kristol -> target y = height - 50,
+    // and all other nodes -> center (height / 2).
     let simulation = d3.forceSimulation(graph.nodes)
                        .force("link", d3.forceLink(graph.links)
                                          .id(d => d.id)
@@ -434,28 +437,11 @@
                        .force("charge", d3.forceManyBody().strength(-400))
                        .force("collide", d3.forceCollide(d => radiusScale(d.totalFlow) + 8))
                        .force("x", d3.forceX(width / 2).strength(0.05))
-                       .force("y", d3.forceY(height / 2).strength(0.05))
-                       .force("billDown", billDownForce)
-                       .force("usaidUp", usaidUpForce);
-
-    // Custom force to pull "Bill Kristol" downward.
-    function billDownForce(alpha) {
-      graph.nodes.forEach(function(d) {
-        if (d.id === "Bill Kristol") {
-          d.vy += (height - 50 - d.y) * alpha;
-        }
-      });
-    }
-
-    // Custom force to nudge "USAID" upward.
-    function usaidUpForce(alpha) {
-      graph.nodes.forEach(function(d) {
-        if (d.id === "USAID") {
-          // Force USAID to move toward a target y position (e.g., 30 pixels from the top)
-          d.vy += (30 - d.y) * alpha;
-        }
-      });
-    }
+                       .force("y", d3.forceY(d => {
+                         if (d.id === "USAID") return 30;
+                         if (d.id === "Bill Kristol") return height - 50;
+                         return height / 2;
+                       }).strength(0.05));
 
     /* ==========================
        Drawing Links & Nodes
@@ -577,8 +563,12 @@
       width = window.innerWidth - detailsWidth;
       height = window.innerHeight;
       svg.attr("width", width).attr("height", height);
-      simulation.force("x", d3.forceX(width / 2).strength(0.05));
-      simulation.force("y", d3.forceY(height / 2).strength(0.05));
+      // Update the y-force target for Bill Kristol accordingly.
+      simulation.force("y", d3.forceY(d => {
+        if (d.id === "USAID") return 30;
+        if (d.id === "Bill Kristol") return height - 50;
+        return height / 2;
+      }).strength(0.05));
       simulation.alpha(1).restart();
     }
 
