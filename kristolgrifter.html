@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defending Democracy - Full Transparency Network</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* Global layout and typography */
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      background: #111; /* Very dark background */
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      color: #fff;
+    }
+    #main-container {
+      display: flex;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Network visualization area */
+    #network {
+      flex-grow: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #network svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Details sidebar panel */
+    #details {
+      width: 320px;
+      background: rgba(20, 20, 20, 0.95);
+      color: #fff;
+      padding: 20px;
+      box-sizing: border-box;
+      height: 100%;
+      overflow-y: auto;
+      box-shadow: -5px 0 20px rgba(0, 0, 0, 0.7);
+      position: relative;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    #details.show {
+      transform: translateX(0);
+    }
+    #details h2 {
+      margin-top: 0;
+      color: #F9A825; /* Dark Yellow accent */
+      font-size: 20px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 10px;
+    }
+    #details button.close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #FB8C00; /* Orange */
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 4px;
+      transition: background-color 0.2s ease-in-out;
+    }
+    #details button.close:hover {
+      background: #FFA726;
+    }
+    /* Legend styling */
+    #legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(20, 20, 20, 0.9);
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      font-size: 14px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .legend-color {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-right: 10px;
+      border: 1px solid #fff;
+    }
+    /* Zoom controls styling */
+    .zoom-controls {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    .zoom-btn {
+      background: rgba(20, 20, 20, 0.9);
+      border: 1px solid #fff;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: background-color 0.2s ease-in-out, transform 0.2s;
+    }
+    .zoom-btn:hover {
+      background: rgba(36, 36, 36, 0.9);
+      transform: scale(1.05);
+    }
+    /* Tooltip styling */
+    .tooltip {
+      position: absolute;
+      background: rgba(20, 20, 20, 0.95);
+      color: #fff;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+      pointer-events: none;
+      z-index: 10;
+      max-width: 250px;
+      word-wrap: break-word;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+      border: 1px solid #fff;
+    }
+    .tooltip h4 {
+      margin: 0 0 8px;
+      color: #F9A825;
+    }
+    .tooltip p {
+      margin: 4px 0;
+    }
+    /* Node and link styling */
+    .node circle {
+      stroke: #fff;
+      stroke-width: 2px;
+      transition: all 0.3s ease;
+    }
+    .node:hover circle {
+      stroke: #F9A825;
+      stroke-width: 3px;
+    }
+    .node text {
+      fill: #fff;
+      font-weight: 500;
+      pointer-events: none;
+      text-anchor: middle;
+      alignment-baseline: middle;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      font-size: 14px; /* Consistent text size */
+    }
+    .link {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.5);
+      stroke-opacity: 0.7;
+      transition: all 0.3s ease;
+    }
+    .link.highlight {
+      stroke: #F9A825;
+      stroke-width: 3px;
+      stroke-opacity: 1;
+    }
+    /* Research/dossier details styling */
+    .research-section {
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #333;
+    }
+    .research-section:last-child {
+      border-bottom: none;
+    }
+    .research-section h3 {
+      margin: 10px 0 8px;
+      color: #F9A825;
+      font-size: 16px;
+    }
+    .research-section p,
+    .research-section ul {
+      margin: 8px 0;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .research-section ul {
+      padding-left: 20px;
+    }
+    .research-section li {
+      margin-bottom: 8px;
+    }
+    .flow-value {
+      color: #FB8C00;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-container">
+    <!-- Network visualization -->
+    <div id="network">
+      <svg></svg>
+    </div>
+
+    <!-- Details sidebar panel -->
+    <div id="details">
+      <button class="close" onclick="hideDetails()">×</button>
+      <div id="details-content"></div>
+    </div>
+
+    <!-- Legend -->
+    <div id="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #F9A825;"></div>
+        <span>Funding Sources</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #FB8C00;"></div>
+        <span>NGOs</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #D32F2F;"></div>
+        <span>Institutions</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #388E3C;"></div>
+        <span>Individuals</span>
+      </div>
+    </div>
+
+    <!-- Zoom controls -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomIn()">+</button>
+      <button class="zoom-btn" onclick="zoomOut()">−</button>
+      <button class="zoom-btn" onclick="resetZoom()">⟲</button>
+    </div>
+  </div>
+
+  <!-- Tooltip -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <script>
+    /* ==========================
+       Graph Data & Computations
+       ========================== */
+    const graph = {
+      nodes: [
+        { id: "USAID", group: 1 },
+        { id: "National Endowment for Democracy", group: 1 },
+        { id: "Open Society Foundations", group: 1 },
+        { id: "NGO1", group: 2 },
+        { id: "NGO2", group: 2 },
+        { id: "NGO3", group: 2 },
+        { id: "Defending Democracy Together Institute", group: 3 },
+        { id: "Bill Kristol", group: 4 }
+      ],
+      links: [
+        { source: "USAID", target: "NGO1", value: 2000000 },
+        { source: "USAID", target: "NGO2", value: 1500000 },
+        { source: "USAID", target: "NGO3", value: 750000 },
+        { source: "National Endowment for Democracy", target: "NGO1", value: 1800000 },
+        { source: "National Endowment for Democracy", target: "NGO2", value: 1200000 },
+        { source: "Open Society Foundations", target: "NGO3", value: 2500000 },
+        { source: "NGO1", target: "Defending Democracy Together Institute", value: 500000 },
+        { source: "NGO2", target: "Defending Democracy Together Institute", value: 850000 },
+        { source: "NGO3", target: "Defending Democracy Together Institute", value: 650000 },
+        { source: "Defending Democracy Together Institute", target: "Bill Kristol", value: 400000 }
+      ]
+    };
+
+    // Compute flows for each node.
+    graph.nodes.forEach(node => {
+      const inflow = graph.links.filter(l => l.target === node.id)
+                                .reduce((sum, l) => sum + l.value, 0);
+      const outflow = graph.links.filter(l => l.source === node.id)
+                                 .reduce((sum, l) => sum + l.value, 0);
+      node.inflow = inflow;
+      node.outflow = outflow;
+      node.netFlow = inflow - outflow;
+      node.totalFlow = inflow + outflow;
+    });
+
+    /* Node descriptions */
+    const nodeDescriptions = {
+      "USAID": "USAID is the U.S. government agency that administers civilian foreign aid and development assistance. It funds programs through NGOs to foster global development and humanitarian projects.",
+      "National Endowment for Democracy": "This organization supports democratic institutions and civil society initiatives worldwide through grants and funding to various NGOs.",
+      "Open Society Foundations": "Founded by George Soros, this philanthropic organization funds programs promoting justice, human rights, and open societies globally.",
+      "NGO1": "NGO1 implements development and humanitarian programs, focusing on areas such as health, education, and infrastructure improvement.",
+      "NGO2": "NGO2 works on grassroots initiatives that address community development, social services, and sustainable development projects.",
+      "NGO3": "NGO3 carries out programs in education, healthcare, and economic development, funded by major international donors.",
+      "Defending Democracy Together Institute": "An advocacy organization that promotes democratic values and accountability, it receives funding from NGOs and political donors to support its initiatives."
+    };
+
+    /* Detailed dossier for Bill Kristol */
+    const nodeDetails = {
+      "Bill Kristol": `
+        <h2>Bill Kristol</h2>
+        <div class="research-section">
+          <h3>Background</h3>
+          <p>William “Bill” Kristol is a prominent American political analyst and commentator, known for his influential roles in conservative circles. He co-founded <em>The Weekly Standard</em> and serves as editor-at-large for <em>The Bulwark</em>. He also held high-profile positions, including serving as Chief of Staff to Vice President Dan Quayle during the George H. W. Bush administration.</p>
+        </div>
+        <div class="research-section">
+          <h3>Defending Democracy Together</h3>
+          <p>In 2018, Kristol co-founded Defending Democracy Together—a 501(c)(4) advocacy organization formed by lifelong conservatives and Republicans. The group champions America’s democratic norms and values, advocates the rule of law, supports free trade, and backs expanded legal immigration. It also initiated projects such as Republicans for the Rule of Law and the Republican Accountability Project.</p>
+        </div>
+        <div class="research-section">
+          <h3>Controversies &amp; Criticisms</h3>
+          <ul>
+            <li><strong>Political Stance and Intra-party Conflict:</strong> A vocal critic of former President Donald Trump and an advocate of the “Never Trump” movement, Kristol has been accused of deepening divisions within the Republican Party.</li>
+            <li><strong>Interventionist Foreign Policy:</strong> His strong advocacy for the 2003 invasion of Iraq has attracted long-term scrutiny, with critics arguing that his hawkish policies led to a protracted, costly conflict.</li>
+            <li><strong>Social Issue Flip-Flops:</strong> Rapid changes in his positions on issues like abortion and same-sex marriage have raised questions about the consistency of his ideological commitments.</li>
+            <li><strong>Media Manipulation and Editorial Bias:</strong> As the founder and former editor of <em>The Weekly Standard</em>, Kristol has been criticized for the magazine’s aggressive promotion of the Iraq War. Its eventual shutdown in 2018 has been linked, in part, to its anti-Trump stance.</li>
+            <li><strong>Opaque Advocacy and Funding:</strong> The fundraising and political campaigns led by Defending Democracy Together have sparked debates over internal party conflicts and the transparency of funding channels.</li>
+          </ul>
+        </div>
+        <div class="research-section">
+          <h3>Conclusion</h3>
+          <p>Bill Kristol’s career illustrates the complexities of modern conservative strategy. While his contributions have been significant, his record—marked by interventionist policies, shifting social stances, and contentious intra-party dynamics—remains deeply polarizing.</p>
+        </div>
+      `
+    };
+
+    /* ==========================
+       Dimensions & Scales
+       ========================== */
+    const detailsWidth = 320;
+    const width = window.innerWidth - detailsWidth;
+    const height = window.innerHeight;
+
+    // Node circle radius based on total flow.
+    const totalFlowExtent = d3.extent(graph.nodes, d => d.totalFlow);
+    const radiusScale = d3.scaleSqrt()
+                          .domain(totalFlowExtent)
+                          .range([14, 40]);
+
+    /* ==========================
+       SVG Setup & Zoom Behavior
+       ========================== */
+    const svg = d3.select("svg")
+                  .attr("width", width)
+                  .attr("height", height);
+    const container = svg.append("g");
+    const tooltip = d3.select("#tooltip");
+    const details = d3.select("#details");
+    const detailsContent = d3.select("#details-content");
+
+    const zoom = d3.zoom()
+                   .scaleExtent([0.3, 3])
+                   .on("zoom", (event) => {
+                     container.attr("transform", event.transform);
+                   });
+    svg.call(zoom);
+
+    function zoomIn() {
+      svg.transition().call(zoom.scaleBy, 1.3);
+    }
+    function zoomOut() {
+      svg.transition().call(zoom.scaleBy, 0.7);
+    }
+    function resetZoom() {
+      svg.transition().call(zoom.transform, d3.zoomIdentity);
+    }
+
+    /* ==========================
+       Link Path Generator (Straight Only)
+       ========================== */
+    function linkStraight(d) {
+      return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+    }
+
+    /* ==========================
+       Improved Text Wrapping Function
+       ========================== */
+    function wrap(text, width) {
+      text.each(function() {
+        let textEl = d3.select(this),
+            words = textEl.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 1.1, // ems
+            y = textEl.attr("y") || 0,
+            dy = parseFloat(textEl.attr("dy")) || 0,
+            tspan = textEl.text(null)
+                          .append("tspan")
+                          .attr("x", 0)
+                          .attr("y", y)
+                          .attr("dy", dy + "em");
+        while (word = words.pop()) {
+          line.push(word);
+          tspan.text(line.join(" "));
+          if (tspan.node().getComputedTextLength() > width && line.length > 1) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [word];
+            tspan = textEl.append("tspan")
+                          .attr("x", 0)
+                          .attr("y", y)
+                          .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                          .text(word);
+          }
+        }
+      });
+    }
+
+    /* ==========================
+       Force Simulation Setup
+       ========================== */
+    const simulation = d3.forceSimulation(graph.nodes)
+                         .force("link", d3.forceLink(graph.links)
+                                           .id(d => d.id)
+                                           .distance(180))
+                         .force("charge", d3.forceManyBody().strength(-400))
+                         .force("collide", d3.forceCollide(d => radiusScale(d.totalFlow) + 8))
+                         .force("x", d3.forceX(width / 2).strength(0.05))
+                         .force("y", d3.forceY(height / 2).strength(0.05))
+                         .force("billDown", billDownForce);
+
+    // Custom force to pull "Bill Kristol" downward.
+    function billDownForce(alpha) {
+      graph.nodes.forEach(function(d) {
+        if (d.id === "Bill Kristol") {
+          d.vy += (height - 50 - d.y) * alpha;
+        }
+      });
+    }
+
+    /* ==========================
+       Drawing Links & Nodes
+       ========================== */
+    const link = container.selectAll(".link")
+                          .data(graph.links)
+                          .enter()
+                          .append("path")
+                          .attr("class", "link")
+                          .attr("stroke-width", d => Math.sqrt(d.value / 250000));
+
+    const node = container.selectAll(".node")
+                          .data(graph.nodes)
+                          .enter()
+                          .append("g")
+                          .attr("class", "node")
+                          .call(d3.drag()
+                                  .on("start", dragstarted)
+                                  .on("drag", dragged)
+                                  .on("end", dragended));
+
+    // Append circles using the new color palette.
+    node.append("circle")
+        .attr("r", d => radiusScale(d.totalFlow))
+        .attr("fill", d => {
+          // Color palette:
+          // Group 1: Dark Yellow (#F9A825)
+          // Group 2: Orange (#FB8C00)
+          // Group 3: Red (#D32F2F)
+          // Group 4: Green (#388E3C)
+          if (d.group === 1) return "#F9A825";
+          if (d.group === 2) return "#FB8C00";
+          if (d.group === 3) return "#D32F2F";
+          return "#388E3C";
+        })
+        .on("mouseover", (event, d) => {
+          link.classed("highlight", l => l.source.id === d.id || l.target.id === d.id);
+          tooltip.html(`
+            <h4>${d.id}</h4>
+            <p><strong>Total Flow:</strong> <span class="flow-value">$${d.totalFlow.toLocaleString()}</span></p>
+          `)
+          .style("display", "block")
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", () => {
+          link.classed("highlight", false);
+          tooltip.style("display", "none");
+        })
+        .on("click", (event, d) => {
+          showDetails(d);
+        });
+
+    // Append visible text labels (fixed at 14px) and wrap them.
+    node.append("text")
+        .attr("dy", "0.35em")
+        .attr("pointer-events", "none")
+        .text(d => d.id);
+
+    /* ==========================
+       Simulation Tick Updates
+       ========================== */
+    simulation.on("tick", () => {
+      link.attr("d", linkStraight);
+      node.attr("transform", d => `translate(${d.x},${d.y})`);
+      // Wrap each node's text using a width roughly equal to twice its radius.
+      node.selectAll("text").each(function(d) {
+        wrap(d3.select(this), radiusScale(d.totalFlow) * 2);
+      });
+    });
+
+    /* ==========================
+       Drag Event Handlers
+       ========================== */
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+
+    /* ==========================
+       Details Panel Handling
+       ========================== */
+    function showDetails(d) {
+      let content = `<h2>${d.id}</h2>`;
+      if (nodeDetails[d.id]) {
+        content = nodeDetails[d.id];
+      } else if (nodeDescriptions[d.id]) {
+        content += `<p>${nodeDescriptions[d.id]}</p>`;
+      }
+      content += `
+        <p><strong>Inflow:</strong> $${d.inflow.toLocaleString()}</p>
+        <p><strong>Outflow:</strong> $${d.outflow.toLocaleString()}</p>
+        <p><strong>Net Flow:</strong> $${d.netFlow.toLocaleString()}</p>
+        <p><strong>Total Flow:</strong> $${d.totalFlow.toLocaleString()}</p>
+      `;
+      const relatedLinks = graph.links.filter(l => l.source === d.id || l.target === d.id);
+      if (relatedLinks.length > 0) {
+        content += `<h3>Connections</h3><ul>`;
+        content += relatedLinks
+          .map(l => `<li>${l.source} → ${l.target} | Amount: $${l.value.toLocaleString()}</li>`)
+          .join("");
+        content += `</ul>`;
+      }
+      detailsContent.html(content);
+      details.classed("show", true);
+    }
+    function hideDetails() {
+      details.classed("show", false);
+    }
+  </script>
+</body>
+</html>
