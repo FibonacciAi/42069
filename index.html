@@ -1,570 +1,490 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOASS Reports</title>
-    <meta name="description" content="Explore the latest due diligence reports on MOASS, including SVMH, UAVS, SIRI, and GME. Stay updated with real-time prices.">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-
-    <!-- Google Fonts for Modern Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            /* Color Palette */
-            --bg-primary: #121212;
-            --bg-secondary: #1e1e1e;
-            --text-primary: #e0e0e0;
-            --text-secondary: #a0a0a0;
-            --accent: #1DA1F2; /* Twitter Blue */
-            --accent-hover: #0d8ddb;
-            --button-bg: #1DA1F2;
-            --button-hover-bg: #0d8ddb;
-            --progress-bg: #333333;
-            --progress-fill: #1DA1F2;
-            --footer-bg: #1e1e1e;
-            --border-color: #333333;
-
-            /* Font */
-            --font-family: 'Inter', sans-serif;
-
-            /* Layout */
-            --max-width-container: 1200px;
-            --transition-speed: 0.3s;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOASS Reports</title>
+  <meta name="description" content="Explore the latest due diligence reports on MOASS. Stay updated with real-time cryptocurrency prices and progress tracking.">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  
+  <!-- Google Fonts for Modern Typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Color Palette */
+      --bg-primary: #121212;
+      --bg-gradient-start: #121212;
+      --bg-gradient-end: #1e1e1e;
+      --text-primary: #e0e0e0;
+      --text-secondary: #a0a0a0;
+      --accent: #1DA1F2;
+      --accent-hover: #0d8ddb;
+      --button-bg: #1DA1F2;
+      --button-hover-bg: #0d8ddb;
+      --progress-bg: #333333;
+      --progress-fill: #1DA1F2;
+      --footer-bg: #1e1e1e;
+      --border-color: #333333;
+      
+      /* Font */
+      --font-family: 'Inter', sans-serif;
+      
+      /* Layout */
+      --max-width-container: 1200px;
+      --transition-speed: 0.3s;
+    }
+    
+    /* Global Reset */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .container {
+      width: 100%;
+      max-width: var(--max-width-container);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Header */
+    header {
+      margin-bottom: 40px;
+      width: 100%;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px var(--accent), 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    p.tagline {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+    
+    /* Report Links */
+    .report-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      max-width: 800px;
+      width: 100%;
+      margin-bottom: 60px;
+    }
+    
+    .report-links a {
+      background-color: var(--button-bg);
+      color: #ffffff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background-color var(--transition-speed), transform var(--transition-speed);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    .report-links a:hover,
+    .report-links a:focus {
+      background-color: var(--button-hover-bg);
+      transform: translateY(-2px);
+      outline: none;
+    }
+    
+    /* Sections */
+    .section-group {
+      width: 100%;
+      margin-bottom: 60px;
+    }
+    
+    .section-group h2 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 30px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Trackers */
+    .trackers {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+    }
+    
+    .tracker {
+      background: var(--bg-secondary);
+      padding: 25px;
+      border-radius: 12px;
+      width: 280px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+    }
+    
+    .tracker:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .tracker h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 15px;
+    }
+    
+    .price {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    
+    .goal-text {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+    }
+    
+    .progress-container {
+      background-color: var(--progress-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      height: 15px;
+      width: 100%;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: var(--progress-fill);
+      transition: width var(--transition-speed), background-color var(--transition-speed);
+    }
+    
+    /* Twitter Feed Styling */
+    .twitter-feed {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto 60px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .twitter-feed .twitter-timeline {
+      border-radius: 12px !important;
+    }
+    
+    /* Footer */
+    footer {
+      background-color: var(--footer-bg);
+      padding: 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      width: 100%;
+      border-top: 1px solid var(--border-color);
+      margin-top: 40px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+      }
+      p.tagline {
+        font-size: 1rem;
+      }
+      .section-group h2 {
+        font-size: 2rem;
+      }
+      .tracker {
+        width: 100%;
+        max-width: 400px;
+      }
+      .report-links a {
+        font-size: 0.95rem;
+        padding: 10px 20px;
+      }
+      .twitter-feed {
+        max-width: 100%;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2rem;
+      }
+      p.tagline {
+        font-size: 0.9rem;
+      }
+      .section-group h2 {
+        font-size: 1.8rem;
+      }
+      .tracker {
+        padding: 20px;
+      }
+      .tracker h3 {
+        font-size: 1.3rem;
+      }
+      .price {
+        font-size: 1.6rem;
+      }
+      .report-links a {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+      }
+    }
+    
+    /* Accessibility Focus Styles */
+    a:focus {
+      outline: 3px solid var(--accent-hover);
+      outline-offset: 4px;
+    }
+  </style>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Configuration for Assets (Only cryptocurrencies are needed)
+      const assets = {
+        bitcoin: {
+          type: 'crypto',
+          elementId: 'bitcoin-price',
+          progressBarClass: 'bitcoin-progress-bar',
+          goal: 100000,
+        },
+        ethereum: {
+          type: 'crypto',
+          elementId: 'eth-price',
+          progressBarClass: 'eth-progress-bar',
+          goal: 5000,
+        },
+        litecoin: {
+          type: 'crypto',
+          elementId: 'litecoin-price',
+          progressBarClass: 'litecoin-progress-bar',
+          goal: 420,
+        },
+        xrp: {
+          type: 'crypto',
+          elementId: 'xrp-price',
+          progressBarClass: 'xrp-progress-bar',
+          goal: 5,
+        },
+        stellar: {
+          type: 'crypto',
+          elementId: 'stellar-price',
+          progressBarClass: 'stellar-progress-bar',
+          goal: 1,
+        },
+        dogecoin: {
+          type: 'crypto',
+          elementId: 'dogecoin-price',
+          progressBarClass: 'dogecoin-progress-bar',
+          goal: 1,
         }
-
-        /* Reset and Base Styles */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+      };
+  
+      // Server URL (update with your actual server URL)
+      const serverUrl = 'https://your-server-url.com';
+  
+      // Function to initialize WebSocket connections for Cryptocurrencies
+      function initializeCryptoWebSockets() {
+        const cryptoAssets = [];
+        for (const key in assets) {
+          if (assets[key].type === 'crypto') {
+            cryptoAssets.push(key);
+          }
         }
-
-        body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: var(--font-family);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: var(--max-width-container);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Header */
-        header {
-            margin-bottom: 40px;
-            width: 100%;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        p.tagline {
-            font-size: 1.2rem;
-            color: var (--text-secondary);
-            max-width: 800px;
-            margin: 0 auto;
-            line-height: 1.5;
-        }
-
-        /* Report Links */
-        .report-links {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            max-width: 800px;
-            width: 100%;
-            margin-bottom: 60px;
-            /* Space below report links */
-        }
-
-        .report-links a {
-            background-color: var(--button-bg);
-            color: #ffffff;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color var(--transition-speed), transform var(--transition-speed);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-
-        .report-links a:hover,
-        .report-links a:focus {
-            background-color: var(--button-hover-bg);
-            transform: translateY(-2px);
-            outline: none;
-        }
-
-        /* Sections */
-        .section-group {
-            width: 100%;
-            margin-bottom: 60px;
-        }
-
-        .section-group h2 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            color: var(--accent);
-            margin-bottom: 30px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Trackers */
-        .trackers {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-        }
-
-        .tracker {
-            background: var(--bg-secondary);
-            padding: 25px;
-            border-radius: 12px;
-            width: 280px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-        }
-
-        .tracker:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        .tracker h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--accent);
-            margin-bottom: 15px;
-        }
-
-        .price {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 10px;
-        }
-
-        .goal-text {
-            font-size: 1rem;
-            color: var (--text-secondary);
-            margin-bottom: 15px;
-        }
-
-        .progress-container {
-            background-color: var (--progress-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            height: 15px;
-            width: 100%;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background-color: var(--progress-fill);
-            transition: width var (--transition-speed), background-color var (--transition-speed);
-        }
-
-        /* Twitter Feed Styling */
-        .twitter-feed {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            margin-bottom: 60px;
-            /* Space below Twitter feed */
-        }
-
-        .twitter-feed .twitter-timeline {
-            border-radius: 12px !important;
-        }
-
-        /* Footer */
-        footer {
-            background-color: var (--footer-bg);
-            padding: 20px;
-            font-size: 0.9rem;
-            color: var (--text-secondary);
-            width: 100%;
-            border-top: 1px solid var(--border-color);
-            margin-top: 40px;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5rem;
-            }
-
-            p.tagline {
-                font-size: 1rem;
-            }
-
-            .section-group h2 {
-                font-size: 2rem;
-            }
-
-            .tracker {
-                width: 100%;
-                max-width: 400px;
-            }
-
-            .report-links a {
-                font-size: 0.95rem;
-                padding: 10px 20px;
-            }
-
-            .twitter-feed {
-                max-width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            p.tagline {
-                font-size: 0.9rem;
-            }
-
-            .section-group h2 {
-                font-size: 1.8rem;
-            }
-
-            .tracker {
-                padding: 20px;
-            }
-
-            .tracker h3 {
-                font-size: 1.3rem;
-            }
-
-            .price {
-                font-size: 1.6rem;
-            }
-
-            .report-links a {
-                font-size: 0.9rem;
-                padding: 8px 16px;
-            }
-        }
-
-        /* Accessibility Focus Styles */
-        a:focus {
-            outline: 3px solid var(--accent-hover);
-            outline-offset: 4px;
-        }
-
-        /* Keyframes for Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Configuration for Assets
-            const assets = {
-                // Cryptocurrencies (using CoinCap)
-                bitcoin: {
-                    type: 'crypto',
-                    elementId: 'bitcoin-price',
-                    progressBarClass: 'bitcoin-progress-bar',
-                    goal: 100000, // $100,000
-                },
-                ethereum: {
-                    type: 'crypto',
-                    elementId: 'eth-price',
-                    progressBarClass: 'eth-progress-bar',
-                    goal: 5000, // $5,000
-                },
-                litecoin: {
-                    type: 'crypto',
-                    elementId: 'litecoin-price',
-                    progressBarClass: 'litecoin-progress-bar',
-                    goal: 420, // $420
-                },
-                xrp: {
-                    type: 'crypto',
-                    elementId: 'xrp-price',
-                    progressBarClass: 'xrp-progress-bar',
-                    goal: 5, // $5
-                },
-                stellar: {
-                    type: 'crypto',
-                    elementId: 'stellar-price',
-                    progressBarClass: 'stellar-progress-bar',
-                    goal: 1, // $1
-                },
-                dogecoin: {
-                    type: 'crypto',
-                    elementId: 'dogecoin-price',
-                    progressBarClass: 'dogecoin-progress-bar',
-                    goal: 1, // $1
-                },
-                // Stocks (using Alpha Vantage via Server-Side Proxy)
-                gamestop: {
-                    type: 'stock',
-                    elementId: 'gme-price',
-                    progressBarClass: 'gme-progress-bar',
-                    goal: 420, // $420
-                    symbol: 'GME', // Stock symbol for Alpha Vantage
-                },
-                siriusxm: {
-                    type: 'stock',
-                    elementId: 'siri-price',
-                    progressBarClass: 'siri-progress-bar',
-                    goal: 69, // $69
-                    symbol: 'SIRI', // Stock symbol for Alpha Vantage
-                },
-                tesla: {
-                    type: 'stock',
-                    elementId: 'tsla-price',
-                    progressBarClass: 'tsla-progress-bar',
-                    goal: 1470, // $1,470
-                    symbol: 'TSLA', // Stock symbol for Alpha Vantage
+  
+        if (cryptoAssets.length > 0) {
+          const cryptoWsUrl = `wss://ws.coincap.io/prices?assets=${cryptoAssets.join(',')}`;
+          const cryptoWs = new WebSocket(cryptoWsUrl);
+  
+          cryptoWs.onopen = function () {
+            console.log('CoinCap WebSocket connection established for cryptocurrencies.');
+          };
+  
+          cryptoWs.onmessage = function (event) {
+            try {
+              const data = JSON.parse(event.data);
+              for (const asset in data) {
+                if (assets[asset]) {
+                  const price = parseFloat(data[asset]);
+                  updatePrice(asset, price);
                 }
-            };
-
-            // Server URL (update with your actual server URL)
-            const serverUrl = 'https://your-server-url.com'; // Replace with your deployed server URL
-
-            // Function to initialize WebSocket connections for Cryptocurrencies
-            function initializeCryptoWebSockets() {
-                const cryptoAssets = [];
-                for (const key in assets) {
-                    if (assets[key].type === 'crypto') {
-                        cryptoAssets.push(key);
-                    }
-                }
-
-                if (cryptoAssets.length > 0) {
-                    const cryptoWsUrl = `wss://ws.coincap.io/prices?assets=${cryptoAssets.join(',')}`;
-                    const cryptoWs = new WebSocket(cryptoWsUrl);
-
-                    cryptoWs.onopen = function () {
-                        console.log('CoinCap WebSocket connection established for cryptocurrencies.');
-                    };
-
-                    cryptoWs.onmessage = function (event) {
-                        try {
-                            const data = JSON.parse(event.data);
-                            for (const asset in data) {
-                                if (assets[asset]) {
-                                    const price = parseFloat(data[asset]);
-                                    updatePrice(asset, price);
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Error parsing CoinCap WebSocket message:', error);
-                        }
-                    };
-
-                    cryptoWs.onerror = function (error) {
-                        console.error('CoinCap WebSocket error:', error);
-                    };
-
-                    cryptoWs.onclose = function (event) {
-                        console.warn(`CoinCap WebSocket closed: ${event.reason}. Reconnecting in 5 seconds...`);
-                        setTimeout(initializeCryptoWebSockets, 5000); // Attempt reconnection
-                    };
-                }
+              }
+            } catch (error) {
+              console.error('Error parsing CoinCap WebSocket message:', error);
             }
-
-            // Function to initialize REST API polling for Stocks via Server-Side Proxy
-            function initializeStockPolling() {
-                const stockAssets = [];
-                for (const key in assets) {
-                    if (assets[key].type === 'stock') {
-                        stockAssets.push(key);
-                    }
-                }
-
-                if (stockAssets.length > 0) {
-                    const interval = 30000; // 30 seconds
-
-                    async function fetchStockPrices() {
-                        const promises = stockAssets.map(async (assetKey) => {
-                            const symbol = assets[assetKey].symbol;
-                            const url = `${serverUrl}/api/stock/${symbol}`;
-                            try {
-                                const response = await fetch(url);
-                                if (!response.ok) {
-                                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                                }
-                                const data = await response.json();
-                                if (data.price) {
-                                    const price = parseFloat(data.price);
-                                    updatePrice(assetKey, price);
-                                } else {
-                                    console.error(`No price data found for symbol: ${symbol}`, data);
-                                    const priceElement = document.getElementById(assets[assetKey].elementId);
-                                    if (priceElement) {
-                                        priceElement.innerText = `${formatAssetName(assetKey)} Price: Data not available`;
-                                    }
-                                }
-                            } catch (error) {
-                                console.error(`Error fetching data for symbol: ${symbol}`, error);
-                                const priceElement = document.getElementById(assets[assetKey].elementId);
-                                if (priceElement) {
-                                    priceElement.innerText = `${formatAssetName(assetKey)} Price: Error loading data`;
-                                }
-                            }
-                        });
-
-                        await Promise.all(promises);
-                    }
-
-                    // Initial fetch
-                    fetchStockPrices();
-
-                    // Set interval for periodic fetching
-                    setInterval(fetchStockPrices, interval);
-                }
-            }
-
-            // Function to update price and progress bar
-            function updatePrice(assetKey, price) {
-                const asset = assets[assetKey];
-                if (!asset) return;
-
-                const priceElement = document.getElementById(asset.elementId);
-                if (priceElement) {
-                    priceElement.innerText = `${formatAssetName(assetKey)} Price: $${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                }
-
-                const progressBar = document.querySelector(`.${asset.progressBarClass}`);
-                if (progressBar) {
-                    const percentage = Math.min((price / asset.goal) * 100, 100);
-                    progressBar.style.width = `${percentage}%`;
-
-                    // Change progress bar color based on percentage
-                    if (percentage < 50) {
-                        progressBar.style.backgroundColor = '#f7931a'; // Example color
-                    } else if (percentage < 75) {
-                        progressBar.style.backgroundColor = '#1DA1F2'; // Example color
-                    } else {
-                        progressBar.style.backgroundColor = '#0a74da'; // Example color
-                    }
-                }
-            }
-
-            // Helper function to format asset names
-            function formatAssetName(key) {
-                switch (key) {
-                    case 'bitcoin':
-                        return 'Bitcoin';
-                    case 'ethereum':
-                        return 'Ethereum';
-                    case 'litecoin':
-                        return 'Litecoin';
-                    case 'xrp':
-                        return 'XRP';
-                    case 'stellar':
-                        return 'Stellar Lumens';
-                    case 'dogecoin':
-                        return 'Dogecoin';
-                    case 'gamestop':
-                        return 'GME';
-                    case 'siriusxm':
-                        return 'SIRI';
-                    case 'tesla':
-                        return 'TSLA';
-                    default:
-                        return key.toUpperCase();
-                }
-            }
-
-            // Initialize all connections and polling
-            function initializeAll() {
-                initializeCryptoWebSockets();
-                initializeStockPolling();
-            }
-
-            // Start initialization
-            initializeAll();
-        });
-    </script>
+          };
+  
+          cryptoWs.onerror = function (error) {
+            console.error('CoinCap WebSocket error:', error);
+          };
+  
+          cryptoWs.onclose = function (event) {
+            console.warn(`CoinCap WebSocket closed: ${event.reason}. Reconnecting in 5 seconds...`);
+            setTimeout(initializeCryptoWebSockets, 5000);
+          };
+        }
+      }
+  
+      // Function to update price and progress bar
+      function updatePrice(assetKey, price) {
+        const asset = assets[assetKey];
+        if (!asset) return;
+  
+        const priceElement = document.getElementById(asset.elementId);
+        if (priceElement) {
+          priceElement.innerText = `${formatAssetName(assetKey)} Price: $${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+  
+        const progressBar = document.querySelector(`.${asset.progressBarClass}`);
+        if (progressBar) {
+          const percentage = Math.min((price / asset.goal) * 100, 100);
+          progressBar.style.width = `${percentage}%`;
+  
+          if (percentage < 50) {
+            progressBar.style.backgroundColor = '#f7931a';
+          } else if (percentage < 75) {
+            progressBar.style.backgroundColor = '#1DA1F2';
+          } else {
+            progressBar.style.backgroundColor = '#0a74da';
+          }
+        }
+      }
+  
+      // Helper function to format asset names
+      function formatAssetName(key) {
+        switch (key) {
+          case 'bitcoin': return 'Bitcoin';
+          case 'ethereum': return 'Ethereum';
+          case 'litecoin': return 'Litecoin';
+          case 'xrp': return 'XRP';
+          case 'stellar': return 'Stellar Lumens';
+          case 'dogecoin': return 'Dogecoin';
+          default: return key.toUpperCase();
+        }
+      }
+  
+      // Initialize WebSocket connection for cryptocurrencies
+      initializeCryptoWebSockets();
+    });
+  </script>
 </head>
-
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <h1>MOASS Reports</h1>
-            <p class="tagline">Read our reports while you watch Bitcoin, ETH, Litecoin, XRP, Stellar, Doge, GME, SIRI, and TSLA reach their goals. Follow @_D_741Stef on X! 😉</p>
-        </header>
-
-        <!-- Report Links -->
-        <nav class="report-links" aria-label="Report Links">
-            <a href="SVMH.html" aria-label="View SVMH Report">SVMH Report</a>
-            <a href="UAVS.html" aria-label="View UAVS Report">UAVS Report</a>
-            <a href="SIRI.html" aria-label="View SIRI Report">SIRI Report</a>
-            <a href="GME.html" aria-label="View GME Report">GME Report</a>
-        </nav>
-
-        <!-- Main Content -->
-        <main>
-            <!-- Cryptocurrency Trackers -->
-            <section class="section-group">
-                <h2>Cryptocurrency Trackers</h2>
-                <div class="trackers">
-                    <!-- Bitcoin Tracker -->
-                    <div class="tracker" aria-live="polite">
-                        <h3>Bitcoin</h3>
-                        <div class="price" id="bitcoin-price">Loading Bitcoin Price...</div>
-                        <div class="goal-text">Progress towards $100,000</div>
-                        <div class="progress-container" aria-hidden="true">
-                            <div class="progress-bar bitcoin-progress-bar"></div>
-                        </div>
-                    </div>
-
-                    <!-- Ethereum Tracker -->
-                    <div class="tracker" aria-live="polite">
-                        <h3>Ethereum (ETH)</h3>
-                        <div class="price" id="eth-price">Loading Ethereum Price...</div>
-                        <div class="goal-text">Progress towards $5,000</div>
-                        <div class="progress-container" aria-hidden="true">
-                            <div class="progress-bar eth-progress-bar"></div>
-                        </div>
-                    </div>
-
-                    <!-- Litecoin Tracker -->
-                    <div class="tracker" aria-live="polite">
-                        <h3>Litecoin</h3>
-                        <div class="price" id="litecoin-price">Loading Litecoin Price...</div>
-                       
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>MOASS Reports</h1>
+      <p class="tagline">Read our reports while you watch Bitcoin, ETH, Litecoin, XRP, Stellar, and Doge reach their goals.</p>
+    </header>
+    
+    <!-- Report Links -->
+    <nav class="report-links" aria-label="Report Links">
+      <!-- Report links can be updated as needed -->
+      <a href="SIRI.html" aria-label="View SIRI Report">SIRI Report</a>
+    </nav>
+    
+    <!-- Main Content -->
+    <main>
+      <!-- Cryptocurrency Trackers -->
+      <section class="section-group">
+        <h2>Cryptocurrency Trackers</h2>
+        <div class="trackers">
+          <div class="tracker" aria-live="polite">
+            <h3>Bitcoin</h3>
+            <div class="price" id="bitcoin-price">Loading Bitcoin Price...</div>
+            <div class="goal-text">Progress towards $100,000</div>
+            <div class="progress-container" aria-hidden="true">
+              <div class="progress-bar bitcoin-progress-bar"></div>
+            </div>
+          </div>
+  
+          <div class="tracker" aria-live="polite">
+            <h3>Ethereum (ETH)</h3>
+            <div class="price" id="eth-price">Loading Ethereum Price...</div>
+            <div class="goal-text">Progress towards $5,000</div>
+            <div class="progress-container" aria-hidden="true">
+              <div class="progress-bar eth-progress-bar"></div>
+            </div>
+          </div>
+  
+          <div class="tracker" aria-live="polite">
+            <h3>Litecoin</h3>
+            <div class="price" id="litecoin-price">Loading Litecoin Price...</div>
+            <div class="goal-text">Progress towards $420</div>
+            <div class="progress-container" aria-hidden="true">
+              <div class="progress-bar litecoin-progress-bar"></div>
+            </div>
+          </div>
+  
+          <div class="tracker" aria-live="polite">
+            <h3>XRP</h3>
+            <div class="price" id="xrp-price">Loading XRP Price...</div>
+            <div class="goal-text">Progress towards $5</div>
+            <div class="progress-container" aria-hidden="true">
+              <div class="progress-bar xrp-progress-bar"></div>
+            </div>
+          </div>
+  
+          <div class="tracker" aria-live="polite">
+            <h3>Stellar Lumens</h3>
+            <div class="price" id="stellar-price">Loading Stellar Price...</div>
+            <div class="goal-text">Progress towards $1</div>
+            <div class="progress-container" aria-hidden="true">
+              <div class="progress-bar stellar-progress-bar"></div>
+            </div>
+          </div>
+  
+          <div class="tracker" aria-live="polite">
+            <h3>Dogecoin</h3>
+            <div class="price" id="dogecoin-price">Loading Dogecoin Price...</div>
+            <div class="goal-text">Progress towards $1</div>
+            <div class="progress-container" aria-hidden="true">
+              <div class="progress-bar dogecoin-progress-bar"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+      &copy; 2025 MOASS Reports. All Rights Reserved.
+    </footer>
+  </div>
+</body>
+</html>
