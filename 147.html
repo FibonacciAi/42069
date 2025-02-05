@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Dune Thumper – Market-Resonant Beats & Dynamic Pulses" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dune Thumper: GME Tinfoil Edition</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Favicon -->
+  <link rel="icon" href="https://fibonacciai.github.io/42069/power-512.png" type="image/png">
+  <style>
+    :root {
+      --bg-color: #000;
+      --text-color: #fff;
+      --panel-bg: rgba(0, 0, 0, 0.85);
+      --highlight: #d4af37;
+    }
+    html.light-theme {
+      --bg-color: #222;
+      --text-color: #fff;
+      --panel-bg: rgba(50, 50, 50, 0.85);
+      --highlight: #0275d8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; }
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Canvas fills the window */
+    #cycleCanvas {
+      display: block;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 1;
+    }
+    /* Controls */
+    .controls {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%; max-width: 900px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .control-buttons, .control-toggles, .volume-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .controls button {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      min-width: 80px;
+    }
+    .controls button:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(255,255,255,0.3);
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .date-display {
+      font-size: 0.9rem;
+      white-space: nowrap;
+      text-align: center;
+      flex-grow: 1;
+    }
+    .control-toggles input[type="checkbox"] { margin-right: 4px; }
+    .volume-controls label { font-size: 0.9rem; }
+    .volume-controls input[type="range"] { width: 100px; }
+    .time-scrub-container {
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+    .time-scrub-container input[type="range"] { width: 80%; }
+    /* Legend Panel */
+    .legend {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+    .legend-header {
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .legend-indicator {
+      font-size: 0.9rem;
+      color: #ff0000;
+      min-height: 1.2em;
+    }
+    .legend ul {
+      display: flex;
+      flex-wrap: wrap;
+      list-style: none;
+      gap: 15px;
+      justify-content: center;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    .legend li {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1 1 150px;
+      justify-content: center;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    @keyframes vibrate {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0, 0); }
+    }
+    .vibrate { animation: vibrate 0.5s linear; }
+    /* Logo Container */
+    .logo-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    .logo-container img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      transition: opacity 0.5s ease-in-out;
+      opacity: 1;
+      object-fit: cover;
+      box-shadow: 0 0 15px rgba(0,0,0,0.7);
+    }
+    /* Emojis */
+    .emoji {
+      position: absolute;
+      top: -30px;
+      font-size: 24px;
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .emoji.active { opacity: 1; transform: translateY(-10px); }
+    .emoji.fire { left: 50%; transform: translateX(-50%); }
+    .emoji.boom { left: 60%; transform: translateX(-50%); }
+    .emoji.beer { left: 40%; transform: translateX(-50%); }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Canvas for drawing rings -->
+    <canvas id="cycleCanvas"></canvas>
+    <!-- Controls -->
+    <div class="controls" id="controls" role="region" aria-label="Thumper Controls">
+      <div class="control-buttons">
+        <button id="pause-btn" aria-label="Pause/Play Thumper">Pause</button>
+        <button id="reset-btn" aria-label="Reset Thumper">Reset</button>
+        <button id="speed-down-btn" aria-label="Slow Thumper">Slower</button>
+        <button id="speed-up-btn" aria-label="Speed Up Thumper">Faster</button>
+        <button id="download-btn" aria-label="Download Thumper Image">Download</button>
+      </div>
+      <div class="date-display" id="date-display"></div>
+      <div class="control-toggles">
+        <label><input type="checkbox" id="muteMusic">Mute Music</label>
+        <label><input type="checkbox" id="muteThumps">Mute Thumps</label>
+        <label>
+          Harmonic:
+          <input type="range" id="harmonicSlider" min="0.5" max="2.0" step="0.01" value="1.0">
+        </label>
+        <div class="volume-controls">
+          <label>
+            Music Volume:
+            <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="0.5">
+          </label>
+          <label>
+            Thump Volume:
+            <input type="range" id="thumpVolume" min="0" max="1" step="0.01" value="0.25">
+          </label>
+        </div>
+      </div>
+      <div class="time-scrub-container">
+        <label>
+          Time Scrub:
+          <input type="range" id="time-scrub" min="0" max="5000" step="1" value="0">
+        </label>
+      </div>
+    </div>
+    <!-- Legend Panel -->
+    <div class="legend" id="legend" role="region" aria-label="Dune Harmonic Cycles">
+      <div class="legend-header">Dune Harmonic Cycles</div>
+      <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+      <ul>
+        <li id="legend-1461">
+          <span class="legend-dot" id="legend-dot-1461" style="background: hsl(0,100%,40%);"></span> 1461: Shai-Hulud's Call
+        </li>
+        <li id="legend-1470">
+          <span class="legend-dot" id="legend-dot-1470" style="background: hsl(120,100%,40%);"></span> 1470: Arrakis Rhapsody
+        </li>
+        <li id="legend-1471">
+          <span class="legend-dot" id="legend-dot-1471" style="background: hsl(30,100%,40%);"></span> 1471: Maker's March
+        </li>
+        <li id="legend-741">
+          <span class="legend-dot" id="legend-dot-741" style="background: hsl(60,100%,40%);"></span> 741: Sietch Whisper
+        </li>
+        <li id="legend-147">
+          <span class="legend-dot" id="legend-dot-147" style="background: hsl(120,100%,40%);"></span> 147: Dune's Heartbeat
+        </li>
+        <li id="legend-55">
+          <span class="legend-dot" id="legend-dot-55" style="background: hsl(30,100%,40%);"></span> 55: Melange Pulse
+        </li>
+        <li id="legend-35">
+          <span class="legend-dot" id="legend-dot-35" style="background: hsl(0,100%,40%);"></span> 35: Fremen Chant
+        </li>
+        <li id="legend-21">
+          <span class="legend-dot" id="legend-dot-21" style="background: hsl(60,100%,40%);"></span> 21: Desert Drift
+        </li>
+      </ul>
+    </div>
+    <!-- Logo Container -->
+    <div class="logo-container">
+      <a href="#" target="_blank" rel="noopener noreferrer">
+        <img id="custom-logo" src="https://fibonacciai.github.io/42069/power-512.png" alt="Power Logo">
+      </a>
+      <span class="emoji fire" aria-hidden="true">🔥</span>
+      <span class="emoji boom" aria-hidden="true">💥</span>
+      <span class="emoji beer" aria-hidden="true">🍻</span>
+    </div>
+    <!-- Background Music -->
+    <audio id="bgMusic" src="https://fibonacciai.github.io/42069/fremen.m4a" autoplay loop></audio>
+  </div>
+
+  <script type="module">
+    /******************************************
+     * AUDIO SETUP & HARMONIC TUNING (Fibonacci Polyrhythm)
+     ******************************************/
+    let audioCtx;
+    let harmonicFactor = 1.0;
+    const fibRatios = [1.0, 1.618, 2.618];
+    
+    // Initialize the audio context and attach resume events.
+    function initAudioContext(){
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+      // Ensure we resume on first interaction.
+      document.addEventListener('click', resumeAndPlayMusic, { once: true });
+      document.addEventListener('touchstart', resumeAndPlayMusic, { once: true });
+    }
+    
+    function resumeAndPlayMusic(){
+      if(audioCtx.state === 'suspended'){
+        audioCtx.resume().then(() => {
+          const bgMusic = document.getElementById('bgMusic');
+          // Apply volume and mute settings (use defaults if settings not yet loaded)
+          bgMusic.muted = (settings && settings.muteMusic) || false;
+          bgMusic.volume = parseFloat(document.getElementById('musicVolume').value);
+          bgMusic.play().catch(err => console.error('bgMusic play error:', err));
+        });
+      }
+    }
+    
+    // For oscillator sounds, respect the muteThumps flag.
+    function isThumpMuted(){ 
+      return settings ? settings.muteThumps : false;
+    }
+    
+    // Play a Fibonacci-based polyrhythm if thumps aren’t muted.
+    function playFibonacciPolyrhythm(baseFreq, duration = 0.75, type = 'sine'){
+      if(isThumpMuted()) return;
+      const now = audioCtx.currentTime;
+      fibRatios.forEach((ratio, i) => {
+        scheduleTone(baseFreq * ratio, now + i * 0.15, duration, type);
+      });
+    }
+    
+    function scheduleTone(freq, startTime, duration = 0.5, type = 'sine'){
+      if(isThumpMuted()) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      const thumpVolume = parseFloat(document.getElementById('thumpVolume').value);
+      oscillator.frequency.setValueAtTime(freq * harmonicFactor, startTime);
+      oscillator.type = type;
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start(startTime);
+      gainNode.gain.setValueAtTime(thumpVolume, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      oscillator.stop(startTime + duration);
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const slider = document.getElementById('harmonicSlider');
+      if(slider) {
+        harmonicFactor = parseFloat(slider.value);
+        slider.addEventListener('input', (e) => {
+          harmonicFactor = parseFloat(e.target.value);
+        });
+      }
+    });
+    
+    /******************************************
+     * THUMPER LOGIC & INTERACTION
+     ******************************************/
+    let cycleCanvas, cycleCtx;
+    let cycleWidth, cycleHeight;
+    let time = 0;
+    let isPaused = false;
+    let isScrubbing = false;
+    let scrubStartX = 0;
+    let speedMultiplier = 0.05;
+    let triggeredResonances = new Set();
+    let thumps = [];
+    let settings;
+    
+    // Define cycles with names, lengths, and hues.
+    const CYCLES = [
+      { name: "1461: Shai-Hulud's Call", length: 1461, hue: 0 },
+      { name: "1470: Arrakis Rhapsody",    length: 1470, hue: 120 },
+      { name: "1471: Maker's March",       length: 1471, hue: 30 },
+      { name: "741: Sietch Whisper",       length: 741,  hue: 60 },
+      { name: "147: Dune's Heartbeat",     length: 147,  hue: 120 },
+      { name: "55: Melange Pulse",         length: 55,   hue: 30 },
+      { name: "35: Fremen Chant",          length: 35,   hue: 0 },
+      { name: "21: Desert Drift",          length: 21,   hue: 60 }
+    ];
+    
+    // Define crucial dates.
+    const CRUCIAL_DATES = [
+      new Date(2025,0,9),
+      new Date(2025,0,12),
+      new Date(2025,0,23),
+      new Date(2025,0,28),
+      new Date(2024,4,1),
+      new Date(2025,0,29),
+      new Date(2024,11,25)
+    ];
+    
+    const EMOJI_DATES = {
+      '2025-01-27': 'drum',
+      '2025-01-28': 'camel',
+      '2025-01-29': 'desert'
+    };
+    
+    const FIBONACCI_CYCLES = [21,34,55,89,144,233,377,610,987,1597];
+    const KEY_CYCLES = [1461,1470,1471,741,147];
+    function isKeyOrFibonacci(n){
+      return KEY_CYCLES.indexOf(n) !== -1 || FIBONACCI_CYCLES.indexOf(n) !== -1;
+    }
+    
+    // Load settings from localStorage (or use defaults).
+    function loadSettings(){
+      const defaultSettings = {
+        muteMusic: false,
+        muteThumps: false,
+        lightTheme: false,
+      };
+      return Object.assign({}, defaultSettings,
+        JSON.parse(localStorage.getItem("thumperSettings") || '{}')
+      );
+    }
+    
+    function saveSettings(){
+      localStorage.setItem("thumperSettings", JSON.stringify(settings));
+    }
+    
+    let activeResonances = {};
+    function markResonance(cycleNameA, cycleNameB) {
+      activeResonances[cycleNameA] = true;
+      activeResonances[cycleNameB] = true;
+      addVibrationToLegend(cycleNameA);
+      addVibrationToLegend(cycleNameB);
+      setTimeout(() => {
+        activeResonances[cycleNameA] = false;
+        activeResonances[cycleNameB] = false;
+        removeVibrationFromLegend(cycleNameA);
+        removeVibrationFromLegend(cycleNameB);
+      }, 500);
+    }
+    
+    function addVibrationToLegend(cycleName) {
+      const period = cycleName.split(":")[0].trim();
+      const dot = document.getElementById("legend-dot-" + period);
+      if(dot) dot.classList.add("vibrate");
+    }
+    
+    function removeVibrationFromLegend(cycleName) {
+      const period = cycleName.split(":")[0].trim();
+      const dot = document.getElementById("legend-dot-" + period);
+      if(dot) dot.classList.remove("vibrate");
+    }
+    
+    function startVisualization(){
+      settings = loadSettings();
+      cycleCanvas = document.getElementById('cycleCanvas');
+      cycleCtx = cycleCanvas.getContext('2d');
+      resizeCycleCanvas();
+      
+      // Set up background music mute/volume controls.
+      const muteMusicBox = document.getElementById('muteMusic');
+      const muteThumpsBox = document.getElementById('muteThumps');
+      
+      muteMusicBox.checked = settings.muteMusic;
+      muteMusicBox.addEventListener('change', (e) => {
+        settings.muteMusic = e.target.checked;
+        document.getElementById('bgMusic').muted = settings.muteMusic;
+        saveSettings();
+      });
+      
+      muteThumpsBox.checked = settings.muteThumps;
+      muteThumpsBox.addEventListener('change', (e) => {
+        settings.muteThumps = e.target.checked;
+        saveSettings();
+      });
+      
+      document.getElementById('musicVolume').addEventListener('input', (e) => {
+        document.getElementById('bgMusic').volume = parseFloat(e.target.value);
+      });
+      
+      document.getElementById('pause-btn').addEventListener('click', togglePause);
+      document.getElementById('reset-btn').addEventListener('click', resetTime);
+      document.getElementById('speed-down-btn').addEventListener('click', speedDown);
+      document.getElementById('speed-up-btn').addEventListener('click', speedUp);
+      document.getElementById('download-btn').addEventListener('click', downloadThumper);
+      document.addEventListener('keydown', handleKeyDown);
+      cycleCanvas.addEventListener('wheel', onWheelScrub, { passive:false });
+      cycleCanvas.addEventListener('touchstart', onTouchStart);
+      cycleCanvas.addEventListener('touchmove', onTouchMove);
+      cycleCanvas.addEventListener('touchend', onTouchEnd);
+      window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(resizeCycleCanvas, 200);
+      });
+      const scrubSlider = document.getElementById('time-scrub');
+      scrubSlider.addEventListener('input', (e) => { time = parseInt(e.target.value, 10); });
+      document.getElementById('date-display').textContent = "Current: " + formatDate(getCurrentDate(time));
+      animate();
+    }
+    
+    function resizeCycleCanvas(){
+      cycleWidth = window.innerWidth;
+      cycleHeight = window.innerHeight;
+      cycleCanvas.style.width = cycleWidth + "px";
+      cycleCanvas.style.height = cycleHeight + "px";
+      const dpr = window.devicePixelRatio || 1;
+      cycleCanvas.width = cycleWidth * dpr;
+      cycleCanvas.height = cycleHeight * dpr;
+      if(cycleCtx.resetTransform) { cycleCtx.resetTransform(); }
+      cycleCtx.scale(dpr, dpr);
+    }
+    
+    function togglePause(){
+      isPaused = !isPaused;
+      document.getElementById('pause-btn').textContent = isPaused ? 'Play' : 'Pause';
+    }
+    
+    function resetTime(){
+      time = 0;
+      triggeredResonances.clear();
+      thumps = [];
+      document.getElementById('time-scrub').value = 0;
+    }
+    
+    function speedDown(){ speedMultiplier = Math.max(speedMultiplier/2, 0.01); }
+    function speedUp(){ speedMultiplier = Math.min(speedMultiplier*2, 16); }
+    
+    function handleKeyDown(e){
+      switch(e.key){
+        case ' ':
+          e.preventDefault();
+          togglePause();
+          break;
+        case 'r':
+        case 'R':
+          resetTime();
+          break;
+        case 'ArrowUp':
+          speedUp();
+          break;
+        case 'ArrowDown':
+          speedDown();
+          break;
+      }
+    }
+    
+    function onWheelScrub(e){
+      e.preventDefault();
+      const baseSensitivity = 0.0005;
+      const acceleration = Math.log(Math.abs(e.deltaY) + 1);
+      time += e.deltaY * baseSensitivity * acceleration;
+      document.getElementById('time-scrub').value = time;
+    }
+    
+    function onTouchStart(e){
+      isScrubbing = true;
+      scrubStartX = e.touches[0].clientX;
+    }
+    
+    function onTouchMove(e){
+      if(!isScrubbing) return;
+      const currentX = e.touches[0].clientX;
+      const dayDelta = (currentX - scrubStartX) / 5;
+      time += dayDelta;
+      scrubStartX = currentX;
+      document.getElementById('time-scrub').value = time;
+    }
+    
+    function onTouchEnd(){ isScrubbing = false; }
+    
+    function animate(){
+      cycleCtx.clearRect(0, 0, cycleWidth, cycleHeight);
+      drawCycles();
+      updateThumps(cycleCtx);
+      document.getElementById('time-scrub').value = time;
+      if(!isPaused && !isScrubbing){ time += speedMultiplier; }
+      requestAnimationFrame(animate);
+    }
+    
+    function getCurrentDate(time){
+      const START_DATE = new Date(2021, 0, 28);
+      return new Date(START_DATE.getTime() + time * 86400000);
+    }
+    
+    function formatDate(date){
+      return date.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }
+    
+    function getMarketPhase(progress){
+      if(progress < 0.25) return { phase: "Accumulation", lightness: 30 };
+      else if(progress < 0.5) return { phase: "Markup", lightness: 50 };
+      else if(progress < 0.75) return { phase: "Distribution", lightness: 70 };
+      else return { phase: "Markdown", lightness: 40 };
+    }
+    
+    function getCycleColor(cycle, progress){
+      const { lightness } = getMarketPhase(progress);
+      return `hsl(${cycle.hue}, 100%, ${lightness}%)`;
+    }
+    
+    function drawCycles(){
+      const centerX = cycleWidth / 2;
+      const centerY = cycleHeight / 2;
+      const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+      const currentDate = getCurrentDate(time);
+      document.getElementById('date-display').textContent = "Current: " + formatDate(currentDate);
+      const cycleProgresses = [];
+      CYCLES.forEach((cycle, idx) => {
+        const progress = (time % cycle.length) / cycle.length;
+        cycleProgresses.push(progress);
+        const ringRadius = ringSpacing * (CYCLES.length - idx);
+        const color = getCycleColor(cycle, progress);
+        let offsetX = 0, offsetY = 0;
+        if(activeResonances[cycle.name]) {
+          offsetX = Math.sin(time * 50 + idx) * 2;
+          offsetY = Math.cos(time * 50 + idx) * 2;
+        }
+        drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, color);
+      });
+      // Check resonances between cycles.
+      for(let i = 0; i < CYCLES.length; i++){
+        for(let j = i + 1; j < CYCLES.length; j++){
+          const cycleA = CYCLES[i];
+          const cycleB = CYCLES[j];
+          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) continue;
+          const ringRadius = ringSpacing * (CYCLES.length - i);
+          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
+        }
+      }
+      checkCrucialDates(centerX, centerY, currentDate);
+      checkEmojiEvents(currentDate);
+    }
+    
+    function drawCycleRing(x, y, radius, progress, color){
+      const angle = progress * 2 * Math.PI;
+      cycleCtx.beginPath();
+      cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
+      cycleCtx.strokeStyle = color;
+      cycleCtx.lineWidth = 2;
+      cycleCtx.stroke();
+      // Draw a marker showing current progress.
+      const markerX = x + Math.cos(angle) * radius;
+      const markerY = y + Math.sin(angle) * radius;
+      cycleCtx.beginPath();
+      cycleCtx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
+      cycleCtx.fillStyle = '#fff';
+      cycleCtx.fill();
+    }
+    
+    function checkResonance(x, y, radius, progressA, progressB, currentDate, cycleA, cycleB){
+      const alignmentThreshold = 0.02;
+      const diff = Math.abs(progressA - progressB);
+      const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
+      if(!isAlignment) return;
+      const eventKey = "Align-" + currentDate.toDateString() + "-" + radius + "-" + cycleA.name + "-" + cycleB.name;
+      if(triggeredResonances.has(eventKey)) return;
+      triggeredResonances.add(eventKey);
+      const phaseInfo = getMarketPhase(progressA).phase;
+      const resonanceIndicator = document.getElementById('resonance-indicator');
+      resonanceIndicator.textContent = "Resonance: " + cycleA.name + " & " + cycleB.name + " (" + phaseInfo + ") " + formatDate(currentDate);
+      setTimeout(() => { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
+      markResonance(cycleA.name, cycleB.name);
+      // Draw a highlighted ring.
+      cycleCtx.beginPath();
+      cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+      cycleCtx.strokeStyle = 'rgba(255,0,0,0.8)';
+      cycleCtx.lineWidth = 3;
+      cycleCtx.stroke();
+      // Play thump sound if not muted.
+      playFibonacciPolyrhythm(130.81, 0.75, 'sine');
+      spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.8)');
+    }
+    
+    function checkCrucialDates(x, y, currentDate){
+      const dayThreshold = 1;
+      const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
+      if(found){
+        const eventKey = "Crucial-" + currentDate.toDateString();
+        if(!triggeredResonances.has(eventKey)){
+          triggeredResonances.add(eventKey);
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
+          cycleCtx.strokeStyle = 'rgba(255,165,0,0.8)';
+          cycleCtx.lineWidth = 4;
+          cycleCtx.stroke();
+          scheduleTone(65.41, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6, 'sine');
+          spawnThump(x, y, 150, 'rgba(255,165,0,0.8)');
+          const resonanceIndicator = document.getElementById('resonance-indicator');
+          resonanceIndicator.textContent = "Resonance: Crucial Date! " + formatDate(currentDate);
+          setTimeout(() => { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
+        }
+      }
+    }
+    
+    function checkEmojiEvents(currentDate){
+      const formattedDate = currentDate.toISOString().split('T')[0];
+      document.querySelector('.emoji.drum')?.classList.toggle('active', EMOJI_DATES[formattedDate] === 'drum');
+      document.querySelector('.emoji.camel')?.classList.toggle('active', EMOJI_DATES[formattedDate] === 'camel');
+      document.querySelector('.emoji.desert')?.classList.toggle('active', EMOJI_DATES[formattedDate] === 'desert');
+    }
+    
+    function spawnThump(x, y, startRadius, color){
+      thumps.push({ x, y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color });
+    }
+    
+    function updateThumps(ctx){
+      for(let i = thumps.length - 1; i >= 0; i--){
+        const t = thumps[i];
+        t.radius += 2;
+        t.alpha -= 0.015;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.radius, 0, 2 * Math.PI);
+        let updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, (match, rgb) => {
+          return `rgba(${rgb},${t.alpha.toFixed(2)})`;
+        });
+        ctx.strokeStyle = updatedColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+        if(t.radius >= t.maxRadius || t.alpha <= 0){
+          thumps.splice(i, 1);
+        }
+      }
+    }
+    
+    function downloadThumper(){
+      const link = document.createElement('a');
+      link.download = 'thumper.png';
+      link.href = cycleCanvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    /******************************************
+     * LAUNCH
+     ******************************************/
+    window.addEventListener('load', () => {
+      initAudioContext();
+      startVisualization();
+    });
+  </script>
+</body>
+</html>
