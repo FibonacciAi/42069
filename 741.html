@@ -183,6 +183,15 @@
       align-items: center;
       pointer-events: none;
     }
+    /* Improve centering on mobile: use fixed position on small viewports */
+    @media (max-width: 600px) {
+      .logo-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
     .logo-container img {
       width: 60px;
       height: 60px;
@@ -302,7 +311,6 @@
     function initAudioContext(){
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
-      // Ensure we resume on first interaction.
       document.addEventListener('click', resumeAndPlayMusic, { once: true });
       document.addEventListener('touchstart', resumeAndPlayMusic, { once: true });
     }
@@ -311,7 +319,6 @@
       if(audioCtx.state === 'suspended'){
         audioCtx.resume().then(() => {
           const bgMusic = document.getElementById('bgMusic');
-          // Apply volume and mute settings (use defaults if settings not yet loaded)
           bgMusic.muted = (settings && settings.muteMusic) || false;
           bgMusic.volume = parseFloat(document.getElementById('musicVolume').value);
           bgMusic.play().catch(err => console.error('bgMusic play error:', err));
@@ -486,14 +493,17 @@
       cycleCanvas.addEventListener('touchstart', onTouchStart);
       cycleCanvas.addEventListener('touchmove', onTouchMove);
       cycleCanvas.addEventListener('touchend', onTouchEnd);
-      window.addEventListener('resize', () => {
-        clearTimeout(window.resizeTimeout);
-        window.resizeTimeout = setTimeout(resizeCycleCanvas, 200);
-      });
+      window.addEventListener('resize', debounceResize, false);
       const scrubSlider = document.getElementById('time-scrub');
       scrubSlider.addEventListener('input', (e) => { time = parseInt(e.target.value, 10); });
       document.getElementById('date-display').textContent = "Current: " + formatDate(getCurrentDate(time));
       animate();
+    }
+    
+    // Debounced resize handler for performance.
+    function debounceResize(){
+      clearTimeout(window.resizeTimeout);
+      window.resizeTimeout = setTimeout(resizeCycleCanvas, 200);
     }
     
     function resizeCycleCanvas(){
