@@ -298,27 +298,33 @@
     let harmonicFactor = 1.0;
     const fibRatios = [1.0, 1.618, 2.618];
     
+    // Initialize the audio context and attach resume events.
     function initAudioContext(){
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
-      // On user interaction, resume the audio context and try to play bgMusic.
-      document.addEventListener('click', resumeAndPlayMusic);
-      document.addEventListener('touchstart', resumeAndPlayMusic);
+      // Ensure we resume on first interaction.
+      document.addEventListener('click', resumeAndPlayMusic, { once: true });
+      document.addEventListener('touchstart', resumeAndPlayMusic, { once: true });
     }
     
     function resumeAndPlayMusic(){
       if(audioCtx.state === 'suspended'){
         audioCtx.resume().then(() => {
           const bgMusic = document.getElementById('bgMusic');
+          // Apply volume and mute settings (use defaults if settings not yet loaded)
+          bgMusic.muted = (settings && settings.muteMusic) || false;
+          bgMusic.volume = parseFloat(document.getElementById('musicVolume').value);
           bgMusic.play().catch(err => console.error('bgMusic play error:', err));
         });
       }
     }
     
-    // For oscillator sounds, we use the "muteThumps" flag.
-    function isThumpMuted(){ return settings.muteThumps; }
+    // For oscillator sounds, respect the muteThumps flag.
+    function isThumpMuted(){ 
+      return settings ? settings.muteThumps : false;
+    }
     
-    // Play the Fibonacci-based polyrhythm if thump sounds are not muted.
+    // Play a Fibonacci-based polyrhythm if thumps aren’t muted.
     function playFibonacciPolyrhythm(baseFreq, duration = 0.75, type = 'sine'){
       if(isThumpMuted()) return;
       const now = audioCtx.currentTime;
@@ -366,16 +372,16 @@
     let thumps = [];
     let settings;
     
-    // Define cycles with names and lengths.
+    // Define cycles with names, lengths, and hues.
     const CYCLES = [
-      { name: "1461: Shai-Hulud's Call", length:1461, hue: 0 },
-      { name: "1470: Arrakis Rhapsody",    length:1470, hue: 120 },
-      { name: "1471: Maker's March",       length:1471, hue: 30 },
-      { name: "741: Sietch Whisper",       length:741,  hue: 60 },
-      { name: "147: Dune's Heartbeat",     length:147,  hue: 120 },
-      { name: "55: Melange Pulse",         length:55,   hue: 30 },
-      { name: "35: Fremen Chant",          length:35,   hue: 0 },
-      { name: "21: Desert Drift",          length:21,   hue: 60 }
+      { name: "1461: Shai-Hulud's Call", length: 1461, hue: 0 },
+      { name: "1470: Arrakis Rhapsody",    length: 1470, hue: 120 },
+      { name: "1471: Maker's March",       length: 1471, hue: 30 },
+      { name: "741: Sietch Whisper",       length: 741,  hue: 60 },
+      { name: "147: Dune's Heartbeat",     length: 147,  hue: 120 },
+      { name: "55: Melange Pulse",         length: 55,   hue: 30 },
+      { name: "35: Fremen Chant",          length: 35,   hue: 0 },
+      { name: "21: Desert Drift",          length: 21,   hue: 60 }
     ];
     
     // Define crucial dates.
@@ -401,6 +407,7 @@
       return KEY_CYCLES.indexOf(n) !== -1 || FIBONACCI_CYCLES.indexOf(n) !== -1;
     }
     
+    // Load settings from localStorage (or use defaults).
     function loadSettings(){
       const defaultSettings = {
         muteMusic: false,
@@ -452,7 +459,6 @@
       const muteMusicBox = document.getElementById('muteMusic');
       const muteThumpsBox = document.getElementById('muteThumps');
       
-      // Use settings.muteMusic for background music.
       muteMusicBox.checked = settings.muteMusic;
       muteMusicBox.addEventListener('change', (e) => {
         settings.muteMusic = e.target.checked;
@@ -460,14 +466,12 @@
         saveSettings();
       });
       
-      // Use settings.muteThumps for oscillator sounds.
       muteThumpsBox.checked = settings.muteThumps;
       muteThumpsBox.addEventListener('change', (e) => {
         settings.muteThumps = e.target.checked;
         saveSettings();
       });
       
-      // Update bgMusic volume.
       document.getElementById('musicVolume').addEventListener('input', (e) => {
         document.getElementById('bgMusic').volume = parseFloat(e.target.value);
       });
@@ -482,9 +486,6 @@
       cycleCanvas.addEventListener('touchstart', onTouchStart);
       cycleCanvas.addEventListener('touchmove', onTouchMove);
       cycleCanvas.addEventListener('touchend', onTouchEnd);
-      document.getElementById('custom-logo').addEventListener('load', () => {
-        document.getElementById('custom-logo').classList.add('loaded');
-      });
       window.addEventListener('resize', () => {
         clearTimeout(window.resizeTimeout);
         window.resizeTimeout = setTimeout(resizeCycleCanvas, 200);
@@ -495,7 +496,6 @@
       animate();
     }
     
-    // Set the canvas dimensions to the window dimensions.
     function resizeCycleCanvas(){
       cycleWidth = window.innerWidth;
       cycleHeight = window.innerHeight;
@@ -615,6 +615,7 @@
         }
         drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, color);
       });
+      // Check resonances between cycles.
       for(let i = 0; i < CYCLES.length; i++){
         for(let j = i + 1; j < CYCLES.length; j++){
           const cycleA = CYCLES[i];
@@ -635,6 +636,7 @@
       cycleCtx.strokeStyle = color;
       cycleCtx.lineWidth = 2;
       cycleCtx.stroke();
+      // Draw a marker showing current progress.
       const markerX = x + Math.cos(angle) * radius;
       const markerY = y + Math.sin(angle) * radius;
       cycleCtx.beginPath();
@@ -656,6 +658,7 @@
       resonanceIndicator.textContent = "Resonance: " + cycleA.name + " & " + cycleB.name + " (" + phaseInfo + ") " + formatDate(currentDate);
       setTimeout(() => { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
       markResonance(cycleA.name, cycleB.name);
+      // Draw a highlighted ring.
       cycleCtx.beginPath();
       cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
       cycleCtx.strokeStyle = 'rgba(255,0,0,0.8)';
