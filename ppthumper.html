@@ -183,7 +183,6 @@
       align-items: center;
       pointer-events: none;
     }
-    /* Improve centering on mobile: use fixed position on small viewports */
     @media (max-width: 600px) {
       .logo-container {
         position: fixed;
@@ -307,7 +306,6 @@
     let harmonicFactor = 1.0;
     const fibRatios = [1.0, 1.618, 2.618];
     
-    // Initialize the audio context and attach resume events.
     function initAudioContext(){
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
@@ -326,12 +324,10 @@
       }
     }
     
-    // For oscillator sounds, respect the muteThumps flag.
     function isThumpMuted(){ 
       return settings ? settings.muteThumps : false;
     }
     
-    // Play a Fibonacci-based polyrhythm if thumps aren’t muted.
     function playFibonacciPolyrhythm(baseFreq, duration = 0.75, type = 'sine'){
       if(isThumpMuted()) return;
       const now = audioCtx.currentTime;
@@ -379,7 +375,6 @@
     let thumps = [];
     let settings;
     
-    // Define cycles with names, lengths, and hues.
     const CYCLES = [
       { name: "1461: Shai-Hulud's Call", length: 1461, hue: 0 },
       { name: "1470: Arrakis Rhapsody",    length: 1470, hue: 120 },
@@ -391,7 +386,6 @@
       { name: "21: Desert Drift",          length: 21,   hue: 60 }
     ];
     
-    // Define crucial dates.
     const CRUCIAL_DATES = [
       new Date(2025,0,9),
       new Date(2025,0,12),
@@ -414,7 +408,6 @@
       return KEY_CYCLES.indexOf(n) !== -1 || FIBONACCI_CYCLES.indexOf(n) !== -1;
     }
     
-    // Load settings from localStorage (or use defaults).
     function loadSettings(){
       const defaultSettings = {
         muteMusic: false,
@@ -457,11 +450,11 @@
     }
     
     /******************************************
-     * MOON SKIN WITH CRATERS
+     * HIGH-DEF MOON SKIN WITH REFINED DETAILS
      ******************************************/
     let moonCraters = [];
     function generateMoonCraters() {
-      // Generate craters based on the current moon dimensions.
+      // Generate crater definitions relative to the moon's center and radius.
       moonCraters = [];
       const centerX = cycleWidth / 2;
       const centerY = cycleHeight / 2;
@@ -469,39 +462,69 @@
       const craterCount = 8;
       for (let i = 0; i < craterCount; i++){
         const angle = Math.random() * 2 * Math.PI;
-        const dist = (Math.random() * 0.5 + 0.3) * moonRadius; // 30%-80% of radius
+        const dist = (Math.random() * 0.5 + 0.3) * moonRadius;
         const craterX = centerX + dist * Math.cos(angle);
         const craterY = centerY + dist * Math.sin(angle);
-        const craterRadius = moonRadius * (Math.random() * 0.05 + 0.05); // 5%-10% of moon radius
+        const craterRadius = moonRadius * (Math.random() * 0.05 + 0.05);
         moonCraters.push({ x: craterX, y: craterY, radius: craterRadius });
       }
     }
     
-    // Draw a large full purple-hued moon with crater details.
+    // Draw a high-definition purple moon using multiple gradient layers, refined craters, and surface texture.
     function drawMoon(){
       const centerX = cycleWidth / 2;
       const centerY = cycleHeight / 2;
       const radius = Math.min(cycleWidth, cycleHeight) * 0.4;
-      // Draw the radial gradient for the moon.
-      const gradient = cycleCtx.createRadialGradient(centerX, centerY, radius * 0.1, centerX, centerY, radius);
-      gradient.addColorStop(0, '#b19cd9'); // soft lavender
-      gradient.addColorStop(1, '#4b0082'); // deep indigo
-      cycleCtx.fillStyle = gradient;
+      
+      // Layer 1: Base radial gradient for overall purple tone.
+      const baseGradient = cycleCtx.createRadialGradient(centerX, centerY, radius * 0.05, centerX, centerY, radius);
+      baseGradient.addColorStop(0, '#e6d0f5'); // light violet
+      baseGradient.addColorStop(0.6, '#a27cc3'); // mid purple
+      baseGradient.addColorStop(1, '#4b0082'); // deep indigo
+      cycleCtx.fillStyle = baseGradient;
       cycleCtx.beginPath();
       cycleCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
       cycleCtx.fill();
       
-      // Draw crater details.
+      // Layer 2: Inner glow for subtle light variation.
+      const glowGradient = cycleCtx.createRadialGradient(centerX, centerY, radius * 0.2, centerX, centerY, radius);
+      glowGradient.addColorStop(0, 'rgba(255,255,255,0.15)');
+      glowGradient.addColorStop(1, 'rgba(255,255,255,0)');
+      cycleCtx.fillStyle = glowGradient;
+      cycleCtx.beginPath();
+      cycleCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      cycleCtx.fill();
+      
+      // Layer 3: Draw refined crater details using individual radial gradients.
       moonCraters.forEach(crater => {
         cycleCtx.save();
-        cycleCtx.fillStyle = "rgba(75, 0, 130, 0.3)"; // a slightly darker hue
-        cycleCtx.shadowColor = "rgba(0, 0, 0, 0.5)";
-        cycleCtx.shadowBlur = 4;
+        const craterGradient = cycleCtx.createRadialGradient(crater.x, crater.y, crater.radius * 0.3, crater.x, crater.y, crater.radius);
+        craterGradient.addColorStop(0, 'rgba(0,0,0,0.25)');
+        craterGradient.addColorStop(1, 'rgba(0,0,0,0)');
+        cycleCtx.fillStyle = craterGradient;
         cycleCtx.beginPath();
         cycleCtx.arc(crater.x, crater.y, crater.radius, 0, 2 * Math.PI);
         cycleCtx.fill();
         cycleCtx.restore();
       });
+      
+      // Layer 4: Fine lunar surface texture (simulated with random dots).
+      const textureDensity = 250;
+      cycleCtx.save();
+      cycleCtx.globalAlpha = 0.15;
+      for(let i = 0; i < textureDensity; i++){
+        const angle = Math.random() * 2 * Math.PI;
+        const dist = Math.random() * radius;
+        const x = centerX + dist * Math.cos(angle);
+        const y = centerY + dist * Math.sin(angle);
+        if(Math.hypot(x - centerX, y - centerY) < radius) {
+          cycleCtx.fillStyle = 'rgba(0, 0, 0, ' + (Math.random() * 0.4 + 0.1) + ')';
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, Math.random() * 1.5, 0, 2 * Math.PI);
+          cycleCtx.fill();
+        }
+      }
+      cycleCtx.restore();
     }
     
     /******************************************
@@ -513,7 +536,6 @@
       cycleCtx = cycleCanvas.getContext('2d');
       resizeCycleCanvas();
       
-      // Set up background music mute/volume controls.
       const muteMusicBox = document.getElementById('muteMusic');
       const muteThumpsBox = document.getElementById('muteThumps');
       
@@ -551,7 +573,6 @@
       animate();
     }
     
-    // Debounced resize handler for performance.
     function debounceResize(){
       clearTimeout(window.resizeTimeout);
       window.resizeTimeout = setTimeout(resizeCycleCanvas, 200);
@@ -567,8 +588,6 @@
       cycleCanvas.height = cycleHeight * dpr;
       if(cycleCtx.resetTransform) { cycleCtx.resetTransform(); }
       cycleCtx.scale(dpr, dpr);
-      
-      // Regenerate moon craters when the canvas is resized.
       generateMoonCraters();
     }
     
@@ -632,9 +651,9 @@
     
     function animate(){
       cycleCtx.clearRect(0, 0, cycleWidth, cycleHeight);
-      // Draw the reimagined full-moon background with enhanced crater details
+      // Draw the enhanced high-definition purple moon.
       drawMoon();
-      // Then overlay the cycle rings and markers.
+      // Overlay cycle rings and markers.
       drawCycles();
       updateThumps(cycleCtx);
       document.getElementById('time-scrub').value = time;
@@ -680,10 +699,8 @@
           offsetX = Math.sin(time * 50 + idx) * 2;
           offsetY = Math.cos(time * 50 + idx) * 2;
         }
-        // Draw the cycle ring (now as an overlay on the moon)
         drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, color);
       });
-      // Check resonances between cycles.
       for(let i = 0; i < CYCLES.length; i++){
         for(let j = i + 1; j < CYCLES.length; j++){
           const cycleA = CYCLES[i];
@@ -704,7 +721,6 @@
       cycleCtx.strokeStyle = color;
       cycleCtx.lineWidth = 2;
       cycleCtx.stroke();
-      // Draw a marker showing current progress.
       const markerX = x + Math.cos(angle) * radius;
       const markerY = y + Math.sin(angle) * radius;
       cycleCtx.beginPath();
@@ -726,13 +742,11 @@
       resonanceIndicator.textContent = "Resonance: " + cycleA.name + " & " + cycleB.name + " (" + phaseInfo + ") " + formatDate(currentDate);
       setTimeout(() => { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
       markResonance(cycleA.name, cycleB.name);
-      // Draw a highlighted ring.
       cycleCtx.beginPath();
       cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
       cycleCtx.strokeStyle = 'rgba(255,0,0,0.8)';
       cycleCtx.lineWidth = 3;
       cycleCtx.stroke();
-      // Play thump sound if not muted.
       playFibonacciPolyrhythm(130.81, 0.75, 'sine');
       spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.8)');
     }
