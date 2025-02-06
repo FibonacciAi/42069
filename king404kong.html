@@ -114,7 +114,7 @@
     /* Legend Panel – center the list */
     .legend {
       position: absolute;
-      bottom: 10px;  /* Move it higher on mobile screens */
+      bottom: 10px;
       width: 90%; max-width: 800px;
       background: var(--panel-bg);
       border-radius: 12px;
@@ -173,9 +173,9 @@
       100% { transform: translate(0, 0); }
     }
     .vibrate { animation: vibrate 0.5s linear; }
-    /* Logo Container */
+    /* Logo Container - using fixed positioning to ensure it's dead center */
     .logo-container {
-      position: absolute;
+      position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -208,7 +208,7 @@
     .emoji.boom { left: 60%; transform: translateX(-50%); }
     .emoji.beer { left: 40%; transform: translateX(-50%); }
     
-    /* Media Query for Mobile: reduce text sizes and adjust legend position */
+    /* Media Query for Mobile: reduce text sizes and adjust legend */
     @media only screen and (max-width: 480px) {
       body {
         font-size: 10px;
@@ -226,7 +226,7 @@
         width: 50px;
       }
       .legend {
-        bottom: 10px;  /* Move legend closer to bottom on mobile */
+        bottom: 5px;  /* Move legend a bit closer to bottom on mobile */
         font-size: 0.7rem;
       }
       .legend li {
@@ -551,8 +551,8 @@
       document.getElementById('time-scrub').value = 0;
     }
     
-    function speedDown(){ speedMultiplier = Math.max(speedMultiplier/2, 0.01); }
-    function speedUp(){ speedMultiplier = Math.min(speedMultiplier*2, 16); }
+    function speedDown(){ speedMultiplier = Math.max(speedMultiplier / 2, 0.01); }
+    function speedUp(){ speedMultiplier = Math.min(speedMultiplier * 2, 16); }
     
     function handleKeyDown(e){
       switch(e.key){
