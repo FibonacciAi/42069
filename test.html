@@ -37,14 +37,14 @@
       height: 100vh;
       overflow: hidden;
     }
-    /* The canvas covers the full screen */
+    /* Canvas covers full screen */
     #cycleCanvas {
       display: block;
       position: absolute;
       top: 0; left: 0;
       z-index: 1;
     }
-    /* Controls – mobile-friendly */
+    /* Controls – mobile friendly */
     .controls {
       position: absolute;
       top: 10px;
@@ -323,7 +323,7 @@
     function playFibonacciPolyrhythm(baseFreq, duration = 0.75, type = 'sine'){
       if(isThumpMuted()) return;
       const now = audioCtx.currentTime;
-      fibRatios.forEach((ratio, i) => {
+      fibRatios.forEach(function(ratio, i) {
         scheduleTone(baseFreq * ratio, now + i * 0.15, duration, type);
       });
     }
@@ -343,11 +343,11 @@
       oscillator.stop(startTime + duration);
     }
     
-    document.addEventListener('DOMContentLoaded', () => {
-      const slider = document.getElementById('harmonicSlider');
+    document.addEventListener('DOMContentLoaded', function() {
+      var slider = document.getElementById('harmonicSlider');
       if(slider) {
         harmonicFactor = parseFloat(slider.value);
-        slider.addEventListener('input', (e) => {
+        slider.addEventListener('input', function(e) {
           harmonicFactor = parseFloat(e.target.value);
         });
       }
@@ -362,8 +362,8 @@
     let isPaused = false;
     let isScrubbing = false;
     let scrubStartX = 0;
-    // Increased speedMultiplier for more visible movement.
-    let speedMultiplier = 0.2;
+    // Increased speed multiplier for visible movement.
+    let speedMultiplier = 0.5;
     let triggeredResonances = new Set();
     let thumps = [];
     let settings;
@@ -399,7 +399,7 @@
     const FIBONACCI_CYCLES = [21,34,55,89,144,233,377,610,987,1597];
     const KEY_CYCLES = [1461,1470,1471,741,147];
     function isKeyOrFibonacci(n){
-      return KEY_CYCLES.indexOf(n) !== -1 || FIBONACCI_CYCLES.indexOf(n) !== -1;
+      return (KEY_CYCLES.indexOf(n) !== -1) || (FIBONACCI_CYCLES.indexOf(n) !== -1);
     }
     
     function loadSettings(){
@@ -423,7 +423,7 @@
       activeResonances[cycleNameB] = true;
       addVibrationToLegend(cycleNameA);
       addVibrationToLegend(cycleNameB);
-      setTimeout(() => {
+      setTimeout(function() {
         activeResonances[cycleNameA] = false;
         activeResonances[cycleNameB] = false;
         removeVibrationFromLegend(cycleNameA);
@@ -432,15 +432,15 @@
     }
     
     function addVibrationToLegend(cycleName) {
-      const period = cycleName.split(":")[0].trim();
-      const dot = document.getElementById("legend-dot-" + period);
-      if(dot) dot.classList.add("vibrate");
+      var period = cycleName.split(":")[0].trim();
+      var dot = document.getElementById("legend-dot-" + period);
+      if(dot) { dot.classList.add("vibrate"); }
     }
     
     function removeVibrationFromLegend(cycleName) {
-      const period = cycleName.split(":")[0].trim();
-      const dot = document.getElementById("legend-dot-" + period);
-      if(dot) dot.classList.remove("vibrate");
+      var period = cycleName.split(":")[0].trim();
+      var dot = document.getElementById("legend-dot-" + period);
+      if(dot) { dot.classList.remove("vibrate"); }
     }
     
     /******************************************
@@ -450,29 +450,29 @@
     const moonImage = new Image();
     moonImage.src = 'https://fibonacciai.github.io/42069/ppmoon.png';
     
-    // Mandelbrot background: compute once on an offscreen canvas.
+    // Mandelbrot background computed once on an offscreen canvas.
     let mandelbrotCanvas;
     function initMandelbrotBackground() {
-      const offW = 200, offH = 200;
+      var offW = 200, offH = 200;
       mandelbrotCanvas = document.createElement('canvas');
       mandelbrotCanvas.width = offW;
       mandelbrotCanvas.height = offH;
-      const offCtx = mandelbrotCanvas.getContext('2d');
-      const imgData = offCtx.createImageData(offW, offH);
-      const maxIter = 50;
-      for(let py = 0; py < offH; py++){
-        for(let px = 0; px < offW; px++){
-          let x0 = (px / offW) * 3.5 - 2.5;
-          let y0 = (py / offH) * 2 - 1;
-          let x = 0, y = 0, iteration = 0;
+      var offCtx = mandelbrotCanvas.getContext('2d');
+      var imgData = offCtx.createImageData(offW, offH);
+      var maxIter = 50;
+      for(var py = 0; py < offH; py++){
+        for(var px = 0; px < offW; px++){
+          var x0 = (px / offW) * 3.5 - 2.5;
+          var y0 = (py / offH) * 2 - 1;
+          var x = 0, y = 0, iteration = 0;
           while(x*x + y*y <= 4 && iteration < maxIter){
-            let xtemp = x*x - y*y + x0;
+            var xtemp = x*x - y*y + x0;
             y = 2*x*y + y0;
             x = xtemp;
             iteration++;
           }
-          const index = 4 * (py * offW + px);
-          const c = iteration === maxIter ? 0 : 255 - Math.floor(255 * iteration / maxIter);
+          var index = 4 * (py * offW + px);
+          var c = (iteration === maxIter) ? 0 : 255 - Math.floor(255 * iteration / maxIter);
           imgData.data[index] = c;
           imgData.data[index+1] = c;
           imgData.data[index+2] = c;
@@ -482,10 +482,10 @@
       offCtx.putImageData(imgData, 0, 0);
     }
     
-    // Fractal oscillator (audible) modulated by volatility.
+    // Fractal oscillator update (audible), modulated by active resonances.
     function updateFractalTone(activeResCount) {
       if(fractalOscillator && audioCtx) {
-        const newFreq = 220 + activeResCount * 50 + 20 * Math.sin(time / 30);
+        var newFreq = 220 + activeResCount * 50 + 20 * Math.sin(time / 30);
         fractalOscillator.frequency.setTargetAtTime(newFreq, audioCtx.currentTime, 0.1);
       }
     }
@@ -493,8 +493,8 @@
     // Recursive fractal tree overlay for market memory.
     function drawFractalTree(x, y, length, angle, depth) {
       if(depth === 0 || length < 2) return;
-      const x2 = x + length * Math.cos(angle);
-      const y2 = y + length * Math.sin(angle);
+      var x2 = x + length * Math.cos(angle);
+      var y2 = y + length * Math.sin(angle);
       cycleCtx.beginPath();
       cycleCtx.moveTo(x, y);
       cycleCtx.lineTo(x2, y2);
@@ -513,7 +513,7 @@
       cycleCtx.strokeStyle = "rgba(255,255,255,0.05)";
       cycleCtx.lineWidth = 1;
       cycleCtx.stroke();
-      const newRadius = radius * 0.5;
+      var newRadius = radius * 0.5;
       drawRecursiveCycle(x - newRadius, y, newRadius, depth - 1);
       drawRecursiveCycle(x + newRadius, y, newRadius, depth - 1);
       drawRecursiveCycle(x, y - newRadius, newRadius, depth - 1);
@@ -521,12 +521,11 @@
     
     // Enhanced drawMoon: draws Mandelbrot background, outer glow, moon image, and fractal overlays.
     function drawMoon(){
-      const centerX = cycleWidth / 2;
-      const centerY = cycleHeight / 2;
-      const diameter = Math.min(cycleWidth, cycleHeight) * 0.8;
-      const radius = diameter / 2;
+      var centerX = cycleWidth / 2;
+      var centerY = cycleHeight / 2;
+      var diameter = Math.min(cycleWidth, cycleHeight) * 0.8;
+      var radius = diameter / 2;
       
-      // Draw Mandelbrot background if available.
       if(mandelbrotCanvas) {
         cycleCtx.save();
         cycleCtx.globalAlpha = 0.15;
@@ -534,10 +533,9 @@
         cycleCtx.restore();
       }
       
-      // Outer pulsating glow.
-      const pulsate = 1 + 0.05 * Math.sin(time / 50);
-      const glowRadius = radius * 1.5 * pulsate;
-      const glowGradient = cycleCtx.createRadialGradient(centerX, centerY, radius, centerX, centerY, glowRadius);
+      var pulsate = 1 + 0.05 * Math.sin(time / 50);
+      var glowRadius = radius * 1.5 * pulsate;
+      var glowGradient = cycleCtx.createRadialGradient(centerX, centerY, radius, centerX, centerY, glowRadius);
       glowGradient.addColorStop(0, 'rgba(180,140,217,0.6)');
       glowGradient.addColorStop(1, 'rgba(180,140,217,0)');
       cycleCtx.save();
@@ -548,21 +546,17 @@
       cycleCtx.fill();
       cycleCtx.restore();
       
-      // Draw the moon image.
       cycleCtx.drawImage(moonImage, centerX - radius, centerY - radius, diameter, diameter);
       
-      // Market memory overlay: fractal tree.
       drawFractalTree(centerX, centerY, radius * 0.6, -Math.PI/2, 4);
-      
-      // Recursive cycle overlay.
       drawRecursiveCycle(centerX, centerY, radius * 0.5, 3);
     }
     
     /******************************************
      * PREDICTION OVERLAY (Market Forecast)
      ******************************************/
-    let predictionText = "";
-    let predictionTimer = 0;
+    var predictionText = "";
+    var predictionTimer = 0;
     function checkPrediction(activeResCount) {
       if(activeResCount >= 3) {
         predictionText = "Prediction: High Volatility Ahead";
@@ -592,23 +586,23 @@
       resizeCycleCanvas();
       initMandelbrotBackground();
       
-      const muteMusicBox = document.getElementById('muteMusic');
-      const muteThumpsBox = document.getElementById('muteThumps');
+      var muteMusicBox = document.getElementById('muteMusic');
+      var muteThumpsBox = document.getElementById('muteThumps');
       
       muteMusicBox.checked = settings.muteMusic;
-      muteMusicBox.addEventListener('change', (e) => {
+      muteMusicBox.addEventListener('change', function(e) {
         settings.muteMusic = e.target.checked;
         document.getElementById('bgMusic').muted = settings.muteMusic;
         saveSettings();
       });
       
       muteThumpsBox.checked = settings.muteThumps;
-      muteThumpsBox.addEventListener('change', (e) => {
+      muteThumpsBox.addEventListener('change', function(e) {
         settings.muteThumps = e.target.checked;
         saveSettings();
       });
       
-      document.getElementById('musicVolume').addEventListener('input', (e) => {
+      document.getElementById('musicVolume').addEventListener('input', function(e) {
         document.getElementById('bgMusic').volume = parseFloat(e.target.value);
       });
       
@@ -623,8 +617,8 @@
       cycleCanvas.addEventListener('touchmove', onTouchMove);
       cycleCanvas.addEventListener('touchend', onTouchEnd);
       window.addEventListener('resize', debounceResize, false);
-      const scrubSlider = document.getElementById('time-scrub');
-      scrubSlider.addEventListener('input', (e) => { time = parseInt(e.target.value, 10); });
+      var scrubSlider = document.getElementById('time-scrub');
+      scrubSlider.addEventListener('input', function(e) { time = parseInt(e.target.value, 10); });
       document.getElementById('date-display').textContent = "Current: " + formatDate(getCurrentDate(time));
       animate();
     }
@@ -639,7 +633,7 @@
       cycleHeight = window.innerHeight;
       cycleCanvas.style.width = cycleWidth + "px";
       cycleCanvas.style.height = cycleHeight + "px";
-      const dpr = window.devicePixelRatio || 1;
+      var dpr = window.devicePixelRatio || 1;
       cycleCanvas.width = cycleWidth * dpr;
       cycleCanvas.height = cycleHeight * dpr;
       if(cycleCtx.resetTransform) { cycleCtx.resetTransform(); }
@@ -682,8 +676,8 @@
     
     function onWheelScrub(e){
       e.preventDefault();
-      const baseSensitivity = 0.0005;
-      const acceleration = Math.log(Math.abs(e.deltaY) + 1);
+      var baseSensitivity = 0.0005;
+      var acceleration = Math.log(Math.abs(e.deltaY) + 1);
       time += e.deltaY * baseSensitivity * acceleration;
       document.getElementById('time-scrub').value = time;
     }
@@ -695,8 +689,8 @@
     
     function onTouchMove(e){
       if(!isScrubbing) return;
-      const currentX = e.touches[0].clientX;
-      const dayDelta = (currentX - scrubStartX) / 5;
+      var currentX = e.touches[0].clientX;
+      var dayDelta = (currentX - scrubStartX) / 5;
       time += dayDelta;
       scrubStartX = currentX;
       document.getElementById('time-scrub').value = time;
@@ -706,20 +700,275 @@
     
     // Main animation loop
     function animate(){
-      // Ghost trails: overlay a semi-transparent rectangle.
+      // Ghost trails for market memory
+      cycleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+      
+      // Count active resonances
+      var activeResCount = 0;
+      for(var key in activeResonances) {
+        if(activeResonances[key]) { activeResCount++; }
+      }
+      checkPrediction(activeResCount);
+      updateFractalTone(activeResCount);
+      
+      // Fractal time warping: accelerate time when volatility is high.
+      var volatilityFactor = 1 + 0.5 * activeResCount;
+      if(!isPaused && !isScrubbing){ time += speedMultiplier * volatilityFactor; }
+      
+      // Draw Mandelbrot background
+      if(mandelbrotCanvas) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = 0.15;
+        cycleCtx.drawImage(mandelbrotCanvas, 0, 0, cycleWidth, cycleHeight);
+        cycleCtx.restore();
+      }
+      
+      // Draw enhanced moon with fractal overlays.
+      drawMoon();
+      
+      // Draw market cycle rings.
+      drawCycles();
+      
+      // Update particle thumps.
+      updateThumps(cycleCtx);
+      
+      // Draw prediction overlay if active.
+      drawPredictionOverlay();
+      
+      // Glitch effect if active.
+      if(glitchActive) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = 0.3;
+        cycleCtx.translate(Math.random()*10 - 5, Math.random()*10 - 5);
+        cycleCtx.rotate((Math.random()*10 - 5) * Math.PI/180);
+        cycleCtx.fillStyle = 'rgba(255,255,255,0.2)';
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+        cycleCtx.restore();
+        if(--glitchTimer <= 0) { glitchActive = false; }
+      }
+      
+      document.getElementById('time-scrub').value = time;
+      requestAnimationFrame(animate);
+    }
+    
+    function getCurrentDate(time){
+      var START_DATE = new Date(2021, 0, 28);
+      return new Date(START_DATE.getTime() + time * 86400000);
+    }
+    
+    function formatDate(date){
+      return date.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }
+    
+    function getMarketPhase(progress){
+      if(progress < 0.25) return { phase: "Accumulation", lightness: 30 };
+      else if(progress < 0.5) return { phase: "Markup", lightness: 50 };
+      else if(progress < 0.75) return { phase: "Distribution", lightness: 70 };
+      else return { phase: "Markdown", lightness: 40 };
+    }
+    
+    // Power-law scaling for cycle intensity.
+    function getCycleColor(cycle, progress, ringRadius){
+      var phase = getMarketPhase(progress);
+      var lineWidth = 2 * Math.pow(ringRadius, 0.15);
+      return { color: "hsl(" + cycle.hue + ", 100%, " + phase.lightness + "%)", lineWidth: lineWidth };
+    }
+    
+    function drawCycles(){
+      var centerX = cycleWidth / 2;
+      var centerY = cycleHeight / 2;
+      var ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+      var currentDate = getCurrentDate(time);
+      document.getElementById('date-display').textContent = "Current: " + formatDate(currentDate);
+      var cycleProgresses = [];
+      
+      CYCLES.forEach(function(cycle, idx) {
+        var progress = (time % cycle.length) / cycle.length;
+        cycleProgresses.push(progress);
+        var ringRadius = ringSpacing * (CYCLES.length - idx);
+        var cc = getCycleColor(cycle, progress, ringRadius);
+        var offsetX = 0, offsetY = 0;
+        if(activeResonances[cycle.name]) {
+          offsetX = Math.sin(time * 50 + idx) * 2;
+          offsetY = Math.cos(time * 50 + idx) * 2;
+        }
+        drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, cc.color, cc.lineWidth);
+      });
+      
+      for(var i = 0; i < CYCLES.length; i++){
+        for(var j = i + 1; j < CYCLES.length; j++){
+          var cycleA = CYCLES[i];
+          var cycleB = CYCLES[j];
+          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) { continue; }
+          var ringRadius = ringSpacing * (CYCLES.length - i);
+          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
+        }
+      }
+      
+      checkCrucialDates(centerX, centerY, currentDate);
+      checkEmojiEvents(currentDate);
+    }
+    
+    function drawCycleRing(x, y, radius, progress, color, lineWidth){
+      var angle = progress * 2 * Math.PI;
+      cycleCtx.beginPath();
+      cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
+      cycleCtx.strokeStyle = color;
+      cycleCtx.lineWidth = lineWidth;
+      cycleCtx.stroke();
+      var markerX = x + Math.cos(angle) * radius;
+      var markerY = y + Math.sin(angle) * radius;
+      cycleCtx.beginPath();
+      cycleCtx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
+      cycleCtx.fillStyle = '#fff';
+      cycleCtx.fill();
+    }
+    
+    function checkResonance(x, y, radius, progressA, progressB, currentDate, cycleA, cycleB){
+      var alignmentThreshold = 0.02;
+      var diff = Math.abs(progressA - progressB);
+      var isAlignment = (diff < alignmentThreshold) || (Math.abs(1 - diff) < alignmentThreshold);
+      if(!isAlignment) { return; }
+      var eventKey = "Align-" + currentDate.toDateString() + "-" + radius + "-" + cycleA.name + "-" + cycleB.name;
+      if(triggeredResonances.has(eventKey)) { return; }
+      triggeredResonances.add(eventKey);
+      var phaseInfo = getMarketPhase(progressA).phase;
+      var resonanceIndicator = document.getElementById('resonance-indicator');
+      resonanceIndicator.textContent = "Resonance: " + cycleA.name + " & " + cycleB.name + " (" + phaseInfo + ") " + formatDate(currentDate);
+      
+      if(diff < alignmentThreshold / 2) {
+        triggerGlitch(40);
+        spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.9)');
+        spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.9)');
+      }
+      
+      markResonance(cycleA.name, cycleB.name);
+      cycleCtx.beginPath();
+      cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+      cycleCtx.strokeStyle = 'rgba(255,0,0,0.8)';
+      cycleCtx.lineWidth = 3;
+      cycleCtx.stroke();
+      playFibonacciPolyrhythm(130.81, 0.75, 'sine');
+      spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.8)');
+    }
+    
+    function checkCrucialDates(x, y, currentDate){
+      var dayThreshold = 1;
+      var found = CRUCIAL_DATES.some(function(cd) {
+        return Math.abs((currentDate - cd) / 86400000) < dayThreshold;
+      });
+      if(found) {
+        var eventKey = "Crucial-" + currentDate.toDateString();
+        if(!triggeredResonances.has(eventKey)) {
+          triggeredResonances.add(eventKey);
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
+          cycleCtx.strokeStyle = 'rgba(255,165,0,0.8)';
+          cycleCtx.lineWidth = 4;
+          cycleCtx.stroke();
+          scheduleTone(65.41, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6, 'sine');
+          spawnThump(x, y, 150, 'rgba(255,165,0,0.8)');
+          var resonanceIndicator = document.getElementById('resonance-indicator');
+          resonanceIndicator.textContent = "Resonance: Crucial Date! " + formatDate(currentDate);
+          setTimeout(function() { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
+        }
+      }
+    }
+    
+    function checkEmojiEvents(currentDate){
+      var formattedDate = currentDate.toISOString().split('T')[0];
+      var drumEmoji = document.querySelector('.emoji.drum');
+      if(drumEmoji){ drumEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'drum')); }
+      var camelEmoji = document.querySelector('.emoji.camel');
+      if(camelEmoji){ camelEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'camel')); }
+      var desertEmoji = document.querySelector('.emoji.desert');
+      if(desertEmoji){ desertEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'desert')); }
+    }
+    
+    function spawnThump(x, y, startRadius, color){
+      thumps.push({ x: x, y: y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color: color });
+    }
+    
+    function updateThumps(ctx){
+      for(var i = thumps.length - 1; i >= 0; i--){
+        var t = thumps[i];
+        t.radius += 2;
+        t.alpha -= 0.015;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.radius, 0, 2 * Math.PI);
+        var updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, function(match, rgb) {
+          return "rgba(" + rgb + "," + t.alpha.toFixed(2) + ")";
+        });
+        ctx.strokeStyle = updatedColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+        if(t.radius >= t.maxRadius || t.alpha <= 0){
+          thumps.splice(i, 1);
+        }
+      }
+    }
+    
+    function downloadThumper(){
+      var link = document.createElement('a');
+      link.download = 'thumper.png';
+      link.href = cycleCanvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    /******************************************
+     * LAUNCH
+     ******************************************/
+    window.addEventListener('load', function() {
+      initAudioContext();
+      startVisualization();
+    });
+    
+    /******************************************
+     * PREDICTION OVERLAY FUNCTIONS
+     ******************************************/
+    function drawPredictionOverlay() {
+      if(predictionTimer > 0 && predictionText) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = predictionTimer / 100;
+        cycleCtx.font = "bold 48px Inter";
+        cycleCtx.fillStyle = "rgba(255,0,0,0.8)";
+        cycleCtx.textAlign = "center";
+        cycleCtx.fillText(predictionText, cycleWidth/2, cycleHeight*0.2);
+        cycleCtx.restore();
+        predictionTimer--;
+      }
+    }
+    
+    var predictionText = "";
+    var predictionTimer = 0;
+    function checkPrediction(activeResCount) {
+      if(activeResCount >= 3) {
+        predictionText = "Prediction: High Volatility Ahead";
+        predictionTimer = 100;
+      }
+    }
+    
+    /******************************************
+     * MAIN ANIMATION LOOP
+     ******************************************/
+    function animate(){
+      // Draw ghost trails for market memory.
       cycleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
       cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
       
       // Count active resonances.
-      let activeResCount = 0;
-      for(let key in activeResonances) {
-        if(activeResonances[key]) activeResCount++;
+      var activeResCount = 0;
+      for(var key in activeResonances) {
+        if(activeResonances[key]) { activeResCount++; }
       }
       checkPrediction(activeResCount);
       updateFractalTone(activeResCount);
       
       // Fractal time warping: speed up time when volatility is high.
-      const volatilityFactor = 1 + 0.5 * activeResCount;
+      var volatilityFactor = 1 + 0.5 * activeResCount;
       if(!isPaused && !isScrubbing){ time += speedMultiplier * volatilityFactor; }
       
       // Draw Mandelbrot background.
@@ -751,7 +1000,7 @@
         cycleCtx.fillStyle = 'rgba(255,255,255,0.2)';
         cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
         cycleCtx.restore();
-        if(--glitchTimer <= 0) glitchActive = false;
+        if(--glitchTimer <= 0) { glitchActive = false; }
       }
       
       document.getElementById('time-scrub').value = time;
@@ -759,7 +1008,7 @@
     }
     
     function getCurrentDate(time){
-      const START_DATE = new Date(2021, 0, 28);
+      var START_DATE = new Date(2021, 0, 28);
       return new Date(START_DATE.getTime() + time * 86400000);
     }
     
@@ -776,38 +1025,38 @@
     
     // Power-law scaling for cycle intensity.
     function getCycleColor(cycle, progress, ringRadius){
-      const { lightness } = getMarketPhase(progress);
-      let lineWidth = 2 * Math.pow(ringRadius, 0.15);
-      return { color: `hsl(${cycle.hue}, 100%, ${lightness}%)`, lineWidth };
+      var phase = getMarketPhase(progress);
+      var lineWidth = 2 * Math.pow(ringRadius, 0.15);
+      return { color: "hsl(" + cycle.hue + ", 100%, " + phase.lightness + "%)", lineWidth: lineWidth };
     }
     
     function drawCycles(){
-      const centerX = cycleWidth / 2;
-      const centerY = cycleHeight / 2;
-      const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
-      const currentDate = getCurrentDate(time);
+      var centerX = cycleWidth / 2;
+      var centerY = cycleHeight / 2;
+      var ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+      var currentDate = getCurrentDate(time);
       document.getElementById('date-display').textContent = "Current: " + formatDate(currentDate);
-      const cycleProgresses = [];
+      var cycleProgresses = [];
       
-      CYCLES.forEach((cycle, idx) => {
-        const progress = (time % cycle.length) / cycle.length;
+      CYCLES.forEach(function(cycle, idx) {
+        var progress = (time % cycle.length) / cycle.length;
         cycleProgresses.push(progress);
-        const ringRadius = ringSpacing * (CYCLES.length - idx);
-        const { color, lineWidth } = getCycleColor(cycle, progress, ringRadius);
-        let offsetX = 0, offsetY = 0;
+        var ringRadius = ringSpacing * (CYCLES.length - idx);
+        var cc = getCycleColor(cycle, progress, ringRadius);
+        var offsetX = 0, offsetY = 0;
         if(activeResonances[cycle.name]) {
           offsetX = Math.sin(time * 50 + idx) * 2;
           offsetY = Math.cos(time * 50 + idx) * 2;
         }
-        drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, color, lineWidth);
+        drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, cc.color, cc.lineWidth);
       });
       
-      for(let i = 0; i < CYCLES.length; i++){
-        for(let j = i + 1; j < CYCLES.length; j++){
-          const cycleA = CYCLES[i];
-          const cycleB = CYCLES[j];
-          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) continue;
-          const ringRadius = ringSpacing * (CYCLES.length - i);
+      for(var i = 0; i < CYCLES.length; i++){
+        for(var j = i + 1; j < CYCLES.length; j++){
+          var cycleA = CYCLES[i];
+          var cycleB = CYCLES[j];
+          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) { continue; }
+          var ringRadius = ringSpacing * (CYCLES.length - i);
           checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
         }
       }
@@ -817,14 +1066,14 @@
     }
     
     function drawCycleRing(x, y, radius, progress, color, lineWidth){
-      const angle = progress * 2 * Math.PI;
+      var angle = progress * 2 * Math.PI;
       cycleCtx.beginPath();
       cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
       cycleCtx.strokeStyle = color;
       cycleCtx.lineWidth = lineWidth;
       cycleCtx.stroke();
-      const markerX = x + Math.cos(angle) * radius;
-      const markerY = y + Math.sin(angle) * radius;
+      var markerX = x + Math.cos(angle) * radius;
+      var markerY = y + Math.sin(angle) * radius;
       cycleCtx.beginPath();
       cycleCtx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
       cycleCtx.fillStyle = '#fff';
@@ -832,15 +1081,15 @@
     }
     
     function checkResonance(x, y, radius, progressA, progressB, currentDate, cycleA, cycleB){
-      const alignmentThreshold = 0.02;
-      const diff = Math.abs(progressA - progressB);
-      const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
-      if(!isAlignment) return;
-      const eventKey = "Align-" + currentDate.toDateString() + "-" + radius + "-" + cycleA.name + "-" + cycleB.name;
-      if(triggeredResonances.has(eventKey)) return;
+      var alignmentThreshold = 0.02;
+      var diff = Math.abs(progressA - progressB);
+      var isAlignment = (diff < alignmentThreshold) || (Math.abs(1 - diff) < alignmentThreshold);
+      if(!isAlignment) { return; }
+      var eventKey = "Align-" + currentDate.toDateString() + "-" + radius + "-" + cycleA.name + "-" + cycleB.name;
+      if(triggeredResonances.has(eventKey)) { return; }
       triggeredResonances.add(eventKey);
-      const phaseInfo = getMarketPhase(progressA).phase;
-      const resonanceIndicator = document.getElementById('resonance-indicator');
+      var phaseInfo = getMarketPhase(progressA).phase;
+      var resonanceIndicator = document.getElementById('resonance-indicator');
       resonanceIndicator.textContent = "Resonance: " + cycleA.name + " & " + cycleB.name + " (" + phaseInfo + ") " + formatDate(currentDate);
       
       if(diff < alignmentThreshold / 2) {
@@ -860,11 +1109,13 @@
     }
     
     function checkCrucialDates(x, y, currentDate){
-      const dayThreshold = 1;
-      const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
-      if(found){
-        const eventKey = "Crucial-" + currentDate.toDateString();
-        if(!triggeredResonances.has(eventKey)){
+      var dayThreshold = 1;
+      var found = CRUCIAL_DATES.some(function(cd) {
+        return Math.abs((currentDate - cd) / 86400000) < dayThreshold;
+      });
+      if(found) {
+        var eventKey = "Crucial-" + currentDate.toDateString();
+        if(!triggeredResonances.has(eventKey)) {
           triggeredResonances.add(eventKey);
           cycleCtx.beginPath();
           cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
@@ -873,34 +1124,37 @@
           cycleCtx.stroke();
           scheduleTone(65.41, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6, 'sine');
           spawnThump(x, y, 150, 'rgba(255,165,0,0.8)');
-          const resonanceIndicator = document.getElementById('resonance-indicator');
+          var resonanceIndicator = document.getElementById('resonance-indicator');
           resonanceIndicator.textContent = "Resonance: Crucial Date! " + formatDate(currentDate);
-          setTimeout(() => { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
+          setTimeout(function() { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
         }
       }
     }
     
     function checkEmojiEvents(currentDate){
-      const formattedDate = currentDate.toISOString().split('T')[0];
-      document.querySelector('.emoji.drum')?.classList.toggle('active', EMOJI_DATES[formattedDate] === 'drum');
-      document.querySelector('.emoji.camel')?.classList.toggle('active', EMOJI_DATES[formattedDate] === 'camel');
-      document.querySelector('.emoji.desert')?.classList.toggle('active', EMOJI_DATES[formattedDate] === 'desert');
+      var formattedDate = currentDate.toISOString().split('T')[0];
+      var drumEmoji = document.querySelector('.emoji.drum');
+      if(drumEmoji){ drumEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'drum')); }
+      var camelEmoji = document.querySelector('.emoji.camel');
+      if(camelEmoji){ camelEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'camel')); }
+      var desertEmoji = document.querySelector('.emoji.desert');
+      if(desertEmoji){ desertEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'desert')); }
     }
     
     function spawnThump(x, y, startRadius, color){
-      thumps.push({ x, y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color });
+      thumps.push({ x: x, y: y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color: color });
     }
     
     function updateThumps(ctx){
-      for(let i = thumps.length - 1; i >= 0; i--){
-        const t = thumps[i];
+      for(var i = thumps.length - 1; i >= 0; i--){
+        var t = thumps[i];
         t.radius += 2;
         t.alpha -= 0.015;
         ctx.save();
         ctx.beginPath();
         ctx.arc(t.x, t.y, t.radius, 0, 2 * Math.PI);
-        let updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, (match, rgb) => {
-          return `rgba(${rgb},${t.alpha.toFixed(2)})`;
+        var updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, function(match, rgb) {
+          return "rgba(" + rgb + "," + t.alpha.toFixed(2) + ")";
         });
         ctx.strokeStyle = updatedColor;
         ctx.lineWidth = 3;
@@ -913,7 +1167,7 @@
     }
     
     function downloadThumper(){
-      const link = document.createElement('a');
+      var link = document.createElement('a');
       link.download = 'thumper.png';
       link.href = cycleCanvas.toDataURL('image/png');
       link.click();
@@ -922,7 +1176,7 @@
     /******************************************
      * LAUNCH
      ******************************************/
-    window.addEventListener('load', () => {
+    window.addEventListener('load', function() {
       initAudioContext();
       startVisualization();
     });
@@ -943,8 +1197,8 @@
       }
     }
     
-    let predictionText = "";
-    let predictionTimer = 0;
+    var predictionText = "";
+    var predictionTimer = 0;
     function checkPrediction(activeResCount) {
       if(activeResCount >= 3) {
         predictionText = "Prediction: High Volatility Ahead";
@@ -952,6 +1206,379 @@
       }
     }
     
+    /******************************************
+     * MAIN ANIMATION LOOP
+     ******************************************/
+    function animate(){
+      // Draw ghost trails
+      cycleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+      
+      // Count active resonances
+      var activeResCount = 0;
+      for(var key in activeResonances) {
+        if(activeResonances[key]) { activeResCount++; }
+      }
+      checkPrediction(activeResCount);
+      updateFractalTone(activeResCount);
+      
+      // Fractal time warping: speed up time when volatility is high.
+      var volatilityFactor = 1 + 0.5 * activeResCount;
+      if(!isPaused && !isScrubbing){ time += speedMultiplier * volatilityFactor; }
+      
+      // Draw Mandelbrot background.
+      if(mandelbrotCanvas) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = 0.15;
+        cycleCtx.drawImage(mandelbrotCanvas, 0, 0, cycleWidth, cycleHeight);
+        cycleCtx.restore();
+      }
+      
+      // Draw enhanced moon with fractal overlays.
+      drawMoon();
+      
+      // Draw market cycle rings.
+      drawCycles();
+      
+      // Update particle thumps.
+      updateThumps(cycleCtx);
+      
+      // Draw prediction overlay if active.
+      drawPredictionOverlay();
+      
+      // Glitch overlay if active.
+      if(glitchActive) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = 0.3;
+        cycleCtx.translate(Math.random()*10 - 5, Math.random()*10 - 5);
+        cycleCtx.rotate((Math.random()*10 - 5) * Math.PI/180);
+        cycleCtx.fillStyle = 'rgba(255,255,255,0.2)';
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+        cycleCtx.restore();
+        if(--glitchTimer <= 0) { glitchActive = false; }
+      }
+      
+      document.getElementById('time-scrub').value = time;
+      requestAnimationFrame(animate);
+    }
+    
+    function getCurrentDate(time){
+      var START_DATE = new Date(2021, 0, 28);
+      return new Date(START_DATE.getTime() + time * 86400000);
+    }
+    
+    function formatDate(date){
+      return date.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }
+    
+    function getMarketPhase(progress){
+      if(progress < 0.25) return { phase: "Accumulation", lightness: 30 };
+      else if(progress < 0.5) return { phase: "Markup", lightness: 50 };
+      else if(progress < 0.75) return { phase: "Distribution", lightness: 70 };
+      else return { phase: "Markdown", lightness: 40 };
+    }
+    
+    // Power-law scaling for cycle intensity.
+    function getCycleColor(cycle, progress, ringRadius){
+      var phase = getMarketPhase(progress);
+      var lineWidth = 2 * Math.pow(ringRadius, 0.15);
+      return { color: "hsl(" + cycle.hue + ", 100%, " + phase.lightness + "%)", lineWidth: lineWidth };
+    }
+    
+    function drawCycles(){
+      var centerX = cycleWidth / 2;
+      var centerY = cycleHeight / 2;
+      var ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+      var currentDate = getCurrentDate(time);
+      document.getElementById('date-display').textContent = "Current: " + formatDate(currentDate);
+      var cycleProgresses = [];
+      
+      CYCLES.forEach(function(cycle, idx) {
+        var progress = (time % cycle.length) / cycle.length;
+        cycleProgresses.push(progress);
+        var ringRadius = ringSpacing * (CYCLES.length - idx);
+        var cc = getCycleColor(cycle, progress, ringRadius);
+        var offsetX = 0, offsetY = 0;
+        if(activeResonances[cycle.name]) {
+          offsetX = Math.sin(time * 50 + idx) * 2;
+          offsetY = Math.cos(time * 50 + idx) * 2;
+        }
+        drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, cc.color, cc.lineWidth);
+      });
+      
+      for(var i = 0; i < CYCLES.length; i++){
+        for(var j = i + 1; j < CYCLES.length; j++){
+          var cycleA = CYCLES[i];
+          var cycleB = CYCLES[j];
+          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) { continue; }
+          var ringRadius = ringSpacing * (CYCLES.length - i);
+          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
+        }
+      }
+      
+      checkCrucialDates(centerX, centerY, currentDate);
+      checkEmojiEvents(currentDate);
+    }
+    
+    function drawCycleRing(x, y, radius, progress, color, lineWidth){
+      var angle = progress * 2 * Math.PI;
+      cycleCtx.beginPath();
+      cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
+      cycleCtx.strokeStyle = color;
+      cycleCtx.lineWidth = lineWidth;
+      cycleCtx.stroke();
+      var markerX = x + Math.cos(angle) * radius;
+      var markerY = y + Math.sin(angle) * radius;
+      cycleCtx.beginPath();
+      cycleCtx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
+      cycleCtx.fillStyle = '#fff';
+      cycleCtx.fill();
+    }
+    
+    function checkResonance(x, y, radius, progressA, progressB, currentDate, cycleA, cycleB){
+      var alignmentThreshold = 0.02;
+      var diff = Math.abs(progressA - progressB);
+      var isAlignment = (diff < alignmentThreshold) || (Math.abs(1 - diff) < alignmentThreshold);
+      if(!isAlignment) { return; }
+      var eventKey = "Align-" + currentDate.toDateString() + "-" + radius + "-" + cycleA.name + "-" + cycleB.name;
+      if(triggeredResonances.has(eventKey)) { return; }
+      triggeredResonances.add(eventKey);
+      var phaseInfo = getMarketPhase(progressA).phase;
+      var resonanceIndicator = document.getElementById('resonance-indicator');
+      resonanceIndicator.textContent = "Resonance: " + cycleA.name + " & " + cycleB.name + " (" + phaseInfo + ") " + formatDate(currentDate);
+      
+      if(diff < alignmentThreshold / 2) {
+        triggerGlitch(40);
+        spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.9)');
+        spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.9)');
+      }
+      
+      markResonance(cycleA.name, cycleB.name);
+      cycleCtx.beginPath();
+      cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+      cycleCtx.strokeStyle = 'rgba(255,0,0,0.8)';
+      cycleCtx.lineWidth = 3;
+      cycleCtx.stroke();
+      playFibonacciPolyrhythm(130.81, 0.75, 'sine');
+      spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.8)');
+    }
+    
+    function checkCrucialDates(x, y, currentDate){
+      var dayThreshold = 1;
+      var found = CRUCIAL_DATES.some(function(cd) {
+        return Math.abs((currentDate - cd) / 86400000) < dayThreshold;
+      });
+      if(found) {
+        var eventKey = "Crucial-" + currentDate.toDateString();
+        if(!triggeredResonances.has(eventKey)) {
+          triggeredResonances.add(eventKey);
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
+          cycleCtx.strokeStyle = 'rgba(255,165,0,0.8)';
+          cycleCtx.lineWidth = 4;
+          cycleCtx.stroke();
+          scheduleTone(65.41, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6, 'sine');
+          spawnThump(x, y, 150, 'rgba(255,165,0,0.8)');
+          var resonanceIndicator = document.getElementById('resonance-indicator');
+          resonanceIndicator.textContent = "Resonance: Crucial Date! " + formatDate(currentDate);
+          setTimeout(function() { resonanceIndicator.textContent = "Resonance: Off"; }, 4000);
+        }
+      }
+    }
+    
+    function checkEmojiEvents(currentDate){
+      var formattedDate = currentDate.toISOString().split('T')[0];
+      var drumEmoji = document.querySelector('.emoji.drum');
+      if(drumEmoji){ drumEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'drum')); }
+      var camelEmoji = document.querySelector('.emoji.camel');
+      if(camelEmoji){ camelEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'camel')); }
+      var desertEmoji = document.querySelector('.emoji.desert');
+      if(desertEmoji){ desertEmoji.classList.toggle('active', (EMOJI_DATES[formattedDate] === 'desert')); }
+    }
+    
+    function spawnThump(x, y, startRadius, color){
+      thumps.push({ x: x, y: y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color: color });
+    }
+    
+    function updateThumps(ctx){
+      for(var i = thumps.length - 1; i >= 0; i--){
+        var t = thumps[i];
+        t.radius += 2;
+        t.alpha -= 0.015;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.radius, 0, 2 * Math.PI);
+        var updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, function(match, rgb) {
+          return "rgba(" + rgb + "," + t.alpha.toFixed(2) + ")";
+        });
+        ctx.strokeStyle = updatedColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+        if(t.radius >= t.maxRadius || t.alpha <= 0){
+          thumps.splice(i, 1);
+        }
+      }
+    }
+    
+    function downloadThumper(){
+      var link = document.createElement('a');
+      link.download = 'thumper.png';
+      link.href = cycleCanvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    /******************************************
+     * LAUNCH
+     ******************************************/
+    window.addEventListener('load', function() {
+      initAudioContext();
+      startVisualization();
+    });
+    
+    /******************************************
+     * PREDICTION OVERLAY FUNCTIONS
+     ******************************************/
+    function drawPredictionOverlay() {
+      if(predictionTimer > 0 && predictionText) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = predictionTimer / 100;
+        cycleCtx.font = "bold 48px Inter";
+        cycleCtx.fillStyle = "rgba(255,0,0,0.8)";
+        cycleCtx.textAlign = "center";
+        cycleCtx.fillText(predictionText, cycleWidth/2, cycleHeight*0.2);
+        cycleCtx.restore();
+        predictionTimer--;
+      }
+    }
+    
+    var predictionText = "";
+    var predictionTimer = 0;
+    function checkPrediction(activeResCount) {
+      if(activeResCount >= 3) {
+        predictionText = "Prediction: High Volatility Ahead";
+        predictionTimer = 100;
+      }
+    }
+    
+    /******************************************
+     * MAIN ANIMATION LOOP
+     ******************************************/
+    function animate(){
+      // Ghost trails.
+      cycleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+      
+      // Count active resonances.
+      var activeResCount = 0;
+      for(var key in activeResonances) {
+        if(activeResonances[key]) { activeResCount++; }
+      }
+      checkPrediction(activeResCount);
+      updateFractalTone(activeResCount);
+      
+      // Fractal time warping.
+      var volatilityFactor = 1 + 0.5 * activeResCount;
+      if(!isPaused && !isScrubbing){ time += speedMultiplier * volatilityFactor; }
+      
+      // Mandelbrot background.
+      if(mandelbrotCanvas) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = 0.15;
+        cycleCtx.drawImage(mandelbrotCanvas, 0, 0, cycleWidth, cycleHeight);
+        cycleCtx.restore();
+      }
+      
+      // Draw enhanced moon.
+      drawMoon();
+      
+      // Draw market cycle rings.
+      drawCycles();
+      
+      // Update particle thumps.
+      updateThumps(cycleCtx);
+      
+      // Draw prediction overlay.
+      drawPredictionOverlay();
+      
+      // Glitch effect if active.
+      if(glitchActive) {
+        cycleCtx.save();
+        cycleCtx.globalAlpha = 0.3;
+        cycleCtx.translate(Math.random()*10 - 5, Math.random()*10 - 5);
+        cycleCtx.rotate((Math.random()*10 - 5) * Math.PI/180);
+        cycleCtx.fillStyle = 'rgba(255,255,255,0.2)';
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+        cycleCtx.restore();
+        if(--glitchTimer <= 0) { glitchActive = false; }
+      }
+      
+      document.getElementById('time-scrub').value = time;
+      requestAnimationFrame(animate);
+    }
+    
+    function getCurrentDate(time){
+      var START_DATE = new Date(2021, 0, 28);
+      return new Date(START_DATE.getTime() + time * 86400000);
+    }
+    
+    function formatDate(date){
+      return date.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }
+    
+    function getMarketPhase(progress){
+      if(progress < 0.25) return { phase: "Accumulation", lightness: 30 };
+      else if(progress < 0.5) return { phase: "Markup", lightness: 50 };
+      else if(progress < 0.75) return { phase: "Distribution", lightness: 70 };
+      else return { phase: "Markdown", lightness: 40 };
+    }
+    
+    // Power-law scaling for cycle intensity.
+    function getCycleColor(cycle, progress, ringRadius){
+      var phase = getMarketPhase(progress);
+      var lineWidth = 2 * Math.pow(ringRadius, 0.15);
+      return { color: "hsl(" + cycle.hue + ", 100%, " + phase.lightness + "%)", lineWidth: lineWidth };
+    }
+    
+    function drawCycles(){
+      var centerX = cycleWidth / 2;
+      var centerY = cycleHeight / 2;
+      var ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+      var currentDate = getCurrentDate(time);
+      document.getElementById('date-display').textContent = "Current: " + formatDate(currentDate);
+      var cycleProgresses = [];
+      
+      CYCLES.forEach(function(cycle, idx) {
+        var progress = (time % cycle.length) / cycle.length;
+        cycleProgresses.push(progress);
+        var ringRadius = ringSpacing * (CYCLES.length - idx);
+        var cc = getCycleColor(cycle, progress, ringRadius);
+        var offsetX = 0, offsetY = 0;
+        if(activeResonances[cycle.name]) {
+          offsetX = Math.sin(time * 50 + idx) * 2;
+          offsetY = Math.cos(time * 50 + idx) * 2;
+        }
+        drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, cc.color, cc.lineWidth);
+      });
+      
+      for(var i = 0; i < CYCLES.length; i++){
+        for(var j = i + 1; j < CYCLES.length; j++){
+          var cycleA = CYCLES[i];
+          var cycleB = CYCLES[j];
+          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) { continue; }
+          var ringRadius = ringSpacing * (CYCLES.length - i);
+          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
+        }
+      }
+      
+      checkCrucialDates(centerX, centerY, currentDate);
+      checkEmojiEvents(currentDate);
+    }
+    
+    window.addEventListener('load', function() {
+      initAudioContext();
+      startVisualization();
+    });
   </script>
 </body>
 </html>
