@@ -2,77 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="description" content="Cycle Resonance Visualization – Dune Thumper Edition" />
+  <meta name="description" content="Nebula Pulse – A Dark-Mode Particle Audiovisual Visualization of Market Cycles, Fractalized to the Tits" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cycle Resonance Visualization – Dune Thumper Edition</title>
+  <title>Nebula Pulse: Fractal Market Simulation</title>
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Favicon -->
+  <link rel="icon" href="https://fibonacciai.github.io/42069/power-512.png" type="image/png">
   <style>
+    /* Base & Theme Variables */
     :root {
-      /* Dune-inspired colors */
-      --bg-color: #0B0B0B;              /* Nearly pitch-black */
-      --text-color: #EAE1CF;            /* Warm, creamy off-white */
-      --panel-bg: rgba(30,25,20,0.95);   /* Rich, saturated earthy brown */
-      --highlight: #C5000B;             /* Vivid red accent */
-      
-      /* Cycle Colors (GameStop accents) */
-      --keymaster:   #C5000B;  /* 1471-day (Key master cycle) */
-      --cycle741:    #8B0000;  /* 741-day */
-      --cycle147:    #FFD200;  /* 147-day */
-      --cycle110:    #4B3621;  /* 110-day */
-      --cycle55:     #6E5843;  /* 55-day */
-      --cycle35:     #C5000B;  /* 35-day */
-      --cycle21:     #FFFFFF;  /* 21-day */
-      --tplus1:      #C0C0C0;  /* T+1 */
-      --tplus2:      #808080;  /* T+2 */
-      
-      /* Legend Dot Colors */
-      --legend-1471: var(--keymaster);
-      --legend-741:  var(--cycle741);
-      --legend-147:  var(--cycle147);
-      --legend-110:  var(--cycle110);
-      --legend-55:   var(--cycle55);
-      --legend-35:   var(--cycle35);
-      --legend-21:   var(--cycle21);
-      --legend-t1:   var(--tplus1);
-      --legend-t2:   var(--tplus2);
+      --bg-color: #000;
+      --text-color: #fff;
+      --panel-bg: rgba(0, 0, 0, 0.85);
+      --highlight: #d4af37;
     }
-    
-    /* Reset & Base Styling */
+    html.light-theme {
+      --bg-color: #222;
+      --panel-bg: rgba(50, 50, 50, 0.85);
+      --highlight: #0275d8;
+    }
+    /* Reset & Base Styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; }
     body {
       background: var(--bg-color);
       color: var(--text-color);
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       overflow: hidden;
       transition: background 0.3s, color 0.3s;
     }
-    
-    /* Container */
+    /* Container & Canvas */
     #container {
       position: relative;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
     }
-    
-    /* Canvas: fills the screen; disable default touch actions */
     #cycleCanvas {
+      display: block;
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
       z-index: 1;
-      touch-action: none;
     }
-    
-    /* Top Controls Panel */
+    /* Controls */
     .controls {
       position: absolute;
-      top: 20px;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 900px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    @media (max-width: 600px) {
+      .controls {
+        flex-wrap: wrap;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+      }
+    }
+    .control-buttons,
+    .control-toggles,
+    .volume-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .controls button {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      min-width: 80px;
+    }
+    .controls button:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(255,255,255,0.3);
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .date-display { font-size: 0.9rem; white-space: nowrap; text-align: center; flex-grow: 1; }
+    .control-toggles input[type="checkbox"] { margin-right: 4px; }
+    .volume-controls label { font-size: 0.9rem; }
+    .volume-controls input[type="range"] { width: 100px; }
+    .time-scrub-container {
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+    .time-scrub-container input[type="range"] { width: 80%; }
+    /* Harmonic Slider with Value & Presets */
+    .harmonic-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    .harmonic-control input[type="range"] { width: 120px; }
+    .harmonic-control select { padding: 2px 4px; }
+    /* Reverse Mode & Dual Overlay Controls */
+    .reverse-control, .dual-overlay-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.9rem;
+    }
+    /* Legend Panel with Integrated Prediction */
+    .legend {
+      position: absolute;
+      bottom: 10%;
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
@@ -85,70 +147,14 @@
       z-index: 4;
       padding: 0.5rem 1rem;
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .control-buttons {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .controls button,
-    .controls input[type="range"] {
-      margin-right: 10px;
-    }
-    .controls label {
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    /* Time Scrub Slider (0–5000 units) */
-    #time-scrub { width: 300px; }
-    /* Playback Speed Buttons */
-    .speed-btns {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .speed-btn {
-      padding: 4px 8px;
-      font-size: 0.85rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background: var(--highlight);
-      color: var(--text-color);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .speed-btn.active { box-shadow: 0 0 12px var(--highlight); }
-    .date-display {
-      font-size: 0.9rem;
-      color: rgba(240,234,214,0.9);
-      white-space: nowrap;
-      text-align: center;
-    }
-    
-    /* Bottom Legend Panel */
-    .legend {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
-      max-width: 800px;
-      background: var(--panel-bg);
-      border-radius: 12px 12px 0 0;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
-      z-index: 4;
-      padding: 0.5rem 1rem;
-      display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.8rem;
     }
+    .legend-header { font-weight: bold; text-align: center; margin-bottom: 4px; }
+    .legend-indicator { font-size: 0.9rem; color: #ff0000; min-height: 1.2em; }
+    .prediction-indicator { font-size: 1.2rem; color: #ff0000; margin-top: 5px; }
     .legend ul {
       display: flex;
       flex-wrap: wrap;
@@ -163,13 +169,8 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      flex: 1 1 120px;
+      flex: 1 1 150px;
       justify-content: center;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    .legend li.active {
-      background: rgba(255,255,255,0.2);
-      box-shadow: 0 0 8px rgba(255,255,255,0.8);
     }
     .legend-dot {
       display: inline-block;
@@ -177,639 +178,745 @@
       height: 12px;
       border-radius: 50%;
     }
-    /* Legend Debug Info */
-    #legend-debug {
-      font-size: 0.75rem;
-      text-align: center;
-      margin-top: 5px;
-      color: rgba(255,255,255,0.8);
+    /* Vibration Animation */
+    @keyframes vibrate {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0, 0); }
     }
-    
-    /* Sound Wave Animation */
-    .sound-wave {
-      position: absolute;
-      border: 2px solid var(--highlight);
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: expand 1s linear infinite;
-      opacity: 0.6;
-      pointer-events: none;
-      z-index: 5;
-      display: none;
-    }
-    @keyframes expand {
-      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-      100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-    }
-    
-    /* Tooltip */
-    .tooltip {
-      position: absolute;
-      padding: 6px 10px;
-      background: var(--panel-bg);
-      color: var(--text-color);
-      border-radius: 4px;
-      border: 1px solid rgba(255,255,255,0.2);
-      pointer-events: none;
-      z-index: 999;
-      display: none;
-      font-size: 0.8rem;
-      white-space: pre-line;
-    }
-    
-    /* Logo & Emoji – Logo fixed in upper left corner */
+    .vibrate { animation: vibrate 0.5s linear; }
+    /* Logo Container */
     .logo-container {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 6;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
       display: flex;
+      flex-direction: column;
       align-items: center;
-    }
-    #custom-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      transition: opacity 0.5s ease-in-out;
-      opacity: 0;
-      object-fit: cover;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
-    #custom-logo.loaded { opacity: 1; }
-    .emoji {
-      position: absolute;
-      top: -30px;
-      font-size: 24px;
-      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-      opacity: 0;
       pointer-events: none;
     }
-    .emoji.active {
-      opacity: 1;
-      transform: translateY(-10px);
+    @media (max-width: 600px) {
+      .logo-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     }
-    .emoji.fire { left: 50%; transform: translateX(-50%); }
-    .emoji.boom { left: 60%; transform: translateX(-50%); }
-    .emoji.beer { left: 40%; transform: translateX(-50%); }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-      .controls { width: 95%; top: 10px; }
-      .legend { bottom: 0; }
-      #custom-logo { width: 35px; height: 35px; }
-      .emoji { font-size: 20px; }
-    }
-    @media (max-width: 480px) {
-      .controls { flex-direction: column; gap: 8px; align-items: center; }
-      .controls button { min-width: 70px; padding: 6px 12px; font-size: 0.8rem; }
-      .date-display { font-size: 0.8rem; margin-top: 8px; }
-      .legend { bottom: 0; padding: 0.5rem 0.75rem; gap: 10px; }
-      .legend li { flex: 1 1 100px; }
-      #custom-logo { width: 30px; height: 30px; }
-      .emoji { font-size: 18px; }
-    }
-    @media (max-width: 320px) {
-      .controls button { min-width: 60px; padding: 5px 8px; font-size: 0.7rem; }
-      .date-display { font-size: 0.7rem; }
-      .legend li { flex: 1 1 80px; }
-      #custom-logo { width: 25px; height: 25px; }
-      .emoji { font-size: 16px; }
+    .logo-container img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      transition: opacity 0.5s ease-in-out;
+      object-fit: cover;
+      box-shadow: 0 0 15px rgba(0,0,0,0.7);
     }
   </style>
 </head>
 <body>
   <div id="container">
-    <!-- Top Controls Panel -->
-    <div class="controls" id="controls" role="region" aria-label="Animation Controls">
+    <canvas id="cycleCanvas"></canvas>
+    <!-- Controls -->
+    <div class="controls" id="controls" role="region" aria-label="Thumper Controls">
       <div class="control-buttons">
         <button id="pause-btn" aria-label="Pause/Play">Pause</button>
-        <button id="reset-btn" aria-label="Reset Animation">Reset</button>
-        <label>
-          Time Scrub:
-          <input type="range" id="time-scrub" min="0" max="5000" step="1" value="0">
-        </label>
+        <button id="reset-btn" aria-label="Reset">Reset</button>
+        <button id="speed-down-btn" aria-label="Slow Down">Slower</button>
+        <button id="speed-up-btn" aria-label="Speed Up">Faster</button>
+        <button id="download-btn" aria-label="Download Image">Download</button>
       </div>
-      <div class="speed-btns">
-        <button class="speed-btn" data-speed="0.03">1×</button>
-        <button class="speed-btn" data-speed="0.06">2×</button>
-        <button class="speed-btn" data-speed="0.18">6×</button>
-        <button class="speed-btn" data-speed="0.24">8×</button>
+      <div class="date-display" id="date-display"></div>
+      <div class="control-toggles">
+        <label><input type="checkbox" id="muteMusic">Mute Music</label>
+        <label><input type="checkbox" id="muteThumps">Mute Thumps</label>
+        <div class="harmonic-control">
+          <label>
+            Harmonic:
+            <input type="range" id="harmonicSlider" min="0.5" max="2.0" step="0.01" value="1.0">
+          </label>
+          <span id="harmonicValue">1.00</span>
+          <label>
+            Preset:
+            <select id="presetHarmonics">
+              <option value="">--Custom--</option>
+              <option value="1.0">Shitty (1.0)</option>
+              <option value="1.2">Average (1.2)</option>
+              <option value="1.618">Phi (1.618)</option>
+              <option value="2.0">Epic (2.0)</option>
+            </select>
+          </label>
+        </div>
+        <div class="reverse-control">
+          <label><input type="checkbox" id="reverseMode">Reverse Mode</label>
+        </div>
+        <div class="dual-overlay-control">
+          <label><input type="checkbox" id="dualOverlay">Dual Overlay</label>
+        </div>
+        <div class="volume-controls">
+          <label>Music Volume: <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="0.5"></label>
+          <label>Thump Volume: <input type="range" id="thumpVolume" min="0" max="1" step="0.01" value="0.25"></label>
+        </div>
       </div>
-      <div class="date-display" id="date-display">Current: [Loading...]</div>
+      <div class="time-scrub-container">
+        <label>Time Scrub: <input type="range" id="time-scrub" min="0" max="5000" step="1" value="0"></label>
+      </div>
     </div>
-    <!-- Bottom Legend Panel -->
-    <div class="legend" id="legend" role="region" aria-label="Cycle Legend">
+    <!-- Legend with Integrated Prediction -->
+    <div class="legend" id="legend" role="region" aria-label="Market Cycles">
+      <div class="legend-header">Dune Harmonic Cycles</div>
+      <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+      <div class="prediction-indicator" id="predictionIndicator">Prediction: </div>
       <ul>
-        <li data-cycle="1471-day"><span class="legend-dot" style="background: var(--keymaster);"></span> 1471-day Cycle</li>
-        <li data-cycle="741-day"><span class="legend-dot" style="background: var(--cycle741);"></span> 741-day Cycle</li>
-        <li data-cycle="147-day"><span class="legend-dot" style="background: var(--cycle147);"></span> 147-day Cycle</li>
-        <li data-cycle="110-day"><span class="legend-dot" style="background: var(--cycle110);"></span> 110-day Cycle</li>
-        <li data-cycle="55-day"><span class="legend-dot" style="background: var(--cycle55);"></span> 55-day Cycle</li>
-        <li data-cycle="35-day"><span class="legend-dot" style="background: var(--cycle35);"></span> 35-day Cycle</li>
-        <li data-cycle="21-day"><span class="legend-dot" style="background: var(--cycle21);"></span> 21-day Cycle</li>
-        <li data-cycle="T+1"><span class="legend-dot" style="background: var(--tplus1);"></span> T+1</li>
-        <li data-cycle="T+2"><span class="legend-dot" style="background: var(--tplus2);"></span> T+2</li>
+        <li id="legend-1461"><span class="legend-dot" id="legend-dot-1461" style="background: hsl(0,100%,40%);"></span>1461: Shai-Hulud's Call</li>
+        <li id="legend-1470"><span class="legend-dot" id="legend-dot-1470" style="background: hsl(120,100%,40%);"></span>1470: Arrakis Rhapsody</li>
+        <li id="legend-1471"><span class="legend-dot" id="legend-dot-1471" style="background: hsl(30,100%,40%);"></span>1471: Maker's March</li>
+        <li id="legend-741"><span class="legend-dot" id="legend-dot-741" style="background: hsl(60,100%,40%);"></span>741: Sietch Whisper</li>
+        <li id="legend-147"><span class="legend-dot" id="legend-dot-147" style="background: hsl(120,100%,40%);"></span>147: Dune's Heartbeat</li>
+        <li id="legend-55"><span class="legend-dot" id="legend-dot-55" style="background: hsl(30,100%,40%);"></span>55: Melange Pulse</li>
+        <li id="legend-35"><span class="legend-dot" id="legend-dot-35" style="background: hsl(0,100%,40%);"></span>35: Fremen Chant</li>
+        <li id="legend-21"><span class="legend-dot" id="legend-dot-21" style="background: hsl(60,100%,40%);"></span>21: Desert Drift</li>
       </ul>
-      <div id="legend-debug">Debug Info: [N/A]</div>
     </div>
-    <!-- Logo & Emoji Container -->
+    <!-- Logo -->
     <div class="logo-container">
       <a href="#" target="_blank" rel="noopener noreferrer">
         <img id="custom-logo" src="https://fibonacciai.github.io/42069/power-512.png" alt="Power Logo">
       </a>
-      <span class="emoji fire" aria-hidden="true">🔥</span>
-      <span class="emoji boom" aria-hidden="true">💥</span>
-      <span class="emoji beer" aria-hidden="true">🍻</span>
     </div>
-    <!-- Canvas -->
-    <canvas id="cycleCanvas">Your browser does not support the canvas element.</canvas>
+    <!-- Background Music -->
+    <audio id="bgMusic" src="https://fibonacciai.github.io/42069/Fury.mp3" autoplay loop></audio>
   </div>
-  <!-- Sound Wave Element -->
-  <div class="sound-wave" id="soundWave"></div>
-  <!-- Tooltip -->
-  <div id="tooltip" class="tooltip" role="tooltip"></div>
-  
-  <script>
-    // Global variables for multitouch.
-    let currentScale = 1;
-    let panOffset = { x: 0, y: 0 };
-    let initialDistance = 0;
-    let initialScale = 1;
-    let initialPan = {};
 
-    function getDistance(touches) {
-      const dx = touches[0].clientX - touches[1].clientX;
-      const dy = touches[0].clientY - touches[1].clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-    
-    // --------------------- Begin Initialization ---------------------
-    window.addEventListener('load', function() {
-      
-      /*************** 1) CONFIG & INITIAL DATA ***************/
-      function initConfig() { }
-      const CYCLES = [
-        { name: '1471-day', length: 1471, colorVar: '--keymaster' },
-        { name: '741-day',  length: 741,  colorVar: '--cycle741' },
-        { name: '147-day',  length: 147,  colorVar: '--cycle147' },
-        { name: '110-day',  length: 110,  colorVar: '--cycle110' },
-        { name: '55-day',   length: 55,   colorVar: '--cycle55' },
-        { name: '35-day',   length: 35,   colorVar: '--cycle35' },
-        { name: '21-day',   length: 21,   colorVar: '--cycle21' },
-        { name: 'T+1',      length: 1,    colorVar: '--tplus1' },
-        { name: 'T+2',      length: 2,    colorVar: '--tplus2' }
-      ];
-      const KEY_DATES = {
-        "2021-01-28": "MOASS Origin – the buy button was turned off.",
-        "2023-12-05": "Time Magazine Meme Drop – shorting becomes perilous 🔥",
-        "2023-12-25": "Gift Box Meme – the trap is set 💥",
-        "2025-01-28": "35-Day Squeeze Anniversary – pressure peaks.",
-        "2025-01-29": "Lunar New Year & Epic Culmination – the thumper roars 🍻"
-      };
-      const CRUCIAL_DATES = [
-        new Date(2021, 0, 28),
-        new Date(2023, 11, 5),
-        new Date(2023, 11, 25),
-        new Date(2025, 0, 28),
-        new Date(2025, 0, 29)
-      ];
-      const EMOJI_DATES = {
-        "2021-01-28": "🔥",
-        "2023-12-05": "🔥",
-        "2023-12-25": "💥",
-        "2025-01-29": "🍻"
-      };
-      const START_DATE = new Date(2021, 0, 28);
-      const LOCALSTORAGE_KEY = 'cycleSettingsAdv';
-      const defaultSettings = {
-        audioMuted: false,
-        debugOverlay: false,
-        fractalDetails: true,
-        language: 'en'
-      };
-      const FIBONACCI_CYCLES = [21, 34, 55, 89, 144, 233, 377, 610, 987, 1597];
-      const KEY_CYCLES = [1471, 741, 147, 110, 55, 35, 21];
-      function isKeyOrFibonacci(n) {
-        return KEY_CYCLES.includes(n) || FIBONACCI_CYCLES.includes(n);
-      }
-      
-      /*************** 2) MINIMAL i18n ***************/
-      const MESSAGES = {
-        en: {
-          muteAudioLabel: "Mute Audio",
-          showDebugLabel: "Show Debug",
-          showFractalLabel: "Show Harmonics"
-        }
-      };
-      function initI18n() { applyLanguage('en'); }
-      function applyLanguage(lang) {
-        const dict = MESSAGES[lang] || MESSAGES.en;
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-          const key = el.getAttribute('data-i18n');
-          if (dict[key]) { el.textContent = dict[key]; }
-        });
-      }
-      
-      /*************** 3) AUDIO SETUP ***************/
+  <script type="module">
+    (() => {
+      /* ============================================================
+         AUDIO SETUP & HARMONIC TUNING
+         ============================================================ */
       let audioCtx;
-      function initAudioContext() {
+      let harmonicFactor = 1.0;
+      const fibRatios = [1.0, 1.618, 2.618];
+
+      const initAudioContext = () => {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         audioCtx = new AudioContext();
-        document.addEventListener('click', resumeAudioContext);
-        document.addEventListener('touchstart', resumeAudioContext);
-      }
-      function resumeAudioContext() {
-        if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-        document.removeEventListener('click', resumeAudioContext);
-        document.removeEventListener('touchstart', resumeAudioContext);
-      }
-      function audioContextTime() { return audioCtx ? audioCtx.currentTime : performance.now() / 1000; }
-      // playThumper uses 35 Hz, 1.5 sec duration, and a higher initial gain (0.5) for a deeper, smoother thump.
-      function playThumper() {
-        scheduleTone(35, audioContextTime(), 1.5, "sine", 0.5);
-      }
-      // scheduleTone now accepts an optional initialGain parameter.
-      function scheduleTone(frequency, startTime, duration = 0.5, type = "sine", initialGain = 0.3) {
-        if (settings.audioMuted) return;
+        document.addEventListener('click', resumeAndPlayMusic, { once: true });
+        document.addEventListener('touchstart', resumeAndPlayMusic, { once: true });
+      };
+
+      const resumeAndPlayMusic = () => {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => {
+            const bgMusic = document.getElementById('bgMusic');
+            bgMusic.muted = settings?.muteMusic || false;
+            bgMusic.volume = parseFloat(document.getElementById('musicVolume').value);
+            bgMusic.play().catch(err => console.error('bgMusic play error:', err));
+          });
+        }
+      };
+
+      const isThumpMuted = () => settings?.muteThumps || false;
+
+      const playFibonacciPolyrhythm = (baseFreq, duration = 0.75, type = 'sine') => {
+        if (isThumpMuted()) return;
+        const now = audioCtx.currentTime;
+        fibRatios.forEach((ratio, i) => {
+          scheduleTone(baseFreq * ratio, now + i * 0.15, duration, type);
+        });
+      };
+
+      const scheduleTone = (freq, startTime, duration = 0.5, type = 'sine') => {
+        if (isThumpMuted()) return;
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-        oscillator.frequency.setValueAtTime(frequency, startTime);
+        const thumpVolume = parseFloat(document.getElementById('thumpVolume').value);
+        oscillator.frequency.setValueAtTime(freq * harmonicFactor, startTime);
         oscillator.type = type;
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         oscillator.start(startTime);
-        gainNode.gain.setValueAtTime(initialGain, startTime);
+        gainNode.gain.setValueAtTime(thumpVolume, startTime);
         gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
         oscillator.stop(startTime + duration);
-      }
-      function playPolyrhythm(frequencies, baseDuration = 0.5) {
-        if (settings.audioMuted) return;
-        const now = audioCtx.currentTime;
-        frequencies.forEach((freq, index) => {
-          scheduleTone(freq, now + index * 0.15, baseDuration);
-        });
-      }
-      
-      /*************** 4) DRAWING & HARMONIC OVERLAY ***************/
-      function drawCycleRing(ctx, x, y, radius, progress, color) {
-        const angle = progress * 2 * Math.PI;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        const markerX = x + Math.cos(angle) * radius;
-        const markerY = y + Math.sin(angle) * radius;
-        ctx.beginPath();
-        ctx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-      }
-      function drawHarmonicOverlay(ctx, x, y, baseRadius, color) {
-        const numArcs = 5;
-        for (let i = 0; i < numArcs; i++) {
-          const radius = baseRadius * (1 + i * 0.05);
-          const opacity = 1 - i * (1 / numArcs);
-          ctx.beginPath();
-          ctx.arc(x, y, radius, 0, 2 * Math.PI);
-          ctx.strokeStyle = hexToRGBA(color, opacity);
-          ctx.lineWidth = 2;
-          ctx.stroke();
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const slider = document.getElementById('harmonicSlider');
+        const harmonicValueDisplay = document.getElementById('harmonicValue');
+        if (slider) {
+          harmonicFactor = parseFloat(slider.value);
+          harmonicValueDisplay.textContent = parseFloat(slider.value).toFixed(2);
+          slider.addEventListener('input', (e) => {
+            harmonicFactor = parseFloat(e.target.value);
+            harmonicValueDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+          });
         }
-      }
-      function hexToRGBA(color, alpha) {
-        if (color.indexOf("rgb(") === 0) {
-          return color.replace(")", `, ${alpha})`).replace("rgb", "rgba");
+        const presetSelect = document.getElementById('presetHarmonics');
+        if (presetSelect) {
+          presetSelect.addEventListener('change', (e) => {
+            if (e.target.value !== "") {
+              slider.value = e.target.value;
+              harmonicFactor = parseFloat(e.target.value);
+              harmonicValueDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+            }
+          });
         }
-        if (color[0] === "#") { color = color.slice(1); }
-        if (color.length === 3) { color = color.split('').map(c => c + c).join(''); }
-        const r = parseInt(color.substring(0, 2), 16);
-        const g = parseInt(color.substring(2, 4), 16);
-        const b = parseInt(color.substring(4, 6), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      }
-      function showTooltip(tooltipEl, message, x, y) {
-        tooltipEl.textContent = message;
-        tooltipEl.style.left = (x + 10) + 'px';
-        tooltipEl.style.top = (y + 10) + 'px';
-        tooltipEl.style.display = 'block';
-        setTimeout(() => { tooltipEl.style.display = 'none'; }, 2000);
-      }
-      function formatDate(date) {
-        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      }
-      function getCurrentDate(time) { return new Date(START_DATE.getTime() + time * 86400000); }
-      
-      /*************** 5) MAIN LOGIC & LEGEND HIGHLIGHTING ***************/
+      });
+
+      /* ============================================================
+         CANVAS, VISUALS & GEOMETRY
+         ============================================================ */
+      let cycleCanvas, cycleCtx;
+      let cycleWidth, cycleHeight;
       let time = 0;
       let isPaused = false;
       let isScrubbing = false;
       let scrubStartX = 0;
-      let speedMultiplier = 0.03; // Default 1× playback speed.
-      let frameCount = 0;
-      let lastDebugTime = performance.now();
+      let speedMultiplier = 0.05;
       let triggeredResonances = new Set();
-      let waves = [];
-      
-      // Time scrub slider listeners.
-      const timeScrubSlider = document.getElementById("time-scrub");
-      if (timeScrubSlider) {
-        timeScrubSlider.addEventListener("input", (e) => {
-          isScrubbing = true;
-          time = parseFloat(e.target.value);
-        });
-        timeScrubSlider.addEventListener("change", (e) => {
-          isScrubbing = false;
-        });
-      }
-      function highlightLegend(cycleIdentifier) {
-        const legendItem = document.querySelector(`.legend li[data-cycle="${cycleIdentifier}"]`);
-        if (legendItem) {
-          legendItem.classList.add('active');
-          setTimeout(() => { legendItem.classList.remove('active'); }, 500);
+      let thumps = [];
+      let settings;
+      let glitchActive = false;
+      let glitchTimer = 0;
+      // For prediction smoothing (exponential moving average)
+      let smoothedActiveRes = 0;
+
+      // Market cycles and key dates
+      const CYCLES = [
+        { name: "1461: Shai-Hulud's Call", length: 1461, hue: 0 },
+        { name: "1470: Arrakis Rhapsody",    length: 1470, hue: 120 },
+        { name: "1471: Maker's March",       length: 1471, hue: 30 },
+        { name: "741: Sietch Whisper",       length: 741,  hue: 60 },
+        { name: "147: Dune's Heartbeat",     length: 147,  hue: 120 },
+        { name: "55: Melange Pulse",         length: 55,   hue: 30 },
+        { name: "35: Fremen Chant",          length: 35,   hue: 0 },
+        { name: "21: Desert Drift",          length: 21,   hue: 60 }
+      ];
+      const CRUCIAL_DATES = [
+        new Date(2025, 0, 9),
+        new Date(2025, 0, 12),
+        new Date(2025, 0, 23),
+        new Date(2025, 0, 28),
+        new Date(2024, 4, 1),
+        new Date(2025, 0, 29),
+        new Date(2024, 11, 25)
+      ];
+      const FIBONACCI_CYCLES = [21,34,55,89,144,233,377,610,987,1597];
+      const KEY_CYCLES = [1461,1470,1471,741,147];
+      const isKeyOrFibonacci = n => KEY_CYCLES.includes(n) || FIBONACCI_CYCLES.includes(n);
+
+      /* ------------------------------------------------------------
+         SETTINGS & LOCAL STORAGE
+         ------------------------------------------------------------ */
+      const loadSettings = () => {
+        const defaultSettings = { muteMusic: false, muteThumps: false, lightTheme: false };
+        return Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem("thumperSettings") || '{}'));
+      };
+      const saveSettings = () => localStorage.setItem("thumperSettings", JSON.stringify(settings));
+
+      /* ------------------------------------------------------------
+         RESONANCE & VIBRATION EFFECTS
+         ------------------------------------------------------------ */
+      const activeResonances = {};
+      const markResonance = (cycleNameA, cycleNameB) => {
+        activeResonances[cycleNameA] = activeResonances[cycleNameB] = true;
+        addVibrationToLegend(cycleNameA);
+        addVibrationToLegend(cycleNameB);
+        setTimeout(() => {
+          activeResonances[cycleNameA] = activeResonances[cycleNameB] = false;
+          removeVibrationFromLegend(cycleNameA);
+          removeVibrationFromLegend(cycleNameB);
+        }, 500);
+      };
+      const addVibrationToLegend = cycleName => {
+        const period = cycleName.split(":")[0].trim();
+        document.getElementById("legend-dot-" + period)?.classList.add("vibrate");
+      };
+      const removeVibrationFromLegend = cycleName => {
+        const period = cycleName.split(":")[0].trim();
+        document.getElementById("legend-dot-" + period)?.classList.remove("vibrate");
+      };
+
+      /* ============================================================
+         ENHANCED VISUAL SYSTEM: MOON, FRACTALS & STAR FIELD
+         ============================================================ */
+      const moonImage = new Image();
+      moonImage.src = 'https://fibonacciai.github.io/42069/ppmoon.png';
+
+      let fractalOverlayCanvas = null;
+      const computeFractalOverlay = () => {
+        const diameter = Math.min(cycleWidth, cycleHeight) * 0.8;
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = diameter;
+        offCanvas.height = diameter;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.translate(diameter / 2, diameter / 2);
+        drawFractalTreeOff(offCtx, diameter * 0.3, -Math.PI / 2, 4);
+        drawRecursiveCycleOff(offCtx, diameter * 0.25, 3);
+        return offCanvas;
+      };
+
+      const drawFractalTreeOff = (ctx, length, angle, depth) => {
+        if (depth === 0 || length < 2) return;
+        const x2 = length * Math.cos(angle);
+        const y2 = length * Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(x2, y2);
+        drawFractalTreeOff(ctx, length * 0.7, angle - Math.PI / 6, depth - 1);
+        ctx.restore();
+        ctx.save();
+        ctx.translate(x2, y2);
+        drawFractalTreeOff(ctx, length * 0.7, angle + Math.PI / 6, depth - 1);
+        ctx.restore();
+      };
+
+      const drawRecursiveCycleOff = (ctx, radius, depth) => {
+        if (depth <= 0) return;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = "rgba(255,255,255,0.05)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        const newRadius = radius * 0.5;
+        ctx.save(); ctx.translate(-newRadius, 0); drawRecursiveCycleOff(ctx, newRadius, depth - 1); ctx.restore();
+        ctx.save(); ctx.translate(newRadius, 0); drawRecursiveCycleOff(ctx, newRadius, depth - 1); ctx.restore();
+        ctx.save(); ctx.translate(0, -newRadius); drawRecursiveCycleOff(ctx, newRadius, depth - 1); ctx.restore();
+      };
+
+      let starFieldCanvas;
+      const starField = {
+        stars: [],
+        init: (width, height, count) => {
+          starFieldCanvas = document.createElement('canvas');
+          starFieldCanvas.width = width;
+          starFieldCanvas.height = height;
+          const ctx = starFieldCanvas.getContext('2d');
+          starField.stars = [];
+          for (let i = 0; i < count; i++) {
+            starField.stars.push({
+              x: Math.random() * width,
+              y: Math.random() * height,
+              radius: Math.random() * 1.5 + 0.5,
+              baseAlpha: Math.random() * 0.5 + 0.5,
+              twinkleSpeed: Math.random() * 0.02 + 0.005,
+              phase: Math.random() * Math.PI * 2
+            });
+          }
+          starField.draw(ctx, 0);
+        },
+        draw: (ctx, t) => {
+          ctx.clearRect(0, 0, starFieldCanvas.width, starFieldCanvas.height);
+          starField.stars.forEach(star => {
+            const twinkle = 0.5 + 0.5 * Math.sin(t * star.twinkleSpeed + star.phase);
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+            ctx.fillStyle = `rgba(255,255,255,${star.baseAlpha * twinkle})`;
+            ctx.fill();
+          });
         }
-      }
-      function checkKeyDates(currentDate, tooltipEl, x, y) {
-        const iso = currentDate.toISOString().split('T')[0];
-        if (KEY_DATES[iso]) {
-          showTooltip(tooltipEl, KEY_DATES[iso], x, y);
+      };
+
+      const drawMoon = () => {
+        const centerX = cycleWidth / 2, centerY = cycleHeight / 2;
+        const diameter = Math.min(cycleWidth, cycleHeight) * 0.8;
+        const radius = diameter / 2;
+        const pulsate = 1 + 0.05 * Math.sin(time / 50);
+        const glowRadius = radius * 1.5 * pulsate;
+        const glowGradient = cycleCtx.createRadialGradient(centerX, centerY, radius, centerX, centerY, glowRadius);
+        glowGradient.addColorStop(0, 'rgba(180,140,217,0.6)');
+        glowGradient.addColorStop(1, 'rgba(180,140,217,0)');
+        cycleCtx.save();
+        cycleCtx.globalCompositeOperation = 'lighter';
+        cycleCtx.fillStyle = glowGradient;
+        cycleCtx.beginPath();
+        cycleCtx.arc(centerX, centerY, glowRadius, 0, 2 * Math.PI);
+        cycleCtx.fill();
+        cycleCtx.restore();
+        cycleCtx.drawImage(moonImage, centerX - radius, centerY - radius, diameter, diameter);
+        if (fractalOverlayCanvas) {
+          cycleCtx.drawImage(fractalOverlayCanvas, centerX - radius, centerY - radius, diameter, diameter);
         }
-      }
-      const settings = (function loadSettings(){
-        return Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY) || '{}'));
-      })();
-      function saveSettings() { localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings)); }
-      
-      /*************** 6) RESONANCE & EVENT CHECKS ***************/
-      function checkResonance(ctx, x, y, radius, progressA, progressB, currentDate, tooltipEl, cycleA, cycleB) {
+      };
+
+      /* ============================================================
+         VISUAL FEEDBACK, PREDICTIONS & HAPTIC FEEDBACK
+         ============================================================ */
+      // Use a smoothed value for active resonances to prevent rapid prediction changes.
+      const updatePredictionDisplay = (activeResCount) => {
+        // Smooth the activeResCount value:
+        smoothedActiveRes = smoothedActiveRes * 0.95 + activeResCount * 0.05;
+        let predictionText = "";
+        if (smoothedActiveRes < 0.5) {
+          predictionText = "Calm Markets Ahead";
+        } else if (smoothedActiveRes < 1.5) {
+          predictionText = "Mild Fluctuations Expected";
+        } else if (smoothedActiveRes < 2.5) {
+          predictionText = "Moderate Volatility Ahead";
+        } else {
+          predictionText = "High Volatility Ahead";
+        }
+        document.getElementById('predictionIndicator').textContent = `Prediction: ${predictionText}`;
+      };
+
+      const vibrateDevice = duration => {
+        if (navigator.vibrate) { navigator.vibrate(duration); }
+      };
+
+      const getMarketPhase = progress => {
+        if (progress < 0.25) return { phase: "Accumulation", lightness: 30 };
+        else if (progress < 0.5) return { phase: "Markup", lightness: 50 };
+        else if (progress < 0.75) return { phase: "Distribution", lightness: 70 };
+        else return { phase: "Markdown", lightness: 40 };
+      };
+
+      const getCycleColor = (cycle, progress, ringRadius) => {
+        const { lightness } = getMarketPhase(progress);
+        return { color: `hsl(${cycle.hue}, 100%, ${lightness}%)`, lineWidth: 2 * Math.pow(ringRadius, 0.15) };
+      };
+
+      const mandelbrotPerturb = (theta, progress, baseRadius) => {
+        const scale = 0.7885;
+        const c_re = scale * Math.cos(theta + progress * 2 * Math.PI);
+        const c_im = scale * Math.sin(theta + progress * 2 * Math.PI);
+        let z_re = 0, z_im = 0, iter = 0;
+        const maxIter = 20;
+        while (z_re * z_re + z_im * z_im <= 4 && iter < maxIter) {
+          const new_re = z_re * z_re - z_im * z_im + c_re;
+          const new_im = 2 * z_re * z_im + c_im;
+          z_re = new_re; z_im = new_im; iter++;
+        }
+        const norm = iter / maxIter;
+        return (norm * 2 - 1) * (0.05 * baseRadius);
+      };
+
+      const drawCycleRing = (x, y, baseRadius, progress, color, lineWidth) => {
+        const numPoints = 50;
+        const points = [];
+        for (let i = 0; i < numPoints; i++) {
+          const theta = (i / numPoints) * 2 * Math.PI;
+          const r = baseRadius + harmonicFactor * mandelbrotPerturb(theta, progress, baseRadius);
+          points.push({ x: x + r * Math.cos(theta), y: y + r * Math.sin(theta) });
+        }
+        cycleCtx.beginPath();
+        cycleCtx.moveTo(points[0].x, points[0].y);
+        points.forEach(pt => cycleCtx.lineTo(pt.x, pt.y));
+        cycleCtx.closePath();
+        cycleCtx.strokeStyle = color;
+        cycleCtx.lineWidth = lineWidth;
+        cycleCtx.stroke();
+        // Marker indicating current progress.
+        const markerTheta = progress * 2 * Math.PI;
+        cycleCtx.beginPath();
+        cycleCtx.arc(x + baseRadius * Math.cos(markerTheta), y + baseRadius * Math.sin(markerTheta), 6, 0, 2 * Math.PI);
+        cycleCtx.fillStyle = '#fff';
+        cycleCtx.fill();
+
+        // Dual Overlay: draw inverse perturbation if enabled.
+        const dualOverlay = document.getElementById('dualOverlay').checked;
+        if (dualOverlay) {
+          const invPoints = [];
+          for (let i = 0; i < numPoints; i++) {
+            const theta = (i / numPoints) * 2 * Math.PI;
+            const r = baseRadius - harmonicFactor * mandelbrotPerturb(theta, progress, baseRadius);
+            invPoints.push({ x: x + r * Math.cos(theta), y: y + r * Math.sin(theta) });
+          }
+          cycleCtx.beginPath();
+          cycleCtx.moveTo(invPoints[0].x, invPoints[0].y);
+          invPoints.forEach(pt => cycleCtx.lineTo(pt.x, pt.y));
+          cycleCtx.closePath();
+          cycleCtx.strokeStyle = 'cyan';
+          cycleCtx.lineWidth = lineWidth * 0.8;
+          cycleCtx.stroke();
+        }
+      };
+
+      const drawCycles = () => {
+        const centerX = cycleWidth / 2, centerY = cycleHeight / 2;
+        const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+        const currentDate = new Date(new Date(2021, 0, 28).getTime() + time * 86400000);
+        document.getElementById('date-display').textContent =
+          "Current: " + currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const cycleProgresses = [];
+        CYCLES.forEach((cycle, idx) => {
+          const progress = (time % cycle.length) / cycle.length;
+          cycleProgresses.push(progress);
+          const ringRadius = ringSpacing * (CYCLES.length - idx);
+          const { color, lineWidth } = getCycleColor(cycle, progress, ringRadius);
+          let offsetX = 0, offsetY = 0;
+          if (activeResonances[cycle.name]) {
+            offsetX = Math.sin(time * 50 + idx) * 2;
+            offsetY = Math.cos(time * 50 + idx) * 2;
+          }
+          drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, color, lineWidth);
+        });
+        // Check resonances between cycles.
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            const cycleA = CYCLES[i], cycleB = CYCLES[j];
+            if (!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) continue;
+            const ringRadius = ringSpacing * (CYCLES.length - i);
+            checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
+          }
+        }
+        checkCrucialDates(centerX, centerY, currentDate);
+      };
+
+      const spawnThump = (x, y, startRadius, color) => {
+        thumps.push({ x, y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color });
+      };
+
+      const updateThumps = ctx => {
+        for (let i = thumps.length - 1; i >= 0; i--) {
+          const t = thumps[i];
+          t.radius += 2;
+          t.alpha -= 0.015;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.radius, 0, 2 * Math.PI);
+          const updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, (match, rgb) => {
+            return `rgba(${rgb},${t.alpha.toFixed(2)})`;
+          });
+          ctx.strokeStyle = updatedColor;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.restore();
+          if (t.radius >= t.maxRadius || t.alpha <= 0) thumps.splice(i, 1);
+        }
+      };
+
+      const checkResonance = (x, y, radius, progressA, progressB, currentDate, cycleA, cycleB) => {
         const alignmentThreshold = 0.02;
         const diff = Math.abs(progressA - progressB);
-        const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
-        if (!isAlignment) return;
-        const eventKey = `Res-${currentDate.toDateString()}-${radius}-${cycleA.name}-${cycleB.name}`;
+        if (diff >= alignmentThreshold && Math.abs(1 - diff) >= alignmentThreshold) return;
+        const eventKey = `Align-${currentDate.toDateString()}-${radius}-${cycleA.name}-${cycleB.name}`;
         if (triggeredResonances.has(eventKey)) return;
         triggeredResonances.add(eventKey);
-        const dayThreshold = 1;
-        const nearCrucial = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
-        const cycleColor = getComputedStyle(document.documentElement).getPropertyValue(cycleA.colorVar).trim();
-        ctx.beginPath();
-        ctx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
-        // Increase stroke width for near-crucial events.
-        ctx.lineWidth = nearCrucial ? 6 : 4;
-        ctx.strokeStyle = cycleColor;
-        ctx.stroke();
-        drawHarmonicOverlay(ctx, x, y, radius * 1.1, cycleColor);
-        if (nearCrucial) {
-          playPolyrhythm([261.63, 329.63, 392.0], 0.75);
-          playThumper();
-          showTooltip(tooltipEl, `Resonance (Crucial):\n${cycleA.name} & ${cycleB.name}\non ${formatDate(currentDate)}`, x, y);
-        } else {
-          // Adjusted mid-range tone: smoother decay and lower gain.
-          scheduleTone(80, audioContextTime() + 0.1, 0.75, "sine", 0.2);
-          if (navigator.vibrate) { navigator.vibrate(100); }
-          showTooltip(tooltipEl, `Resonance:\n${cycleA.name} & ${cycleB.name}`, x, y);
+        const phaseInfo = getMarketPhase(progressA).phase;
+        const resonanceIndicator = document.getElementById('resonance-indicator');
+        if (resonanceIndicator) {
+          resonanceIndicator.textContent = `Resonance: ${cycleA.name} & ${cycleB.name} (${phaseInfo}) ${currentDate.toLocaleDateString()}`;
+          setTimeout(() => resonanceIndicator.textContent = "Resonance: Off", 4000);
         }
-        spawnWave(x, y, radius * 1.1);
-        if (isKeyOrFibonacci(cycleA.length)) { highlightLegend(cycleA.name); }
-        if (isKeyOrFibonacci(cycleB.length)) { highlightLegend(cycleB.name); }
-        checkKeyDates(currentDate, tooltipEl, x, y);
-      }
-      function checkCrucialDates(ctx, x, y, currentDate, tooltipEl) {
+        markResonance(cycleA.name, cycleB.name);
+        cycleCtx.beginPath();
+        cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+        cycleCtx.strokeStyle = 'rgba(255,0,0,0.8)';
+        cycleCtx.lineWidth = 3;
+        cycleCtx.stroke();
+        playFibonacciPolyrhythm(130.81, 0.75, 'sine');
+        spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.8)');
+        vibrateDevice(50);
+      };
+
+      const checkCrucialDates = (x, y, currentDate) => {
         const dayThreshold = 1;
         const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
         if (found) {
           const eventKey = `Crucial-${currentDate.toDateString()}`;
           if (!triggeredResonances.has(eventKey)) {
             triggeredResonances.add(eventKey);
-            ctx.beginPath();
-            ctx.arc(x, y, 150, 0, 2 * Math.PI);
-            ctx.strokeStyle = 'rgba(255,165,0,0.8)';
-            ctx.lineWidth = 4;
-            ctx.stroke();
-            scheduleTone(523.25, audioContextTime() + 0.1, 0.6);
-            showTooltip(tooltipEl, `Crucial Date near\n${formatDate(currentDate)}`, x, y);
-            spawnWave(x, y, 150);
+            cycleCtx.beginPath();
+            cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
+            cycleCtx.strokeStyle = 'rgba(255,165,0,0.8)';
+            cycleCtx.lineWidth = 4;
+            cycleCtx.stroke();
+            scheduleTone(65.41, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6, 'sine');
+            spawnThump(x, y, 150, 'rgba(255,165,0,0.8)');
+            const resonanceIndicator = document.getElementById('resonance-indicator');
+            if (resonanceIndicator) {
+              resonanceIndicator.textContent = `Resonance: Crucial Date! ${currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+              setTimeout(() => resonanceIndicator.textContent = "Resonance: Off", 4000);
+            }
+            vibrateDevice(100);
           }
         }
-      }
-      function checkEmojiEvents(currentDate) {
-        const formattedDate = currentDate.toISOString().split('T')[0];
-        document.querySelector('.emoji.fire').classList.toggle('active', EMOJI_DATES[formattedDate] === '🔥');
-        document.querySelector('.emoji.boom').classList.toggle('active', EMOJI_DATES[formattedDate] === '💥');
-        document.querySelector('.emoji.beer').classList.toggle('active', EMOJI_DATES[formattedDate] === '🍻');
-      }
-      function spawnWave(x, y, startRadius = 0) {
-        waves.push({ x, y, radius: startRadius, maxRadius: startRadius + 250, alpha: 1 });
-      }
-      function updateWaves() {
-        for (let i = waves.length - 1; i >= 0; i--) {
-          const w = waves[i];
-          w.radius += 2;
-          w.alpha -= 0.015;
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(w.x, w.y, w.radius, 0, 2 * Math.PI);
-          ctx.strokeStyle = `rgba(255,255,255,${w.alpha})`;
-          ctx.lineWidth = 3;
-          ctx.stroke();
-          ctx.restore();
-          if (w.radius >= w.maxRadius || w.alpha <= 0) { waves.splice(i, 1); }
-        }
-      }
-      
-      /*************** 7) MAIN ANIMATION & EVENT HANDLERS ***************/
-      function resizeCanvas() {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.resetTransform();
-        ctx.scale(dpr, dpr);
-      }
-      
-      // Multitouch: Pinch-to-Zoom and Pan.
-      let currentScale = 1;
-      let panOffset = { x: 0, y: 0 };
-      let initialDistance = 0;
-      let initialScale = 1;
-      let initialPan = {};
-      function getDistance(touches) {
-        const dx = touches[0].clientX - touches[1].clientX;
-        const dy = touches[0].clientY - touches[1].clientY;
-        return Math.sqrt(dx * dx + dy * dy);
-      }
-      
-      canvas.addEventListener("touchmove", (e) => {
-        if (!e.touches) return;
-        if (e.touches.length >= 2) {
-          // Two-finger pinch-to-zoom
-          const newDistance = getDistance(e.touches);
-          if (initialDistance === 0) {
-            initialDistance = newDistance;
-            initialScale = currentScale;
-          } else {
-            const scaleFactor = newDistance / initialDistance;
-            currentScale = initialScale * scaleFactor;
-            currentScale = Math.max(0.5, Math.min(currentScale, 5));
-          }
-          e.preventDefault();
-        } else if (e.touches.length === 1) {
-          // One-finger pan
-          const touch = e.touches[0];
-          if (initialPan.x === undefined) {
-            initialPan = { x: touch.clientX, y: touch.clientY };
-          } else {
-            const dx = touch.clientX - initialPan.x;
-            const dy = touch.clientY - initialPan.y;
-            panOffset.x += dx;
-            panOffset.y += dy;
-            initialPan = { x: touch.clientX, y: touch.clientY };
-          }
-          e.preventDefault();
-        }
-      });
-      canvas.addEventListener("touchend", (e) => {
-        if (e.touches.length < 2) {
-          initialDistance = 0;
-          initialPan = {};
-        }
-      });
-      let lastTap = 0;
-      canvas.addEventListener("touchend", (e) => {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTap;
-        if (tapLength < 300 && tapLength > 0) {
-          // Double-tap detected: reset zoom and pan.
-          currentScale = 1;
-          panOffset = { x: 0, y: 0 };
-        }
-        lastTap = currentTime;
-      });
-      
-      // Draw cycles with pan and zoom applied.
-      function drawAllCycles(ctx, tooltipEl, dateDisplay) {
-        const rect = canvas.getBoundingClientRect();
-        ctx.save();
-        ctx.translate(panOffset.x, panOffset.y);
-        ctx.scale(currentScale, currentScale);
-        const centerX = rect.width / (2 * currentScale);
-        const centerY = rect.height / (2 * currentScale);
-        const ringSpacing = Math.min(rect.width, rect.height) / (2 * CYCLES.length * currentScale);
-        const currentDate = getCurrentDate(time);
-        dateDisplay.textContent = `Current: ${formatDate(currentDate)}`;
-        let cycleProgresses = [];
-        CYCLES.forEach((cycle, idx) => {
-          const progress = (time % cycle.length) / cycle.length;
-          cycleProgresses.push(progress);
-          const ringRadius = ringSpacing * (CYCLES.length - idx);
-          const color = getComputedStyle(document.documentElement)
-                        .getPropertyValue(cycle.colorVar)
-                        .trim();
-          drawCycleRing(ctx, centerX, centerY, ringRadius, progress, color);
-          if (settings.fractalDetails) {
-            drawHarmonicOverlay(ctx, centerX, centerY, ringRadius, color);
-          }
+      };
+
+      /* ============================================================
+         CANVAS RESIZING & EVENT HANDLING
+         ============================================================ */
+      const startVisualization = () => {
+        settings = loadSettings();
+        cycleCanvas = document.getElementById('cycleCanvas');
+        cycleCtx = cycleCanvas.getContext('2d');
+        resizeCycleCanvas();
+        starField.init(cycleWidth, cycleHeight, 300);
+        fractalOverlayCanvas = computeFractalOverlay();
+
+        const muteMusicBox = document.getElementById('muteMusic');
+        const muteThumpsBox = document.getElementById('muteThumps');
+        muteMusicBox.checked = settings.muteMusic;
+        muteMusicBox.addEventListener('change', e => {
+          settings.muteMusic = e.target.checked;
+          document.getElementById('bgMusic').muted = settings.muteMusic;
+          saveSettings();
         });
-        for (let i = 0; i < CYCLES.length; i++) {
-          for (let j = i + 1; j < CYCLES.length; j++) {
-            const cycleA = CYCLES[i];
-            const cycleB = CYCLES[j];
-            if (!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) continue;
-            const ringRadius = ringSpacing * (CYCLES.length - i);
-            checkResonance(ctx, centerX, centerY, ringRadius,
-              cycleProgresses[i], cycleProgresses[j],
-              currentDate, tooltipEl, cycleA, cycleB);
-          }
-        }
-        checkCrucialDates(ctx, centerX, centerY, currentDate, tooltipEl);
-        checkEmojiEvents(currentDate);
-        ctx.restore();
-        document.getElementById('legend-debug').textContent = `Time: ${time.toFixed(2)} | FPS: ${frameCount}`;
-      }
-      function animate(dateDisplay, tooltipEl) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawAllCycles(ctx, tooltipEl, dateDisplay);
-        updateWaves();
-        frameCount++;
-        const now = performance.now();
-        if (now - lastDebugTime >= 1000) {
-          frameCount = 0;
-          lastDebugTime = now;
-        }
-        if (!isPaused && !isScrubbing) { 
-          time += speedMultiplier;
-        }
-        requestAnimationFrame(() => animate(dateDisplay, tooltipEl));
-      }
-      function togglePause() {
+        muteThumpsBox.checked = settings.muteThumps;
+        muteThumpsBox.addEventListener('change', e => {
+          settings.muteThumps = e.target.checked;
+          saveSettings();
+        });
+        document.getElementById('musicVolume').addEventListener('input', e => {
+          document.getElementById('bgMusic').volume = parseFloat(e.target.value);
+        });
+        document.getElementById('pause-btn').addEventListener('click', togglePause);
+        document.getElementById('reset-btn').addEventListener('click', resetTime);
+        document.getElementById('speed-down-btn').addEventListener('click', speedDown);
+        document.getElementById('speed-up-btn').addEventListener('click', speedUp);
+        document.getElementById('download-btn').addEventListener('click', () => {
+          const link = document.createElement('a');
+          link.download = 'thumper.png';
+          link.href = cycleCanvas.toDataURL('image/png');
+          link.click();
+        });
+        document.addEventListener('keydown', handleKeyDown);
+        cycleCanvas.addEventListener('wheel', onWheelScrub, { passive: false });
+        cycleCanvas.addEventListener('touchstart', onTouchStart);
+        cycleCanvas.addEventListener('touchmove', onTouchMove);
+        cycleCanvas.addEventListener('touchend', onTouchEnd);
+        window.addEventListener('resize', debounceResize, false);
+        const scrubSlider = document.getElementById('time-scrub');
+        scrubSlider.addEventListener('input', e => { time = parseInt(e.target.value, 10); });
+        document.getElementById('date-display').textContent =
+          "Current: " + new Date(new Date(2021, 0, 28).getTime() + time * 86400000)
+          .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        animate();
+      };
+
+      const debounceResize = () => {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(() => {
+          resizeCycleCanvas();
+          starField.init(cycleWidth, cycleHeight, 300);
+          fractalOverlayCanvas = computeFractalOverlay();
+        }, 200);
+      };
+
+      const resizeCycleCanvas = () => {
+        cycleWidth = window.innerWidth;
+        cycleHeight = window.innerHeight;
+        cycleCanvas.style.width = cycleWidth + "px";
+        cycleCanvas.style.height = cycleHeight + "px";
+        const dpr = window.devicePixelRatio || 1;
+        cycleCanvas.width = cycleWidth * dpr;
+        cycleCanvas.height = cycleHeight * dpr;
+        if (cycleCtx.resetTransform) cycleCtx.resetTransform();
+        cycleCtx.scale(dpr, dpr);
+      };
+
+      const togglePause = () => {
         isPaused = !isPaused;
         document.getElementById('pause-btn').textContent = isPaused ? 'Play' : 'Pause';
-      }
-      function resetTime() { time = 0; triggeredResonances.clear(); waves = []; }
-      function onWheelScrub(e) {
+      };
+
+      const resetTime = () => {
+        time = 0;
+        triggeredResonances.clear();
+        thumps = [];
+        document.getElementById('time-scrub').value = 0;
+      };
+
+      const speedDown = () => { speedMultiplier = Math.max(speedMultiplier / 2, 0.01); };
+      const speedUp = () => { speedMultiplier = Math.min(speedMultiplier * 2, 16); };
+
+      const handleKeyDown = e => {
+        switch (e.key) {
+          case ' ':
+            e.preventDefault();
+            togglePause();
+            break;
+          case 'r':
+          case 'R':
+            resetTime();
+            break;
+          case 'ArrowUp':
+            speedUp();
+            break;
+          case 'ArrowDown':
+            speedDown();
+            break;
+        }
+      };
+
+      const onWheelScrub = e => {
         e.preventDefault();
         const baseSensitivity = 0.0005;
         const acceleration = Math.log(Math.abs(e.deltaY) + 1);
         time += e.deltaY * baseSensitivity * acceleration;
-      }
-      function onTouchStart(e) { isScrubbing = true; scrubStartX = e.touches[0].clientX; }
-      function onTouchMove(e) {
+        document.getElementById('time-scrub').value = time;
+      };
+
+      const onTouchStart = e => {
+        isScrubbing = true;
+        scrubStartX = e.touches[0].clientX;
+      };
+
+      const onTouchMove = e => {
         if (!isScrubbing) return;
         const currentX = e.touches[0].clientX;
-        time += (currentX - scrubStartX) / 5;
+        const dayDelta = (currentX - scrubStartX) / 5;
+        time += dayDelta;
         scrubStartX = currentX;
-      }
-      function onTouchEnd() { isScrubbing = false; }
-      
-      /*************** 8) PLAYBACK SPEED CONTROL ***************/
-      function initSpeedButtons() {
-        const speedButtons = document.querySelectorAll(".speed-btn");
-        speedButtons.forEach(btn => {
-          btn.addEventListener("click", (e) => {
-            speedMultiplier = parseFloat(e.target.getAttribute("data-speed"));
-            speedButtons.forEach(b => b.classList.remove("active"));
-            e.target.classList.add("active");
-          });
-        });
-      }
-      
-      /*************** 9) INITIALIZATION ***************/
-      function startVisualization() {
-        canvas = document.getElementById('cycleCanvas');
-        ctx = canvas.getContext('2d');
-        const pauseBtn = document.getElementById('pause-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const dateDisplay = document.getElementById('date-display');
-        const tooltipEl = document.getElementById('tooltip');
-        const logo = document.getElementById('custom-logo');
-        
-        pauseBtn.addEventListener('click', togglePause);
-        resetBtn.addEventListener('click', resetTime);
-        document.addEventListener('keydown', (e) => {
-          if (e.key === ' ') { e.preventDefault(); togglePause(); }
-          else if (e.key.toLowerCase() === 'r') { resetTime(); }
-        });
-        canvas.addEventListener('wheel', onWheelScrub, { passive: false });
-        canvas.addEventListener('touchstart', onTouchStart);
-        canvas.addEventListener('touchmove', onTouchMove);
-        canvas.addEventListener('touchend', onTouchEnd);
-        logo.addEventListener('load', () => { logo.classList.add('loaded'); });
-        window.addEventListener('resize', () => {
-          clearTimeout(window.resizeTimeout);
-          window.resizeTimeout = setTimeout(resizeCanvas, 200);
-        });
-        resizeCanvas();
-        initSpeedButtons();
-        animate(dateDisplay, tooltipEl);
-      }
-      
-      /*************** 10) INIT CALLS ***************/
-      initConfig();
-      initI18n();
-      initAudioContext();
-      startVisualization();
-    });
+        document.getElementById('time-scrub').value = time;
+      };
+
+      const onTouchEnd = () => { isScrubbing = false; };
+
+      /* ============================================================
+         MAIN ANIMATION LOOP
+         ============================================================ */
+      const animate = () => {
+        cycleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+
+        if (starFieldCanvas) {
+          starField.draw(starFieldCanvas.getContext('2d'), time);
+          cycleCtx.drawImage(starFieldCanvas, 0, 0, cycleWidth, cycleHeight);
+        }
+
+        // Smooth active resonance count:
+        const currentActiveRes = Object.values(activeResonances).filter(Boolean).length;
+        smoothedActiveRes = smoothedActiveRes * 0.95 + currentActiveRes * 0.05;
+        updatePredictionDisplay(smoothedActiveRes);
+
+        // Check if Reverse Mode is enabled.
+        const reverseMode = document.getElementById('reverseMode').checked;
+        if (!isPaused && !isScrubbing) {
+          time += (reverseMode ? -1 : 1) * speedMultiplier * (1 + 0.5 * currentActiveRes);
+        }
+
+        drawMoon();
+        drawCycles();
+        updateThumps(cycleCtx);
+
+        if (glitchActive) {
+          cycleCtx.save();
+          cycleCtx.globalAlpha = 0.3;
+          cycleCtx.translate(Math.random() * 10 - 5, Math.random() * 10 - 5);
+          cycleCtx.rotate((Math.random() * 10 - 5) * Math.PI / 180);
+          cycleCtx.fillStyle = 'rgba(255,255,255,0.2)';
+          cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+          cycleCtx.restore();
+          if (--glitchTimer <= 0) glitchActive = false;
+        }
+
+        document.getElementById('time-scrub').value = time;
+        requestAnimationFrame(animate);
+      };
+
+      /* ============================================================
+         LAUNCH
+         ============================================================ */
+      window.addEventListener('load', () => {
+        initAudioContext();
+        startVisualization();
+      });
+    })();
   </script>
 </body>
 </html>
