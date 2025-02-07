@@ -1,124 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="description" content="Cycle Resonance + Faster Mandelbrot (Single-File)" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cycle Resonance + Faster Fractal</title>
+  <meta charset="UTF-8">
+  <meta name="description" content="Nebula Pulse – A transcendent dark–mode audiovisual visualization of market cycles, infused with sacred geometric magic and harmonic resonance.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nebula Pulse: Starry Night Edition</title>
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-
+  <!-- Favicon -->
+  <link rel="icon" href="https://fibonacciai.github.io/42069/power-512.png" type="image/png">
   <style>
+    /* Base & Theme Variables */
     :root {
-      --bg-color: #0f0f13;
-      --text-color: #ffffff;
-      --panel-bg: rgba(15, 15, 19, 0.85);
-      --highlight: #2196F3;
-
-      --limegreen-color: #32CD32;
-      --skyblue-color: #87CEFA;
-      --orange-color: #FFA500;
-      --pink-color: #FF69B4;
-      --gold-color: #FFD700;
-      --blueviolet-color: rgba(138, 43, 226, 0.8);
-      --orangered-color: rgba(255, 69, 0, 0.8);
-      --turquoise-color: #40E0D0;
-      --purple-color: #800080;
+      --bg-color: #000;
+      --text-color: #fff;
+      --panel-bg: rgba(0, 0, 0, 0.85);
+      --highlight: #d4af37;
     }
     html.light-theme {
-      --bg-color: #f9f9f9;
-      --text-color: #333;
-      --panel-bg: rgba(255, 255, 255, 0.85);
+      --bg-color: #222;
+      --panel-bg: rgba(50, 50, 50, 0.85);
       --highlight: #0275d8;
     }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    /* Reset & Base Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%;
       height: 100%;
-    }
-    body {
       background: var(--bg-color);
       color: var(--text-color);
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Inter', sans-serif;
       overflow: hidden;
-      transition: background 0.3s, color 0.3s;
     }
+    /* Container & Canvas */
     #container {
       position: relative;
       width: 100vw;
       height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
       overflow: hidden;
     }
-    /* Fractal Canvas: covers full background. */
-    #fractalCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-    }
-    /* Cycle Canvas: foreground. */
     #cycleCanvas {
+      display: block;
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
       z-index: 1;
     }
-    .controls,
-    .legend {
+    /* Controls */
+    .controls {
       position: absolute;
-      width: 90%;
-      max-width: 800px;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 900px;
       background: var(--panel-bg);
       border-radius: 12px;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
       z-index: 4;
       padding: 0.5rem 1rem;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-    }
-    .controls {
-      top: 20px;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
     }
-    .legend {
-      bottom: 60px;
-      font-size: 0.8rem;
-      justify-content: space-around;
-      align-items: center;
+    @media (max-width: 600px) {
+      .controls {
+        flex-wrap: wrap;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+      }
     }
-    .control-buttons {
+    .control-buttons,
+    .control-toggles,
+    .volume-controls {
       display: flex;
       gap: 10px;
       align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .control-extra {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
     }
     .controls button {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
       color: var(--text-color);
       padding: 8px 16px;
       border-radius: 4px;
@@ -128,72 +93,157 @@
       min-width: 80px;
     }
     .controls button:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255,255,255,0.2);
       transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+      box-shadow: 0 2px 8px rgba(255,255,255,0.3);
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
     .date-display {
       font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.9);
       white-space: nowrap;
       text-align: center;
+      flex-grow: 1;
     }
-    #settingsPanel {
-      position: absolute;
-      top: 80px;
-      right: 20px;
+    .volume-controls input[type="range"],
+    .time-scrub-container input[type="range"] { width: 100px; }
+    .time-scrub-container {
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+    .time-scrub-container input[type="range"] { width: 80%; }
+    /* NEW: Harmonic Control (Slider + Presets) */
+    .harmonic-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    .harmonic-control input[type="range"] { width: 120px; }
+    .harmonic-control select { padding: 2px 4px; }
+    .harmonic-control span { min-width: 40px; text-align: center; }
+    /* NEW: GPT Tuning Panel */
+    .gpt-control {
+      width: 95%;
+      max-width: 900px;
       background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 4;
       padding: 0.5rem 1rem;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      z-index: 5;
-      font-size: 0.85rem;
-      color: var(--text-color);
+      margin: 10px auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
     }
-    #settingsPanel label {
-      display: block;
-      margin-bottom: 0.3rem;
-      cursor: pointer;
-    }
-    #settingsPanel input,
-    #settingsPanel select {
-      margin-right: 0.5rem;
-    }
-    #debugOverlay {
+    .gpt-control input[type="text"] { flex: 1; padding: 4px; }
+    .gpt-control button { padding: 6px 12px; }
+    /* Legend */
+    .legend {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 8px;
-      border-radius: 4px;
-      color: #fff;
-      font-size: 12px;
-      z-index: 6;
-      display: none;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.8rem;
+      text-align: center;
     }
+    .legend-header { font-weight: bold; margin-bottom: 4px; }
+    .legend-indicator { font-size: 0.9rem; color: #ff0000; min-height: 1.2em; }
+    .legend ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .legend li {
+      display: flex;
+      gap: 5px;
+      flex: 1 1 150px;
+      justify-content: center;
+      align-items: center;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    /* Vibration Animation */
+    @keyframes vibrate {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0, 0); }
+    }
+    .vibrate { animation: vibrate 0.5s linear; }
+    /* Logo Container */
     .logo-container {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      z-index: 3;
+      z-index: 5;
       display: flex;
       flex-direction: column;
       align-items: center;
-      pointer-events: auto;
+      pointer-events: none;
     }
-    #custom-logo {
-      width: 40px;
-      height: 40px;
+    @media (max-width: 600px) {
+      .logo-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    }
+    .logo-container img {
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       transition: opacity 0.5s ease-in-out;
-      opacity: 0;
       object-fit: cover;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 15px rgba(0,0,0,0.7);
     }
-    #custom-logo.loaded {
-      opacity: 1;
+    /* Prediction Display */
+    .prediction-display {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.5rem;
+      color: #ff0000;
+      background: rgba(0,0,0,0.8);
+      padding: 10px 20px;
+      border-radius: 8px;
+      z-index: 10;
+      pointer-events: none;
     }
+    /* (Optional) Emoji Styles */
     .emoji {
       position: absolute;
       top: -30px;
@@ -202,745 +252,777 @@
       opacity: 0;
       pointer-events: none;
     }
-    .emoji.active {
-      opacity: 1;
-      transform: translateY(-10px);
-    }
-    .emoji.fire { left: 50%; transform: translateX(-50%); }
-    .emoji.boom { left: 60%; transform: translateX(-50%); }
-    .emoji.beer { left: 40%; transform: translateX(-50%); }
-    .legend ul {
-      display: flex;
-      flex-wrap: wrap;
-      list-style: none;
-      gap: 15px;
-      justify-content: center;
-      width: 100%;
-    }
-    .legend li {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex: 1 1 120px;
-      justify-content: center;
-    }
-    .legend-dot {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-    .tooltip {
-      position: absolute;
-      padding: 6px 10px;
-      background: var(--panel-bg);
-      color: var(--text-color);
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      pointer-events: none;
-      z-index: 999;
-      display: none;
-      font-size: 0.8rem;
-    }
+    .emoji.active { opacity: 1; transform: translateY(-10px); }
   </style>
 </head>
 <body>
   <div id="container">
-    <!-- Fractal in background -->
-    <canvas id="fractalCanvas"></canvas>
-    <!-- Cycle visualization in foreground -->
     <canvas id="cycleCanvas"></canvas>
-    <!-- Controls Panel -->
-    <div class="controls" id="controls" role="region" aria-label="Animation Controls">
+    <!-- GPT Tuning Panel -->
+    <div class="gpt-control" id="gptControl">
+      <input type="text" id="gptQuery" placeholder="Ask GPT for tuning advice...">
+      <button id="gptSubmit">Ask GPT</button>
+    </div>
+    <!-- Controls -->
+    <div class="controls" id="controls" role="region" aria-label="Thumper Controls">
       <div class="control-buttons">
         <button id="pause-btn" aria-label="Pause/Play">Pause</button>
-        <button id="reset-btn" aria-label="Reset Animation">Reset</button>
-        <button id="speed-down-btn" aria-label="Decrease Speed">Slower</button>
-        <button id="speed-up-btn" aria-label="Increase Speed">Faster</button>
+        <button id="reset-btn" aria-label="Reset">Reset</button>
+        <button id="speed-down-btn" aria-label="Slow Down">Slower</button>
+        <button id="speed-up-btn" aria-label="Speed Up">Faster</button>
         <button id="download-btn" aria-label="Download Image">Download</button>
       </div>
-      <div class="date-display" id="date-display">Current: [Loading...]</div>
-      <!-- Extra controls -->
-      <div class="control-extra">
-        <label for="iterationRange">Iterations:</label>
-        <input type="range" id="iterationRange" min="20" max="100" value="40">
-        <label for="volumeControl">Volume:</label>
-        <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.3">
+      <div class="date-display" id="date-display"></div>
+      <div class="control-toggles">
+        <label><input type="checkbox" id="muteMusic">Mute Music</label>
+        <label><input type="checkbox" id="muteThumps">Mute Thumps</label>
+        <div class="harmonic-control">
+          <label>
+            Harmonic:
+            <input type="range" id="harmonicSlider" min="0.5" max="2.0" step="0.01" value="1.0">
+          </label>
+          <span id="harmonicValue">1.00</span>
+          <label>
+            Preset:
+            <select id="presetHarmonics">
+              <option value="">--Custom--</option>
+              <option value="1.0">Shitty (1.0)</option>
+              <option value="1.2">Average (1.2)</option>
+              <option value="1.618">Phi (1.618)</option>
+              <option value="2.0">Epic (2.0)</option>
+            </select>
+          </label>
+        </div>
+        <div class="volume-controls">
+          <label>Music Volume: <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="0.5"></label>
+          <label>Thump Volume: <input type="range" id="thumpVolume" min="0" max="1" step="0.01" value="0.25"></label>
+        </div>
+      </div>
+      <div class="time-scrub-container">
+        <label>Time Scrub: <input type="range" id="time-scrub" min="0" max="5000" step="1" value="0"></label>
       </div>
     </div>
-    <!-- Settings Panel -->
-    <div id="settingsPanel" aria-label="Settings Panel">
-      <label>
-        <input type="checkbox" id="toggleMute">
-        <span>Mute Audio</span>
-      </label>
-      <label>
-        <input type="checkbox" id="toggleDebug">
-        <span>Show Debug</span>
-      </label>
-      <label>
-        <input type="checkbox" id="toggleFractal" checked>
-        <span>Show Fractals</span>
-      </label>
-      <label>
-        <input type="checkbox" id="toggleTheme">
-        <span>Light Theme</span>
-      </label>
-      <label>
-        <select id="languageSelector" aria-label="Select Language">
-          <option value="en" selected>English</option>
-          <option value="es">Español</option>
-        </select>
-      </label>
+    <!-- Legend -->
+    <div class="legend" id="legend" role="region" aria-label="Market Cycles">
+      <div class="legend-header">Dune Harmonic Cycles</div>
+      <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+      <ul>
+        <li id="legend-1461"><span class="legend-dot" id="legend-dot-1461" style="background: hsl(0,100%,40%);"></span>1461: Shai-Hulud's Call</li>
+        <li id="legend-1470"><span class="legend-dot" id="legend-dot-1470" style="background: hsl(120,100%,40%);"></span>1470: Arrakis Rhapsody</li>
+        <li id="legend-1471"><span class="legend-dot" id="legend-dot-1471" style="background: hsl(30,100%,40%);"></span>1471: Maker's March</li>
+        <li id="legend-741"><span class="legend-dot" id="legend-dot-741" style="background: hsl(60,100%,40%);"></span>741: Sietch Whisper</li>
+        <li id="legend-147"><span class="legend-dot" id="legend-dot-147" style="background: hsl(120,100%,40%);"></span>147: Dune's Heartbeat</li>
+        <li id="legend-55"><span class="legend-dot" id="legend-dot-55" style="background: hsl(30,100%,40%);"></span>55: Melange Pulse</li>
+        <li id="legend-35"><span class="legend-dot" id="legend-dot-35" style="background: hsl(0,100%,40%);"></span>35: Fremen Chant</li>
+        <li id="legend-21"><span class="legend-dot" id="legend-dot-21" style="background: hsl(60,100%,40%);"></span>21: Desert Drift</li>
+      </ul>
     </div>
-    <!-- Debug Overlay -->
-    <div id="debugOverlay"></div>
-    <!-- Logo & Emoji Container -->
+    <!-- Logo -->
     <div class="logo-container">
       <a href="#" target="_blank" rel="noopener noreferrer">
-        <img id="custom-logo" src="https://fibonacciai.github.io/42069/power-512.png" alt="Power Logo"/>
+        <img id="custom-logo" src="https://fibonacciai.github.io/42069/power-512.png" alt="Power Logo">
       </a>
       <span class="emoji fire" aria-hidden="true">🔥</span>
       <span class="emoji boom" aria-hidden="true">💥</span>
       <span class="emoji beer" aria-hidden="true">🍻</span>
     </div>
-    <!-- Legend Panel -->
-    <div class="legend" id="legend" role="region" aria-label="Cycle Legend">
-      <ul>
-        <li><span class="legend-dot" style="background: var(--limegreen-color);"></span> Main ~4yrs Cycle</li>
-        <li><span class="legend-dot" style="background: var(--blueviolet-color);"></span> 1470-day Cycle</li>
-        <li><span class="legend-dot" style="background: var(--orangered-color);"></span> 1471-day Cycle</li>
-        <li><span class="legend-dot" style="background: var(--gold-color);"></span> 741-day Cycle</li>
-        <li><span class="legend-dot" style="background: var(--skyblue-color);"></span> 147-day Cycle</li>
-        <li><span class="legend-dot" style="background: var(--turquoise-color);"></span> 55-day Cycle</li>
-        <li><span class="legend-dot" style="background: var(--orange-color);"></span> 35-day Cycle</li>
-        <li><span class="legend-dot" style="background: var(--purple-color);"></span> 21-day Cycle</li>
-      </ul>
-    </div>
+    <!-- Prediction Display -->
+    <div id="predictionDisplay" class="prediction-display"></div>
+    <!-- Background Music -->
+    <audio id="bgMusic" src="https://fibonacciai.github.io/42069/Fury.mp3" autoplay loop></audio>
   </div>
-  <!-- Tooltip Overlay -->
-  <div id="tooltip" class="tooltip" role="tooltip"></div>
 
   <script type="module">
-    /******************************************
-     * PERFORMANCE-ENHANCED FRACTAL RENDERING VIA WORKER
-     ******************************************/
+    (() => {
+      /******************************************
+       * SETTINGS UTILITIES
+       ******************************************/
+      function loadSettings() {
+        const defaultSettings = { muteMusic: false, muteThumps: false, lightTheme: false };
+        try {
+          return Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem("thumperSettings") || '{}'));
+        } catch (e) {
+          return defaultSettings;
+        }
+      }
+      function saveSettings() {
+        localStorage.setItem("thumperSettings", JSON.stringify(settings));
+      }
+      let settings = loadSettings();
 
-    // Define the worker code as a string.
-    const workerScript = `
-      self.addEventListener('message', function(event) {
-        const data = event.data;
-        if (data.type === 'init') {
-          self.canvas = data.canvas;
-          self.ctx = self.canvas.getContext('2d');
-          self.canvas.width = data.width * data.dpr;
-          self.canvas.height = data.height * data.dpr;
-          self.ctx.scale(data.dpr, data.dpr);
-          renderMandelbrot(data);
-        } else if (data.type === 'render') {
-          self.canvas.width = data.width * data.dpr;
-          self.canvas.height = data.height * data.dpr;
-          self.ctx.scale(data.dpr, data.dpr);
-          renderMandelbrot(data);
+      /******************************************
+       * isKeyOrFibonacci (Global)
+       ******************************************/
+      function isKeyOrFibonacci(n) {
+        const KEY_CYCLES = [1461, 1470, 1471, 741, 147];
+        const FIBONACCI_CYCLES = [21, 34, 55, 89, 144, 233, 377, 610, 987, 1597];
+        return KEY_CYCLES.includes(n) || FIBONACCI_CYCLES.includes(n);
+      }
+
+      /******************************************
+       * AUDIO SETUP, HARMONIC TUNING & DRONE SOUND
+       ******************************************/
+      let audioCtx;
+      let harmonicFactor = 1.0;
+      const fibRatios = [1.0, 1.618, 2.618];
+      let droneOsc, droneGain;
+      function initAudioContext() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        document.addEventListener('click', resumeAndPlayMusic, { once: true });
+        document.addEventListener('touchstart', resumeAndPlayMusic, { once: true });
+      }
+      function resumeAndPlayMusic() {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => {
+            const bgMusic = document.getElementById('bgMusic');
+            bgMusic.muted = settings.muteMusic;
+            bgMusic.volume = parseFloat(document.getElementById('musicVolume').value);
+            bgMusic.play().catch(err => console.error('bgMusic play error:', err));
+          });
+        }
+      }
+      function isThumpMuted() {
+        return settings.muteThumps;
+      }
+      function playFibonacciPolyrhythm(baseFreq, duration = 0.75, type = 'sine') {
+        if (isThumpMuted()) return;
+        const now = audioCtx.currentTime;
+        fibRatios.forEach((ratio, i) => {
+          scheduleTone(baseFreq * ratio, now + i * 0.15, duration, type);
+        });
+      }
+      function scheduleTone(freq, startTime, duration = 0.5, type = 'sine') {
+        if (isThumpMuted()) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        const thumpVolume = parseFloat(document.getElementById('thumpVolume').value);
+        oscillator.frequency.setValueAtTime(freq * harmonicFactor, startTime);
+        oscillator.type = type;
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start(startTime);
+        gainNode.gain.setValueAtTime(thumpVolume, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+        oscillator.stop(startTime + duration);
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        const slider = document.getElementById('harmonicSlider');
+        const harmonicValueDisplay = document.getElementById('harmonicValue');
+        if (slider) {
+          harmonicFactor = parseFloat(slider.value);
+          harmonicValueDisplay.textContent = parseFloat(slider.value).toFixed(2);
+          slider.addEventListener('input', (e) => {
+            harmonicFactor = parseFloat(e.target.value);
+            harmonicValueDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+          });
+        }
+        const presetSelect = document.getElementById('presetHarmonics');
+        if (presetSelect) {
+          presetSelect.addEventListener('change', (e) => {
+            if (e.target.value !== "") {
+              slider.value = e.target.value;
+              harmonicFactor = parseFloat(e.target.value);
+              harmonicValueDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+            }
+          });
         }
       });
-      function hslToRgb(h, s, l){
-          let r, g, b;
-          if(s === 0){ r=g=b=l; }
-          else {
-              const hue2rgb = (p, q, t)=>{
-                  if(t<0)t+=1;
-                  if(t>1)t-=1;
-                  if(t<1/6)return p+(q-p)*6*t;
-                  if(t<1/2)return q;
-                  if(t<2/3)return p+(q-p)*(2/3 - t)*6;
-                  return p;
-              };
-              const q = (l < 0.5) ? l*(1+s) : (l+s - l*s);
-              const p = 2*l - q;
-              r = hue2rgb(p, q, h+1/3);
-              g = hue2rgb(p, q, h);
-              b = hue2rgb(p, q, h-1/3);
-          }
-          return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+      function startDrone() {
+        if (!audioCtx) return;
+        droneOsc = audioCtx.createOscillator();
+        droneGain = audioCtx.createGain();
+        droneOsc.type = 'sine';
+        droneOsc.frequency.setValueAtTime(55 * harmonicFactor, audioCtx.currentTime);
+        droneGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        droneOsc.connect(droneGain);
+        droneGain.connect(audioCtx.destination);
+        droneOsc.start();
       }
-      function renderMandelbrot(params){
-          const { width, height, fractalMaxIterations, fractalZoom, fractalCenterX, fractalCenterY } = params;
-          const ctx = self.ctx;
-          const imageData = ctx.createImageData(width, height);
-          const data = imageData.data;
-          for (let py = 0; py < height; py++){
-              const y0 = fractalCenterY + (py - height/2) * (fractalZoom / height);
-              for (let px = 0; px < width; px++){
-                  const x0 = fractalCenterX + (px - width/2) * (fractalZoom / width);
-                  let x = 0, y = 0, iteration = 0;
-                  while (x*x + y*y <= 4 && iteration < fractalMaxIterations){
-                      let xTemp = x*x - y*y + x0;
-                      y = 2*x*y + y0;
-                      x = xTemp;
-                      iteration++;
-                  }
-                  const idx = (py * width + px) * 4;
-                  if (iteration === fractalMaxIterations) {
-                      data[idx] = 0;
-                      data[idx+1] = 0;
-                      data[idx+2] = 0;
-                      data[idx+3] = 255;
-                  } else {
-                      const hue = (iteration * 10) % 360;
-                      const rgb = hslToRgb(hue/360, 1, 0.5);
-                      data[idx] = rgb[0];
-                      data[idx+1] = rgb[1];
-                      data[idx+2] = rgb[2];
-                      data[idx+3] = 255;
-                  }
-              }
-          }
-          ctx.putImageData(imageData, 0, 0);
+      function updateDroneSound(activeResCount) {
+        if (!droneOsc || !droneGain) return;
+        const newFreq = 55 * harmonicFactor * (1 + activeResCount * 0.1);
+        droneOsc.frequency.setValueAtTime(newFreq, audioCtx.currentTime);
+        const newGain = 0.05 + (activeResCount / 10);
+        droneGain.gain.setValueAtTime(newGain, audioCtx.currentTime);
       }
-    `;
 
-    // Global fractal variables
-    let fractalCanvas, fractalCtx, fractalWidth, fractalHeight, fractalWorker = null;
-    let fractalMaxIterations = 40;
-    let fractalZoom = 2.5;
-    let fractalCenterX = -0.75;
-    let fractalCenterY = 0.0;
-
-    /******************************************
-     * BASIC UTILS
-     ******************************************/
-    const START_DATE = new Date(2021, 0, 28);
-    function getCurrentDate(time) {
-      return new Date(START_DATE.getTime() + time * 86400000);
-    }
-    function formatDate(date){
-      return date.toLocaleDateString('en-US', {
-        weekday:'long',
-        year:'numeric',
-        month:'long',
-        day:'numeric'
-      });
-    }
-    function hslToRgb(h, s, l){
-      let r, g, b;
-      if(s === 0){ r=g=b=l; }
-      else {
-        const hue2rgb = (p, q, t)=>{
-          if(t<0)t+=1;
-          if(t>1)t-=1;
-          if(t<1/6)return p+(q-p)*6*t;
-          if(t<1/2)return q;
-          if(t<2/3)return p+(q-p)*(2/3 - t)*6;
-          return p;
-        };
-        const q = (l<0.5) ? l*(1+s) : (l+s - l*s);
-        const p = 2*l - q;
-        r = hue2rgb(p,q,h+1/3);
-        g = hue2rgb(p,q,h);
-        b = hue2rgb(p,q,h-1/3);
-      }
-      return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
-    }
-
-    /******************************************
-     * FRACTAL RENDERING INIT & FUNCTIONS
-     ******************************************/
-    function initFractalCanvas(){
-      fractalCanvas = document.getElementById('fractalCanvas');
-      // Use OffscreenCanvas if supported
-      if(fractalCanvas.transferControlToOffscreen){
-        const offscreen = fractalCanvas.transferControlToOffscreen();
-        const blob = new Blob([workerScript], { type: 'application/javascript' });
-        fractalWorker = new Worker(URL.createObjectURL(blob));
-        fractalWorker.postMessage({
-          type: 'init',
-          canvas: offscreen,
-          width: fractalCanvas.clientWidth,
-          height: fractalCanvas.clientHeight,
-          dpr: window.devicePixelRatio || 1,
-          fractalMaxIterations: fractalMaxIterations,
-          fractalZoom: fractalZoom,
-          fractalCenterX: fractalCenterX,
-          fractalCenterY: fractalCenterY
-        }, [offscreen]);
-      } else {
-        // Fallback to main-thread rendering
-        fractalCtx = fractalCanvas.getContext('2d');
-        resizeFractalCanvas();
-      }
-    }
-    function resizeFractalCanvas(){
-      fractalWidth = fractalCanvas.clientWidth;
-      fractalHeight = fractalCanvas.clientHeight;
-      if(fractalWorker){
-        fractalWorker.postMessage({
-          type: 'render',
-          width: fractalWidth,
-          height: fractalHeight,
-          dpr: window.devicePixelRatio || 1,
-          fractalMaxIterations: fractalMaxIterations,
-          fractalZoom: fractalZoom,
-          fractalCenterX: fractalCenterX,
-          fractalCenterY: fractalCenterY
-        });
-      } else {
+      /******************************************
+       * CANVAS, VISUALS & GEOMETRY
+       ******************************************/
+      let cycleCanvas, cycleCtx;
+      let cycleWidth, cycleHeight;
+      let timeVar = 0;
+      let isPaused = false;
+      let isScrubbing = false;
+      let scrubStartX = 0;
+      let speedMultiplier = 0.05;
+      let triggeredResonances = new Set();
+      let thumps = [];
+      let glitchActive = false;
+      let glitchTimer = 0;
+      const CYCLES = [
+        { name: "1461: Shai-Hulud's Call", length: 1461, hue: 0 },
+        { name: "1470: Arrakis Rhapsody", length: 1470, hue: 120 },
+        { name: "1471: Maker's March", length: 1471, hue: 30 },
+        { name: "741: Sietch Whisper", length: 741, hue: 60 },
+        { name: "147: Dune's Heartbeat", length: 147, hue: 120 },
+        { name: "55: Melange Pulse", length: 55, hue: 30 },
+        { name: "35: Fremen Chant", length: 35, hue: 0 },
+        { name: "21: Desert Drift", length: 21, hue: 60 }
+      ];
+      const CRUCIAL_DATES = [
+        new Date(2025, 0, 9),
+        new Date(2025, 0, 12),
+        new Date(2025, 0, 23),
+        new Date(2025, 0, 28)
+      ];
+      function resizeCanvas() {
+        cycleWidth = window.innerWidth;
+        cycleHeight = window.innerHeight;
+        cycleCanvas.style.width = cycleWidth + "px";
+        cycleCanvas.style.height = cycleHeight + "px";
         const dpr = window.devicePixelRatio || 1;
-        fractalCanvas.width = fractalWidth * dpr;
-        fractalCanvas.height = fractalHeight * dpr;
-        fractalCtx.resetTransform();
-        fractalCtx.scale(dpr, dpr);
-        if(settings.fractalDetails){
-          renderMandelbrot();
-        } else {
-          fractalCtx.clearRect(0,0, fractalWidth, fractalHeight);
-        }
+        cycleCanvas.width = cycleWidth * dpr;
+        cycleCanvas.height = cycleHeight * dpr;
+        if (cycleCtx.resetTransform) cycleCtx.resetTransform();
+        cycleCtx.scale(dpr, dpr);
       }
-    }
-    function renderMandelbrot(){
-      if(fractalWorker){
-        fractalWorker.postMessage({
-          type: 'render',
-          width: fractalCanvas.clientWidth,
-          height: fractalCanvas.clientHeight,
-          dpr: window.devicePixelRatio || 1,
-          fractalMaxIterations: fractalMaxIterations,
-          fractalZoom: fractalZoom,
-          fractalCenterX: fractalCenterX,
-          fractalCenterY: fractalCenterY
-        });
-      } else {
-        const imageData = fractalCtx.createImageData(fractalWidth, fractalHeight);
-        const data = imageData.data;
-        for(let py = 0; py < fractalHeight; py++){
-          const y0 = fractalCenterY + (py - fractalHeight/2) * (fractalZoom / fractalHeight);
-          for(let px = 0; px < fractalWidth; px++){
-            const x0 = fractalCenterX + (px - fractalWidth/2) * (fractalZoom / fractalWidth);
-            let x = 0, y = 0, iteration = 0;
-            while(x*x + y*y <= 4 && iteration < fractalMaxIterations){
-              let xTemp = x*x - y*y + x0;
-              y = 2*x*y + y0;
-              x = xTemp;
-              iteration++;
-            }
-            const idx = (py * fractalWidth + px) * 4;
-            if(iteration === fractalMaxIterations){
-              data[idx] = 0; data[idx+1] = 0; data[idx+2] = 0; data[idx+3] = 255;
-            } else {
-              const hue = (iteration * 10) % 360;
-              const rgb = hslToRgb(hue/360, 1, 0.5);
-              data[idx] = rgb[0]; data[idx+1] = rgb[1]; data[idx+2] = rgb[2]; data[idx+3] = 255;
-            }
-          }
-        }
-        fractalCtx.putImageData(imageData, 0, 0);
-      }
-    }
-    function fractalAlignmentShift(){
-      // Slight zoom and random shift
-      fractalZoom *= 0.9;
-      fractalCenterX += (Math.random()-0.5) * 0.1 * fractalZoom;
-      fractalCenterY += (Math.random()-0.5) * 0.1 * fractalZoom;
-      fractalMaxIterations += 3;
-      if(fractalMaxIterations > 80) fractalMaxIterations = 40;
-      renderMandelbrot();
-    }
 
-    /******************************************
-     * AUDIO
-     ******************************************/
-    let audioCtx;
-    let audioSettingsRef;
-    function initAudioContext(){
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AudioContext();
-      document.addEventListener('click', resumeAudioCtx);
-      document.addEventListener('touchstart', resumeAudioCtx);
-    }
-    function resumeAudioCtx(){
-      if(audioCtx.state === 'suspended'){
-        audioCtx.resume();
-      }
-      document.removeEventListener('click', resumeAudioCtx);
-      document.removeEventListener('touchstart', resumeAudioCtx);
-    }
-    function setSettingsRef(ref){ audioSettingsRef = ref; }
-    function isAudioMuted(){ return !audioSettingsRef || audioSettingsRef.audioMuted; }
-    function scheduleTone(freq, startTime, duration = 0.5){
-      if(isAudioMuted()) return;
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      const volume = Number(document.getElementById('volumeControl').value);
-      oscillator.frequency.setValueAtTime(freq, startTime);
-      oscillator.type = 'sine';
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      oscillator.start(startTime);
-      gainNode.gain.setValueAtTime(volume, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-      oscillator.stop(startTime + duration);
-    }
-    function playPolyrhythm(freqs, baseDur = 0.5){
-      if(isAudioMuted()) return;
-      const now = audioCtx.currentTime;
-      freqs.forEach((f, i) => {
-        scheduleTone(f, now + i*0.15, baseDur);
-      });
-    }
-
-    /******************************************
-     * CYCLE LOGIC & INTERACTION
-     ******************************************/
-    let cycleCanvas, cycleCtx;
-    let cycleWidth, cycleHeight;
-    let time = 0;
-    let isPaused = false;
-    let isScrubbing = false;
-    let scrubStartX = 0;
-    let speedMultiplier = 0.05;
-    let frameCount = 0;
-    let lastDebugTime = performance.now();
-    let triggeredResonances = new Set();
-    let waves = [];
-    let settings;
-    const CYCLES = [
-      { name: 'Main ~4yrs (1461)', length:1461, colorVar:'--limegreen-color'},
-      { name: '1470-day',         length:1470, colorVar:'--blueviolet-color'},
-      { name: '1471-day',         length:1471, colorVar:'--orangered-color'},
-      { name: '741-day',          length:741,  colorVar:'--gold-color'},
-      { name: '147-day',          length:147,  colorVar:'--skyblue-color'},
-      { name: '55-day',           length:55,   colorVar:'--turquoise-color'},
-      { name: '35-day',           length:35,   colorVar:'--orange-color'},
-      { name: '21-day',           length:21,   colorVar:'--purple-color'}
-    ];
-    const CRUCIAL_DATES = [
-      new Date(2025,0,9),
-      new Date(2025,0,12),
-      new Date(2025,0,23),
-      new Date(2025,0,28),
-      new Date(2024,4,1),
-      new Date(2025,0,29),
-      new Date(2024,11,25)
-    ];
-    const EMOJI_DATES = {
-      '2025-01-27': 'fire',
-      '2025-01-28': 'boom',
-      '2025-01-29': 'beer'
-    };
-    const FIBONACCI_CYCLES = [21,34,55,89,144,233,377,610,987,1597];
-    const KEY_CYCLES = [1461,1470,1471,741,147];
-    function isKeyOrFibonacci(n){
-      return KEY_CYCLES.includes(n) || FIBONACCI_CYCLES.includes(n);
-    }
-    function loadSettings(){
-      const defaultSettings = {
-        audioMuted: false,
-        debugOverlay: false,
-        fractalDetails: true,
-        lightTheme: false,
-        language: 'en'
-      };
-      return Object.assign({}, defaultSettings,
-        JSON.parse(localStorage.getItem("cycleSettingsAdv") || '{}')
-      );
-    }
-    function saveSettings(){
-      localStorage.setItem("cycleSettingsAdv", JSON.stringify(settings));
-    }
-    function startVisualization(){
-      settings = loadSettings();
-      cycleCanvas = document.getElementById('cycleCanvas');
-      cycleCtx = cycleCanvas.getContext('2d');
-      resizeCycleCanvas();
-      initFractalCanvas();
-      const pauseBtn = document.getElementById('pause-btn');
-      const resetBtn = document.getElementById('reset-btn');
-      const speedDownBtn = document.getElementById('speed-down-btn');
-      const speedUpBtn = document.getElementById('speed-up-btn');
-      const downloadBtn = document.getElementById('download-btn');
-      const dateDisplay = document.getElementById('date-display');
-      const toggleMute = document.getElementById('toggleMute');
-      const toggleDebug = document.getElementById('toggleDebug');
-      const toggleFractal = document.getElementById('toggleFractal');
-      const toggleTheme = document.getElementById('toggleTheme');
-      const debugOverlay = document.getElementById('debugOverlay');
-      const logo = document.getElementById('custom-logo');
-
-      setSettingsRef(settings);
-      toggleMute.checked = settings.audioMuted;
-      toggleDebug.checked = settings.debugOverlay;
-      toggleFractal.checked = settings.fractalDetails;
-      toggleTheme.checked = settings.lightTheme;
-      debugOverlay.style.display = settings.debugOverlay ? 'block' : 'none';
-      if(settings.lightTheme){
-        document.documentElement.classList.add('light-theme');
-      }
-      toggleMute.addEventListener('change', e=>{
-        settings.audioMuted = e.target.checked;
-        saveSettings();
-      });
-      toggleDebug.addEventListener('change', e=>{
-        settings.debugOverlay = e.target.checked;
-        debugOverlay.style.display = settings.debugOverlay ? 'block' : 'none';
-        saveSettings();
-      });
-      toggleFractal.addEventListener('change', e=>{
-        settings.fractalDetails = e.target.checked;
-        saveSettings();
-        if(settings.fractalDetails){
-          renderMandelbrot();
-        } else {
-          if(fractalCtx) fractalCtx.clearRect(0,0, fractalWidth, fractalHeight);
-        }
-      });
-      toggleTheme.addEventListener('change', e=>{
-        settings.lightTheme = e.target.checked;
-        document.documentElement.classList.toggle('light-theme', settings.lightTheme);
-        saveSettings();
-      });
-      pauseBtn.addEventListener('click', togglePause);
-      resetBtn.addEventListener('click', resetTime);
-      speedDownBtn.addEventListener('click', speedDown);
-      speedUpBtn.addEventListener('click', speedUp);
-      downloadBtn.addEventListener('click', downloadFractal);
-      document.getElementById('iterationRange').addEventListener('input', (e) => {
-        fractalMaxIterations = Number(e.target.value);
-        if(settings.fractalDetails) renderMandelbrot();
-      });
-      document.addEventListener('keydown', handleKeyDown);
-      cycleCanvas.addEventListener('wheel', onWheelScrub, { passive:false });
-      cycleCanvas.addEventListener('touchstart', onTouchStart);
-      cycleCanvas.addEventListener('touchmove', onTouchMove);
-      cycleCanvas.addEventListener('touchend', onTouchEnd);
-      logo.addEventListener('load', ()=>{
-        logo.classList.add('loaded');
-      });
-      window.addEventListener('resize', ()=>{
-        clearTimeout(window.resizeTimeout);
-        window.resizeTimeout = setTimeout(()=>{
-          resizeCycleCanvas();
-          resizeFractalCanvas();
-        },200);
-      });
-      animate(dateDisplay, debugOverlay);
-    }
-    function resizeCycleCanvas(){
-      cycleWidth = cycleCanvas.clientWidth;
-      cycleHeight = cycleCanvas.clientHeight;
-      const dpr = window.devicePixelRatio || 1;
-      cycleCanvas.width = cycleWidth * dpr;
-      cycleCanvas.height = cycleHeight * dpr;
-      cycleCtx.resetTransform();
-      cycleCtx.scale(dpr, dpr);
-    }
-    function togglePause(){
-      isPaused = !isPaused;
-      const btn = document.getElementById('pause-btn');
-      btn.textContent = isPaused ? 'Play' : 'Pause';
-    }
-    function resetTime(){
-      time = 0;
-      triggeredResonances.clear();
-      waves = [];
-      fractalZoom = 2.5;
-      fractalCenterX = -0.75;
-      fractalCenterY = 0;
-      fractalMaxIterations = Number(document.getElementById('iterationRange').value);
-      if(settings.fractalDetails){
-        renderMandelbrot();
-      }
-    }
-    function speedDown(){
-      speedMultiplier = Math.max(speedMultiplier/2, 0.01);
-    }
-    function speedUp(){
-      speedMultiplier = Math.min(speedMultiplier*2, 16);
-    }
-    function handleKeyDown(e){
-      switch(e.key){
-        case ' ':
-          e.preventDefault();
-          togglePause();
-          break;
-        case 'r':
-        case 'R':
-          resetTime();
-          break;
-        case 'ArrowUp':
-          speedUp();
-          break;
-        case 'ArrowDown':
-          speedDown();
-          break;
-      }
-    }
-    function onWheelScrub(e){
-      e.preventDefault();
-      const baseSensitivity = 0.0005;
-      const acceleration = Math.log(Math.abs(e.deltaY) + 1);
-      time += e.deltaY * baseSensitivity * acceleration;
-    }
-    function onTouchStart(e){
-      isScrubbing = true;
-      scrubStartX = e.touches[0].clientX;
-    }
-    function onTouchMove(e){
-      if(!isScrubbing) return;
-      const currentX = e.touches[0].clientX;
-      const dayDelta = (currentX - scrubStartX) / 5;
-      time += dayDelta;
-      scrubStartX = currentX;
-    }
-    function onTouchEnd(){
-      isScrubbing = false;
-    }
-    function animate(dateDisplay, debugOverlay){
-      cycleCtx.clearRect(0, 0, cycleWidth, cycleHeight);
-      drawAllCycles(dateDisplay);
-      updateWaves(cycleCtx);
-      frameCount++;
-      const now = performance.now();
-      if(now - lastDebugTime >= 1000){
-        if(settings.debugOverlay){
-          const currentDate = getCurrentDate(time);
-          debugOverlay.textContent = \`FPS: \${frameCount} | Time: \${time.toFixed(2)} | Date: \${formatDate(currentDate)}\`;
-        }
-        frameCount = 0;
-        lastDebugTime = now;
-      }
-      if(!isPaused && !isScrubbing){
-        time += speedMultiplier;
-      }
-      requestAnimationFrame(() => animate(dateDisplay, debugOverlay));
-    }
-    function drawAllCycles(dateDisplay){
-      const centerX = cycleWidth / 2;
-      const centerY = cycleHeight / 2;
-      const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
-      const currentDate = getCurrentDate(time);
-      dateDisplay.textContent = \`Current: \${formatDate(currentDate)}\`;
-      let cycleProgresses = [];
-      CYCLES.forEach((cycle, idx) => {
-        const progress = (time % cycle.length) / cycle.length;
-        cycleProgresses.push(progress);
-        const ringRadius = ringSpacing * (CYCLES.length - idx);
-        const color = getComputedStyle(document.documentElement).getPropertyValue(cycle.colorVar).trim();
-        drawCycleRing(centerX, centerY, ringRadius, progress, color);
-      });
-      for(let i = 0; i < CYCLES.length; i++){
-        for(let j = i + 1; j < CYCLES.length; j++){
-          const cycleA = CYCLES[i];
-          const cycleB = CYCLES[j];
-          if(!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) continue;
-          const ringRadius = ringSpacing * (CYCLES.length - i);
-          checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
-        }
-      }
-      checkCrucialDates(centerX, centerY, currentDate);
-      checkEmojiEvents(currentDate);
-    }
-    function drawCycleRing(x, y, radius, progress, color){
-      const angle = progress * 2 * Math.PI;
-      cycleCtx.beginPath();
-      cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
-      cycleCtx.strokeStyle = color;
-      cycleCtx.lineWidth = 2;
-      cycleCtx.stroke();
-      const markerX = x + Math.cos(angle) * radius;
-      const markerY = y + Math.sin(angle) * radius;
-      cycleCtx.beginPath();
-      cycleCtx.arc(markerX, markerY, 6, 0, 2 * Math.PI);
-      cycleCtx.fillStyle = '#fff';
-      cycleCtx.fill();
-    }
-    function checkResonance(x, y, radius, progressA, progressB, currentDate, cycleA, cycleB){
-      const alignmentThreshold = 0.02;
-      const diff = Math.abs(progressA - progressB);
-      const isAlignment = diff < alignmentThreshold || Math.abs(1 - diff) < alignmentThreshold;
-      if(!isAlignment) return;
-      const eventKey = \`Align-\${currentDate.toDateString()}-\${radius}-\${cycleA.name}-\${cycleB.name}\`;
-      if(triggeredResonances.has(eventKey)) return;
-      triggeredResonances.add(eventKey);
-      cycleCtx.beginPath();
-      cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
-      cycleCtx.strokeStyle = 'rgba(0,255,0,0.7)';
-      cycleCtx.lineWidth = 3;
-      cycleCtx.stroke();
-      playPolyrhythm([261.63, 329.63, 392], 0.75);
-      spawnWave(x, y, radius * 1.1);
-      if(settings.fractalDetails){
-        fractalAlignmentShift();
-      }
-      showTooltip(\`Alignment: \${cycleA.name} & \${cycleB.name}\n on \${formatDate(currentDate)}\`, x, y);
-    }
-    function checkCrucialDates(x, y, currentDate){
-      const dayThreshold = 1;
-      const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd)/86400000) < dayThreshold);
-      if(found){
-        const eventKey = \`Crucial-\${currentDate.toDateString()}\`;
-        if(!triggeredResonances.has(eventKey)){
-          triggeredResonances.add(eventKey);
+      /******************************************
+       * STARRY NIGHT–INSPIRED BACKGROUND
+       ******************************************/
+      function drawStarryNightBackground() {
+        const centerX = cycleWidth / 2;
+        const centerY = cycleHeight / 2;
+        // Radial gradient for a deep blue background.
+        const gradient = cycleCtx.createRadialGradient(centerX, centerY, cycleWidth * 0.1, centerX, centerY, cycleWidth * 0.9);
+        gradient.addColorStop(0, "#0D1B2A");
+        gradient.addColorStop(1, "#1B263B");
+        cycleCtx.fillStyle = gradient;
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+        
+        // Draw dynamic swirling brush strokes.
+        const numSwirls = 10;
+        for (let i = 0; i < numSwirls; i++) {
+          const angleOffset = (i / numSwirls) * 2 * Math.PI;
+          cycleCtx.save();
+          cycleCtx.translate(centerX, centerY);
+          // Rotate slowly over time.
+          cycleCtx.rotate(timeVar * 0.0005 + angleOffset);
           cycleCtx.beginPath();
-          cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
-          cycleCtx.strokeStyle = 'rgba(255,165,0,0.8)';
-          cycleCtx.lineWidth = 4;
-          cycleCtx.stroke();
-          scheduleTone(523.25, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6);
-          spawnWave(x, y, 150);
-          if(settings.fractalDetails){
-            fractalAlignmentShift();
+          const steps = 100;
+          for (let j = 0; j < steps; j++) {
+            const theta = j / steps * 4 * Math.PI;
+            // Create a spiral with a sine modulation for a wavy effect.
+            const radius = (j / steps) * cycleWidth * 0.5 + 20 * Math.sin(j / steps * Math.PI + timeVar * 0.005);
+            const x = radius * Math.cos(theta);
+            const y = radius * Math.sin(theta);
+            if (j === 0) cycleCtx.moveTo(x, y);
+            else cycleCtx.lineTo(x, y);
           }
-          showTooltip(\`Crucial Date near \${formatDate(currentDate)}\`, x, y);
+          cycleCtx.strokeStyle = `rgba(255,215,0,0.3)`;
+          cycleCtx.lineWidth = 2;
+          cycleCtx.stroke();
+          cycleCtx.restore();
+        }
+        
+        // Draw twinkling stars.
+        for (let i = 0; i < 50; i++) {
+          const x = Math.random() * cycleWidth;
+          const y = Math.random() * cycleHeight;
+          const starAlpha = 0.3 + 0.7 * Math.random();
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, Math.random() * 2 + 1, 0, 2 * Math.PI);
+          cycleCtx.fillStyle = `rgba(255,255,255,${starAlpha})`;
+          cycleCtx.fill();
         }
       }
-    }
-    function checkEmojiEvents(currentDate){
-      const formattedDate = currentDate.toISOString().split('T')[0];
-      document.querySelector('.emoji.fire').classList.toggle('active', EMOJI_DATES[formattedDate] === 'fire');
-      document.querySelector('.emoji.boom').classList.toggle('active', EMOJI_DATES[formattedDate] === 'boom');
-      document.querySelector('.emoji.beer').classList.toggle('active', EMOJI_DATES[formattedDate] === 'beer');
-    }
-    function spawnWave(x, y, startRadius = 0){
-      waves.push({ x, y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1 });
-    }
-    function updateWaves(ctx){
-      for(let i = waves.length - 1; i >= 0; i--){
-        const w = waves[i];
-        w.radius += 2;
-        w.alpha -= 0.015;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(w.x, w.y, w.radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = \`rgba(255,255,255,\${w.alpha})\`;
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.restore();
-        if(w.radius >= w.maxRadius || w.alpha <= 0){
-          waves.splice(i, 1);
+
+      /******************************************
+       * SACRED GEOMETRY FUNCTIONS
+       ******************************************/
+      function fractalNoise(angle, phase, octaves = 4) {
+        let noise = 0, amplitude = 1, frequency = 1, max = 0;
+        for (let i = 0; i < octaves; i++) {
+          noise += amplitude * Math.sin(frequency * angle + phase);
+          max += amplitude;
+          amplitude *= 0.5;
+          frequency *= 2;
+        }
+        return noise / max;
+      }
+      function drawRings() {
+        const centerX = cycleWidth / 2;
+        const centerY = cycleHeight / 2;
+        const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+        CYCLES.forEach((cycle, idx) => {
+          const progress = (timeVar % cycle.length) / cycle.length;
+          const baseRadius = ringSpacing * (CYCLES.length - idx);
+          const noiseAmp = Math.pow(harmonicFactor, 2) * 0.3 * baseRadius;
+          cycleCtx.save();
+          cycleCtx.shadowColor = 'rgba(255,255,255,0.25)';
+          cycleCtx.shadowBlur = 12;
+          cycleCtx.beginPath();
+          const segments = 100;
+          for (let j = 0; j <= segments; j++) {
+            const angle = (j / segments) * 2 * Math.PI;
+            const noiseVal = fractalNoise(angle, timeVar * 0.001 * (idx + 1) * harmonicFactor, 5);
+            const r = baseRadius + noiseVal * noiseAmp;
+            const x = cycleWidth / 2 + r * Math.cos(angle);
+            const y = cycleHeight / 2 + r * Math.sin(angle);
+            if (j === 0) cycleCtx.moveTo(x, y);
+            else cycleCtx.lineTo(x, y);
+          }
+          cycleCtx.closePath();
+          const { lightness } = getMarketPhase((timeVar % cycle.length) / cycle.length);
+          cycleCtx.strokeStyle = `hsla(${cycle.hue}, 100%, ${lightness}%, 0.9)`;
+          cycleCtx.lineWidth = 2 * harmonicFactor;
+          cycleCtx.stroke();
+          cycleCtx.restore();
+        });
+      }
+      function drawFiboSpiralEnhanced() {
+        const centerX = cycleWidth / 2;
+        const centerY = cycleHeight / 2;
+        const goldenAngle = 2.39996;
+        const numPoints = 300;
+        const scale = (Math.min(cycleWidth, cycleHeight) / 2) / Math.sqrt(numPoints) * harmonicFactor;
+        cycleCtx.save();
+        cycleCtx.globalAlpha = 0.15;
+        cycleCtx.fillStyle = 'rgba(255,255,255,0.5)';
+        for (let i = 1; i < numPoints; i++) {
+          const r = scale * Math.sqrt(i);
+          const theta = i * goldenAngle;
+          const x = centerX + r * Math.cos(theta);
+          const y = centerY + r * Math.sin(theta);
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, 2, 0, 2 * Math.PI);
+          cycleCtx.fill();
+        }
+        cycleCtx.restore();
+      }
+      // The fractal tree was removed.
+      function drawRecursiveCycle(x, y, radius, depth) {
+        if (depth <= 0) return;
+        cycleCtx.beginPath();
+        cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
+        cycleCtx.strokeStyle = "rgba(255,255,255,0.05)";
+        cycleCtx.lineWidth = 1;
+        cycleCtx.stroke();
+        const newRadius = radius * 0.5;
+        drawRecursiveCycle(x - newRadius, y, newRadius, depth - 1);
+        drawRecursiveCycle(x + newRadius, y, newRadius, depth - 1);
+        drawRecursiveCycle(x, y - newRadius, newRadius, depth - 1);
+      }
+      function drawMoon() {
+        const centerX = cycleWidth / 2;
+        const centerY = cycleHeight / 2;
+        const diameter = Math.min(cycleWidth, cycleHeight) * 0.8;
+        const radius = diameter / 2;
+        const pulsate = 1 + 0.05 * Math.sin(timeVar / 50);
+        const glowRadius = radius * 1.5 * pulsate;
+        const glowGradient = cycleCtx.createRadialGradient(centerX, centerY, radius, centerX, centerY, glowRadius);
+        glowGradient.addColorStop(0, 'rgba(180,140,217,0.6)');
+        glowGradient.addColorStop(1, 'rgba(180,140,217,0)');
+        cycleCtx.save();
+        cycleCtx.globalCompositeOperation = 'lighter';
+        cycleCtx.fillStyle = glowGradient;
+        cycleCtx.beginPath();
+        cycleCtx.arc(centerX, centerY, glowRadius, 0, 2 * Math.PI);
+        cycleCtx.fill();
+        cycleCtx.restore();
+        // Draw the recursive cycle overlay as the "moon"
+        drawRecursiveCycle(centerX, centerY, radius * 0.5, 3);
+      }
+      function spawnThump(x, y, startRadius, color) {
+        thumps.push({ x, y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color });
+      }
+      function updateThumps() {
+        for (let i = thumps.length - 1; i >= 0; i--) {
+          const t = thumps[i];
+          t.radius += 2;
+          t.alpha -= 0.015;
+          cycleCtx.save();
+          cycleCtx.beginPath();
+          cycleCtx.arc(t.x, t.y, t.radius, 0, 2 * Math.PI);
+          let updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, (_, rgb) => {
+            return `rgba(${rgb},${t.alpha.toFixed(2)})`;
+          });
+          cycleCtx.strokeStyle = updatedColor;
+          cycleCtx.lineWidth = 3;
+          cycleCtx.stroke();
+          cycleCtx.restore();
+          if (t.radius >= t.maxRadius || t.alpha <= 0) {
+            thumps.splice(i, 1);
+          }
         }
       }
-    }
-    function showTooltip(message, x, y){
-      const tooltip = document.getElementById('tooltip');
-      tooltip.textContent = message;
-      tooltip.style.left = \`\${x + 10}px\`;
-      tooltip.style.top = \`\${y + 10}px\`;
-      tooltip.style.display = 'block';
-      setTimeout(() => { tooltip.style.display = 'none'; }, 2000);
-    }
-    function downloadFractal(){
-      const link = document.createElement('a');
-      link.download = 'fractal.png';
-      link.href = fractalCanvas.toDataURL('image/png');
-      link.click();
-    }
-    /******************************************
-     * LAUNCH
-     ******************************************/
-    window.addEventListener('load', () => {
-      initAudioContext();
-      startVisualization();
-    });
+      function getCurrentDate(timeVar) {
+        const START_DATE = new Date(2021, 0, 28);
+        return new Date(START_DATE.getTime() + timeVar * 86400000);
+      }
+      function formatDate(date) {
+        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+      function getMarketPhase(progress) {
+        if (progress < 0.25) return { phase: "Accumulation", lightness: 30 };
+        else if (progress < 0.5) return { phase: "Markup", lightness: 50 };
+        else if (progress < 0.75) return { phase: "Distribution", lightness: 70 };
+        else return { phase: "Markdown", lightness: 40 };
+      }
+      function getCycleColor(cycle, progress, ringRadius) {
+        const { lightness } = getMarketPhase(progress);
+        return { color: `hsl(${cycle.hue}, 100%, ${lightness}%)`, lineWidth: 2 * Math.pow(ringRadius, 0.15) };
+      }
+      function vibrateDevice(duration) {
+        if (navigator.vibrate) {
+          navigator.vibrate(duration);
+        }
+      }
+      // The harmonic slider scales the visual noise.
+      function drawCycleRing(x, y, baseRadius, progress, color, lineWidth) {
+        const numPoints = 50;
+        const points = [];
+        for (let i = 0; i < numPoints; i++) {
+          const theta = (i / numPoints) * 2 * Math.PI;
+          const r = baseRadius + harmonicFactor * mandelbrotPerturb(theta, progress, baseRadius);
+          points.push({ x: x + r * Math.cos(theta), y: y + r * Math.sin(theta) });
+        }
+        cycleCtx.beginPath();
+        cycleCtx.moveTo(points[0].x, points[0].y);
+        points.forEach(pt => cycleCtx.lineTo(pt.x, pt.y));
+        cycleCtx.closePath();
+        cycleCtx.strokeStyle = color;
+        cycleCtx.lineWidth = lineWidth;
+        cycleCtx.stroke();
+        const markerTheta = progress * 2 * Math.PI;
+        cycleCtx.beginPath();
+        cycleCtx.arc(x + baseRadius * Math.cos(markerTheta), y + baseRadius * Math.sin(markerTheta), 6, 0, 2 * Math.PI);
+        cycleCtx.fillStyle = '#fff';
+        cycleCtx.fill();
+      }
+      function mandelbrotPerturb(theta, progress, baseRadius) {
+        const scale = 0.7885;
+        const c_re = scale * Math.cos(theta + progress * 2 * Math.PI);
+        const c_im = scale * Math.sin(theta + progress * 2 * Math.PI);
+        let z_re = 0, z_im = 0, iter = 0;
+        const maxIter = 20;
+        while (z_re * z_re + z_im * z_im <= 4 && iter < maxIter) {
+          const new_re = z_re * z_re - z_im * z_im + c_re;
+          const new_im = 2 * z_re * z_im + c_im;
+          z_re = new_re;
+          z_im = new_im;
+          iter++;
+        }
+        const norm = iter / maxIter;
+        return (norm * 2 - 1) * (0.05 * baseRadius);
+      }
+      function drawCycles() {
+        const centerX = cycleWidth / 2, centerY = cycleHeight / 2;
+        const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+        const currentDate = getCurrentDate(timeVar);
+        document.getElementById('date-display').textContent = "Current: " + formatDate(currentDate);
+        let cycleProgresses = [];
+        CYCLES.forEach((cycle, idx) => {
+          const progress = (timeVar % cycle.length) / cycle.length;
+          cycleProgresses.push(progress);
+          const ringRadius = ringSpacing * (CYCLES.length - idx);
+          const { color, lineWidth } = getCycleColor(cycle, progress, ringRadius);
+          let offsetX = 0, offsetY = 0;
+          if (triggeredResonances.has(cycle.name)) {
+            offsetX = Math.sin(timeVar * 50 + idx) * 2;
+            offsetY = Math.cos(timeVar * 50 + idx) * 2;
+          }
+          drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, color, lineWidth);
+        });
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            if (!isKeyOrFibonacci(CYCLES[i].length) && !isKeyOrFibonacci(CYCLES[j].length)) continue;
+            const ringRadius = ringSpacing * (CYCLES.length - i);
+            checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, CYCLES[i], CYCLES[j]);
+          }
+        }
+        checkCrucialDates(centerX, centerY, currentDate);
+      }
+      function checkResonance(x, y, radius, progressA, progressB, currentDate, cycleA, cycleB) {
+        const alignmentThreshold = 0.02;
+        const diff = Math.abs(progressA - progressB);
+        if (diff >= alignmentThreshold && Math.abs(1 - diff) >= alignmentThreshold) return;
+        const eventKey = `Align-${currentDate.toDateString()}-${radius}-${cycleA.name}-${cycleB.name}`;
+        if (triggeredResonances.has(eventKey)) return;
+        triggeredResonances.add(eventKey);
+        const phaseInfo = getMarketPhase(progressA).phase;
+        document.getElementById('resonance-indicator').textContent =
+          `Resonance: ${cycleA.name} & ${cycleB.name} (${phaseInfo}) ${currentDate.toDateString()}`;
+        const resLineWidth = 3 * harmonicFactor;
+        const resOpacity = Math.min(0.8 * harmonicFactor, 1);
+        if (diff < alignmentThreshold / 2) {
+          triggerGlitch(40);
+          spawnThump(x, y, radius * 1.1, `rgba(255,0,0,${resOpacity})`);
+          spawnThump(x, y, radius * 1.1, `rgba(255,0,0,${resOpacity})`);
+        }
+        cycleCtx.beginPath();
+        cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+        cycleCtx.strokeStyle = `rgba(255,0,0,${resOpacity})`;
+        cycleCtx.lineWidth = resLineWidth;
+        cycleCtx.stroke();
+        playFibonacciPolyrhythm(130.81, 0.75, 'sine');
+        spawnThump(x, y, radius * 1.1, `rgba(255,0,0,${resOpacity})`);
+        vibrateDevice(50);
+      }
+      function checkCrucialDates(x, y, currentDate) {
+        const dayThreshold = 1;
+        const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
+        if (found) {
+          const eventKey = `Crucial-${currentDate.toDateString()}`;
+          if (!triggeredResonances.has(eventKey)) {
+            triggeredResonances.add(eventKey);
+            cycleCtx.beginPath();
+            cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
+            cycleCtx.strokeStyle = 'rgba(255,165,0,0.8)';
+            cycleCtx.lineWidth = 4;
+            cycleCtx.stroke();
+            scheduleTone(65.41, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6, 'sine');
+            spawnThump(x, y, 150, 'rgba(255,165,0,0.8)');
+            document.getElementById('resonance-indicator').textContent =
+              `Resonance: Crucial Date! ${currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+            setTimeout(() => {
+              document.getElementById('resonance-indicator').textContent = "Resonance: Off";
+            }, 4000);
+            vibrateDevice(100);
+          }
+        }
+      }
+      function triggerGlitch(duration) {
+        glitchActive = true;
+        glitchTimer = duration;
+      }
+
+      /******************************************
+       * STARRY NIGHT–INSPIRED BACKGROUND
+       ******************************************/
+      function drawStarryNightBackground() {
+        const centerX = cycleWidth / 2;
+        const centerY = cycleHeight / 2;
+        // Radial gradient for a deep blue background.
+        const gradient = cycleCtx.createRadialGradient(centerX, centerY, cycleWidth * 0.1, centerX, centerY, cycleWidth * 0.9);
+        gradient.addColorStop(0, "#0D1B2A");
+        gradient.addColorStop(1, "#1B263B");
+        cycleCtx.fillStyle = gradient;
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+        // Draw dynamic swirling brush strokes.
+        const numSwirls = 10;
+        for (let i = 0; i < numSwirls; i++) {
+          const angleOffset = (i / numSwirls) * 2 * Math.PI;
+          cycleCtx.save();
+          cycleCtx.translate(centerX, centerY);
+          cycleCtx.rotate(timeVar * 0.0005 + angleOffset);
+          cycleCtx.beginPath();
+          const steps = 100;
+          for (let j = 0; j < steps; j++) {
+            const theta = j / steps * 4 * Math.PI;
+            const radius = (j / steps) * cycleWidth * 0.5 + 20 * Math.sin(j / steps * Math.PI + timeVar * 0.005);
+            const x = radius * Math.cos(theta);
+            const y = radius * Math.sin(theta);
+            if (j === 0) cycleCtx.moveTo(x, y);
+            else cycleCtx.lineTo(x, y);
+          }
+          cycleCtx.strokeStyle = `rgba(255,215,0,0.3)`;
+          cycleCtx.lineWidth = 2;
+          cycleCtx.stroke();
+          cycleCtx.restore();
+        }
+        // Draw twinkling stars.
+        for (let i = 0; i < 50; i++) {
+          const x = Math.random() * cycleWidth;
+          const y = Math.random() * cycleHeight;
+          const starAlpha = 0.3 + 0.7 * Math.random();
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, Math.random() * 2 + 1, 0, 2 * Math.PI);
+          cycleCtx.fillStyle = `rgba(255,255,255,${starAlpha})`;
+          cycleCtx.fill();
+        }
+      }
+
+      /******************************************
+       * ANIMATION LOOP
+       ******************************************/
+      function animate() {
+        // Draw the Starry Night–inspired background.
+        drawStarryNightBackground();
+        // Overlay a semi-transparent black rectangle for ghost trails.
+        cycleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+        const activeResCount = Object.values(triggeredResonances).filter(Boolean).length;
+        updatePredictionDisplay(activeResCount);
+        updateDroneSound(activeResCount);
+        drawFiboSpiralEnhanced();
+        drawMoon();
+        drawRings();
+        updateThumps();
+        const centerX = cycleWidth / 2;
+        const centerY = cycleHeight / 2;
+        const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+        let cycleProgresses = [];
+        CYCLES.forEach((cycle, idx) => {
+          cycleProgresses.push((timeVar % cycle.length) / cycle.length);
+        });
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            if (!isKeyOrFibonacci(CYCLES[i].length) && !isKeyOrFibonacci(CYCLES[j].length)) continue;
+            const ringRadius = ringSpacing * (CYCLES.length - i);
+            checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], getCurrentDate(timeVar), CYCLES[i], CYCLES[j]);
+          }
+        }
+        checkCrucialDates(centerX, centerY, getCurrentDate(timeVar));
+        document.getElementById('date-display').textContent = "Current: " + formatDate(getCurrentDate(timeVar));
+        if (!isPaused && !isScrubbing) { timeVar += speedMultiplier; }
+        document.getElementById('time-scrub').value = timeVar;
+        if (glitchActive) {
+          cycleCtx.save();
+          cycleCtx.globalAlpha = 0.3;
+          cycleCtx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+          cycleCtx.fillStyle = 'rgba(255,255,255,0.1)';
+          cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+          cycleCtx.restore();
+          glitchTimer--;
+          if (glitchTimer <= 0) { glitchActive = false; }
+        }
+        requestAnimationFrame(animate);
+      }
+      function updatePredictionDisplay(activeResCount) {
+        const predictions = [
+          "Prediction: Calm Markets Ahead",
+          "Prediction: Steady Growth Expected",
+          "Prediction: Market Fluctuations Incoming",
+          "Prediction: Bullish Rally Imminent",
+          "Prediction: Bearish Downturn on the Horizon",
+          "Prediction: High Volatility Ahead"
+        ];
+        let predictionText = "";
+        if (activeResCount > 0) {
+          const index = Math.floor(timeVar / 500) % predictions.length;
+          predictionText = predictions[index];
+        }
+        document.getElementById('predictionDisplay').textContent = predictionText;
+      }
+
+      /******************************************
+       * GPT TUNING SUPPORT (EXPERIMENTAL)
+       ******************************************/
+      async function callGPT(prompt) {
+        try {
+          const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer YOUR_API_KEY"
+            },
+            body: JSON.stringify({
+              model: "gpt-4",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7
+            })
+          });
+          const data = await response.json();
+          return data.choices[0].message.content;
+        } catch (error) {
+          console.error("GPT API error:", error);
+          return "Error calling GPT API.";
+        }
+      }
+      document.getElementById('gptSubmit').addEventListener('click', async () => {
+        const query = document.getElementById('gptQuery').value;
+        if (!query) return;
+        const outputEl = document.getElementById('predictionDisplay');
+        outputEl.textContent = "Thinking...";
+        const gptResponse = await callGPT(query);
+        outputEl.textContent = gptResponse;
+      });
+
+      /******************************************
+       * CONTROLS & RESIZING
+       ******************************************/
+      function setupControls() {
+        settings = loadSettings();
+        document.getElementById('muteMusic').checked = settings.muteMusic;
+        document.getElementById('muteMusic').addEventListener('change', (e) => {
+          settings.muteMusic = e.target.checked;
+          document.getElementById('bgMusic').muted = settings.muteMusic;
+          saveSettings();
+        });
+        document.getElementById('muteThumps').checked = settings.muteThumps;
+        document.getElementById('muteThumps').addEventListener('change', (e) => {
+          settings.muteThumps = e.target.checked;
+          saveSettings();
+        });
+        document.getElementById('musicVolume').addEventListener('input', (e) => {
+          document.getElementById('bgMusic').volume = parseFloat(e.target.value);
+        });
+        document.getElementById('pause-btn').addEventListener('click', () => {
+          isPaused = !isPaused;
+          document.getElementById('pause-btn').textContent = isPaused ? 'Play' : 'Pause';
+        });
+        document.getElementById('reset-btn').addEventListener('click', () => {
+          timeVar = 0;
+          triggeredResonances.clear();
+          thumps = [];
+          document.getElementById('time-scrub').value = 0;
+        });
+        document.getElementById('speed-down-btn').addEventListener('click', () => {
+          speedMultiplier = Math.max(speedMultiplier / 2, 0.01);
+        });
+        document.getElementById('speed-up-btn').addEventListener('click', () => {
+          speedMultiplier = Math.min(speedMultiplier * 2, 16);
+        });
+        document.getElementById('download-btn').addEventListener('click', () => {
+          const link = document.createElement('a');
+          link.download = 'nebula_pulse.png';
+          link.href = cycleCanvas.toDataURL('image/png');
+          link.click();
+        });
+        document.getElementById('time-scrub').addEventListener('input', (e) => {
+          timeVar = parseInt(e.target.value, 10);
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === ' ') {
+            e.preventDefault();
+            isPaused = !isPaused;
+            document.getElementById('pause-btn').textContent = isPaused ? 'Play' : 'Pause';
+          }
+          if (e.key === 'r' || e.key === 'R') {
+            timeVar = 0;
+            triggeredResonances.clear();
+            thumps = [];
+            document.getElementById('time-scrub').value = 0;
+          }
+          if (e.key === 'ArrowUp') {
+            speedMultiplier = Math.min(speedMultiplier * 2, 16);
+          }
+          if (e.key === 'ArrowDown') {
+            speedMultiplier = Math.max(speedMultiplier / 2, 0.01);
+          }
+        });
+        window.addEventListener('resize', () => {
+          resizeCanvas();
+          // For our Starry Night background, redraw on each frame.
+        });
+      }
+
+      /******************************************
+       * LAUNCH
+       ******************************************/
+      window.addEventListener('load', () => {
+        cycleCanvas = document.getElementById('cycleCanvas');
+        cycleCtx = cycleCanvas.getContext('2d');
+        resizeCanvas();
+        setupControls();
+        initAudioContext();
+        startDrone();
+        requestAnimationFrame(animate);
+      });
+    })();
   </script>
 </body>
 </html>
