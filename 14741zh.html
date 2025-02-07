@@ -2,420 +2,895 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gateway Process Visualization</title>
+  <meta name="description" content="Nebula Pulse – A Dark-Mode Particle Audiovisual Visualization of Market Cycles, Fractalized to the Tits" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nebula Pulse: Fractal Market Simulation</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Favicon -->
+  <link rel="icon" href="https://fibonacciai.github.io/42069/power-512.png" type="image/png">
   <style>
-    /* Basic reset and styling */
-    html, body, #root {
+    /* Base & Theme Variables */
+    :root {
+      --bg-color: #000;
+      --text-color: #fff;
+      --panel-bg: rgba(0, 0, 0, 0.85);
+      --highlight: #d4af37;
+    }
+    html.light-theme {
+      --bg-color: #222;
+      --panel-bg: rgba(50, 50, 50, 0.85);
+      --highlight: #0275d8;
+    }
+    /* Reset & Base Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; }
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+    /* Container & Canvas */
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #cycleCanvas {
+      display: block;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 1;
+    }
+    /* Controls */
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 900px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    @media (max-width: 600px) {
+      .controls {
+        flex-wrap: wrap;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+      }
+    }
+    .control-buttons,
+    .control-toggles,
+    .volume-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .controls button {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      min-width: 80px;
+    }
+    .controls button:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(255,255,255,0.3);
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .date-display { font-size: 0.9rem; white-space: nowrap; text-align: center; flex-grow: 1; }
+    .control-toggles input[type="checkbox"] { margin-right: 4px; }
+    .volume-controls label { font-size: 0.9rem; }
+    .volume-controls input[type="range"] { width: 100px; }
+    .time-scrub-container {
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+    .time-scrub-container input[type="range"] { width: 80%; }
+    /* Harmonic Slider with Value & Presets */
+    .harmonic-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    .harmonic-control input[type="range"] { width: 120px; }
+    .harmonic-control select { padding: 2px 4px; }
+    /* Legend Panel with Prediction integrated */
+    .legend {
+      position: absolute;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 4;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+    .legend-header { font-weight: bold; text-align: center; margin-bottom: 4px; }
+    .legend-indicator { font-size: 0.9rem; color: #ff0000; min-height: 1.2em; }
+    .prediction-indicator { font-size: 1.2rem; color: #ff0000; margin-top: 5px; }
+    .legend ul {
+      display: flex;
+      flex-wrap: wrap;
+      list-style: none;
+      gap: 15px;
+      justify-content: center;
+      width: 100%;
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      font-family: sans-serif;
+    }
+    .legend li {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1 1 150px;
+      justify-content: center;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    /* Reverse Mode Control */
+    .reverse-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.9rem;
+    }
+    /* Vibration Animation */
+    @keyframes vibrate {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0, 0); }
+    }
+    .vibrate { animation: vibrate 0.5s linear; }
+    /* Logo Container */
+    .logo-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    @media (max-width: 600px) {
+      .logo-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    }
+    .logo-container img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      transition: opacity 0.5s ease-in-out;
+      object-fit: cover;
+      box-shadow: 0 0 15px rgba(0,0,0,0.7);
     }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="container">
+    <canvas id="cycleCanvas"></canvas>
+    <!-- Controls -->
+    <div class="controls" id="controls" role="region" aria-label="Thumper Controls">
+      <div class="control-buttons">
+        <button id="pause-btn" aria-label="Pause/Play">Pause</button>
+        <button id="reset-btn" aria-label="Reset">Reset</button>
+        <button id="speed-down-btn" aria-label="Slow Down">Slower</button>
+        <button id="speed-up-btn" aria-label="Speed Up">Faster</button>
+        <button id="download-btn" aria-label="Download Image">Download</button>
+      </div>
+      <div class="date-display" id="date-display"></div>
+      <div class="control-toggles">
+        <label><input type="checkbox" id="muteMusic">Mute Music</label>
+        <label><input type="checkbox" id="muteThumps">Mute Thumps</label>
+        <div class="harmonic-control">
+          <label>
+            Harmonic:
+            <input type="range" id="harmonicSlider" min="0.5" max="2.0" step="0.01" value="1.0">
+          </label>
+          <span id="harmonicValue">1.00</span>
+          <label>
+            Preset:
+            <select id="presetHarmonics">
+              <option value="">--Custom--</option>
+              <option value="1.0">Shitty (1.0)</option>
+              <option value="1.2">Average (1.2)</option>
+              <option value="1.618">Phi (1.618)</option>
+              <option value="2.0">Epic (2.0)</option>
+            </select>
+          </label>
+        </div>
+        <div class="reverse-control">
+          <label><input type="checkbox" id="reverseMode">Reverse Mode</label>
+        </div>
+        <div class="volume-controls">
+          <label>Music Volume: <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="0.5"></label>
+          <label>Thump Volume: <input type="range" id="thumpVolume" min="0" max="1" step="0.01" value="0.25"></label>
+        </div>
+      </div>
+      <div class="time-scrub-container">
+        <label>Time Scrub: <input type="range" id="time-scrub" min="0" max="5000" step="1" value="0"></label>
+      </div>
+    </div>
+    <!-- Legend with Prediction -->
+    <div class="legend" id="legend" role="region" aria-label="Market Cycles">
+      <div class="legend-header">Dune Harmonic Cycles</div>
+      <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+      <div class="prediction-indicator" id="predictionIndicator">Prediction: </div>
+      <ul>
+        <li id="legend-1461"><span class="legend-dot" id="legend-dot-1461" style="background: hsl(0,100%,40%);"></span>1461: Shai-Hulud's Call</li>
+        <li id="legend-1470"><span class="legend-dot" id="legend-dot-1470" style="background: hsl(120,100%,40%);"></span>1470: Arrakis Rhapsody</li>
+        <li id="legend-1471"><span class="legend-dot" id="legend-dot-1471" style="background: hsl(30,100%,40%);"></span>1471: Maker's March</li>
+        <li id="legend-741"><span class="legend-dot" id="legend-dot-741" style="background: hsl(60,100%,40%);"></span>741: Sietch Whisper</li>
+        <li id="legend-147"><span class="legend-dot" id="legend-dot-147" style="background: hsl(120,100%,40%);"></span>147: Dune's Heartbeat</li>
+        <li id="legend-55"><span class="legend-dot" id="legend-dot-55" style="background: hsl(30,100%,40%);"></span>55: Melange Pulse</li>
+        <li id="legend-35"><span class="legend-dot" id="legend-dot-35" style="background: hsl(0,100%,40%);"></span>35: Fremen Chant</li>
+        <li id="legend-21"><span class="legend-dot" id="legend-dot-21" style="background: hsl(60,100%,40%);"></span>21: Desert Drift</li>
+      </ul>
+    </div>
+    <!-- Logo -->
+    <div class="logo-container">
+      <a href="#" target="_blank" rel="noopener noreferrer">
+        <img id="custom-logo" src="https://fibonacciai.github.io/42069/power-512.png" alt="Power Logo">
+      </a>
+    </div>
+    <!-- Background Music -->
+    <audio id="bgMusic" src="https://fibonacciai.github.io/42069/Fury.mp3" autoplay loop></audio>
+  </div>
   <script type="module">
-    import React, { useEffect, useRef, useState } from 'https://esm.sh/react@18';
-    import ReactDOM from 'https://esm.sh/react-dom@18';
-    import { motion, AnimatePresence } from 'https://esm.sh/framer-motion';
-    import { ChevronDown, ChevronUp, Play, Pause, RefreshCw } from 'https://esm.sh/lucide-react';
+    (() => {
+      /* ============================================================
+         AUDIO SETUP & HARMONIC TUNING
+         ============================================================ */
+      let audioCtx;
+      let harmonicFactor = 1.0;
+      const fibRatios = [1.0, 1.618, 2.618];
 
-    const GatewayVisualization = () => {
-      const canvasRef = useRef(null);
-      const particlesRef = useRef([]);
-      // Persist animation state across renders
-      const rotationRef = useRef(0);
-      const hueRef = useRef(0);
+      const initAudioContext = () => {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        document.addEventListener('click', resumeAndPlayMusic, { once: true });
+        document.addEventListener('touchstart', resumeAndPlayMusic, { once: true });
+      };
 
-      const [isAnimating, setIsAnimating] = useState(true);
-      const [viewMode, setViewMode] = useState('cosmic'); // cosmic, torus, quasar
-      const [showDetails, setShowDetails] = useState(false);
-      const [frequency, setFrequency] = useState(7.83); // Schumann resonance default
-      const [energyLevel, setEnergyLevel] = useState(50);
-      const [animationSpeed, setAnimationSpeed] = useState(1); // New animation speed control
-
-      // Particle class for dynamic effects
-      class Particle {
-        constructor(x, y, canvas) {
-          this.x = x;
-          this.y = y;
-          this.canvas = canvas;
-          this.size = Math.random() * 3;
-          this.speedX = Math.random() * 3 - 1.5;
-          this.speedY = Math.random() * 3 - 1.5;
-          this.life = 1;
-          this.color = `hsla(${Math.random() * 60 + 200}, 100%, 50%, ${this.life})`;
-        }
-
-        update() {
-          this.x += this.speedX;
-          this.y += this.speedY;
-          this.life -= 0.01;
-          this.color = `hsla(${Math.random() * 60 + 200}, 100%, 50%, ${this.life})`;
-        }
-
-        draw(ctx) {
-          ctx.fillStyle = this.color;
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        isAlive() {
-          return this.life > 0;
-        }
-      }
-
-      // Creates new particles at a given position
-      const createParticleSystem = (canvas, x, y, count) => {
-        for (let i = 0; i < count; i++) {
-          particlesRef.current.push(new Particle(x, y, canvas));
+      const resumeAndPlayMusic = () => {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => {
+            const bgMusic = document.getElementById('bgMusic');
+            bgMusic.muted = settings?.muteMusic || false;
+            bgMusic.volume = parseFloat(document.getElementById('musicVolume').value);
+            bgMusic.play().catch(err => console.error('bgMusic play error:', err));
+          });
         }
       };
 
-      // Reset animation values and clear particles
-      const handleReset = () => {
-        rotationRef.current = 0;
-        hueRef.current = 0;
-        particlesRef.current = [];
+      const isThumpMuted = () => settings?.muteThumps || false;
+
+      const playFibonacciPolyrhythm = (baseFreq, duration = 0.75, type = 'sine') => {
+        if (isThumpMuted()) return;
+        const now = audioCtx.currentTime;
+        fibRatios.forEach((ratio, i) => {
+          scheduleTone(baseFreq * ratio, now + i * 0.15, duration, type);
+        });
       };
 
-      useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        let animationFrameId;
+      const scheduleTone = (freq, startTime, duration = 0.5, type = 'sine') => {
+        if (isThumpMuted()) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        const thumpVolume = parseFloat(document.getElementById('thumpVolume').value);
+        oscillator.frequency.setValueAtTime(freq * harmonicFactor, startTime);
+        oscillator.type = type;
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start(startTime);
+        gainNode.gain.setValueAtTime(thumpVolume, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+        oscillator.stop(startTime + duration);
+      };
 
-        // Adjust canvas size based on its container
-        const handleResize = () => {
-          canvas.width = canvas.clientWidth;
-          canvas.height = canvas.clientHeight;
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
+      document.addEventListener('DOMContentLoaded', () => {
+        const slider = document.getElementById('harmonicSlider');
+        const harmonicValueDisplay = document.getElementById('harmonicValue');
+        if (slider) {
+          harmonicFactor = parseFloat(slider.value);
+          harmonicValueDisplay.textContent = parseFloat(slider.value).toFixed(2);
+          slider.addEventListener('input', (e) => {
+            harmonicFactor = parseFloat(e.target.value);
+            harmonicValueDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+          });
+        }
+        const presetSelect = document.getElementById('presetHarmonics');
+        if (presetSelect) {
+          presetSelect.addEventListener('change', (e) => {
+            if (e.target.value !== "") {
+              slider.value = e.target.value;
+              harmonicFactor = parseFloat(e.target.value);
+              harmonicValueDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+            }
+          });
+        }
+      });
 
-        // Draw the "Cosmic Egg" view mode
-        const drawCosmicEgg = () => {
-          const { width, height } = canvas;
-          const centerX = width / 2;
-          const centerY = height / 2;
+      /* ============================================================
+         CANVAS, VISUALS & GEOMETRY
+         ============================================================ */
+      let cycleCanvas, cycleCtx;
+      let cycleWidth, cycleHeight;
+      let time = 0;
+      let isPaused = false;
+      let isScrubbing = false;
+      let scrubStartX = 0;
+      let speedMultiplier = 0.05;
+      let triggeredResonances = new Set();
+      let thumps = [];
+      let settings;
+      let glitchActive = false;
+      let glitchTimer = 0;
 
-          // Create a radial gradient background
-          const gradient = ctx.createRadialGradient(
-            centerX, centerY, 0,
-            centerX, centerY, height
-          );
-          gradient.addColorStop(0, `hsla(${hueRef.current}, 70%, 10%, 1)`);
-          gradient.addColorStop(1, `hsla(${(hueRef.current + 60) % 360}, 70%, 5%, 1)`);
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
+      // Market cycles (CYCLES) and crucial dates
+      const CYCLES = [
+        { name: "1461: Shai-Hulud's Call", length: 1461, hue: 0 },
+        { name: "1470: Arrakis Rhapsody",    length: 1470, hue: 120 },
+        { name: "1471: Maker's March",       length: 1471, hue: 30 },
+        { name: "741: Sietch Whisper",       length: 741,  hue: 60 },
+        { name: "147: Dune's Heartbeat",     length: 147,  hue: 120 },
+        { name: "55: Melange Pulse",         length: 55,   hue: 30 },
+        { name: "35: Fremen Chant",          length: 35,   hue: 0 },
+        { name: "21: Desert Drift",          length: 21,   hue: 60 }
+      ];
+      const CRUCIAL_DATES = [
+        new Date(2025, 0, 9),
+        new Date(2025, 0, 12),
+        new Date(2025, 0, 23),
+        new Date(2025, 0, 28),
+        new Date(2024, 4, 1),
+        new Date(2025, 0, 29),
+        new Date(2024, 11, 25)
+      ];
+      const FIBONACCI_CYCLES = [21,34,55,89,144,233,377,610,987,1597];
+      const KEY_CYCLES = [1461,1470,1471,741,147];
+      const isKeyOrFibonacci = n => KEY_CYCLES.includes(n) || FIBONACCI_CYCLES.includes(n);
 
-          // Draw the cosmic egg structure
+      /* ------------------------------------------------------------
+         SETTINGS & LOCAL STORAGE
+         ------------------------------------------------------------ */
+      const loadSettings = () => {
+        const defaultSettings = { muteMusic: false, muteThumps: false, lightTheme: false };
+        return Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem("thumperSettings") || '{}'));
+      };
+      const saveSettings = () => localStorage.setItem("thumperSettings", JSON.stringify(settings));
+
+      /* ------------------------------------------------------------
+         RESONANCE & VIBRATION EFFECTS
+         ------------------------------------------------------------ */
+      const activeResonances = {};
+      const markResonance = (cycleNameA, cycleNameB) => {
+        activeResonances[cycleNameA] = activeResonances[cycleNameB] = true;
+        addVibrationToLegend(cycleNameA);
+        addVibrationToLegend(cycleNameB);
+        setTimeout(() => {
+          activeResonances[cycleNameA] = activeResonances[cycleNameB] = false;
+          removeVibrationFromLegend(cycleNameA);
+          removeVibrationFromLegend(cycleNameB);
+        }, 500);
+      };
+      const addVibrationToLegend = cycleName => {
+        const period = cycleName.split(":")[0].trim();
+        document.getElementById("legend-dot-" + period)?.classList.add("vibrate");
+      };
+      const removeVibrationFromLegend = cycleName => {
+        const period = cycleName.split(":")[0].trim();
+        document.getElementById("legend-dot-" + period)?.classList.remove("vibrate");
+      };
+
+      /* ============================================================
+         ENHANCED VISUAL SYSTEM: MOON, FRACTALS & STAR FIELD
+         ============================================================ */
+      const moonImage = new Image();
+      moonImage.src = 'https://fibonacciai.github.io/42069/ppmoon.png';
+
+      let fractalOverlayCanvas = null;
+      const computeFractalOverlay = () => {
+        const diameter = Math.min(cycleWidth, cycleHeight) * 0.8;
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = diameter;
+        offCanvas.height = diameter;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.translate(diameter / 2, diameter / 2);
+        drawFractalTreeOff(offCtx, diameter * 0.3, -Math.PI / 2, 4);
+        drawRecursiveCycleOff(offCtx, diameter * 0.25, 3);
+        return offCanvas;
+      };
+
+      const drawFractalTreeOff = (ctx, length, angle, depth) => {
+        if (depth === 0 || length < 2) return;
+        const x2 = length * Math.cos(angle);
+        const y2 = length * Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(x2, y2);
+        drawFractalTreeOff(ctx, length * 0.7, angle - Math.PI / 6, depth - 1);
+        ctx.restore();
+        ctx.save();
+        ctx.translate(x2, y2);
+        drawFractalTreeOff(ctx, length * 0.7, angle + Math.PI / 6, depth - 1);
+        ctx.restore();
+      };
+
+      const drawRecursiveCycleOff = (ctx, radius, depth) => {
+        if (depth <= 0) return;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = "rgba(255,255,255,0.05)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        const newRadius = radius * 0.5;
+        ctx.save(); ctx.translate(-newRadius, 0); drawRecursiveCycleOff(ctx, newRadius, depth - 1); ctx.restore();
+        ctx.save(); ctx.translate(newRadius, 0); drawRecursiveCycleOff(ctx, newRadius, depth - 1); ctx.restore();
+        ctx.save(); ctx.translate(0, -newRadius); drawRecursiveCycleOff(ctx, newRadius, depth - 1); ctx.restore();
+      };
+
+      let starFieldCanvas;
+      const starField = {
+        stars: [],
+        init: (width, height, count) => {
+          starFieldCanvas = document.createElement('canvas');
+          starFieldCanvas.width = width;
+          starFieldCanvas.height = height;
+          const ctx = starFieldCanvas.getContext('2d');
+          starField.stars = [];
+          for (let i = 0; i < count; i++) {
+            starField.stars.push({
+              x: Math.random() * width,
+              y: Math.random() * height,
+              radius: Math.random() * 1.5 + 0.5,
+              baseAlpha: Math.random() * 0.5 + 0.5,
+              twinkleSpeed: Math.random() * 0.02 + 0.005,
+              phase: Math.random() * Math.PI * 2
+            });
+          }
+          starField.draw(ctx, 0);
+        },
+        draw: (ctx, t) => {
+          ctx.clearRect(0, 0, starFieldCanvas.width, starFieldCanvas.height);
+          starField.stars.forEach(star => {
+            const twinkle = 0.5 + 0.5 * Math.sin(t * star.twinkleSpeed + star.phase);
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+            ctx.fillStyle = `rgba(255,255,255,${star.baseAlpha * twinkle})`;
+            ctx.fill();
+          });
+        }
+      };
+
+      const drawMoon = () => {
+        const centerX = cycleWidth / 2, centerY = cycleHeight / 2;
+        const diameter = Math.min(cycleWidth, cycleHeight) * 0.8;
+        const radius = diameter / 2;
+        const pulsate = 1 + 0.05 * Math.sin(time / 50);
+        const glowRadius = radius * 1.5 * pulsate;
+        const glowGradient = cycleCtx.createRadialGradient(centerX, centerY, radius, centerX, centerY, glowRadius);
+        glowGradient.addColorStop(0, 'rgba(180,140,217,0.6)');
+        glowGradient.addColorStop(1, 'rgba(180,140,217,0)');
+        cycleCtx.save();
+        cycleCtx.globalCompositeOperation = 'lighter';
+        cycleCtx.fillStyle = glowGradient;
+        cycleCtx.beginPath();
+        cycleCtx.arc(centerX, centerY, glowRadius, 0, 2 * Math.PI);
+        cycleCtx.fill();
+        cycleCtx.restore();
+        cycleCtx.drawImage(moonImage, centerX - radius, centerY - radius, diameter, diameter);
+        if (fractalOverlayCanvas) {
+          cycleCtx.drawImage(fractalOverlayCanvas, centerX - radius, centerY - radius, diameter, diameter);
+        }
+      };
+
+      /* ============================================================
+         VISUAL FEEDBACK, PREDICTIONS & HAPTIC FEEDBACK
+         ============================================================ */
+      const updatePredictionDisplay = activeResCount => {
+        let predictionText = "";
+        if (activeResCount === 0) {
+          predictionText = "Calm Markets Ahead";
+        } else if (activeResCount === 1) {
+          predictionText = "Mild Fluctuations Expected";
+        } else if (activeResCount === 2) {
+          predictionText = "Moderate Volatility Ahead";
+        } else {
+          predictionText = "High Volatility Ahead";
+        }
+        document.getElementById('predictionIndicator').textContent = `Prediction: ${predictionText}`;
+      };
+
+      const vibrateDevice = duration => {
+        if (navigator.vibrate) {
+          navigator.vibrate(duration);
+        }
+      };
+
+      const getMarketPhase = progress => {
+        if (progress < 0.25) return { phase: "Accumulation", lightness: 30 };
+        else if (progress < 0.5) return { phase: "Markup", lightness: 50 };
+        else if (progress < 0.75) return { phase: "Distribution", lightness: 70 };
+        else return { phase: "Markdown", lightness: 40 };
+      };
+
+      const getCycleColor = (cycle, progress, ringRadius) => {
+        const { lightness } = getMarketPhase(progress);
+        return { color: `hsl(${cycle.hue}, 100%, ${lightness}%)`, lineWidth: 2 * Math.pow(ringRadius, 0.15) };
+      };
+
+      const mandelbrotPerturb = (theta, progress, baseRadius) => {
+        const scale = 0.7885;
+        const c_re = scale * Math.cos(theta + progress * 2 * Math.PI);
+        const c_im = scale * Math.sin(theta + progress * 2 * Math.PI);
+        let z_re = 0, z_im = 0, iter = 0;
+        const maxIter = 20;
+        while (z_re * z_re + z_im * z_im <= 4 && iter < maxIter) {
+          const new_re = z_re * z_re - z_im * z_im + c_re;
+          const new_im = 2 * z_re * z_im + c_im;
+          z_re = new_re;
+          z_im = new_im;
+          iter++;
+        }
+        const norm = iter / maxIter;
+        return (norm * 2 - 1) * (0.05 * baseRadius);
+      };
+
+      const drawCycleRing = (x, y, baseRadius, progress, color, lineWidth) => {
+        const numPoints = 50;
+        const points = [];
+        for (let i = 0; i < numPoints; i++) {
+          const theta = (i / numPoints) * 2 * Math.PI;
+          const r = baseRadius + harmonicFactor * mandelbrotPerturb(theta, progress, baseRadius);
+          points.push({ x: x + r * Math.cos(theta), y: y + r * Math.sin(theta) });
+        }
+        cycleCtx.beginPath();
+        cycleCtx.moveTo(points[0].x, points[0].y);
+        points.forEach(pt => cycleCtx.lineTo(pt.x, pt.y));
+        cycleCtx.closePath();
+        cycleCtx.strokeStyle = color;
+        cycleCtx.lineWidth = lineWidth;
+        cycleCtx.stroke();
+        const markerTheta = progress * 2 * Math.PI;
+        cycleCtx.beginPath();
+        cycleCtx.arc(x + baseRadius * Math.cos(markerTheta), y + baseRadius * Math.sin(markerTheta), 6, 0, 2 * Math.PI);
+        cycleCtx.fillStyle = '#fff';
+        cycleCtx.fill();
+      };
+
+      const drawCycles = () => {
+        const centerX = cycleWidth / 2, centerY = cycleHeight / 2;
+        const ringSpacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+        const currentDate = new Date(new Date(2021, 0, 28).getTime() + time * 86400000);
+        document.getElementById('date-display').textContent =
+          "Current: " + currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const cycleProgresses = [];
+        CYCLES.forEach((cycle, idx) => {
+          const progress = (time % cycle.length) / cycle.length;
+          cycleProgresses.push(progress);
+          const ringRadius = ringSpacing * (CYCLES.length - idx);
+          const { color, lineWidth } = getCycleColor(cycle, progress, ringRadius);
+          let offsetX = 0, offsetY = 0;
+          if (activeResonances[cycle.name]) {
+            offsetX = Math.sin(time * 50 + idx) * 2;
+            offsetY = Math.cos(time * 50 + idx) * 2;
+          }
+          drawCycleRing(centerX + offsetX, centerY + offsetY, ringRadius, progress, color, lineWidth);
+        });
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            const cycleA = CYCLES[i], cycleB = CYCLES[j];
+            if (!isKeyOrFibonacci(cycleA.length) && !isKeyOrFibonacci(cycleB.length)) continue;
+            const ringRadius = ringSpacing * (CYCLES.length - i);
+            checkResonance(centerX, centerY, ringRadius, cycleProgresses[i], cycleProgresses[j], currentDate, cycleA, cycleB);
+          }
+        }
+        checkCrucialDates(centerX, centerY, currentDate);
+      };
+
+      const spawnThump = (x, y, startRadius, color) => {
+        thumps.push({ x, y, radius: startRadius, maxRadius: startRadius + 200, alpha: 1, color });
+      };
+
+      const updateThumps = ctx => {
+        for (let i = thumps.length - 1; i >= 0; i--) {
+          const t = thumps[i];
+          t.radius += 2;
+          t.alpha -= 0.015;
           ctx.save();
-          ctx.translate(centerX, centerY);
-          ctx.rotate(rotationRef.current);
-
-          // Outer ring
           ctx.beginPath();
-          ctx.ellipse(0, 0, 200, 100, 0, 0, Math.PI * 2);
-          ctx.strokeStyle = `hsla(${hueRef.current}, 70%, 50%, 0.5)`;
+          ctx.arc(t.x, t.y, t.radius, 0, 2 * Math.PI);
+          const updatedColor = t.color.replace(/rgba\((.+),\s*([0-9.]+)\)/, (match, rgb) => {
+            return `rgba(${rgb},${t.alpha.toFixed(2)})`;
+          });
+          ctx.strokeStyle = updatedColor;
           ctx.lineWidth = 3;
           ctx.stroke();
-
-          // Energy field lines
-          for (let i = 0; i < 360; i += 10) {
-            const angle = (i * Math.PI) / 180;
-            const radius = 220 + Math.sin(angle * 4 + rotationRef.current * 2) * 20;
-            ctx.beginPath();
-            ctx.moveTo(
-              Math.cos(angle) * radius,
-              Math.sin(angle) * (radius * 0.5)
-            );
-            ctx.lineTo(
-              Math.cos(angle) * (radius - 40),
-              Math.sin(angle) * ((radius - 40) * 0.5)
-            );
-            ctx.strokeStyle = `hsla(${(hueRef.current + i) % 360}, 70%, 50%, 0.2)`;
-            ctx.stroke();
-          }
           ctx.restore();
+          if (t.radius >= t.maxRadius || t.alpha <= 0) thumps.splice(i, 1);
+        }
+      };
 
-          // Update and render particles
-          particlesRef.current = particlesRef.current.filter(particle => {
-            if (particle.isAlive()) {
-              particle.update();
-              particle.draw(ctx);
-              return true;
+      const checkResonance = (x, y, radius, progressA, progressB, currentDate, cycleA, cycleB) => {
+        const alignmentThreshold = 0.02;
+        const diff = Math.abs(progressA - progressB);
+        if (diff >= alignmentThreshold && Math.abs(1 - diff) >= alignmentThreshold) return;
+        const eventKey = `Align-${currentDate.toDateString()}-${radius}-${cycleA.name}-${cycleB.name}`;
+        if (triggeredResonances.has(eventKey)) return;
+        triggeredResonances.add(eventKey);
+        const phaseInfo = getMarketPhase(progressA).phase;
+        const resonanceIndicator = document.getElementById('resonance-indicator');
+        if (resonanceIndicator) {
+          resonanceIndicator.textContent = `Resonance: ${cycleA.name} & ${cycleB.name} (${phaseInfo}) ${currentDate.toLocaleDateString()}`;
+          setTimeout(() => resonanceIndicator.textContent = "Resonance: Off", 4000);
+        }
+        markResonance(cycleA.name, cycleB.name);
+        cycleCtx.beginPath();
+        cycleCtx.arc(x, y, radius * 1.1, 0, 2 * Math.PI);
+        cycleCtx.strokeStyle = 'rgba(255,0,0,0.8)';
+        cycleCtx.lineWidth = 3;
+        cycleCtx.stroke();
+        playFibonacciPolyrhythm(130.81, 0.75, 'sine');
+        spawnThump(x, y, radius * 1.1, 'rgba(255,0,0,0.8)');
+        vibrateDevice(50);
+      };
+
+      const checkCrucialDates = (x, y, currentDate) => {
+        const dayThreshold = 1;
+        const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
+        if (found) {
+          const eventKey = `Crucial-${currentDate.toDateString()}`;
+          if (!triggeredResonances.has(eventKey)) {
+            triggeredResonances.add(eventKey);
+            cycleCtx.beginPath();
+            cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
+            cycleCtx.strokeStyle = 'rgba(255,165,0,0.8)';
+            cycleCtx.lineWidth = 4;
+            cycleCtx.stroke();
+            scheduleTone(65.41, audioCtx ? audioCtx.currentTime + 0.1 : 0, 0.6, 'sine');
+            spawnThump(x, y, 150, 'rgba(255,165,0,0.8)');
+            const resonanceIndicator = document.getElementById('resonance-indicator');
+            if (resonanceIndicator) {
+              resonanceIndicator.textContent = `Resonance: Crucial Date! ${currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+              setTimeout(() => resonanceIndicator.textContent = "Resonance: Off", 4000);
             }
-            return false;
-          });
-
-          // Occasionally generate new particles
-          if (Math.random() < 0.1) {
-            createParticleSystem(
-              canvas,
-              centerX + Math.random() * 400 - 200,
-              centerY + Math.random() * 200 - 100,
-              5
-            );
+            vibrateDevice(100);
           }
+        }
+      };
 
-          // Update rotation and hue using the animationSpeed multiplier
-          if (isAnimating) {
-            rotationRef.current += 0.005 * animationSpeed;
-            hueRef.current = (hueRef.current + 0.1 * animationSpeed) % 360;
-            animationFrameId = requestAnimationFrame(drawCosmicEgg);
-          }
-        };
+      /* ============================================================
+         CANVAS RESIZING & EVENT HANDLING
+         ============================================================ */
+      const startVisualization = () => {
+        settings = loadSettings();
+        cycleCanvas = document.getElementById('cycleCanvas');
+        cycleCtx = cycleCanvas.getContext('2d');
+        resizeCycleCanvas();
+        starField.init(cycleWidth, cycleHeight, 300);
+        fractalOverlayCanvas = computeFractalOverlay();
 
-        // Draw the "Torus Field" view mode
-        const drawTorus = () => {
-          const { width, height } = canvas;
-          ctx.fillStyle = '#000';
-          ctx.fillRect(0, 0, width, height);
+        const muteMusicBox = document.getElementById('muteMusic');
+        const muteThumpsBox = document.getElementById('muteThumps');
+        muteMusicBox.checked = settings.muteMusic;
+        muteMusicBox.addEventListener('change', e => {
+          settings.muteMusic = e.target.checked;
+          document.getElementById('bgMusic').muted = settings.muteMusic;
+          saveSettings();
+        });
+        muteThumpsBox.checked = settings.muteThumps;
+        muteThumpsBox.addEventListener('change', e => {
+          settings.muteThumps = e.target.checked;
+          saveSettings();
+        });
+        document.getElementById('musicVolume').addEventListener('input', e => {
+          document.getElementById('bgMusic').volume = parseFloat(e.target.value);
+        });
+        document.getElementById('pause-btn').addEventListener('click', togglePause);
+        document.getElementById('reset-btn').addEventListener('click', resetTime);
+        document.getElementById('speed-down-btn').addEventListener('click', speedDown);
+        document.getElementById('speed-up-btn').addEventListener('click', speedUp);
+        document.getElementById('download-btn').addEventListener('click', () => {
+          const link = document.createElement('a');
+          link.download = 'thumper.png';
+          link.href = cycleCanvas.toDataURL('image/png');
+          link.click();
+        });
+        document.addEventListener('keydown', handleKeyDown);
+        cycleCanvas.addEventListener('wheel', onWheelScrub, { passive: false });
+        cycleCanvas.addEventListener('touchstart', onTouchStart);
+        cycleCanvas.addEventListener('touchmove', onTouchMove);
+        cycleCanvas.addEventListener('touchend', onTouchEnd);
+        window.addEventListener('resize', debounceResize, false);
+        const scrubSlider = document.getElementById('time-scrub');
+        scrubSlider.addEventListener('input', e => { time = parseInt(e.target.value, 10); });
+        document.getElementById('date-display').textContent =
+          "Current: " + new Date(new Date(2021, 0, 28).getTime() + time * 86400000)
+          .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        animate();
+      };
 
-          const centerX = width / 2;
-          const centerY = height / 2;
-          ctx.save();
-          ctx.translate(centerX, centerY);
-          ctx.rotate(rotationRef.current);
+      const debounceResize = () => {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(() => {
+          resizeCycleCanvas();
+          starField.init(cycleWidth, cycleHeight, 300);
+          fractalOverlayCanvas = computeFractalOverlay();
+        }, 200);
+      };
 
-          // Draw torus spiral
-          for (let i = 0; i < 200; i++) {
-            const angle = (i / 50) * Math.PI * 2 + rotationRef.current;
-            const radius = 150 + Math.sin(angle * frequency / 10) * 50;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius * 0.5;
-            
-            ctx.beginPath();
-            ctx.arc(x, y, 2, 0, Math.PI * 2);
-            ctx.fillStyle = `hsla(${(hueRef.current + i) % 360}, 70%, 50%, 0.5)`;
-            ctx.fill();
-          }
-          ctx.restore();
+      const resizeCycleCanvas = () => {
+        cycleWidth = window.innerWidth;
+        cycleHeight = window.innerHeight;
+        cycleCanvas.style.width = cycleWidth + "px";
+        cycleCanvas.style.height = cycleHeight + "px";
+        const dpr = window.devicePixelRatio || 1;
+        cycleCanvas.width = cycleWidth * dpr;
+        cycleCanvas.height = cycleHeight * dpr;
+        if (cycleCtx.resetTransform) cycleCtx.resetTransform();
+        cycleCtx.scale(dpr, dpr);
+      };
 
-          if (isAnimating) {
-            rotationRef.current += 0.02 * animationSpeed;
-            hueRef.current = (hueRef.current + 0.5 * animationSpeed) % 360;
-            animationFrameId = requestAnimationFrame(drawTorus);
-          }
-        };
+      const togglePause = () => {
+        isPaused = !isPaused;
+        document.getElementById('pause-btn').textContent = isPaused ? 'Play' : 'Pause';
+      };
 
-        // Draw the "Quasar Emission" view mode
-        const drawQuasar = () => {
-          const { width, height } = canvas;
-          ctx.fillStyle = '#000';
-          ctx.fillRect(0, 0, width, height);
+      const resetTime = () => {
+        time = 0;
+        triggeredResonances.clear();
+        thumps = [];
+        document.getElementById('time-scrub').value = 0;
+      };
 
-          const centerX = width / 2;
-          const centerY = height / 2;
+      const speedDown = () => { speedMultiplier = Math.max(speedMultiplier / 2, 0.01); };
+      const speedUp = () => { speedMultiplier = Math.min(speedMultiplier * 2, 16); };
 
-          ctx.save();
-          ctx.translate(centerX, centerY);
-          
-          // Draw core gradient
-          const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 100);
-          gradient.addColorStop(0, `hsla(${hueRef.current}, 70%, 50%, 1)`);
-          gradient.addColorStop(1, `hsla(${hueRef.current}, 70%, 50%, 0)`);
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(0, 0, 100, 0, Math.PI * 2);
-          ctx.fill();
+      const handleKeyDown = e => {
+        switch (e.key) {
+          case ' ':
+            e.preventDefault();
+            togglePause();
+            break;
+          case 'r':
+          case 'R':
+            resetTime();
+            break;
+          case 'ArrowUp':
+            speedUp();
+            break;
+          case 'ArrowDown':
+            speedDown();
+            break;
+        }
+      };
 
-          // Draw jets around the core
-          ctx.rotate(rotationRef.current);
-          for (let i = 0; i < energyLevel; i++) {
-            const angle = (i / energyLevel) * Math.PI * 2;
-            const x = Math.cos(angle) * 200;
-            const y = Math.sin(angle) * 200;
-            
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(x, y);
-            ctx.strokeStyle = `hsla(${(hueRef.current + i * 2) % 360}, 70%, 50%, 0.2)`;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-          }
-          ctx.restore();
+      const onWheelScrub = e => {
+        e.preventDefault();
+        const baseSensitivity = 0.0005;
+        const acceleration = Math.log(Math.abs(e.deltaY) + 1);
+        time += e.deltaY * baseSensitivity * acceleration;
+        document.getElementById('time-scrub').value = time;
+      };
 
-          if (isAnimating) {
-            rotationRef.current += 0.01 * animationSpeed;
-            hueRef.current = (hueRef.current + 0.2 * animationSpeed) % 360;
-            animationFrameId = requestAnimationFrame(drawQuasar);
-          }
-        };
+      const onTouchStart = e => {
+        isScrubbing = true;
+        scrubStartX = e.touches[0].clientX;
+      };
 
-        // Dispatch the appropriate drawing function based on viewMode
-        const draw = () => {
-          switch (viewMode) {
-            case 'cosmic':
-              drawCosmicEgg();
-              break;
-            case 'torus':
-              drawTorus();
-              break;
-            case 'quasar':
-              drawQuasar();
-              break;
-            default:
-              drawCosmicEgg();
-          }
-        };
+      const onTouchMove = e => {
+        if (!isScrubbing) return;
+        const currentX = e.touches[0].clientX;
+        const dayDelta = (currentX - scrubStartX) / 5;
+        time += dayDelta;
+        scrubStartX = currentX;
+        document.getElementById('time-scrub').value = time;
+      };
 
-        draw();
+      const onTouchEnd = () => { isScrubbing = false; };
 
-        return () => {
-          window.removeEventListener('resize', handleResize);
-          cancelAnimationFrame(animationFrameId);
-        };
-      }, [isAnimating, viewMode, frequency, energyLevel, animationSpeed]);
+      /* ============================================================
+         MAIN ANIMATION LOOP
+         ============================================================ */
+      const animate = () => {
+        cycleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
 
-      return (
-        <div className="relative" style={{width: '100%', height: '100vh', background: '#000', overflow: 'hidden'}}>
-          <canvas 
-            ref={canvasRef}
-            style={{width: '100%', height: '100%'}}
-          />
+        if (starFieldCanvas) {
+          starField.draw(starFieldCanvas.getContext('2d'), time);
+          cycleCtx.drawImage(starFieldCanvas, 0, 0, cycleWidth, cycleHeight);
+        }
 
-          <motion.div 
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              left: '1rem',
-              background: 'rgba(0, 0, 0, 0.8)',
-              padding: '1rem',
-              borderRadius: '0.5rem',
-              backdropFilter: 'blur(4px)'
-            }}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem'}}>
-              <button
-                onClick={() => setIsAnimating(!isAnimating)}
-                style={{
-                  padding: '0.5rem',
-                  borderRadius: '0.25rem',
-                  background: '#3b82f6',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                {isAnimating ? <Pause size={20} /> : <Play size={20} />}
-              </button>
-              <button
-                onClick={handleReset}
-                style={{
-                  padding: '0.5rem',
-                  borderRadius: '0.25rem',
-                  background: '#10b981',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <RefreshCw size={20} />
-              </button>
-              <button
-                onClick={() => setShowDetails(!showDetails)}
-                style={{
-                  padding: '0.5rem',
-                  borderRadius: '0.25rem',
-                  background: '#8b5cf6',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                {showDetails ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </button>
-            </div>
+        const activeResCount = Object.values(activeResonances).filter(Boolean).length;
+        updatePredictionDisplay(activeResCount);
 
-            <AnimatePresence>
-              {showDetails && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}
-                >
-                  <div>
-                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>View Mode</label>
-                    <select 
-                      value={viewMode}
-                      onChange={(e) => setViewMode(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        background: '#1f2937',
-                        borderRadius: '0.25rem',
-                        border: 'none',
-                        color: '#fff'
-                      }}
-                    >
-                      <option value="cosmic">Cosmic Egg</option>
-                      <option value="torus">Torus Field</option>
-                      <option value="quasar">Quasar Emission</option>
-                    </select>
-                  </div>
+        // Check if Reverse Mode is enabled.
+        const reverseMode = document.getElementById('reverseMode').checked;
+        if (!isPaused && !isScrubbing) {
+          // If reverse is enabled, subtract from time; otherwise add.
+          time += (reverseMode ? -1 : 1) * speedMultiplier * (1 + 0.5 * activeResCount);
+        }
 
-                  <div>
-                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>
-                      Frequency: {frequency.toFixed(2)} Hz
-                    </label>
-                    <input 
-                      type="range"
-                      min="1"
-                      max="40"
-                      step="0.1"
-                      value={frequency}
-                      onChange={(e) => setFrequency(Number(e.target.value))}
-                      style={{width: '100%'}}
-                    />
-                  </div>
+        drawMoon();
+        drawCycles();
+        updateThumps(cycleCtx);
 
-                  <div>
-                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>
-                      Energy Level: {energyLevel}%
-                    </label>
-                    <input 
-                      type="range"
-                      min="1"
-                      max="100"
-                      value={energyLevel}
-                      onChange={(e) => setEnergyLevel(Number(e.target.value))}
-                      style={{width: '100%'}}
-                    />
-                  </div>
+        if (glitchActive) {
+          cycleCtx.save();
+          cycleCtx.globalAlpha = 0.3;
+          cycleCtx.translate(Math.random() * 10 - 5, Math.random() * 10 - 5);
+          cycleCtx.rotate((Math.random() * 10 - 5) * Math.PI / 180);
+          cycleCtx.fillStyle = 'rgba(255,255,255,0.2)';
+          cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+          cycleCtx.restore();
+          if (--glitchTimer <= 0) glitchActive = false;
+        }
 
-                  <div>
-                    <label style={{color: '#d1d5db', marginBottom: '0.25rem', display: 'block'}}>
-                      Animation Speed: {animationSpeed.toFixed(1)}x
-                    </label>
-                    <input 
-                      type="range"
-                      min="0.1"
-                      max="3"
-                      step="0.1"
-                      value={animationSpeed}
-                      onChange={(e) => setAnimationSpeed(Number(e.target.value))}
-                      style={{width: '100%'}}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+        document.getElementById('time-scrub').value = time;
+        requestAnimationFrame(animate);
+      };
 
-          <div style={{position: 'absolute', bottom: '1rem', right: '1rem', color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem'}}>
-            Gateway Process Visualization
-          </div>
-        </div>
-      );
-    };
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<GatewayVisualization />);
+      /* ============================================================
+         LAUNCH
+         ============================================================ */
+      window.addEventListener('load', () => {
+        initAudioContext();
+        startVisualization();
+      });
+    })();
   </script>
 </body>
 </html>
