@@ -47,18 +47,20 @@
       border: 2px solid #555;
       /* This container will be scaled via JS */
     }
-    /* Canvas uses the fixed base resolution (we'll upscale its internal resolution) */
+    /* The canvas will be retina‐ified via script */
     canvas {
       display: block;
       background-color: rgba(0, 0, 0, 0.75);
     }
-    /* Accent overlay image: now placed at bottom left and sized appropriately */
+    /* Bottom left accent image (hybrid logo) */
     #power-accent {
       position: absolute;
       bottom: 10px;
       left: 10px;
-      width: 80px; /* Increased a bit for clarity */
+      width: 80px; /* Adjust as needed */
+      height: auto;
       opacity: 0.85;
+      image-rendering: pixelated;
     }
     @media (max-width: 480px) {
       h1 { font-size: 1.5em; }
@@ -72,20 +74,19 @@
   <!-- Fullscreen game wrapper -->
   <div id="gameWrapper">
     <div class="game-container" id="gameContainer">
-      <!-- Note: the canvas’s HTML attributes are now set via script for high DPI -->
       <canvas id="gameCanvas"></canvas>
-      <!-- Accent overlay now shows the hybrid logo, moved to bottom left -->
-      <img id="power-accent" src="image-306.jpg" alt="Hybrid Gamestop &amp; Atari Logo">
+      <!-- Updated bottom left logo using an absolute URL -->
+      <img id="power-accent" src="https://fibonacciai.github.io/42069/image-306.jpg" alt="Hybrid Gamestop &amp; Atari Logo" crossorigin="anonymous">
     </div>
   </div>
 
   <script>
-    /* =================== High-DPI Canvas Setup ===================
-       We set the canvas’s internal resolution higher (by a factor equal to the devicePixelRatio)
-       then scale the context accordingly. This makes all drawn images crisp.
-    ================================================================ */
+    // Base game dimensions
     const baseWidth = 480;
     const baseHeight = 320;
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    /* =================== High-DPI Canvas Setup =================== */
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const ratio = window.devicePixelRatio || 1;
@@ -94,10 +95,8 @@
     canvas.style.width = baseWidth + "px";
     canvas.style.height = baseHeight + "px";
     ctx.scale(ratio, ratio);
-
-    /* =================== Programmatic Sound Setup ===================
-       Using the Web Audio API to generate sounds for events.
-    ================================================================== */
+    
+    /* =================== Programmatic Sound Setup =================== */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playTone(frequency, duration, type) {
       const oscillator = audioCtx.createOscillator();
@@ -117,38 +116,32 @@
     function playLifeLostSound() { playTone(200, 0.2, 'triangle'); }
     function playGameoverSound() { playTone(150, 0.3, 'sine'); }
     function playWinSound()      { playTone(800, 0.2, 'square'); }
-
+    
     /* =================== Background Music =================== */
     const backgroundMusic = new Audio("https://fibonacciai.github.io/42069/Fury.mp3");
     backgroundMusic.loop = true;
-
-    /* =================== Ball Setup ===================
-       The ball uses your Power Logo (rotates for effect).
-    ====================================================== */
+    
+    /* =================== Ball Setup =================== */
     const ballImage = new Image();
     ballImage.src = "https://fibonacciai.github.io/42069/power-512.png";
     ballImage.crossOrigin = "anonymous";
-    let ballRadius = 16; // Rendered as 32x32 pixels
+    let ballRadius = 16;
     let ballX = baseWidth / 2;
     let ballY = baseHeight - 30;
     let dx = 2;
     let dy = -2;
     let ballAngle = 0;
-
+    
     /* =================== Paddle Setup =================== */
     let paddleHeight = 10;
     let paddleWidth = 75;
     let paddleX = (baseWidth - paddleWidth) / 2;
-
+    
     /* =================== Input Flags =================== */
     let rightPressed = false;
     let leftPressed = false;
-
-    /* =================== Brick Setup ===================
-       We’re now using funny high‑res images:
-       dougcifu.png, stevecohen.png, andrewleft.png, gabeplotkin.png.
-       All images are loaded from https://fibonacciai.github.io/42069/
-    ====================================================== */
+    
+    /* =================== Brick Setup =================== */
     let brickRowCount = 5;
     let brickColumnCount = 7;
     let brickWidth = 55;
@@ -156,7 +149,7 @@
     let brickPadding = 10;
     let brickOffsetTop = 30;
     let brickOffsetLeft = 35;
-
+    
     const brickImageSources = [
       "https://fibonacciai.github.io/42069/dougcifu.png",
       "https://fibonacciai.github.io/42069/stevecohen.png",
@@ -177,14 +170,12 @@
         bricks[c][r] = { x: 0, y: 0, status: 1, imgIndex: Math.floor(Math.random() * brickImages.length) };
       }
     }
-
+    
     /* =================== Score & Lives =================== */
     let score = 0;
     let lives = 3;
-
-    /* =================== Particle System ===================
-       Spawn particles on brick-break for a burst effect.
-    ====================================================== */
+    
+    /* =================== Particle System =================== */
     let particles = [];
     function spawnParticles(x, y, color) {
       for (let i = 0; i < 15; i++) {
@@ -218,13 +209,13 @@
         }
       }
     }
-
+    
     /* =================== Game State =================== */
-    let gameState = 'start'; // "start", "playing", "gameover", "win"
-
+    let gameState = 'start';
+    
     /* =================== Global Scale Factor =================== */
-    let currentScale = 1; // Used for adjusting mouse coordinates
-
+    let currentScale = 1;
+    
     /* =================== Text Wrapping Function =================== */
     function wrapText(context, text, x, y, maxWidth, lineHeight) {
       let words = text.split(' ');
@@ -243,13 +234,15 @@
       }
       context.fillText(line, x, y);
     }
-
+    
     /* =================== Event Listeners =================== */
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
     document.addEventListener("mousemove", mouseMoveHandler, false);
     document.addEventListener("keypress", keyPressHandler, false);
-
+    canvas.addEventListener("touchstart", handleTouchStart, false);
+    canvas.addEventListener("touchmove", handleTouchMove, false);
+    
     function keyDownHandler(e) {
       if (e.key === "Right" || e.key === "ArrowRight") {
         rightPressed = true;
@@ -271,6 +264,26 @@
         paddleX = relativeX - paddleWidth / 2;
       }
     }
+    function handleTouchStart(e) {
+      e.preventDefault();
+      if (gameState === 'start') {
+        gameState = 'playing';
+        if (backgroundMusic.paused) {
+          backgroundMusic.play().catch(err => console.log("Music play error:", err));
+        }
+      } else if (gameState === 'gameover' || gameState === 'win') {
+        document.location.reload();
+      }
+    }
+    function handleTouchMove(e) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      let touch = e.touches[0];
+      let relativeX = (touch.clientX - rect.left) / currentScale;
+      if (relativeX > 0 && relativeX < baseWidth) {
+        paddleX = relativeX - paddleWidth / 2;
+      }
+    }
     function keyPressHandler(e) {
       if (gameState === 'start' && e.key === 'Enter') {
         gameState = 'playing';
@@ -281,7 +294,7 @@
         document.location.reload();
       }
     }
-
+    
     /* =================== Collision Detection =================== */
     function collisionDetection() {
       for (let c = 0; c < brickColumnCount; c++) {
@@ -304,9 +317,8 @@
         }
       }
     }
-
+    
     /* =================== Drawing Functions =================== */
-    // Draw the rotating ball using the Power Logo.
     function drawBall() {
       ctx.save();
       ctx.translate(ballX, ballY);
@@ -325,7 +337,6 @@
       ctx.fillRect(paddleX, baseHeight - paddleHeight, paddleWidth, paddleHeight);
       ctx.restore();
     }
-    // Draw bricks using the funny images, centered without stretching.
     function drawBricks() {
       for (let c = 0; c < brickColumnCount; c++) {
         for (let r = 0; r < brickRowCount; r++) {
@@ -336,7 +347,6 @@
             b.x = brickX;
             b.y = brickY;
             ctx.save();
-            // Enable high-quality scaling
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = "high";
             let img = brickImages[b.imgIndex];
@@ -363,7 +373,6 @@
       ctx.fillStyle = "#fff";
       ctx.fillText("Lives: " + lives, baseWidth - 65, 20);
     }
-    // Draw overlay text with wrapped lines.
     function drawOverlay(message) {
       ctx.save();
       ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
@@ -377,11 +386,10 @@
       let y = baseHeight / 2 - 20;
       wrapText(ctx, message, x, y, maxWidth, lineHeight);
       ctx.font = "16px 'Montserrat', sans-serif";
-      ctx.fillText("Press Enter to continue", baseWidth / 2, baseHeight / 2 + 40);
+      ctx.fillText(isTouch ? "Tap to continue" : "Press Enter to continue", baseWidth / 2, baseHeight / 2 + 40);
       ctx.restore();
     }
-
-    /* =================== Main Game Loop =================== */
+    
     function draw() {
       ctx.clearRect(0, 0, baseWidth, baseHeight);
       drawBricks();
@@ -390,28 +398,23 @@
       drawScore();
       drawLives();
       updateAndDrawParticles();
-
+    
       if (gameState === 'playing') {
         collisionDetection();
-        // Keyboard-based paddle movement.
         if (rightPressed && paddleX < baseWidth - paddleWidth) {
           paddleX += 7;
         }
         if (leftPressed && paddleX > 0) {
           paddleX -= 7;
         }
-        // Bounce off left/right walls.
         if (ballX + dx > baseWidth - ballRadius || ballX + dx < ballRadius) {
           dx = -dx;
           playWallSound();
         }
-        // Bounce off the top wall.
         if (ballY + dy < ballRadius) {
           dy = -dy;
           playWallSound();
-        }
-        // Paddle collision.
-        else if (ballY + dy > baseHeight - ballRadius) {
+        } else if (ballY + dy > baseHeight - ballRadius) {
           if (ballX > paddleX && ballX < paddleX + paddleWidth) {
             playPaddleSound();
             let hitPoint = (ballX - (paddleX + paddleWidth / 2)) / (paddleWidth / 2);
@@ -436,23 +439,22 @@
         ballY += dy;
         ballAngle += 0.05;
       }
-
+    
       if (gameState === 'start') {
         drawOverlay("Welcome, Gamer! Your quest begins now.");
       } else if (gameState === 'gameover') {
-        drawOverlay("Alas, your journey ends here. Press Enter to try again.");
+        drawOverlay("Alas, your journey ends here. Tap to try again.");
       } else if (gameState === 'win') {
         drawOverlay("Victory! You've revived the spirit of classic gaming!");
       }
-
+    
       requestAnimationFrame(draw);
     }
     draw();
-
-    /* =================== Responsive Scaling =================== */
+    
     function adjustGameScale() {
       const scale = Math.min(window.innerWidth / baseWidth, window.innerHeight / baseHeight);
-      currentScale = scale; // Store scale for mouse adjustments.
+      currentScale = scale;
       const gameContainer = document.getElementById("gameContainer");
       gameContainer.style.transform = "scale(" + scale + ")";
       gameContainer.style.width = baseWidth + "px";
