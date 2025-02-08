@@ -45,7 +45,6 @@
       background: url('image-310.jpg') no-repeat center center;
       background-size: cover;
       border: 2px solid #555;
-      /* This container will be scaled via JS */
     }
     /* The canvas will be retina‐ified via script */
     canvas {
@@ -57,7 +56,7 @@
       position: absolute;
       bottom: 10px;
       left: 10px;
-      width: 80px; /* Adjust as needed */
+      width: 80px;
       height: auto;
       opacity: 0.85;
       image-rendering: pixelated;
@@ -75,7 +74,7 @@
   <div id="gameWrapper">
     <div class="game-container" id="gameContainer">
       <canvas id="gameCanvas"></canvas>
-      <!-- Updated bottom left logo using an absolute URL -->
+      <!-- Using absolute URL for the logo -->
       <img id="power-accent" src="https://fibonacciai.github.io/42069/image-306.jpg" alt="Hybrid Gamestop &amp; Atari Logo" crossorigin="anonymous">
     </div>
   </div>
@@ -125,7 +124,7 @@
     const ballImage = new Image();
     ballImage.src = "https://fibonacciai.github.io/42069/power-512.png";
     ballImage.crossOrigin = "anonymous";
-    let ballRadius = 16;
+    let ballRadius = 16; // Rendered as 32x32 pixels
     let ballX = baseWidth / 2;
     let ballY = baseHeight - 30;
     let dx = 2;
@@ -150,11 +149,13 @@
     let brickOffsetTop = 30;
     let brickOffsetLeft = 35;
     
+    // Funny brick images including kennyg.png
     const brickImageSources = [
       "https://fibonacciai.github.io/42069/dougcifu.png",
       "https://fibonacciai.github.io/42069/stevecohen.png",
       "https://fibonacciai.github.io/42069/andrewleft.png",
-      "https://fibonacciai.github.io/42069/gabeplotkin.png"
+      "https://fibonacciai.github.io/42069/gabeplotkin.png",
+      "https://fibonacciai.github.io/42069/kennyg.png"
     ];
     const brickImages = [];
     for (let i = 0; i < brickImageSources.length; i++) {
@@ -172,8 +173,11 @@
     }
     
     /* =================== Score & Lives =================== */
+    let lives = 9;  // Lives set to 9
     let score = 0;
-    let lives = 3;
+    // Score increment such that total score becomes 42069 when all bricks are broken.
+    const totalBricks = brickRowCount * brickColumnCount;
+    const scoreIncrement = 42069 / totalBricks;
     
     /* =================== Particle System =================== */
     let particles = [];
@@ -211,28 +215,26 @@
     }
     
     /* =================== Game State =================== */
-    let gameState = 'start';
+    let gameState = 'start';  // "start", "playing", "gameover", "win"
     
     /* =================== Global Scale Factor =================== */
     let currentScale = 1;
     
-    /* =================== Text Wrapping Function =================== */
-    function wrapText(context, text, x, y, maxWidth, lineHeight) {
-      let words = text.split(' ');
-      let line = '';
-      for (let n = 0; n < words.length; n++) {
-        let testLine = line + words[n] + ' ';
-        let metrics = context.measureText(testLine);
-        let testWidth = metrics.width;
-        if (testWidth > maxWidth && n > 0) {
-          context.fillText(line, x, y);
-          line = words[n] + ' ';
-          y += lineHeight;
-        } else {
-          line = testLine;
-        }
+    /* =================== Overlay Drawing Function =================== */
+    function drawOverlay(message) {
+      ctx.save();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(0, 0, baseWidth, baseHeight);
+      ctx.font = "22px 'Montserrat', sans-serif";
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      let lineHeight = 26;
+      let lines = message.split("\n");
+      let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], baseWidth / 2, startY + i * lineHeight);
       }
-      context.fillText(line, x, y);
+      ctx.restore();
     }
     
     /* =================== Event Listeners =================== */
@@ -305,10 +307,13 @@
                 ballY > b.y && ballY < b.y + brickHeight) {
               dy = -dy;
               b.status = 0;
-              score++;
+              score += scoreIncrement;
               playBrickSound();
               spawnParticles(ballX, ballY, "#FFFFFF");
-              if (score === brickRowCount * brickColumnCount) {
+              // Increase speed slightly
+              dx *= 1.02;
+              dy *= 1.02;
+              if (score >= 42069) {
                 gameState = 'win';
                 playWinSound();
               }
@@ -366,7 +371,7 @@
     function drawScore() {
       ctx.font = "16px 'Montserrat', sans-serif";
       ctx.fillStyle = "#fff";
-      ctx.fillText("Score: " + score, 8, 20);
+      ctx.fillText("Score: " + Math.round(score), 8, 20);
     }
     function drawLives() {
       ctx.font = "16px 'Montserrat', sans-serif";
@@ -380,13 +385,12 @@
       ctx.font = "22px 'Montserrat', sans-serif";
       ctx.fillStyle = "#fff";
       ctx.textAlign = "center";
-      let maxWidth = baseWidth - 40;
       let lineHeight = 26;
-      let x = baseWidth / 2;
-      let y = baseHeight / 2 - 20;
-      wrapText(ctx, message, x, y, maxWidth, lineHeight);
-      ctx.font = "16px 'Montserrat', sans-serif";
-      ctx.fillText(isTouch ? "Tap to continue" : "Press Enter to continue", baseWidth / 2, baseHeight / 2 + 40);
+      let lines = message.split("\n");
+      let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], baseWidth / 2, startY + i * lineHeight);
+      }
       ctx.restore();
     }
     
@@ -441,11 +445,11 @@
       }
     
       if (gameState === 'start') {
-        drawOverlay("Welcome, Gamer! Your quest begins now.");
+        drawOverlay("Ready Player 741?\nYour Quest Begins Now.\nTap or Press Enter to Play.");
       } else if (gameState === 'gameover') {
-        drawOverlay("Alas, your journey ends here. Tap to try again.");
+        drawOverlay("Alas, Player 741, your journey ends here.\nTap or Press Enter to try again.");
       } else if (gameState === 'win') {
-        drawOverlay("Victory! You've revived the spirit of classic gaming!");
+        drawOverlay("Victory, Player 741! You've revived the spirit of classic gaming!\nFollow @_D_741Stef on X");
       }
     
       requestAnimationFrame(draw);
