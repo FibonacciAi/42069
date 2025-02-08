@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Centered Enlarged ASCII Skull (Golden Ratio)</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background-color: #000;
+      position: relative;
+    }
+    /* The wrapper centers and scales the ASCII art uniformly */
+    #skull-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1.618);
+      transform-origin: center;
+    }
+    /* Preformatted text preserves the original spacing */
+    #skull {
+      font-family: 'Courier New', Courier, monospace;
+      white-space: pre;
+      line-height: 1;
+      animation: colorChange 10s infinite;
+    }
+    @keyframes colorChange {
+      0%   { color: #ff0000; }
+      20%  { color: #ff7f00; }
+      40%  { color: #ffff00; }
+      60%  { color: #00ff00; }
+      80%  { color: #0000ff; }
+      100% { color: #8b00ff; }
+    }
+  </style>
+</head>
+<body>
+  <div id="skull-wrapper">
+    <pre id="skull"></pre>
+  </div>
+
+  <script>
+    const goldenRatio = 1.618;
+    // Original ASCII skull art with two modifications:
+    // • The third line (forehead) now has a central segment replaced with the Base64 of "Keep Searching":
+    //     S2VlcCBTZWFyY2hpbmc=
+    // • A lower line has been altered to include the signature: @_D_741Stef
+    const originalSkull = `
+                                                uuuuuuuuuuuuuu
+                                                uuuuuuuuuuuuuu
+                                        uuuu$$S2VlcCBTZWFyY2hpbmc=$$uuuu
+                                        uuuu$$$$$$$$$$$$$$$$$$$$$$uuuu
+                                  uuuu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uuuu
+                                  uuuu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uuuu
+                                uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                                uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                              uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                              uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                            uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                            uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                            uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                            uu$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$uu
+                            uu$$$$$$$$$$$$""      ""$$$$$$""      ""$$$$$$$$$$$$uu
+                            uu$$$$$$$$$$$$""      ""$$$$$$""      ""$$$$$$$$$$$$uu
+                            ""$$$$$$$$""            uu$$uu              $$$$$$$$""
+                            ""$$$$$$$$""            uu$$uu              $$$$$$$$""
+                              $$$$$$uu              uu$$uu              uu$$$$$$
+                              $$$$$$uu              uu$$uu              uu$$$$$$
+                              $$$$$$uu            uu$$$$$$uu            uu$$$$$$
+                              $$$$$$uu            uu$$$$$$uu            uu$$$$$$
+                                ""$$$$$$$$uuuu$$$$$$      $$$$$$uuuu$$$$$$$$""
+                                ""$$$$$$$$uuuu$$$$$$      $$$$$$uuuu$$$$$$$$""
+                                  ""$$$$$$$$$$$$$$""      ""$$$$$$$$$$$$$$""
+                                  ""$$$$$$$$$$$$$$""      ""$$$$$$$$$$$$$$""
+                                      uu$$$$$$$$$$$$$$uu$$$$$$$$$$$$$$uu
+                                      uu$$$$$$$$$$$$$$uu$$$$$$$$$$$$$$uu
+                                        uu$$""$$""$$""$$""$$""$$""$$uu
+                                        uu$$""$$""$$""$$""$$""$$""$$uu
+                  uuuuuu                $$$$uu$$  $$  $$  $$  $$uu$$$$              uuuuuu
+                  uuuuuu                $$$$uu$$  $$  $$  $$  $$uu$$$$              uuuuuu
+                uu$$$$$$$$                $$$$$$$$$$uu$$uu$$uu$$$$$$              uu$$$$$$$$
+                uu$$$$$$$$                $$$$$$$$$$uu$$uu$$uu$$$$$$              uu$$$$$$$$
+                  $$$$$$$$$$uuuu            ""$$$$$$$$$$$$$$$$$$""          uuuu$$$$$$$$$$$$
+                  $$$$$$$$$$uuuu            ""$$$$$$$$$$$$$$$$$$""          uuuu$$$$$$$$$$$$
+              uu$$$$$$$$$$$$$$$$$$$$$$uuuu        """"""""""        uuuuuuuu$$$$$$$$$$$$$$$$$$$$
+              uu$$$$$$$$$$$$$$$$$$$$$$uuuu        """"""""""        uuuuuuuu$$$$$$$$$$$$$$$$$$$$
+              $$$$$$$$""""""$$$$$$$$$$$$$$$$$$$$uuuuuu      uuuu$$$$$$$$$$$$$$$$$$""""""$$$$$$""
+              $$$$$$$$""""""$$$$$$$$$$$$$$$$$$$$uuuuuu      uuuu$$$$$$$$$$$$$$$$$$""""""$$$$$$""
+                """"""            """"$$$$$$$$$$$$$$$$$$$$$$uuuu  """"$$""""""
+                """"""            """"$$$$$$$$$$$$$$$$$$$$$$uuuu  """"$$""""""
+                    ""$$$$$$$$$$""          @_D_741Stef          """"$$$$$$$$""""
+                    ""$$$$$$$$$$""                                            """"$$$$$$$$""""
+                        $$$$$$""                                                  $$$$$$$$""
+                        $$$$$$""                                                  $$$$$$$$""
+    `;
+
+    document.getElementById('skull').textContent = originalSkull;
+
+    // Dynamically adjust the base font size so that after applying the golden ratio scaling the art fits in the viewport.
+    function resizeSkull() {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      // Filter out empty lines to accurately measure the art
+      const lines = originalSkull.split('\n').filter(line => line.trim().length > 0);
+      const asciiWidth = Math.max(...lines.map(line => line.length));
+      const asciiHeight = lines.length;
+      // Effective dimensions after scaling:
+      //   effectiveWidth  = baseFontSize * asciiWidth * goldenRatio
+      //   effectiveHeight = baseFontSize * asciiHeight * goldenRatio
+      const fontSizeByWidth = viewportWidth / (asciiWidth * goldenRatio);
+      const fontSizeByHeight = viewportHeight / (asciiHeight * goldenRatio);
+      const baseFontSize = Math.min(fontSizeByWidth, fontSizeByHeight);
+      document.getElementById('skull').style.fontSize = baseFontSize + 'px';
+    }
+
+    window.addEventListener('resize', resizeSkull);
+    resizeSkull();
+  </script>
+</body>
+</html>
