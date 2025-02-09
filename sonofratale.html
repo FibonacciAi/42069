@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Harmonic Market Resonance Analyzer – A scientific dashboard integrating key market cycles with historical price data." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harmonic Market Resonance Analyzer</title>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+    <!-- Favicon -->
+    <link rel="icon" href="https://fibonacciai.github.io/42069/power-512.png" type="image/png" />
+    <style>
+      /* Base & Theme Variables (Dark mode as default) */
+      :root {
+        --bg-color: #111;
+        --text-color: #eee;
+        --panel-bg: rgba(20, 20, 20, 0.95);
+        --accent: #d4af37;
+        --grid-color: #333;
+      }
+      html.light-theme {
+        --bg-color: #f4f4f4;
+        --text-color: #222;
+        --panel-bg: rgba(240, 240, 240, 0.95);
+        --accent: #0275d8;
+        --grid-color: #ccc;
+      }
+      /* Reset & Base Styles */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        background: var(--bg-color);
+        color: var(--text-color);
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+      }
+      /* Container & Canvases */
+      #container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: var(--bg-color);
+      }
+      #gridCanvas, #cycleCanvas {
+        display: block;
+        position: absolute;
+        top: 0; left: 0;
+      }
+      #gridCanvas { z-index: 0; }
+      #cycleCanvas { z-index: 1; }
+      /* Controls Panel */
+      .controls {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 95%;
+        max-width: 900px;
+        background: var(--panel-bg);
+        border-radius: 6px;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 0.5rem 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 10;
+      }
+      .control-buttons, .control-toggles, .volume-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.9rem;
+      }
+      .controls button {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: var(--text-color);
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+        min-width: 80px;
+      }
+      .controls button:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(255,255,255,0.3);
+      }
+      .controls label { cursor: pointer; }
+      .date-display {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        text-align: center;
+        flex-grow: 1;
+      }
+      .time-scrub-container input[type="range"] { width: 100%; }
+      /* Legend Panel */
+      .legend {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--panel-bg);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        text-align: center;
+        z-index: 10;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .legend ul {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        margin: 0;
+        padding: 0;
+      }
+      .legend li {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      /* Prediction/Status Display */
+      .prediction-display {
+        position: fixed;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        color: var(--accent);
+        background: rgba(0,0,0,0.7);
+        padding: 8px 12px;
+        border-radius: 4px;
+        z-index: 10;
+        pointer-events: none;
+      }
+      /* About Modal */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+      .modal-content {
+        background: var(--panel-bg);
+        padding: 1.5rem;
+        border-radius: 6px;
+        max-width: 600px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+        color: var(--text-color);
+      }
+      .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <canvas id="gridCanvas"></canvas>
+      <canvas id="cycleCanvas"></canvas>
+
+      <!-- Controls Panel -->
+      <div class="controls" id="controls" role="region" aria-label="Dashboard Controls">
+        <div class="control-buttons">
+          <button id="pause-btn" aria-label="Pause/Play">Pause</button>
+          <button id="reset-btn" aria-label="Reset">Reset</button>
+          <button id="speed-down-btn" aria-label="Slow Down">Slower</button>
+          <button id="speed-up-btn" aria-label="Speed Up">Faster</button>
+          <button id="download-btn" aria-label="Download Image">Download</button>
+          <button id="about-btn" aria-label="About">About</button>
+        </div>
+        <div class="control-toggles">
+          <label><input type="checkbox" id="muteMusic" /> Mute Music</label>
+          <label><input type="checkbox" id="muteThumps" /> Mute Effects</label>
+        </div>
+        <div class="volume-controls">
+          <label>Music Volume: <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="0.5" /></label>
+        </div>
+        <div class="date-display" id="date-display">Date: N/A</div>
+        <div class="time-scrub-container">
+          <input type="range" id="time-scrub" min="0" step="1" value="0">
+        </div>
+      </div>
+
+      <!-- Legend Panel -->
+      <div class="legend" id="legend">
+        <div><strong>Market Cycles</strong></div>
+        <ul id="legendList"></ul>
+      </div>
+
+      <!-- Prediction/Status Display -->
+      <div id="predictionDisplay" class="prediction-display">Status: Off</div>
+
+      <!-- About Modal -->
+      <div id="aboutModal" class="modal">
+        <div class="modal-content">
+          <span id="modalClose" class="modal-close">&times;</span>
+          <h2>About Market Resonance Analyzer</h2>
+          <p>
+            This dashboard integrates key harmonic market cycles with historical price data (split‑adjusted) starting December 31, 2020.
+            As time advances, the tool “plays” the historical prices and simulates forward using a compound growth model modulated by our cycles.
+            When cycles resonate, visual and audio cues hint at potential market turning points.
+          </p>
+          <p>
+            Use the controls above to pause, reset, adjust playback speed, or scrub through time.
+          </p>
+        </div>
+      </div>
+
+      <!-- Background Music -->
+      <audio id="bgMusic" src="https://fibonacciai.github.io/42069/Fury.mp3" autoplay loop></audio>
+    </div>
+
+    <script type="module">
+      "use strict";
+      (function(){
+        /*************************************************
+         * SETTINGS & LOCAL STORAGE
+         *************************************************/
+        function loadSettings() {
+          const defaultSettings = { muteMusic: false, muteThumps: false, lightTheme: false };
+          try {
+            return Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem("analyzerSettings") || '{}'));
+          } catch (e) {
+            return defaultSettings;
+          }
+        }
+        function saveSettings() {
+          localStorage.setItem("analyzerSettings", JSON.stringify(settings));
+        }
+        let settings = loadSettings();
+
+        /*************************************************
+         * DATE PARSING & SPLIT ADJUSTMENT
+         *************************************************/
+        function parseDateString(dateStr) {
+          const parts = dateStr.split("/");
+          return new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+        }
+        // Adjust prices for a 4-for-1 split on August 31, 2022.
+        const splitEvent = { date: new Date("2022-08-31"), factor: 0.25 };
+        function adjustPriceForSplit(date, price) {
+          return date < splitEvent.date ? price * splitEvent.factor : price;
+        }
+
+        /*************************************************
+         * CYCLE SETTINGS, RESONANCE & TIMERS
+         *************************************************/
+        // Market–themed cycles:
+        const cycles = [
+          { label: "1471: Market Momentum", period: 1471, color: "hsl(30, 80%, 60%)" },
+          { label: "741: Bullish Support",    period: 741,  color: "hsl(60, 80%, 60%)" },
+          { label: "147: Correction Cycle",   period: 147,  color: "hsl(120, 80%, 60%)" },
+          { label: "55: Quick Bounce",        period: 55,   color: "hsl(0, 80%, 60%)" },
+          { label: "35: Consolidation Phase", period: 35,   color: "hsl(280, 80%, 60%)" },
+          { label: "21: Liquidity Shift",     period: 21,   color: "hsl(20, 80%, 60%)" }
+        ];
+        const RESONANCE_THRESHOLD = 0.05;
+        const RESONANCE_TIMER_MAX = 30;
+        let resonanceTimers = {};
+        cycles.forEach(cycle => resonanceTimers[cycle.label] = 0);
+
+        /*************************************************
+         * PERRIN PSEUDOPRIMES CALCULATION
+         *************************************************/
+        function buildPerrinUpTo(maxN) {
+          const arr = [3, 0, 2];
+          for (let n = 3; n <= maxN; n++) {
+            arr[n] = arr[n - 2] + arr[n - 3];
+          }
+          return arr;
+        }
+        function isPrime(num) {
+          if (num < 2) return false;
+          if (num % 2 === 0) return num === 2;
+          for (let i = 3; i * i <= num; i += 2) {
+            if (num % i === 0) return false;
+          }
+          return true;
+        }
+        function buildPerrinPseudoprimesUpTo(maxN) {
+          const perrinArr = buildPerrinUpTo(maxN);
+          const result = [];
+          for (let n = 2; n <= maxN; n++) {
+            if (!isPrime(n) && perrinArr[n] % n === 0) result.push(n);
+          }
+          return result;
+        }
+        const PERRIN_PSEUDOPRIMES_SET = new Set(buildPerrinPseudoprimesUpTo(10000));
+        function isPerrinPseudoprime(n) {
+          return PERRIN_PSEUDOPRIMES_SET.has(n);
+        }
+
+        /*************************************************
+         * HISTORICAL DATA & PREDICTIVE PRICE MODELING
+         *************************************************/
+        const EXTRA_DAYS = 500;
+        let historicalData = [];
+        function parseCSV(text) {
+          let delimiter = text.indexOf(",") !== -1 ? "," : "\t";
+          const lines = text.trim().split("\n");
+          const headers = lines[0].split(delimiter).map(h => h.trim());
+          const data = [];
+          for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(delimiter);
+            if (cols.length < headers.length) continue;
+            const record = {};
+            headers.forEach((h, idx) => record[h] = cols[idx].trim());
+            data.push(record);
+          }
+          return data;
+        }
+        function getHistoricalPriceForDate(simDate) {
+          for (let i = historicalData.length - 1; i >= 0; i--) {
+            let recDate = parseDateString(historicalData[i].Date);
+            if (recDate <= simDate) {
+              let rawPrice = parseFloat(historicalData[i]["Close/Last"].replace(/[^0-9.]/g, ""));
+              return adjustPriceForSplit(recDate, rawPrice);
+            }
+          }
+          let first = historicalData[0];
+          return adjustPriceForSplit(parseDateString(first.Date), parseFloat(first["Close/Last"].replace(/[^0-9.]/g, "")));
+        }
+        function getCurrentPrice() {
+          let simDate = getCurrentDate(timeVar);
+          let lastHistoricalDate = parseDateString(historicalData[historicalData.length - 1].Date);
+          if (simDate <= lastHistoricalDate) return getHistoricalPriceForDate(simDate);
+          else return getSimulatedPrice(simDate);
+        }
+        // --- Enhanced simulation function ---
+        function getSimulatedPrice(simDate) {
+          let lastRecord = historicalData[historicalData.length - 1];
+          let lastHistoricalDate = parseDateString(lastRecord.Date);
+          let lastPrice = adjustPriceForSplit(lastHistoricalDate, parseFloat(lastRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+          
+          // Use a longer lookback period (up to 20 days) to compute a more stable growth rate.
+          const lookback = Math.min(20, historicalData.length);
+          let startRecord = historicalData[historicalData.length - lookback];
+          let startDate = parseDateString(startRecord.Date);
+          let startPrice = adjustPriceForSplit(startDate, parseFloat(startRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+          let daysBetween = (lastHistoricalDate - startDate) / 86400000;
+          let compoundRate = daysBetween > 0 ? Math.pow(lastPrice / startPrice, 1 / daysBetween) - 1 : 0;
+          
+          // Clamp the compound rate so that it does not drop too steeply.
+          if (compoundRate < -0.001) compoundRate = -0.001;
+          
+          let daysSinceLast = (simDate - lastHistoricalDate) / 86400000;
+          let simulatedPrice = lastPrice * Math.pow(1 + compoundRate, daysSinceLast);
+          
+          // Apply a moderated modulation from the composite indicator.
+          const composite = computeCompositeIndicator();
+          simulatedPrice *= (1 + composite * 0.02);  // Reduced influence from 0.05 to 0.02
+          return simulatedPrice;
+        }
+        function computeCompositeIndicator() {
+          let indicator = 0;
+          cycles.forEach((cycle, idx) => {
+            let phase = (timeVar % cycle.period) / cycle.period;
+            indicator += (1 / (idx + 1)) * Math.sin(2 * Math.PI * phase);
+          });
+          return indicator;
+        }
+        function computeHistoricalDrift() {
+          const N = Math.min(5, historicalData.length);
+          if (N < 2) return 0;
+          const startRecord = historicalData[historicalData.length - N];
+          const endRecord = historicalData[historicalData.length - 1];
+          const startPrice = adjustPriceForSplit(parseDateString(startRecord.Date), parseFloat(startRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+          const endPrice = adjustPriceForSplit(parseDateString(endRecord.Date), parseFloat(endRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+          return Math.pow(endPrice / startPrice, 1 / (N - 1)) - 1;
+        }
+
+        /*************************************************
+         * AUDIO – AMBIENT DRONE & CUE TONES
+         *************************************************/
+        let audioCtx, droneOsc, droneGain;
+        function initAudioContext() {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+          document.addEventListener("click", resumeAndPlayMusic, { once: true });
+          document.addEventListener("touchstart", resumeAndPlayMusic, { once: true });
+        }
+        function resumeAndPlayMusic() {
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume().then(() => {
+              const bgMusic = document.getElementById("bgMusic");
+              bgMusic.muted = settings.muteMusic;
+              bgMusic.volume = parseFloat(document.getElementById("musicVolume").value);
+              bgMusic.play().catch(err => console.error("bgMusic play error:", err));
+            });
+          }
+        }
+        function isEffectMuted() { return settings.muteThumps; }
+        function computeFibHarmonics() {
+          const phi = 1.61803398875;
+          return 1 + 0.1 * Math.sin(timeVar / phi);
+        }
+        function playCueTone() {
+          if (isEffectMuted()) return;
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const recentMomentum = computeHistoricalDrift();
+          const fibFactor = computeFibHarmonics();
+          osc.frequency.setValueAtTime(330 * (1 + recentMomentum) * fibFactor, now);
+          osc.type = "triangle";
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+          osc.stop(now + 0.5);
+        }
+        function startDrone() {
+          if (!audioCtx) return;
+          droneOsc = audioCtx.createOscillator();
+          droneGain = audioCtx.createGain();
+          droneOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
+          droneGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+          droneOsc.connect(droneGain);
+          droneGain.connect(audioCtx.destination);
+          droneOsc.start();
+        }
+        function updateDroneSound(activeResCount) {
+          if (!droneOsc || !droneGain) return;
+          let composite = computeCompositeIndicator();
+          let newFreq = 60 * (1 + activeResCount * 0.1 + 0.05 * composite);
+          droneOsc.frequency.setValueAtTime(newFreq, audioCtx.currentTime);
+          let newGain = 0.05 + (activeResCount / 10);
+          droneGain.gain.setValueAtTime(newGain, audioCtx.currentTime);
+        }
+
+        /*************************************************
+         * CANVAS RENDERING & TIME MANAGEMENT
+         *************************************************/
+        let cycleCanvas, cycleCtx;
+        let gridCanvas, gridCtx;
+        let canvasWidth, canvasHeight;
+        function getBgTime() { return timeVar * 10; }
+        function getCurrentDate(simTime) {
+          const START_DATE = new Date(2020, 11, 31);
+          return new Date(START_DATE.getTime() + simTime * 86400000);
+        }
+        let timeVar = 0;
+        let isPaused = false;
+        let speedMultiplier = 0.05;
+        let flashTimer = 0;
+        let triggeredResonances = new Set();
+        let glitchActive = false;
+        let glitchTimer = 0;
+
+        /*************************************************
+         * DRAWING FUNCTIONS – MULTILAYER INTEGRATION
+         *************************************************/
+        function drawGrid() {
+          if (!gridCtx) return;
+          gridCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+          gridCtx.save();
+          gridCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--grid-color") || "#333";
+          gridCtx.lineWidth = 1;
+          const gridSize = 50;
+          for (let x = 0; x <= canvasWidth; x += gridSize) {
+            gridCtx.beginPath();
+            gridCtx.moveTo(x, 0);
+            gridCtx.lineTo(x, canvasHeight);
+            gridCtx.stroke();
+          }
+          for (let y = 0; y <= canvasHeight; y += gridSize) {
+            gridCtx.beginPath();
+            gridCtx.moveTo(0, y);
+            gridCtx.lineTo(canvasWidth, y);
+            gridCtx.stroke();
+          }
+          gridCtx.restore();
+        }
+        function drawStarryNightBackground(composite) {
+          const centerX = canvasWidth / 2;
+          const centerY = canvasHeight / 2;
+          let compNorm = Math.min(Math.max((composite + 1) / 2, 0), 1);
+          const gradient = cycleCtx.createRadialGradient(centerX, centerY, canvasWidth * 0.1, centerX, centerY, canvasWidth * 0.9);
+          gradient.addColorStop(0, `rgba(13,27,42,${0.8 + 0.2 * compNorm})`);
+          gradient.addColorStop(1, `rgba(27,38,59,${0.8 + 0.2 * compNorm})`);
+          cycleCtx.fillStyle = gradient;
+          cycleCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+          const bgTime = getBgTime();
+          const numSwirls = 10;
+          for (let i = 0; i < numSwirls; i++) {
+            const angleOffset = (i / numSwirls) * 2 * Math.PI;
+            cycleCtx.save();
+            cycleCtx.translate(canvasWidth / 2, canvasHeight / 2);
+            cycleCtx.rotate(bgTime * 0.0005 + angleOffset);
+            cycleCtx.beginPath();
+            const steps = 100;
+            for (let j = 0; j < steps; j++) {
+              const theta = (j / steps) * 4 * Math.PI;
+              const radius = (j / steps) * canvasWidth * 0.5 + 20 * Math.sin(j / steps * Math.PI + bgTime * 0.005);
+              const x = radius * Math.cos(theta);
+              const y = radius * Math.sin(theta);
+              if (j === 0) cycleCtx.moveTo(x, y);
+              else cycleCtx.lineTo(x, y);
+            }
+            cycleCtx.strokeStyle = "rgba(255,215,0,0.3)";
+            cycleCtx.lineWidth = 2;
+            cycleCtx.stroke();
+            cycleCtx.restore();
+          }
+          for (let i = 0; i < 50; i++) {
+            const x = Math.random() * canvasWidth;
+            const y = Math.random() * canvasHeight;
+            const starAlpha = 0.3 + 0.7 * Math.random() * compNorm;
+            cycleCtx.beginPath();
+            cycleCtx.arc(x, y, Math.random() * 2 + 1, 0, 2 * Math.PI);
+            cycleCtx.fillStyle = `rgba(255,255,255,${starAlpha})`;
+            cycleCtx.fill();
+          }
+        }
+        function drawCyclesOrbital(composite) {
+          const centerX = canvasWidth / 2;
+          const centerY = canvasHeight / 2;
+          const maxRadius = Math.min(canvasWidth, canvasHeight) / 3;
+          let compNorm = Math.min(Math.max((composite + 1) / 2, 0), 1);
+          cycles.forEach((cycle, idx) => {
+            let orbitRadius = maxRadius * ((idx + 1) / (cycles.length + 1));
+            cycleCtx.beginPath();
+            cycleCtx.arc(centerX, centerY, orbitRadius, 0, 2 * Math.PI);
+            cycleCtx.strokeStyle = cycle.color;
+            cycleCtx.lineWidth = 2 + compNorm;
+            cycleCtx.stroke();
+            let phase = (timeVar % cycle.period) / cycle.period;
+            let angle = phase * 2 * Math.PI - Math.PI / 2;
+            let markerX = centerX + orbitRadius * Math.cos(angle);
+            let markerY = centerY + orbitRadius * Math.sin(angle);
+            cycleCtx.beginPath();
+            cycleCtx.arc(markerX, markerY, 8, 0, 2 * Math.PI);
+            cycleCtx.fillStyle = cycle.color;
+            cycleCtx.fill();
+            if (resonanceTimers[cycle.label] > 0) {
+              let intensity = resonanceTimers[cycle.label] / RESONANCE_TIMER_MAX;
+              cycleCtx.save();
+              cycleCtx.beginPath();
+              cycleCtx.arc(markerX, markerY, 14, 0, 2 * Math.PI);
+              cycleCtx.fillStyle = `rgba(255,0,0,${(0.7 * intensity * compNorm).toFixed(2)})`;
+              cycleCtx.fill();
+              if (intensity > 0.5) {
+                cycleCtx.fillStyle = "#fff";
+                cycleCtx.font = "bold 12px Inter, sans-serif";
+                cycleCtx.fillText("RES", markerX + 18, markerY + 4);
+              }
+              cycleCtx.restore();
+            }
+            cycleCtx.fillStyle = "#fff";
+            cycleCtx.font = "12px Inter, sans-serif";
+            cycleCtx.fillText(cycle.label, markerX + 10, markerY);
+          });
+        }
+        function checkResonances() {
+          let events = [];
+          for (let i = 0; i < cycles.length; i++) {
+            let phaseI = (timeVar % cycles[i].period) / cycles[i].period;
+            for (let j = i + 1; j < cycles.length; j++) {
+              let phaseJ = (timeVar % cycles[j].period) / cycles[j].period;
+              let diff = Math.abs(phaseI - phaseJ);
+              if (diff < RESONANCE_THRESHOLD) {
+                events.push({ cycles: [cycles[i].label, cycles[j].label], diff: diff });
+              }
+            }
+          }
+          return events;
+        }
+        function updateResonanceTimers(events) {
+          events.forEach(ev => {
+            ev.cycles.forEach(label => {
+              resonanceTimers[label] = RESONANCE_TIMER_MAX;
+            });
+          });
+        }
+        function decayResonanceTimers() {
+          Object.keys(resonanceTimers).forEach(key => {
+            if (resonanceTimers[key] > 0) resonanceTimers[key]--;
+          });
+        }
+        function drawFlash() {
+          if (flashTimer > 0) {
+            cycleCtx.save();
+            let opacity = (flashTimer / 30) * 0.25;
+            cycleCtx.fillStyle = `rgba(0,255,0,${opacity})`;
+            cycleCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            cycleCtx.restore();
+            flashTimer--;
+          }
+        }
+        function drawPriceChart() {
+          const chartHeight = canvasHeight * 0.25;
+          const chartY = canvasHeight - chartHeight;
+          cycleCtx.save();
+          cycleCtx.fillStyle = "rgba(0,0,0,0.6)";
+          cycleCtx.fillRect(0, chartY, canvasWidth, chartHeight);
+          let currentDay = Math.floor(timeVar);
+          let windowSize = Math.min(canvasWidth, currentDay + 1);
+          let startDay = currentDay - windowSize + 1;
+          let prices = [];
+          for (let d = startDay; d <= currentDay; d++) {
+            let simDate = getCurrentDate(d);
+            let price = d < historicalData.length ? getHistoricalPriceForDate(simDate) : getSimulatedPrice(simDate);
+            prices.push(price);
+          }
+          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+          const maxPrice = prices.length > 0 ? Math.max(...prices) : 100;
+          cycleCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#d4af37";
+          cycleCtx.lineWidth = 2;
+          cycleCtx.beginPath();
+          for (let i = 0; i < prices.length; i++) {
+            let price = prices[i];
+            let y = chartY + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
+            if (i === 0) cycleCtx.moveTo(i, y);
+            else cycleCtx.lineTo(i, y);
+          }
+          cycleCtx.stroke();
+          let curPrice = prices[prices.length - 1];
+          cycleCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#d4af37";
+          cycleCtx.font = "14px Inter, sans-serif";
+          cycleCtx.fillText("Price: $" + curPrice.toFixed(2), 10, chartY + 20);
+          if (prices.length > 0) {
+            let markerX = prices.length - 1;
+            cycleCtx.beginPath();
+            cycleCtx.moveTo(markerX, chartY);
+            cycleCtx.lineTo(markerX, chartY + chartHeight);
+            cycleCtx.strokeStyle = "#fff";
+            cycleCtx.setLineDash([5, 3]);
+            cycleCtx.stroke();
+            cycleCtx.setLineDash([]);
+          }
+          cycleCtx.restore();
+        }
+        function drawFiboSpiralEnhanced(composite) {
+          const centerX = canvasWidth / 2;
+          const centerY = canvasHeight / 2;
+          const goldenAngle = 2.39996;
+          const numPoints = 300;
+          const scale = (Math.min(canvasWidth, canvasHeight) / 2) / Math.sqrt(numPoints);
+          cycleCtx.save();
+          let compAlpha = Math.min(Math.max((composite + 1) / 2, 0.1), 0.3);
+          cycleCtx.globalAlpha = compAlpha;
+          cycleCtx.fillStyle = "rgba(255,255,255,0.5)";
+          for (let i = 1; i < numPoints; i++) {
+            const r = scale * Math.sqrt(i);
+            const theta = i * goldenAngle;
+            const x = centerX + r * Math.cos(theta);
+            const y = centerY + r * Math.sin(theta);
+            cycleCtx.beginPath();
+            cycleCtx.arc(x, y, 2, 0, 2 * Math.PI);
+            cycleCtx.fill();
+          }
+          cycleCtx.restore();
+        }
+        function drawRecursiveCycle(x, y, radius, depth) {
+          if (depth <= 0) return;
+          cycleCtx.beginPath();
+          cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
+          cycleCtx.strokeStyle = "rgba(255,255,255,0.05)";
+          cycleCtx.lineWidth = 1;
+          cycleCtx.stroke();
+          const newRadius = radius * 0.5;
+          drawRecursiveCycle(x - newRadius, y, newRadius, depth - 1);
+          drawRecursiveCycle(x + newRadius, y, newRadius, depth - 1);
+          drawRecursiveCycle(x, y - newRadius, newRadius, depth - 1);
+        }
+        function drawMoon(composite) {
+          const centerX = canvasWidth / 2;
+          const centerY = canvasHeight / 2;
+          const diameter = Math.min(canvasWidth, canvasHeight) * 0.8;
+          const radius = diameter / 2;
+          const pulsate = 1 + 0.05 * Math.sin(timeVar / 50);
+          const glowRadius = radius * 1.5 * pulsate;
+          let compNorm = Math.min(Math.max((composite + 1) / 2, 0), 1);
+          const glowGradient = cycleCtx.createRadialGradient(centerX, centerY, radius, centerX, centerY, glowRadius);
+          glowGradient.addColorStop(0, `rgba(180,140,217,${0.6 * compNorm})`);
+          glowGradient.addColorStop(1, `rgba(180,140,217,0)`);
+          cycleCtx.save();
+          cycleCtx.globalCompositeOperation = "lighter";
+          cycleCtx.fillStyle = glowGradient;
+          cycleCtx.beginPath();
+          cycleCtx.arc(centerX, centerY, glowRadius, 0, 2 * Math.PI);
+          cycleCtx.fill();
+          cycleCtx.restore();
+          drawRecursiveCycle(centerX, centerY, radius * 0.5, 3);
+        }
+
+        /*************************************************
+         * RESIZING & INITIALIZATION
+         *************************************************/
+        function resizeCanvas() {
+          canvasWidth = window.innerWidth;
+          canvasHeight = window.innerHeight;
+          cycleCanvas.style.width = canvasWidth + "px";
+          cycleCanvas.style.height = canvasHeight + "px";
+          gridCanvas.style.width = canvasWidth + "px";
+          gridCanvas.style.height = canvasHeight + "px";
+          const dpr = window.devicePixelRatio || 1;
+          cycleCanvas.width = canvasWidth * dpr;
+          cycleCanvas.height = canvasHeight * dpr;
+          gridCanvas.width = canvasWidth * dpr;
+          gridCanvas.height = canvasHeight * dpr;
+          if (cycleCtx.resetTransform) cycleCtx.resetTransform();
+          cycleCtx.scale(dpr, dpr);
+          gridCtx = gridCanvas.getContext("2d");
+          gridCtx.scale(dpr, dpr);
+        }
+        function populateLegend() {
+          const legendList = document.getElementById("legendList");
+          legendList.innerHTML = "";
+          cycles.forEach(cycle => {
+            const li = document.createElement("li");
+            const dot = document.createElement("span");
+            dot.className = "legend-dot";
+            dot.style.background = cycle.color;
+            li.appendChild(dot);
+            li.appendChild(document.createTextNode(cycle.label));
+            legendList.appendChild(li);
+          });
+        }
+        function setupControls() {
+          document.getElementById("time-scrub").max = historicalData.length + EXTRA_DAYS;
+          document.getElementById("muteMusic").addEventListener("change", (e) => {
+            settings.muteMusic = e.target.checked;
+            document.getElementById("bgMusic").muted = settings.muteMusic;
+            saveSettings();
+          });
+          document.getElementById("muteThumps").addEventListener("change", (e) => {
+            settings.muteThumps = e.target.checked;
+            saveSettings();
+          });
+          document.getElementById("pause-btn").addEventListener("click", () => {
+            isPaused = !isPaused;
+            document.getElementById("pause-btn").textContent = isPaused ? "Play" : "Pause";
+          });
+          document.getElementById("reset-btn").addEventListener("click", () => {
+            timeVar = 0;
+            saveSettings();
+          });
+          document.getElementById("speed-down-btn").addEventListener("click", () => {
+            speedMultiplier = Math.max(speedMultiplier / 2, 0.01);
+          });
+          document.getElementById("speed-up-btn").addEventListener("click", () => {
+            speedMultiplier = Math.min(speedMultiplier * 2, 16);
+          });
+          document.getElementById("download-btn").addEventListener("click", () => {
+            const link = document.createElement("a");
+            link.download = "market_resonance.png";
+            link.href = cycleCanvas.toDataURL("image/png");
+            link.click();
+          });
+          document.getElementById("time-scrub").addEventListener("input", (e) => {
+            timeVar = parseFloat(e.target.value);
+          });
+          window.addEventListener("resize", resizeCanvas);
+        }
+        function setupModal() {
+          const aboutBtn = document.getElementById("about-btn");
+          const aboutModal = document.getElementById("aboutModal");
+          const modalClose = document.getElementById("modalClose");
+          aboutBtn.addEventListener("click", () => { aboutModal.style.display = "flex"; });
+          modalClose.addEventListener("click", () => { aboutModal.style.display = "none"; });
+          window.addEventListener("click", (e) => { if (e.target === aboutModal) { aboutModal.style.display = "none"; } });
+        }
+        function updateDateDisplay() {
+          let simDate = getCurrentDate(timeVar);
+          let curPrice = getCurrentPrice();
+          document.getElementById("date-display").textContent =
+            "Date: " + simDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) +
+            " | Price: $" + curPrice.toFixed(2);
+        }
+
+        /*************************************************
+         * ANIMATION LOOP – THE HARMONIOUS MASTERPIECE
+         *************************************************/
+        function animate() {
+          cycleCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+          const composite = computeCompositeIndicator();
+          drawGrid();
+          drawStarryNightBackground(composite);
+          const resEvents = checkResonances();
+          updateResonanceTimers(resEvents);
+          decayResonanceTimers();
+          drawCyclesOrbital(composite);
+          // Special events:
+          checkCrucialDates(canvasWidth / 2, canvasHeight / 2, getCurrentDate(timeVar));
+          checkPerrinEvent();
+          drawFlash();
+          drawFiboSpiralEnhanced(composite);
+          drawMoon(composite);
+          drawPriceChart();
+          updateDateDisplay();
+          updateDroneSound(resEvents.length);
+          if (!isPaused) { timeVar += speedMultiplier; }
+          document.getElementById("time-scrub").value = timeVar;
+          if (glitchActive) {
+            cycleCtx.save();
+            cycleCtx.globalAlpha = 0.3;
+            cycleCtx.translate((Math.random()-0.5)*10, (Math.random()-0.5)*10);
+            cycleCtx.fillStyle = "rgba(255,255,255,0.1)";
+            cycleCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            cycleCtx.restore();
+            glitchTimer--;
+            if (glitchTimer <= 0) { glitchActive = false; }
+          }
+          requestAnimationFrame(animate);
+        }
+        function checkPerrinEvent() {
+          let day = Math.floor(timeVar);
+          if (day > 1 && isPerrinPseudoprime(day)) {
+            document.getElementById("predictionDisplay").textContent = "Perrin Event: Day " + day;
+            flashTimer = 30;
+            playCueTone();
+          }
+        }
+        function checkCrucialDates(x, y, currentDate) {
+          const CRUCIAL_DATES = [
+            new Date(2025, 0, 9),
+            new Date(2025, 0, 12),
+            new Date(2025, 0, 23),
+            new Date(2025, 0, 28)
+          ];
+          const dayThreshold = 1;
+          const found = CRUCIAL_DATES.some(cd => Math.abs((currentDate - cd) / 86400000) < dayThreshold);
+          if (found) {
+            const eventKey = `Crucial-${currentDate.toDateString()}`;
+            if (!triggeredResonances.has(eventKey)) {
+              triggeredResonances.add(eventKey);
+              cycleCtx.beginPath();
+              cycleCtx.arc(x, y, 150, 0, 2 * Math.PI);
+              cycleCtx.strokeStyle = "rgba(255,165,0,0.8)";
+              cycleCtx.lineWidth = 4;
+              cycleCtx.stroke();
+              playCueTone();
+              document.getElementById("predictionDisplay").textContent =
+                "Resonance: Crucial Date! " +
+                currentDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+              setTimeout(() => {
+                document.getElementById("predictionDisplay").textContent = "Status: Off";
+              }, 4000);
+            }
+          }
+        }
+        function triggerGlitch(duration) {
+          glitchActive = true;
+          glitchTimer = duration;
+        }
+
+        /*************************************************
+         * LAUNCH & CSV LOADING
+         *************************************************/
+        function loadHistoricalData() {
+          return fetch("https://fibonacciai.github.io/42069/HistoricalData_1738905398428.csv")
+            .then(response => response.text())
+            .then(text => {
+              let data = parseCSV(text);
+              data.sort((a, b) => parseDateString(a.Date) - parseDateString(b.Date));
+              console.log("Loaded historical data records:", data.length);
+              return data;
+            });
+        }
+        window.addEventListener("load", () => {
+          cycleCanvas = document.getElementById("cycleCanvas");
+          cycleCtx = cycleCanvas.getContext("2d");
+          gridCanvas = document.getElementById("gridCanvas");
+          gridCtx = gridCanvas.getContext("2d");
+          resizeCanvas();
+          populateLegend();
+          setupControls();
+          setupModal();
+          initAudioContext();
+          startDrone();
+          loadHistoricalData()
+            .then(data => {
+              historicalData = data;
+              document.getElementById("time-scrub").max = historicalData.length + EXTRA_DAYS;
+              requestAnimationFrame(animate);
+            })
+            .catch(err => {
+              console.error("Error loading historical CSV data:", err);
+            });
+        });
+      })();
+    </script>
+  </body>
+</html>
