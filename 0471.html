@@ -229,7 +229,7 @@
           <h2>About Harmonic Resonance Analyzer</h2>
           <p>
             This dashboard integrates key harmonic cycles with GameStop’s historical price data (split‑adjusted) starting December 31, 2020.
-            As time advances, the tool “plays” the historical close–prices (using actual date comparisons) and then simulates forward using a compound growth model modulated by our cycles.
+            As time advances, the tool “plays” the historical close–prices and then simulates forward using a compound growth model modulated by our cycles.
             When cycles resonate (or special numeric events occur), visual and audio cues hint at potential turning points.
           </p>
           <p>
@@ -338,7 +338,7 @@
           }
           return data;
         }
-        // Instead of using a simple index, we map the simulated date to the most recent record.
+        // When a simulated date falls within historical data, use the most recent record.
         function getHistoricalPriceForDate(simDate) {
           for (let i = historicalData.length - 1; i >= 0; i--) {
             let recDate = parseDateString(historicalData[i].Date);
@@ -347,10 +347,10 @@
               return adjustPriceForSplit(recDate, rawPrice);
             }
           }
-          // If no record is found (should not happen), return first record's price.
           let first = historicalData[0];
           return adjustPriceForSplit(parseDateString(first.Date), parseFloat(first["Close/Last"].replace(/[^0-9.]/g, "")));
         }
+        // Use the simulated date to choose either historical or extrapolated price.
         function getCurrentPrice() {
           let simDate = getCurrentDate(timeVar);
           let lastHistoricalDate = parseDateString(historicalData[historicalData.length - 1].Date);
@@ -361,7 +361,6 @@
           }
         }
         function getSimulatedPrice(simDate) {
-          // Use the last historical record as a base.
           let lastRecord = historicalData[historicalData.length - 1];
           let lastHistoricalDate = parseDateString(lastRecord.Date);
           let lastPrice = adjustPriceForSplit(lastHistoricalDate, parseFloat(lastRecord["Close/Last"].replace(/[^0-9.]/g, "")));
@@ -372,7 +371,6 @@
           let startPrice = adjustPriceForSplit(startDate, parseFloat(startRecord["Close/Last"].replace(/[^0-9.]/g, "")));
           let compoundRate = Math.pow(lastPrice / startPrice, 1 / (lookback - 1)) - 1;
           let simulatedPrice = lastPrice * Math.pow(1 + compoundRate, daysSinceLast);
-          // Modulate with composite cycle indicator.
           const composite = computeCompositeIndicator();
           simulatedPrice *= (1 + composite * 0.05);
           return simulatedPrice;
@@ -384,6 +382,16 @@
             indicator += (1 / (idx + 1)) * Math.sin(2 * Math.PI * phase);
           });
           return indicator;
+        }
+        // Compute drift (compound daily growth rate over last 5 days) from historical data.
+        function computeHistoricalDrift() {
+          const N = Math.min(5, historicalData.length);
+          if (N < 2) return 0;
+          const startRecord = historicalData[historicalData.length - N];
+          const endRecord = historicalData[historicalData.length - 1];
+          const startPrice = adjustPriceForSplit(parseDateString(startRecord.Date), parseFloat(startRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+          const endPrice = adjustPriceForSplit(parseDateString(endRecord.Date), parseFloat(endRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+          return Math.pow(endPrice / startPrice, 1 / (N - 1)) - 1;
         }
 
         /*************************************************
@@ -422,15 +430,6 @@
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
           osc.stop(now + 0.5);
         }
-        function computeHistoricalDrift() {
-          const N = Math.min(5, historicalData.length);
-          if (N < 2) return 0;
-          const startRecord = historicalData[historicalData.length - N];
-          const endRecord = historicalData[historicalData.length - 1];
-          const startPrice = adjustPriceForSplit(parseDateString(startRecord.Date), parseFloat(startRecord["Close/Last"].replace(/[^0-9.]/g, "")));
-          const endPrice = adjustPriceForSplit(parseDateString(endRecord.Date), parseFloat(endRecord["Close/Last"].replace(/[^0-9.]/g, "")));
-          return Math.pow(endPrice / startPrice, 1 / (N - 1)) - 1;
-        }
         function startDrone() {
           if (!audioCtx) return;
           droneOsc = audioCtx.createOscillator();
@@ -455,18 +454,20 @@
         let cycleCanvas, cycleCtx;
         let gridCanvas, gridCtx;
         let canvasWidth, canvasHeight;
-        // timeVar is measured in “days” from December 31, 2020.
-        function getCurrentDate(timeVar) {
+        // For background animation we use a faster “bgTime” that is timeVar multiplied.
+        function getBgTime() {
+          return timeVar * 10;
+        }
+        // Simulation time: measured in days from December 31, 2020.
+        function getCurrentDate(simTime) {
           const START_DATE = new Date(2020, 11, 31);
-          return new Date(START_DATE.getTime() + timeVar * 86400000);
+          return new Date(START_DATE.getTime() + simTime * 86400000);
         }
         let timeVar = 0;
         let isPaused = false;
         let speedMultiplier = 0.05;
-        let priceHistory = [];
         let flashTimer = 0;
         let triggeredResonances = new Set();
-        let thumps = [];
         let glitchActive = false;
         let glitchTimer = 0;
 
@@ -493,7 +494,7 @@
           gridCtx.restore();
         }
 
-        // Starry Night–inspired background.
+        // Draw a Starry Night–inspired background using a faster bgTime.
         function drawStarryNightBackground() {
           const centerX = canvasWidth / 2;
           const centerY = canvasHeight / 2;
@@ -502,17 +503,19 @@
           gradient.addColorStop(1, "#1B263B");
           cycleCtx.fillStyle = gradient;
           cycleCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+          // Swirling brush strokes.
+          const bgTime = getBgTime();
           const numSwirls = 10;
           for (let i = 0; i < numSwirls; i++) {
             const angleOffset = (i / numSwirls) * 2 * Math.PI;
             cycleCtx.save();
             cycleCtx.translate(canvasWidth / 2, canvasHeight / 2);
-            cycleCtx.rotate(timeVar * 0.0005 + angleOffset);
+            cycleCtx.rotate(bgTime * 0.0005 + angleOffset);
             cycleCtx.beginPath();
             const steps = 100;
             for (let j = 0; j < steps; j++) {
               const theta = (j / steps) * 4 * Math.PI;
-              const radius = (j / steps) * canvasWidth * 0.5 + 20 * Math.sin(j / steps * Math.PI + timeVar * 0.005);
+              const radius = (j / steps) * canvasWidth * 0.5 + 20 * Math.sin(j / steps * Math.PI + bgTime * 0.005);
               const x = radius * Math.cos(theta);
               const y = radius * Math.sin(theta);
               if (j === 0) cycleCtx.moveTo(x, y);
@@ -523,6 +526,7 @@
             cycleCtx.stroke();
             cycleCtx.restore();
           }
+          // Twinkling stars.
           for (let i = 0; i < 50; i++) {
             const x = Math.random() * canvasWidth;
             const y = Math.random() * canvasHeight;
@@ -555,17 +559,17 @@
             cycleCtx.strokeStyle = "#555";
             cycleCtx.lineWidth = 2;
             cycleCtx.beginPath();
-            cycleCtx.moveTo(0, yStart + bandHeight / 2);
-            cycleCtx.lineTo(canvasWidth, yStart + bandHeight / 2);
+            cycleCtx.moveTo(0, yStart + bandHeight/2);
+            cycleCtx.lineTo(canvasWidth, yStart + bandHeight/2);
             cycleCtx.stroke();
             let markerX = phase * canvasWidth;
             cycleCtx.beginPath();
-            cycleCtx.arc(markerX, yStart + bandHeight / 2, 8, 0, 2 * Math.PI);
+            cycleCtx.arc(markerX, yStart + bandHeight/2, 8, 0, 2 * Math.PI);
             cycleCtx.fillStyle = adjustedColor;
             cycleCtx.fill();
             cycleCtx.fillStyle = "#ccc";
             cycleCtx.font = "12px Inter, sans-serif";
-            cycleCtx.fillText((phase * 100).toFixed(1) + "%", markerX - 15, yStart + bandHeight / 2 - 12);
+            cycleCtx.fillText((phase * 100).toFixed(1) + "%", markerX - 15, yStart + bandHeight/2 - 12);
           });
         }
 
@@ -626,27 +630,34 @@
           cycleCtx.save();
           cycleCtx.fillStyle = "rgba(0,0,0,0.6)";
           cycleCtx.fillRect(0, chartY, canvasWidth, chartHeight);
-          let curPrice = getCurrentPrice();
-          priceHistory.push(curPrice);
-          if (priceHistory.length > canvasWidth) { priceHistory.shift(); }
-          const visibleHistory = priceHistory;
-          const minPrice = visibleHistory.length > 0 ? Math.min(...visibleHistory) : curPrice;
-          const maxPrice = visibleHistory.length > 0 ? Math.max(...visibleHistory) : curPrice;
+          // Determine the visible time window in days.
+          let currentDay = Math.floor(timeVar);
+          let windowSize = Math.min(canvasWidth, currentDay + 1);
+          let startDay = currentDay - windowSize + 1;
+          let prices = [];
+          for (let d = startDay; d <= currentDay; d++) {
+            let simDate = getCurrentDate(d);
+            let price = d < historicalData.length ? getHistoricalPriceForDate(simDate) : getSimulatedPrice(simDate);
+            prices.push(price);
+          }
+          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+          const maxPrice = prices.length > 0 ? Math.max(...prices) : 100;
           cycleCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#d4af37";
           cycleCtx.lineWidth = 2;
           cycleCtx.beginPath();
-          for (let i = 0; i < visibleHistory.length; i++) {
-            let price = visibleHistory[i];
+          for (let i = 0; i < prices.length; i++) {
+            let price = prices[i];
             let y = chartY + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
             if (i === 0) cycleCtx.moveTo(i, y);
             else cycleCtx.lineTo(i, y);
           }
           cycleCtx.stroke();
+          let curPrice = prices[prices.length - 1];
           cycleCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#d4af37";
           cycleCtx.font = "14px Inter, sans-serif";
           cycleCtx.fillText("Price: $" + curPrice.toFixed(2), 10, chartY + 20);
-          if (visibleHistory.length > 0) {
-            let markerX = visibleHistory.length - 1;
+          if (prices.length > 0) {
+            let markerX = prices.length - 1;
             cycleCtx.beginPath();
             cycleCtx.moveTo(markerX, chartY);
             cycleCtx.lineTo(markerX, chartY + chartHeight);
@@ -747,7 +758,7 @@
           });
         }
         function setupControls() {
-          // Set the scrub slider max to historical days plus extra simulation days.
+          // Set scrub slider max to historical days plus extra simulation days.
           document.getElementById("time-scrub").max = historicalData.length + EXTRA_DAYS;
           document.getElementById("muteMusic").addEventListener("change", (e) => {
             settings.muteMusic = e.target.checked;
@@ -764,8 +775,6 @@
           });
           document.getElementById("reset-btn").addEventListener("click", () => {
             timeVar = 0;
-            priceHistory = [];
-            triggeredResonances.clear();
             saveSettings();
           });
           document.getElementById("speed-down-btn").addEventListener("click", () => {
@@ -782,7 +791,6 @@
           });
           document.getElementById("time-scrub").addEventListener("input", (e) => {
             timeVar = parseFloat(e.target.value);
-            priceHistory = [];
           });
           window.addEventListener("resize", resizeCanvas);
         }
@@ -813,7 +821,6 @@
           drawCycles();
           let resEvents = checkResonances();
           if (resEvents.length > 0) drawResonances(resEvents);
-          // Check for special events.
           checkCrucialDates(canvasWidth / 2, canvasHeight / 2, getCurrentDate(timeVar));
           checkPerrinEvent();
           drawFlash();
@@ -903,7 +910,6 @@
           loadHistoricalData()
             .then(data => {
               historicalData = data;
-              // Set the scrub slider max to historical data length plus extra simulation days.
               document.getElementById("time-scrub").max = historicalData.length + EXTRA_DAYS;
               requestAnimationFrame(animate);
             })
