@@ -41,22 +41,46 @@
       z-index: 100;
       border-bottom: 1px solid #333;
     }
-    /* Toggle Controls Button (only on mobile) */
-    #toggleControlsBtn {
-      display: none;
-    }
-    /* Wrap controls in a container so they can be toggled */
-    #controlsContainer {
+    /* Basic controls: always show the thought entry field */
+    .basic-controls {
       display: flex;
       flex-direction: row;
-      flex-wrap: wrap;
-      gap: 8px;
       align-items: center;
+      gap: 8px;
+    }
+    /* Advanced controls: hidden on mobile by default */
+    #advancedControls {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    /* Toggle button for advanced controls (mobile) */
+    #toggleAdvancedBtn {
+      display: block;
+      background: #333;
+      color: #fff;
+      border: none;
+      font-size: 20px;
+      margin-bottom: 4px;
+      width: 100%;
+      text-align: left;
+    }
+    /* On desktop, show advanced controls and hide toggle button */
+    @media (min-width: 601px) {
+      #advancedControls {
+        display: flex !important;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      #toggleAdvancedBtn {
+        display: none;
+      }
     }
     .control-group {
       display: flex;
       flex-direction: row;
-      flex-wrap: wrap;
       gap: 8px;
       align-items: center;
       flex: 1;
@@ -89,7 +113,7 @@
     }
     input[type=range] { width: 80px; }
     #strengthValue { width: 40px; text-align: right; }
-    /* Status and Panel Styling */
+    /* Status and Panels */
     .status-box {
       position: fixed;
       bottom: 20px;
@@ -222,26 +246,33 @@
     /* Mobile Responsive Styles */
     @media (max-width: 600px) {
       .top-bar {
-        padding: 4px;
         flex-direction: column;
+        padding: 4px;
         align-items: stretch;
       }
-      #toggleControlsBtn {
+      /* On mobile, always show basic controls (thought entry) while advanced controls are toggled */
+      .basic-controls {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+      }
+      #toggleAdvancedBtn {
         display: block;
         background: #333;
         color: #fff;
         border: none;
         font-size: 20px;
         margin-bottom: 4px;
-        text-align: left;
         width: 100%;
+        text-align: left;
       }
-      #controlsContainer {
+      #advancedControls {
         display: none;
         flex-direction: column;
         gap: 4px;
       }
-      #controlsContainer.show {
+      #advancedControls.show {
         display: flex;
       }
       .input {
@@ -297,19 +328,22 @@
   </style>
 </head>
 <body>
-  <!-- Top Bar: API Key, Controls Toggle, and Thought Input -->
+  <!-- Top Bar: Basic Controls and Advanced Toggle -->
   <div class="top-bar">
-    <!-- Toggle Controls Button (visible on mobile) -->
-    <button id="toggleControlsBtn" class="btn">☰ Controls</button>
-    <!-- Container for control groups -->
-    <div id="controlsContainer">
+    <!-- Basic Controls: Always show the thought entry field -->
+    <div class="basic-controls">
+      <input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought &amp; press Enter" />
+    </div>
+    <!-- Toggle button for advanced controls (only visible on mobile) -->
+    <button id="toggleAdvancedBtn" class="btn">☰ Advanced</button>
+    <!-- Advanced Controls: API key, connection options, etc. -->
+    <div id="advancedControls">
       <div class="control-group">
         <input type="password" class="input" id="apiKeyInput" placeholder="Enter API key (sk-...)" />
         <button class="btn" id="connectKeyBtn">Connect Key</button>
         <button class="btn" id="changeApiBtn">Change API</button>
       </div>
       <div class="control-group">
-        <input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought &amp; press Enter" />
         <div class="slider-container">
           <label for="linkStrength">Link Strength:</label>
           <input type="range" id="linkStrength" min="0" max="100" value="50" />
@@ -318,16 +352,17 @@
         <button class="btn" id="toggleAnalysisLogBtn">Analysis Log</button>
         <button class="btn" id="toggleThoughtsPanelBtn">View All</button>
       </div>
+      <!-- "Load Predefined NGOs" button will be appended here once API key is connected -->
     </div>
-    <!-- The "Load Predefined NGOs" button will be added to the controlsContainer once API key is connected -->
   </div>
 
-  <!-- Status and Panels -->
+  <!-- Status Box -->
   <div class="status-box" id="statusBox">
     <strong>@DataRepublican 🧵 THE UNIPARTY UNMASKED:</strong><br />
     Connect your API key to enable deep contextual analysis and load sample NGOs.
   </div>
 
+  <!-- Analysis Log Panel -->
   <div class="analysis-log" id="analysisLog">
     <div class="analysis-log-header">
       <strong>Ongoing Analysis</strong>
@@ -336,10 +371,10 @@
     <div id="analysisLogMessages"></div>
   </div>
 
+  <!-- Thoughts Panel -->
   <div class="thought-panel" id="thoughtPanel">
     <h3 style="margin-top:0;">Thoughts</h3>
     <div id="thoughtsList"></div>
-    <!-- Final Report appended below -->
     <div id="finalReport"></div>
   </div>
 
@@ -365,9 +400,9 @@
     let scene, camera, renderer, controls, networkGroup;
     let thoughts = [];      // Each thought: { id, text, mesh, analysis }
     let connections = [];   // Each connection: { from, to, line, strength }
-    let linkStrength = 0.5; // 0 to 1 threshold for connections
+    let linkStrength = 0.5; // 0 to 1 threshold for creating connections
     let apiKey = "";
-    let sampleNGOsLoaded = false; // Load sample NGOs only once
+    let sampleNGOsLoaded = false; // Ensure sample NGOs load only once
 
     // Preloaded sample NGO data (loaded on demand)
     const preloaded = [
@@ -563,6 +598,7 @@
       });
       updateThoughtsList();
       setStatus("Sample NGOs loaded.");
+      // Analyze preloaded connections immediately.
       reanalyzeAllConns().then(updateNetworkAnalysis);
     }
 
@@ -783,7 +819,9 @@ Return only the analysis text.`;
       tObj.mesh.userData.thoughtId = tObj.id;
       thoughts.push(tObj);
       updateThoughtsList();
-
+      // Rotate focus to the new thought
+      controls.target.copy(tObj.mesh.position);
+      controls.update();
       if (thoughts.length > 1) {
         setStatus("Analyzing connections...");
         for (const older of thoughts.slice(0, -1)) {
@@ -926,9 +964,9 @@ Return only the analysis text.`;
     /* --------------------------
        UI Event Listeners
     --------------------------- */
-    document.getElementById('toggleControlsBtn').addEventListener('click', () => {
-      const container = document.getElementById('controlsContainer');
-      container.classList.toggle('show');
+    // Toggle Advanced Controls on mobile
+    document.getElementById('toggleAdvancedBtn').addEventListener('click', () => {
+      document.getElementById('advancedControls').classList.toggle('show');
     });
     document.getElementById('connectKeyBtn').addEventListener('click', () => {
       const val = document.getElementById('apiKeyInput').value.trim();
@@ -938,7 +976,7 @@ Return only the analysis text.`;
       }
       apiKey = val;
       setStatus("API Key connected. Now you can add thoughts.");
-      // Add a button to load predefined NGOs if not already present.
+      // Append "Load Predefined NGOs" button if not already present.
       if (!document.getElementById('loadPredefinedBtn')) {
         const btn = document.createElement('button');
         btn.id = "loadPredefinedBtn";
@@ -949,7 +987,7 @@ Return only the analysis text.`;
           btn.disabled = true;
           setStatus("Sample NGOs loaded.");
         });
-        document.getElementById('controlsContainer').appendChild(btn);
+        document.getElementById('advancedControls').appendChild(btn);
       }
     });
     document.getElementById('changeApiBtn').addEventListener('click', () => {
