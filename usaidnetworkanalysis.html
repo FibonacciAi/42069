@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>3D Thought Network – Deep Contextual Analysis</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <!-- Favicon to prevent local resource warnings -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Favicon to suppress local resource warnings -->
   <link rel="icon" href="data:," />
   <!-- Import map for Three.js modules -->
   <script type="importmap">
@@ -16,109 +16,181 @@
   }
   </script>
   <style>
-    /* Global Reset and Styling */
+    /* Global Reset and Base Styling */
     *, *::before, *::after { box-sizing: border-box; }
     body {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       font-family: system-ui, -apple-system, sans-serif;
-      background: #000; color: #fff;
+      background: #000;
+      color: #fff;
       overflow: hidden;
     }
+    /* Top Bar and Controls */
     .top-bar {
-      position: fixed; top: 0; left: 0; right: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
       background: rgba(0,0,0,0.9);
       backdrop-filter: blur(10px);
       padding: 8px;
-      display: flex; flex-direction: column;
-      gap: 8px; z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
       border-bottom: 1px solid #333;
     }
-    .row {
-      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    /* Toggle Controls Button (only on mobile) */
+    #toggleControlsBtn {
+      display: none;
+    }
+    /* Wrap controls in a container so they can be toggled */
+    #controlsContainer {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      flex: 1;
+      min-width: 280px;
     }
     .btn {
-      background: #333; color: #fff;
+      background: #333;
+      color: #fff;
       border: 1px solid #444;
       border-radius: 6px;
-      padding: 6px 12px; cursor: pointer;
+      padding: 6px 12px;
+      cursor: pointer;
       transition: all 0.2s;
     }
     .btn:hover { background: #444; border-color: #555; }
     .btn:active { transform: translateY(1px); }
     .input {
-      background: #222; color: #fff;
+      background: #222;
+      color: #fff;
       border: 1px solid #333;
       border-radius: 6px;
       padding: 6px 10px;
-      min-width: 160px;
+      min-width: 120px;
+      flex: 1;
     }
-    .slider-container { display: flex; align-items: center; gap: 6px; }
-    input[type=range] { width: 100px; }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    input[type=range] { width: 80px; }
+    #strengthValue { width: 40px; text-align: right; }
+    /* Status and Panel Styling */
     .status-box {
-      position: fixed; bottom: 20px; left: 20px;
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
       background: rgba(0,0,0,0.9);
       backdrop-filter: blur(10px);
       padding: 8px 16px;
-      border-radius: 6px; border: 1px solid #333;
-      z-index: 100; transition: all 0.3s;
+      border-radius: 6px;
+      border: 1px solid #333;
+      z-index: 100;
+      transition: all 0.3s;
       max-width: 40vw;
     }
     .analysis-log {
-      position: fixed; bottom: 20px; left: 50%;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.9);
       backdrop-filter: blur(10px);
-      width: 400px; max-height: 40vh;
-      border: 1px solid #333; border-radius: 6px;
-      padding: 12px; overflow-y: auto;
+      width: 400px;
+      max-height: 40vh;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 12px;
+      overflow-y: auto;
       z-index: 150;
       display: none;
     }
     .analysis-log-header {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
     }
     .analysis-log-header button {
-      background: transparent; border: none;
-      color: #fff; font-size: 16px; cursor: pointer;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
     }
     #analysisLogMessages { font-size: 12px; }
     .thought-panel {
-      position: fixed; right: 20px; top: 100px;
+      position: fixed;
+      right: 20px;
+      top: 100px;
       background: rgba(0,0,0,0.9);
       backdrop-filter: blur(10px);
-      padding: 16px; border-radius: 8px;
+      padding: 16px;
+      border-radius: 8px;
       border: 1px solid #333;
-      width: 300px; max-height: 70vh; overflow-y: auto;
-      z-index: 90; display: none;
+      width: 300px;
+      max-height: 70vh;
+      overflow-y: auto;
+      z-index: 90;
+      display: none;
     }
     .thought-item {
-      background: #222; padding: 8px 12px;
-      border-radius: 4px; margin-bottom: 8px;
-      display: flex; justify-content: space-between;
+      background: #222;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
     }
+    #finalReport { font-size: 12px; margin-top: 8px; }
+    /* Canvas */
     #threeCanvas {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%; z-index: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
       background: #000;
     }
     .suggestionsPanel {
-      display: flex; gap: 8px; margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
       flex-wrap: wrap;
     }
     .suggestion-btn {
-      background: #444; color: #fff;
-      border: none; border-radius: 4px;
-      padding: 4px 8px; cursor: pointer;
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
       font-size: 13px;
     }
     .suggestion-btn:hover { background: #666; }
     /* Lightbox (Modal) Styles */
     .lightbox {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background: rgba(0,0,0,0.8);
       display: flex;
       justify-content: center;
@@ -137,7 +209,8 @@
     }
     #closeLightboxBtn {
       position: absolute;
-      top: 10px; right: 10px;
+      top: 10px;
+      right: 10px;
       background: transparent;
       border: none;
       font-size: 24px;
@@ -145,33 +218,113 @@
       cursor: pointer;
     }
     .hidden { display: none; }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 600px) {
+      .top-bar {
+        padding: 4px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #toggleControlsBtn {
+        display: block;
+        background: #333;
+        color: #fff;
+        border: none;
+        font-size: 20px;
+        margin-bottom: 4px;
+        text-align: left;
+        width: 100%;
+      }
+      #controlsContainer {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+      }
+      #controlsContainer.show {
+        display: flex;
+      }
+      .input {
+        min-width: 100%;
+        font-size: 14px;
+        padding: 4px 8px;
+      }
+      .btn {
+        padding: 4px 8px;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 4px;
+      }
+      .slider-container {
+        font-size: 14px;
+        width: 100%;
+        justify-content: space-between;
+      }
+      input[type=range] {
+        width: 60%;
+      }
+      #strengthValue {
+        width: 30%;
+        text-align: right;
+      }
+      .status-box {
+        font-size: 12px;
+        max-width: 90vw;
+        padding: 6px 12px;
+      }
+      .analysis-log {
+        width: 90vw;
+        font-size: 12px;
+      }
+      .thought-panel {
+        width: 90vw;
+        right: 5vw;
+        top: 90px;
+        font-size: 12px;
+      }
+      .lightbox-content {
+        padding: 10px;
+        max-width: 95vw;
+        max-height: 90vh;
+        font-size: 14px;
+      }
+      .suggestionsPanel {
+        flex-direction: column;
+      }
+      /* Ensure touch-friendly spacing */
+      .btn, .input { touch-action: manipulation; }
+    }
   </style>
 </head>
 <body>
-  <!-- Top Bar: API Key and Thought Input -->
+  <!-- Top Bar: API Key, Controls Toggle, and Thought Input -->
   <div class="top-bar">
-    <div class="row">
-      <!-- API key field is masked -->
-      <input type="password" class="input" id="apiKeyInput" placeholder="Enter API key (sk-...)">
-      <button class="btn" id="connectKeyBtn">Connect Key</button>
-      <button class="btn" id="changeApiBtn">Change API</button>
-    </div>
-    <div class="row">
-      <input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought &amp; press Enter">
-      <div class="slider-container">
-        <label for="linkStrength">Link Strength:</label>
-        <input type="range" id="linkStrength" min="0" max="100" value="50">
-        <span id="strengthValue">0.50</span>
+    <!-- Toggle Controls Button (visible on mobile) -->
+    <button id="toggleControlsBtn" class="btn">☰ Controls</button>
+    <!-- Container for control groups -->
+    <div id="controlsContainer">
+      <div class="control-group">
+        <input type="password" class="input" id="apiKeyInput" placeholder="Enter API key (sk-...)" />
+        <button class="btn" id="connectKeyBtn">Connect Key</button>
+        <button class="btn" id="changeApiBtn">Change API</button>
       </div>
-      <button class="btn" id="toggleAnalysisLogBtn">Analysis Log</button>
-      <button class="btn" id="toggleThoughtsPanelBtn">View All</button>
+      <div class="control-group">
+        <input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought &amp; press Enter" />
+        <div class="slider-container">
+          <label for="linkStrength">Link Strength:</label>
+          <input type="range" id="linkStrength" min="0" max="100" value="50" />
+          <span id="strengthValue">0.50</span>
+        </div>
+        <button class="btn" id="toggleAnalysisLogBtn">Analysis Log</button>
+        <button class="btn" id="toggleThoughtsPanelBtn">View All</button>
+      </div>
     </div>
-    <!-- A button for loading sample NGOs will appear once the API key is set -->
+    <!-- The "Load Predefined NGOs" button will be added to the controlsContainer once API key is connected -->
   </div>
 
   <!-- Status and Panels -->
   <div class="status-box" id="statusBox">
-    <strong>@DataRepublican 🧵 THE UNIPARTY UNMASKED:</strong><br>
+    <strong>@DataRepublican 🧵 THE UNIPARTY UNMASKED:</strong><br />
     Connect your API key to enable deep contextual analysis and load sample NGOs.
   </div>
 
@@ -212,9 +365,9 @@
     let scene, camera, renderer, controls, networkGroup;
     let thoughts = [];      // Each thought: { id, text, mesh, analysis }
     let connections = [];   // Each connection: { from, to, line, strength }
-    let linkStrength = 0.5; // 0 to 1 threshold for creating connections
+    let linkStrength = 0.5; // 0 to 1 threshold for connections
     let apiKey = "";
-    let sampleNGOsLoaded = false; // Flag to load sample NGOs only once
+    let sampleNGOsLoaded = false; // Load sample NGOs only once
 
     // Preloaded sample NGO data (loaded on demand)
     const preloaded = [
@@ -290,18 +443,13 @@
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x000000);
-
       camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 10000);
       camera.position.set(0, 0, 800);
-
       controls = new OrbitControls(camera, renderer.domElement);
-
       networkGroup = new THREE.Group();
       scene.add(networkGroup);
-
       animate();
     }
     function animate() {
@@ -311,7 +459,6 @@
       renderer.render(scene, camera);
     }
     function updateLayout() {
-      // Reapply simple repulsion among nodes
       thoughts.forEach(n1 => {
         thoughts.forEach(n2 => {
           if (n1 === n2) return;
@@ -326,7 +473,6 @@
           }
         });
       });
-      // Update connection lines to follow node positions
       connections.forEach(c => {
         const pts = [c.from.mesh.position, c.to.mesh.position];
         c.line.geometry.setFromPoints(pts);
@@ -368,12 +514,10 @@
       const geo = new THREE.SphereGeometry(10, 16, 16);
       const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5) });
       const sphere = new THREE.Mesh(geo, mat);
-
       const text = title + "\n" + details;
       const label = createTextSprite(text);
       label.position.set(0, 24, 0);
       sphere.add(label);
-
       sphere.position.set(
         (Math.random()-0.5)*500,
         (Math.random()-0.5)*500,
@@ -399,14 +543,12 @@
        Preloading Sample NGOs (On Demand)
     --------------------------- */
     function loadPredefinedNGOs() {
-      // Allow loading even if there are already thoughts on board.
       if (sampleNGOsLoaded) return;
       sampleNGOsLoaded = true;
       preloaded.forEach((org, i) => {
         const title = org.name;
         const details = org.data;
         const node = { id: Date.now() + i, text: title, mesh: createNodeMesh(title, details), analysis: { type:"preloaded", keywords: [] } };
-        // Tag the mesh for raycasting clicks
         node.mesh.userData.thoughtId = node.id;
         thoughts.push(node);
       });
@@ -421,44 +563,41 @@
       });
       updateThoughtsList();
       setStatus("Sample NGOs loaded.");
-      // Reanalyze all connections with the new context.
       reanalyzeAllConns().then(updateNetworkAnalysis);
     }
 
     /* --------------------------
-       Reanalyze All Connections
-         - Loops over every unique pair of thoughts and re-calls the API to update connection strengths.
-         - Renamed to avoid shadowing: reanalyzeAllConns
+       Reanalyze All Connections (Parallelized)
     --------------------------- */
     async function reanalyzeAllConns() {
-      // Remove existing connection lines
       connections.forEach(c => networkGroup.remove(c.line));
       connections = [];
+      let promises = [];
       for (let i = 0; i < thoughts.length; i++) {
         for (let j = i + 1; j < thoughts.length; j++) {
-          try {
-            const res = await makeAnalysisCall(thoughts[i].text, thoughts[j].text);
-            if (res.strength >= linkStrength) {
-              const cObj = {
-                from: thoughts[i],
-                to: thoughts[j],
-                strength: res.strength,
-                line: createConnectionLine(thoughts[i], thoughts[j], res.strength)
-              };
-              connections.push(cObj);
+          promises.push((async () => {
+            try {
+              const res = await makeAnalysisCall(thoughts[i].text, thoughts[j].text);
+              if (res.strength >= linkStrength) {
+                const cObj = {
+                  from: thoughts[i],
+                  to: thoughts[j],
+                  strength: res.strength,
+                  line: createConnectionLine(thoughts[i], thoughts[j], res.strength)
+                };
+                connections.push(cObj);
+              }
+            } catch (err) {
+              logAnalysis("Reanalysis error: " + err.message, true);
             }
-          } catch (err) {
-            logAnalysis("Reanalysis error: " + err.message, true);
-          }
+          })());
         }
       }
+      await Promise.all(promises);
     }
 
     /* --------------------------
-       Analysis Functions
-         - makeAnalysisCall: Calls the OpenAI API to compare two texts.
-         - makeSuggestionCall: Calls the API to suggest additional terms.
-         - updateNetworkAnalysis: Compiles overall metrics and updates the analysis log.
+       Analysis Functions (Real API Calls)
     --------------------------- */
     async function makeAnalysisCall(t1, t2) {
       if (!apiKey) {
@@ -547,7 +686,7 @@ ${combinedTexts}`;
       thoughts.forEach(t => {
         if (t.analysis && t.analysis.type === "suspicious") {
           suspiciousCount++;
-        } else if(t.analysis && t.analysis.type === "contextual") {
+        } else if (t.analysis && t.analysis.type === "contextual") {
           contextualCount++;
         }
         if (t.analysis && t.analysis.keywords) {
@@ -568,7 +707,7 @@ ${combinedTexts}`;
         let boardTerms = new Set();
         thoughts.forEach(t => {
           t.text.split(/\W+/).forEach(word => {
-            if(word) boardTerms.add(word.toLowerCase());
+            if (word) boardTerms.add(word.toLowerCase());
           });
         });
         suggestions = rawSuggestions.filter(term => !boardTerms.has(term.toLowerCase()));
@@ -587,8 +726,6 @@ ${combinedTexts}`;
 
     /* --------------------------
        Detailed Node Analysis (Lightbox)
-         - getDetailedNodeAnalysis: Calls the API for detailed analysis.
-         - showLightboxAnalysis: Displays the result in a modal.
     --------------------------- */
     async function getDetailedNodeAnalysis(thought) {
       if (!apiKey) return "No API key provided.";
@@ -666,7 +803,6 @@ Return only the analysis text.`;
             logAnalysis("Analysis error: " + err.message, true);
           }
         }
-        // Reanalyze all connections to update the entire network context
         await reanalyzeAllConns();
         setStatus("Analysis complete");
       } else {
@@ -699,7 +835,6 @@ Return only the analysis text.`;
         div.innerHTML = `<span>${t.text}</span><button class="btn" onclick="removeThought(${t.id})">×</button>`;
         container.appendChild(div);
       });
-      // Append a final report below the thought list.
       container.innerHTML += `<hr><div id="finalReport">${generateFinalReport()}</div>`;
     }
     function generateFinalReport() {
@@ -709,7 +844,7 @@ Return only the analysis text.`;
       let allKeywords = [];
       thoughts.forEach(t => {
         if (t.analysis && t.analysis.type === "suspicious") suspiciousCount++;
-        else if(t.analysis && t.analysis.type === "contextual") contextualCount++;
+        else if (t.analysis && t.analysis.type === "contextual") contextualCount++;
         if (t.analysis && t.analysis.keywords) allKeywords.push(...t.analysis.keywords);
       });
       let report = `<h3>Final Network Report</h3>`;
@@ -743,7 +878,7 @@ Return only the analysis text.`;
     }
 
     /* --------------------------
-       Raycaster for Node Clicks (Lightbox)
+       Raycaster for Node Clicks (Desktop & Mobile)
     --------------------------- */
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -766,10 +901,35 @@ Return only the analysis text.`;
       }
     }
     window.addEventListener('click', onDocumentMouseClick, false);
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = - (touch.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(networkGroup.children, true);
+        if (intersects.length > 0) {
+          for (let i = 0; i < intersects.length; i++) {
+            const obj = intersects[i].object;
+            if (obj.userData && obj.userData.thoughtId) {
+              const thought = thoughts.find(t => t.id === obj.userData.thoughtId);
+              if (thought) {
+                showLightboxAnalysis(thought);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }, false);
 
     /* --------------------------
        UI Event Listeners
     --------------------------- */
+    document.getElementById('toggleControlsBtn').addEventListener('click', () => {
+      const container = document.getElementById('controlsContainer');
+      container.classList.toggle('show');
+    });
     document.getElementById('connectKeyBtn').addEventListener('click', () => {
       const val = document.getElementById('apiKeyInput').value.trim();
       if (!val) {
@@ -778,7 +938,7 @@ Return only the analysis text.`;
       }
       apiKey = val;
       setStatus("API Key connected. Now you can add thoughts.");
-      // Add a button to load predefined NGOs if not already present
+      // Add a button to load predefined NGOs if not already present.
       if (!document.getElementById('loadPredefinedBtn')) {
         const btn = document.createElement('button');
         btn.id = "loadPredefinedBtn";
@@ -789,7 +949,7 @@ Return only the analysis text.`;
           btn.disabled = true;
           setStatus("Sample NGOs loaded.");
         });
-        document.querySelector('.top-bar').appendChild(btn);
+        document.getElementById('controlsContainer').appendChild(btn);
       }
     });
     document.getElementById('changeApiBtn').addEventListener('click', () => {
@@ -840,7 +1000,7 @@ Return only the analysis text.`;
       document.getElementById('analysisLog').style.display = "none";
     });
 
-    // Expose removeThought globally for inline onclicks
+    // Expose removeThought globally for inline onclicks.
     window.removeThought = removeThought;
 
     /* --------------------------
