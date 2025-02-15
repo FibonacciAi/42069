@@ -78,64 +78,49 @@
     .btn-buy:hover {
       background: #D4147A;
     }
-    /* Info Section */
-    .info-section {
-      padding: 2rem;
+    /* Contract Address */
+    .contract-address-section {
       text-align: center;
+      margin: 2rem auto;
+      padding: 1rem;
       background: #111;
     }
-    .info-section h2 {
-      margin-bottom: 1rem;
-      font-size: 2rem;
-    }
-    .info-section p {
-      margin: 0 auto 2rem auto;
-      max-width: 700px;
-      line-height: 1.5;
-    }
-    /* Social Links */
-    .social-links {
+    .contract-container {
       display: flex;
       justify-content: center;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
     }
-    .social-links a {
+    #contractAddress {
+      width: 350px;
+      padding: 0.5rem;
+      font-size: 1rem;
+      text-align: center;
       background: #222;
-      padding: 0.75rem 1rem;
-      border-radius: 4px;
-      text-decoration: none;
       color: #fff;
+      border: 1px solid #444;
+      border-radius: 4px;
+    }
+    #copyContract {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #FF1493;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
       transition: background 0.3s ease;
     }
-    .social-links a:hover {
-      background: #333;
-    }
-    /* Footer / Disclaimers */
-    footer {
-      background: #000;
-      padding: 1rem;
-      text-align: center;
-      font-size: 0.9rem;
-      opacity: 0.8;
-    }
-    footer p {
-      line-height: 1.4;
-    }
-    footer a {
-      color: #FF1493;
-      text-decoration: none;
-    }
-    footer a:hover {
-      text-decoration: underline;
+    #copyContract:hover {
+      background: #D4147A;
     }
   </style>
 </head>
 <body>
 
-  <!-- HERO SECTION with Embedded Video -->
+  <!-- HERO SECTION -->
   <div class="hero">
-    <!-- Use the raw URL for direct streaming of your video -->
     <video autoplay muted loop playsinline>
       <source src="https://raw.githubusercontent.com/FibonacciAi/42069/291e2456cf891c8d6a3661ba0878e276dd6d3d3f/c7b8104d_588c_4844_8c98_1869beaa6c1a.mp4" type="video/mp4" />
       Your browser does not support HTML5 video.
@@ -145,62 +130,33 @@
       <h1>$ItsTheTits</h1>
       <p>“42069: Time to Fly” — Created by @_D_741Stef</p>
       <button class="btn-connect" id="connectPhantom">Connect Phantom</button>
-      <!-- Updated Buy Link with the correct mint address -->
-      <a href="https://pump.fun/#/trade/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">
+      <a href="https://pump.fun/token/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">
         <button class="btn-buy">Buy $ItsTheTits</button>
       </a>
     </div>
   </div>
 
-  <!-- INFO SECTION -->
-  <div class="info-section">
-    <h2>What is $ItsTheTits?</h2>
-    <p>
-      $ItsTheTits is a Solana-based token showcasing the original video artwork 
-      <strong>“42069: Time to Fly”</strong> by @_D_741Stef. This coin is an 
-      experimental fusion of creativity, blockchain, and community vibes.
-    </p>
-    <p>
-      <strong>On Pump.fun:</strong> $ItsTheTits starts at a low market cap and grows via 
-      a bonding curve, letting the community discover its value organically. Whether you’re here to 
-      collect, trade, or simply enjoy the artwork, you’re in the right place!
-    </p>
-
-    <!-- Social Links -->
-    <div class="social-links">
-      <a href="https://x.com/_D_741Stef" target="_blank">Follow @_D_741Stef</a>
-      <a href="https://pump.fun/#/trade/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">View on Pump.fun</a>
+  <!-- CONTRACT ADDRESS SECTION -->
+  <div class="contract-address-section">
+    <h2>Contract Address</h2>
+    <div class="contract-container">
+      <input type="text" id="contractAddress" value="FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" readonly />
+      <button id="copyContract">Copy</button>
     </div>
   </div>
 
-  <!-- FOOTER / DISCLAIMERS -->
+  <!-- FOOTER -->
   <footer>
-    <p>
-      © 2025 @_D_741Stef. All rights reserved. This page is for informational purposes only 
-      and does not constitute investment advice or a solicitation. Always DYOR (Do Your Own Research).<br><br>
-      Built with ❤️ on Solana.
-    </p>
+    <p>© 2025 @_D_741Stef. All rights reserved. Built with ❤️ on Solana.</p>
   </footer>
 
-  <!-- JavaScript for Phantom Wallet detection/connect -->
+  <!-- JavaScript -->
   <script>
-    const connectBtn = document.getElementById('connectPhantom');
-    const isPhantomInstalled = window.solana && window.solana.isPhantom;
-
-    connectBtn.addEventListener('click', async () => {
-      if (!isPhantomInstalled) {
-        alert('Phantom Wallet not found. Please install the Phantom extension or mobile app.');
-        window.open('https://phantom.app/', '_blank');
-        return;
-      }
-      try {
-        const resp = await window.solana.connect();
-        const walletAddress = resp.publicKey.toString();
-        alert('Phantom Wallet connected!\nAddress: ' + walletAddress);
-      } catch (err) {
-        console.error(err);
-        alert('Connection to Phantom failed or was rejected by the user.');
-      }
+    document.getElementById("copyContract").addEventListener("click", function() {
+      const copyText = document.getElementById("contractAddress");
+      copyText.select();
+      navigator.clipboard.writeText(copyText.value);
+      alert("Contract Address Copied: " + copyText.value);
     });
   </script>
 </body>
