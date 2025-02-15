@@ -15,16 +15,16 @@
       background: #000;
       color: #fff;
       overflow-x: hidden;
+      text-align: center;
     }
-    /* Hero Section */
     .hero {
       position: relative;
       width: 100%;
       height: 100vh;
-      text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
+      text-align: center;
       overflow: hidden;
     }
     .hero video {
@@ -42,20 +42,17 @@
     .hero-content {
       z-index: 2;
       max-width: 800px;
-      margin: 0 auto;
-      padding: 0 20px;
+      padding: 20px;
     }
     .hero h1 {
       font-size: 3rem;
       margin-bottom: 1rem;
-      text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
     }
     .hero p {
       font-size: 1.2rem;
       margin-bottom: 2rem;
-      text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
     }
-    .hero button {
+    .hero button, .contract-container button {
       font-size: 1rem;
       padding: 0.75rem 1.5rem;
       margin: 0.5rem;
@@ -78,11 +75,8 @@
     .btn-buy:hover {
       background: #D4147A;
     }
-    /* Contract Address */
     .contract-address-section {
-      text-align: center;
-      margin: 2rem auto;
-      padding: 1rem;
+      padding: 2rem;
       background: #111;
     }
     .contract-container {
@@ -90,7 +84,7 @@
       justify-content: center;
       align-items: center;
       gap: 0.5rem;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
     }
     #contractAddress {
       width: 350px;
@@ -130,7 +124,7 @@
       <h1>$ItsTheTits</h1>
       <p>“42069: Time to Fly” — Created by @_D_741Stef</p>
       <button class="btn-connect" id="connectPhantom">Connect Phantom</button>
-      <a href="https://pump.fun/token/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">
+      <a href="https://pump.fun/#/token/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">
         <button class="btn-buy">Buy $ItsTheTits</button>
       </a>
     </div>
@@ -157,6 +151,21 @@
       copyText.select();
       navigator.clipboard.writeText(copyText.value);
       alert("Contract Address Copied: " + copyText.value);
+    });
+
+    const connectBtn = document.getElementById("connectPhantom");
+    connectBtn.addEventListener("click", async () => {
+      if (!window.solana || !window.solana.isPhantom) {
+        alert('Phantom Wallet not found. Please install Phantom.');
+        window.open('https://phantom.app/', '_blank');
+        return;
+      }
+      try {
+        const resp = await window.solana.connect();
+        alert('Phantom Wallet connected!\nAddress: ' + resp.publicKey.toString());
+      } catch (err) {
+        alert('Connection failed.');
+      }
     });
   </script>
 </body>
