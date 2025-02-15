@@ -75,10 +75,6 @@
     .btn-buy:hover {
       background: #D4147A;
     }
-    .contract-address-section {
-      padding: 2rem;
-      background: #111;
-    }
     .contract-container {
       display: flex;
       justify-content: center;
@@ -87,7 +83,7 @@
       margin-top: 1rem;
     }
     #contractAddress {
-      width: 350px;
+      width: 400px;
       padding: 0.5rem;
       font-size: 1rem;
       text-align: center;
@@ -127,15 +123,13 @@
       <a href="https://pump.fun/#/token/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">
         <button class="btn-buy">Buy $ItsTheTits</button>
       </a>
-    </div>
-  </div>
-
-  <!-- CONTRACT ADDRESS SECTION -->
-  <div class="contract-address-section">
-    <h2>Contract Address</h2>
-    <div class="contract-container">
-      <input type="text" id="contractAddress" value="FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" readonly />
-      <button id="copyContract">Copy</button>
+      
+      <!-- CONTRACT ADDRESS BELOW BUY BUTTON -->
+      <p style="margin-top: 1rem; font-size: 1rem;">Contract Address:</p>
+      <div class="contract-container">
+        <input type="text" id="contractAddress" value="8zQCSKhiguXFe4qZmq5Kr1mUA4JP2svt8qZuuvoSpump" readonly />
+        <button id="copyContract">Copy</button>
+      </div>
     </div>
   </div>
 
