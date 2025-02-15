@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Advanced 3D Force Visualization (Mobile Optimized)</title>
+
+  <!-- Viewport meta for mobile responsiveness -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+  <style>
+    /* Reset body/html margins & ensure full screen usage */
+    html, body {
+      margin: 0; 
+      padding: 0; 
+      width: 100%; 
+      height: 100%; 
+      font-family: sans-serif;
+      overflow: hidden; /* prevents double-scrolling on mobile */
+    }
+    #graph-container {
+      position: relative; 
+      width: 100%; 
+      height: 100%;
+      background: #101020; /* dark background behind the canvas */
+    }
+    #3d-graph {
+      width: 100%; 
+      height: 100%; 
+    }
+
+    /* Top bar for controls */
+    .controls {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,0,0,0.5);
+      padding: 6px;
+      border-radius: 4px;
+    }
+    .controls input[type="text"] {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .controls button {
+      cursor: pointer;
+      padding: 6px 12px;
+      font-size: 0.9em;
+      border: none;
+      border-radius: 4px;
+      background: #2b6cb0;
+      color: #fff;
+    }
+
+    /* Small help overlay */
+    .help-overlay {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      line-height: 1.4em;
+    }
+  </style>
+</head>
+<body>
+
+<div id="graph-container">
+  <!-- 3D Graph area -->
+  <div id="3d-graph"></div>
+
+  <!-- Top bar with controls: Search box & buttons -->
+  <div class="controls">
+    <input type="text" id="searchBox" placeholder="Search Company..." />
+    <button id="zoomToFitBtn">Zoom to Fit</button>
+  </div>
+
+  <!-- Usage instructions at bottom -->
+  <div class="help-overlay">
+    <strong>Usage Tips:</strong><br/>
+    • <strong>Drag</strong> or <strong>Swipe</strong> the background to rotate in 3D.<br/>
+    • <strong>Pinch</strong> or <strong>scroll</strong> to zoom in/out.<br/>
+    • <strong>Tap</strong> a node to see its details.<br/>
+    • Use the <strong>Search</strong> box to jump to a company.<br/>
+    • Hit <strong>Zoom to Fit</strong> to reset view.
+  </div>
+</div>
+
+<!-- Include 3d-force-graph library -->
+<script src="https://unpkg.com/3d-force-graph"></script>
+<script>
+/** 
+ * 1) Define the raw data from each list.
+ *    Q4 Shares Purchased data
+ */
+const q4Data = [
+  { company: "UBS GROUP AG",                    sharesPurchased: 2047298,  shareIncreasePct: 180.71 },
+  { company: "NORGES BANK",                     sharesPurchased: 1997052,  shareIncreasePct: 162.21 },
+  { company: "LAZARD ASSET MANAGEMENT LLC",     sharesPurchased: 1627180,  shareIncreasePct:   6.95 },
+  { company: "PRICE T ROWE",                    sharesPurchased: 1407502,  shareIncreasePct:  21.63 },
+  { company: "SSGA FUNDS MANAGEMENT INC",       sharesPurchased: 1377447,  shareIncreasePct:   4.71 },
+  { company: "CIBC PRIVATE WEALTH GROUP LLC",   sharesPurchased:  859852,  shareIncreasePct:  69.08 },
+  { company: "AMERIPRISE FINANCIAL INC",        sharesPurchased:  540062,  shareIncreasePct:  40.63 },
+  { company: "BANC FUNDS CO LLC",               sharesPurchased:  502604,  shareIncreasePct:  11.01 },
+  { company: "MELLON INVESTMENTS CORP",         sharesPurchased:  434042,  shareIncreasePct:   7.70 },
+  { company: "BARCLAYS PLC",                    sharesPurchased:  324621,  shareIncreasePct:  85.59 },
+  { company: "JACOBS ASSET MANAGEMENT LLC",     sharesPurchased:  289455,  shareIncreasePct:   2.66 },
+  { company: "NORDEA INVESTMENT MANAGEMENT AB", sharesPurchased:  265305,  shareIncreasePct:   7.37 },
+  { company: "ALBERTA INVESTMENT MANAGEMENT CORP", sharesPurchased: 256000, shareIncreasePct: 69.20 },
+  { company: "FIRST HORIZON ADVISORS INC",      sharesPurchased:  225227,  shareIncreasePct: 115.39 },
+  { company: "TWO SIGMA INVESTMENTS LP",        sharesPurchased:  197776,  shareIncreasePct:   4.94 },
+  { company: "GREAT LAKES ADVISORS LLC",        sharesPurchased:  145465,  shareIncreasePct:   8.15 },
+  { company: "CLEARBRIDGE INVESTMENTS LLC",     sharesPurchased:  129550,  shareIncreasePct:   0.49 },
+  { company: "LASRY MARC",                      sharesPurchased:  100000,  shareIncreasePct:   7.06 },
+  { company: "AQR CAPITAL MANAGEMENT LLC",      sharesPurchased:   93545,  shareIncreasePct:  17.23 },
+  { company: "TANG CAPITAL MANAGEMENT LLC",     sharesPurchased:   67021,  shareIncreasePct:   1.94 },
+  { company: "METLIFE INVESTMENT MANAGEMENT LLC", sharesPurchased: 63971,  shareIncreasePct:   4.67 },
+  { company: "Y INTERCEPT (HONG KONG) LTD",     sharesPurchased:   42828,  shareIncreasePct:  13.46 },
+  { company: "PENDAL GROUP LTD",                sharesPurchased:   36079,  shareIncreasePct:   8.22 },
+  { company: "RAYMOND JAMES FINCL SVCS ADVISORS INC", sharesPurchased: 23225, shareIncreasePct: 3.79 },
+  { company: "MILLENNIUM MANAGEMENT LLC",       sharesPurchased:   20832,  shareIncreasePct:  10.77 },
+  { company: "CITIZEN INVESTMENT ADVISORS",     sharesPurchased:    4515,  shareIncreasePct:   5.55 }
+];
+
+/**
+ * 2) Institutional Ownership data
+ */
+const instData = [
+  { company: "BLACKROCK INC",                          shares: 21382211, value: 410721784.55 },
+  { company: "STATE STREET CORP",                      shares: 12098505, value: 232785192.95 },
+  { company: "VANGUARD GROUP INC",                     shares: 11815812, value: 227687510.84 },
+  { company: "PRICE T ROWE",                           shares:  8192621, value: 157901061.39 },
+  { company: "SSGA FUNDS MANAGEMENT INC",              shares:  7647996, value: 147493128.24 },
+  { company: "ROYCE & ASSOCIATES LP",                  shares:  7046200, value: 135856518.00 },
+  { company: "NORGES BANK",                            shares:  4314525, value:  83157539.75 },
+  { company: "BARCLAYS PLC",                           shares:  4085302, value:  78725739.94 },
+  { company: "LAZARD ASSET MANAGEMENT LLC",            shares:  4071757, value:  78451265.29 },
+  { company: "GILDER GAGNON HOWE & CO LLC",            shares:  3908713, value:  75303911.37 },
+  { company: "DRIEHAUS CAPITAL MANAGEMENT LLC",        shares:  3753329, value:  72267705.41 },
+  { company: "BANC FUNDS CO LLC",                      shares:  3476495, value:  66958657.05 },
+  { company: "RENAISSANCE TECHNOLOGIES LLC",           shares:  3318743, value:  63971986.67 },
+  { company: "LOMBARD ODIER ASSET MANAGEMENT (USA) CORP", shares: 3192082, value: 61570999.14 },
+  { company: "GRANAHAN INVESTMENT MANAGEMENT LLC",     shares:  3025000, value:  58356250.00 },
+  { company: "U S BANCORP",                            shares:  2989661, value:  57666113.59 },
+  { company: "LSV ASSET MANAGEMENT",                   shares:  2784603, value:  53713248.09 },
+  { company: "JACOBS ASSET MANAGEMENT LLC",            shares:  2660045, value:  51318876.55 },
+  { company: "STATE OF NEW JERSEY COMMON PENSION FUND D", shares: 2489031, value: 47992904.39 },
+  { company: "AMERIPRISE FINANCIAL INC",               shares:  2240473, value:  43258949.09 },
+  { company: "INVESCO LTD",                            shares:  2204022, value:  42558428.74 },
+  { company: "PUBLIC EMPLOYEES RETIREMENT SYSTEM OF OHIO", shares: 2187314, value: 42241238.06 },
+  { company: "PRICE & FLEMING INTERNATIONAL INC",      shares:  2060042, value:  39773820.94 },
+  { company: "TWO SIGMA ADVISERS LP",                  shares:  1995000, value:  38529300.00 },
+  { company: "POLICE & FIRE RETIREMENT SYSTEM OF THE CITY OF DETROIT", shares: 1840000, value: 35537600.00 }
+];
+
+/**
+ * 3) Build a unified map of companies so we can attach Q4 data and/or INST data as needed.
+ */
+const nodeMap = {};  // { "CompanyName": { id, q4Shares, q4IncreasePct, instShares, instValue, group } }
+
+// Helper to safely add Q4 data
+function addQ4Record(record) {
+  const name = record.company;
+  if (!nodeMap[name]) {
+    nodeMap[name] = {
+      id: name,
+      q4Shares: null,
+      q4IncreasePct: null,
+      instShares: null,
+      instValue: null,
+      group: "" // "q4", "inst", or "both"
+    };
+  }
+  nodeMap[name].q4Shares      = record.sharesPurchased;
+  nodeMap[name].q4IncreasePct = record.shareIncreasePct;
+}
+
+// Helper to safely add INST data
+function addInstRecord(record) {
+  const name = record.company;
+  if (!nodeMap[name]) {
+    nodeMap[name] = {
+      id: name,
+      q4Shares: null,
+      q4IncreasePct: null,
+      instShares: null,
+      instValue: null,
+      group: ""
+    };
+  }
+  nodeMap[name].instShares = record.shares;
+  nodeMap[name].instValue  = record.value;
+}
+
+// Populate nodeMap with Q4
+q4Data.forEach(r => addQ4Record(r));
+// Populate nodeMap with Institutional
+instData.forEach(r => addInstRecord(r));
+
+// Now determine each node’s group
+Object.values(nodeMap).forEach(node => {
+  const hasQ4   = node.q4Shares !== null;
+  const hasInst = node.instShares !== null;
+  if (hasQ4 && hasInst) node.group = "both";
+  else if (hasQ4)       node.group = "q4";
+  else if (hasInst)     node.group = "inst";
+});
+
+/**
+ * 4) Build final nodes & links array for the force graph.
+ *    - We add two meta-nodes: "Q4" and "INST"
+ *    - For each company node, link to "Q4" if it has Q4 data, link to "INST" if it has Inst data
+ */
+const metaNodes = [
+  { id: "Q4",   group: "meta" },
+  { id: "INST", group: "meta" }
+];
+
+const companyNodes = Object.values(nodeMap);
+const allNodes = metaNodes.concat(companyNodes);
+
+const links = [];
+
+// Link from company -> "Q4" or "INST" if it has that data
+companyNodes.forEach(node => {
+  if (node.q4Shares !== null) {
+    links.push({
+      source: node.id,
+      target: "Q4",
+      value: node.q4Shares
+    });
+  }
+  if (node.instShares !== null) {
+    links.push({
+      source: node.id,
+      target: "INST",
+      value: node.instShares
+    });
+  }
+});
+
+// Our final data for the 3D Force Graph
+const graphData = {
+  nodes: allNodes,
+  links: links
+};
+
+/**
+ * 5) Initialize the 3D force graph
+ */
+const elem = document.getElementById("3d-graph");
+const myGraph = ForceGraph3D()(elem)
+  .graphData(graphData)
+  .nodeAutoColorBy('group')
+  .nodeLabel(node => {
+    // Customize tooltip text
+    if (node.group === "meta") {
+      return `${node.id} (Meta Node)`;
+    } else {
+      let html = `<div><strong>${node.id}</strong><br/>Group: ${node.group}<br/>`;
+      if (node.q4Shares !== null) {
+        html += `Q4 Shares: ${node.q4Shares} | Increase%: ${node.q4IncreasePct}<br/>`;
+      }
+      if (node.instShares !== null) {
+        html += `Inst. Shares: ${node.instShares} | Value: $${(node.instValue || 0).toLocaleString()}<br/>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+  })
+  .linkColor(() => 'rgba(255,255,255,0.2)')      // semi-transparent link lines
+  .linkOpacity(1)
+  .linkWidth(link => Math.max(1, Math.log10(link.value || 1))) 
+  .nodeRelSize(4) // base node size
+  .backgroundColor("#101020") // match background
+  .showNavInfo(false) // hide the default "drag to rotate" text
+  .onNodeDragEnd(node => {
+    // Fix node position after dragging (makes it easier on mobile)
+    node.fx = node.x;
+    node.fy = node.y;
+    node.fz = node.z;
+  });
+
+/** 
+ * 6) Add "search and focus" functionality
+ *    - If user types a matching company name, center & zoom on that node 
+ */
+const searchBox = document.getElementById("searchBox");
+searchBox.addEventListener("change", () => {
+  const searchTerm = searchBox.value.trim().toLowerCase();
+  if (!searchTerm) return;
+
+  // Find a node whose id (company name) includes the search text
+  const foundNode = companyNodes.find(n => n.id.toLowerCase().includes(searchTerm));
+  if (foundNode) {
+    // Center on that node
+    myGraph.centerAt(foundNode.x, foundNode.y, 500);
+    // Zoom in
+    myGraph.zoom(8, 500); // adjust zoom level to taste
+  }
+});
+
+/**
+ * 7) "Zoom to Fit" button to reset the view
+ */
+document.getElementById("zoomToFitBtn").addEventListener("click", () => {
+  myGraph.zoomToFit(800); // animate over 800ms
+});
+</script>
+</body>
+</html>
