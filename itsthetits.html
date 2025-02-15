@@ -133,12 +133,11 @@
 </head>
 <body>
 
-  <!-- HERO SECTION with Video Background -->
+  <!-- HERO SECTION with Embedded Video -->
   <div class="hero">
-    <!-- Replace the 'src' below with a raw/direct link if needed -->
+    <!-- Use the raw URL for direct streaming of your video -->
     <video autoplay muted loop playsinline>
-      <source src="https://github.com/FibonacciAi/42069/blob/291e2456cf891c8d6a3661ba0878e276dd6d3d3f/c7b8104d_588c_4844_8c98_1869beaa6c1a.mp4" type="video/mp4" />
-      <!-- Fallback text if video doesn't load -->
+      <source src="https://raw.githubusercontent.com/FibonacciAi/42069/291e2456cf891c8d6a3661ba0878e276dd6d3d3f/c7b8104d_588c_4844_8c98_1869beaa6c1a.mp4" type="video/mp4" />
       Your browser does not support HTML5 video.
     </video>
 
@@ -146,8 +145,8 @@
       <h1>$ItsTheTits</h1>
       <p>“42069: Time to Fly” — Created by @_D_741Stef</p>
       <button class="btn-connect" id="connectPhantom">Connect Phantom</button>
-      <!-- Link to your token’s pump.fun page -->
-      <a href="https://pump.fun/trade?mint=8zQCSKhiguXFe4qZmq5Kr1mUA4JP2svt8qZuuvoSpump" target="_blank">
+      <!-- Updated Buy Link using the contract address -->
+      <a href="https://pump.fun/trade/8zQCSKhiguXFe4qZmq5Kr1mUA4JP2svt8qZuuvoSpump" target="_blank">
         <button class="btn-buy">Buy $ItsTheTits</button>
       </a>
     </div>
@@ -167,7 +166,7 @@
       collect, trade, or simply enjoy the artwork, you’re in the right place!
     </p>
 
-    <!-- Social Links (update as needed) -->
+    <!-- Social Links -->
     <div class="social-links">
       <a href="https://twitter.com/_D_741Stef" target="_blank">Follow @_D_741Stef</a>
       <a href="https://pump.fun/token/8zQCSKhiguXFe4qZmq5Kr1mUA4JP2svt8qZuuvoSpump" target="_blank">View on Pump.fun</a>
@@ -183,7 +182,7 @@
     </p>
   </footer>
 
-  <!-- OPTIONAL: JavaScript for Phantom Wallet detection/connect -->
+  <!-- JavaScript for Phantom Wallet detection/connect -->
   <script>
     const connectBtn = document.getElementById('connectPhantom');
     const isPhantomInstalled = window.solana && window.solana.isPhantom;
@@ -195,11 +194,9 @@
         return;
       }
       try {
-        // Connect to Phantom
         const resp = await window.solana.connect();
         const walletAddress = resp.publicKey.toString();
         alert('Phantom Wallet connected!\nAddress: ' + walletAddress);
-        // Insert your own logic here if you want to fetch balances or do more
       } catch (err) {
         console.error(err);
         alert('Connection to Phantom failed or was rejected by the user.');
