@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>$PIAI – Pi AI Token</title>
+  <style>
+    * {
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+      text-align: center;
+      padding: 0 10px;
+    }
+    .hero {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-content {
+      z-index: 2;
+      max-width: 800px;
+      padding: 20px;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .buttons-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .hero button, .contract-container button {
+      font-size: 1rem;
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.3s ease;
+      width: 250px;
+      max-width: 90%;
+    }
+    .btn-connect {
+      background: #00C7FF;
+      color: #fff;
+    }
+    .btn-buy {
+      background: #FFD700;
+      color: #000;
+    }
+    .btn-connect:hover {
+      background: #0099CC;
+    }
+    .btn-buy:hover {
+      background: #E6C200;
+    }
+    .contract-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    .contract-text {
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+    #contractAddress {
+      width: 90%;
+      max-width: 360px;
+      padding: 8px;
+      font-size: 1rem;
+      text-align: center;
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+    #copyContract {
+      width: 90%;
+      max-width: 150px;
+      padding: 8px;
+      font-size: 1rem;
+      background: #FFD700;
+      border: none;
+      color: black;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.3s ease;
+    }
+    #copyContract:hover {
+      background: #E6C200;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO SECTION -->
+  <div class="hero">
+    <div class="hero-content">
+      <h1>$PIAI – Pi AI Token</h1>
+      <p>The AI-Powered Future of Pi</p>
+      
+      <div class="buttons-container">
+        <button class="btn-connect" id="connectPhantom">Connect Phantom</button>
+        <a href="https://pump.fun/#/token/B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB" target="_blank">
+          <button class="btn-buy">Buy $PIAI</button>
+        </a>
+      </div>
+
+      <!-- CONTRACT ADDRESS BELOW BUY BUTTON -->
+      <div class="contract-container">
+        <p class="contract-text">Contract Address:</p>
+        <input type="text" id="contractAddress" value="B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB" readonly />
+        <button id="copyContract">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2025 Pi AI. Built with ❤️ on Solana.</p>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    document.getElementById("copyContract").addEventListener("click", function() {
+      const copyText = document.getElementById("contractAddress");
+      copyText.select();
+      navigator.clipboard.writeText(copyText.value);
+      alert("Contract Address Copied: " + copyText.value);
+    });
+
+    const connectBtn = document.getElementById("connectPhantom");
+    connectBtn.addEventListener("click", async () => {
+      if (!window.solana || !window.solana.isPhantom) {
+        alert('Phantom Wallet not found. Please install Phantom.');
+        window.open('https://phantom.app/', '_blank');
+        return;
+      }
+      try {
+        const resp = await window.solana.connect();
+        alert('Phantom Wallet connected!\nAddress: ' + resp.publicKey.toString());
+      } catch (err) {
+        alert('Connection failed.');
+      }
+    });
+  </script>
+</body>
+</html>
