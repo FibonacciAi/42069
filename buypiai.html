@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>$PIAI – Pi AI Token</title>
+  <title>$Pi AI – Official Landing Page</title>
   <style>
     * {
       margin: 0; 
@@ -15,153 +15,207 @@
       background: #000;
       color: #fff;
       overflow-x: hidden;
-      text-align: center;
-      padding: 0 10px;
     }
+    /* Hero Section */
     .hero {
       position: relative;
       width: 100%;
-      min-height: 100vh;
+      height: 100vh;
+      text-align: center;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
       overflow: hidden;
+      background: linear-gradient(45deg, #6b21a8, #3b0764);
     }
     .hero-content {
       z-index: 2;
       max-width: 800px;
-      padding: 20px;
+      margin: 0 auto;
+      padding: 0 20px;
     }
     .hero h1 {
-      font-size: 2.5rem;
+      font-size: 4rem;
       margin-bottom: 1rem;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+      color: #f0f9ff;
     }
     .hero p {
-      font-size: 1rem;
-      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+      color: #e0f2fe;
     }
-    .buttons-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 1.5rem;
-    }
-    .hero button, .contract-container button {
-      font-size: 1rem;
-      padding: 10px 15px;
+    .hero button {
+      font-size: 1.2rem;
+      padding: 1rem 2rem;
+      margin: 0.5rem;
       border: none;
       cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.3s ease;
-      width: 250px;
-      max-width: 90%;
+      border-radius: 8px;
+      transition: all 0.3s ease;
     }
     .btn-connect {
-      background: #00C7FF;
+      background: #7c3aed;
       color: #fff;
     }
     .btn-buy {
-      background: #FFD700;
-      color: #000;
+      background: #2563eb;
+      color: #fff;
     }
     .btn-connect:hover {
-      background: #0099CC;
+      background: #6d28d9;
+      transform: translateY(-2px);
     }
     .btn-buy:hover {
-      background: #E6C200;
+      background: #1d4ed8;
+      transform: translateY(-2px);
     }
-    .contract-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 1rem;
-    }
-    .contract-text {
-      font-size: 1rem;
-      margin-bottom: 5px;
-    }
-    #contractAddress {
-      width: 90%;
-      max-width: 360px;
-      padding: 8px;
-      font-size: 1rem;
+    /* Stats Section */
+    .stats-section {
+      padding: 3rem 2rem;
       text-align: center;
-      background: #222;
+      background: #111;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .stat-card {
+      background: #1a1a1a;
+      padding: 1.5rem;
+      border-radius: 10px;
+    }
+    .stat-card h3 {
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+    }
+    .stat-card p {
+      color: #f1f5f9;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    /* Info Section */
+    .info-section {
+      padding: 3rem 2rem;
+      text-align: center;
+      background: #080808;
+    }
+    .info-section h2 {
+      margin-bottom: 1.5rem;
+      font-size: 2.5rem;
+      color: #f1f5f9;
+    }
+    .info-section p {
+      margin: 0 auto 2rem auto;
+      max-width: 700px;
+      line-height: 1.6;
+      color: #cbd5e1;
+      font-size: 1.1rem;
+    }
+    /* Social Links */
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    .social-links a {
+      background: #1e293b;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
       color: #fff;
-      border: 1px solid #444;
-      border-radius: 4px;
-      margin-bottom: 5px;
+      font-weight: bold;
+      transition: all 0.3s ease;
     }
-    #copyContract {
-      width: 90%;
-      max-width: 150px;
-      padding: 8px;
-      font-size: 1rem;
-      background: #FFD700;
-      border: none;
-      color: black;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.3s ease;
+    .social-links a:hover {
+      background: #334155;
+      transform: translateY(-2px);
     }
-    #copyContract:hover {
-      background: #E6C200;
+    /* Footer */
+    footer {
+      background: #000;
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #64748b;
     }
   </style>
 </head>
 <body>
-
-  <!-- HERO SECTION -->
   <div class="hero">
     <div class="hero-content">
-      <h1>$PIAI – Pi AI Token</h1>
-      <p>The AI-Powered Future of Pi</p>
-      
-      <div class="buttons-container">
-        <button class="btn-connect" id="connectPhantom">Connect Phantom</button>
-        <a href="https://pump.fun/#/token/B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB" target="_blank">
-          <button class="btn-buy">Buy $PIAI</button>
-        </a>
-      </div>
+      <h1>Pi AI</h1>
+      <p>The Future of Artificial Intelligence on Solana</p>
+      <button class="btn-connect" id="connectPhantom">Connect Phantom</button>
+      <a href="https://phantom.com/tokens/solana/B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB?referralId=bw4db5xhd7w" target="_blank">
+        <button class="btn-buy">Buy $PIAI</button>
+      </a>
+    </div>
+  </div>
 
-      <!-- CONTRACT ADDRESS BELOW BUY BUTTON -->
-      <div class="contract-container">
-        <p class="contract-text">Contract Address:</p>
-        <input type="text" id="contractAddress" value="B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB" readonly />
-        <button id="copyContract">Copy</button>
+  <div class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Price</h3>
+        <p><$0.00000001</p>
+      </div>
+      <div class="stat-card">
+        <h3>24h Change</h3>
+        <p class="text-green-500">+248.45%</p>
+      </div>
+      <div class="stat-card">
+        <h3>Market Cap</h3>
+        <p>$786.71K</p>
+      </div>
+      <div class="stat-card">
+        <h3>Network</h3>
+        <p>Solana</p>
       </div>
     </div>
   </div>
 
-  <!-- FOOTER -->
+  <div class="info-section">
+    <h2>About Pi AI</h2>
+    <p>
+      Pi AI combines the power of artificial intelligence with blockchain technology on the Solana network. 
+      Join the growing community of PIAI whales and be part of the next generation of AI-powered cryptocurrencies.
+    </p>
+
+    <div class="social-links">
+      <a href="https://phantom.app/" target="_blank">Download Phantom</a>
+      <a href="https://solscan.io/token/B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB" target="_blank">View on Solscan</a>
+    </div>
+  </div>
+
   <footer>
-    <p>© 2025 Pi AI. Built with ❤️ on Solana.</p>
+    <p>
+      © 2025 Pi AI. All rights reserved. Pricing information is provided for informational purposes only and is not financial advice. 
+      Market data is provided by third parties and we make no representation as to the accuracy of the information.
+    </p>
   </footer>
 
-  <!-- JavaScript -->
   <script>
-    document.getElementById("copyContract").addEventListener("click", function() {
-      const copyText = document.getElementById("contractAddress");
-      copyText.select();
-      navigator.clipboard.writeText(copyText.value);
-      alert("Contract Address Copied: " + copyText.value);
-    });
+    const connectBtn = document.getElementById('connectPhantom');
+    const isPhantomInstalled = window.solana && window.solana.isPhantom;
 
-    const connectBtn = document.getElementById("connectPhantom");
-    connectBtn.addEventListener("click", async () => {
-      if (!window.solana || !window.solana.isPhantom) {
-        alert('Phantom Wallet not found. Please install Phantom.');
+    connectBtn.addEventListener('click', async () => {
+      if (!isPhantomInstalled) {
+        alert('Phantom Wallet not found. Please install the Phantom extension or mobile app.');
         window.open('https://phantom.app/', '_blank');
         return;
       }
       try {
         const resp = await window.solana.connect();
-        alert('Phantom Wallet connected!\nAddress: ' + resp.publicKey.toString());
+        const walletAddress = resp.publicKey.toString();
+        alert('Phantom Wallet connected!\nAddress: ' + walletAddress);
       } catch (err) {
-        alert('Connection failed.');
+        console.error(err);
+        alert('Connection to Phantom failed or was rejected by the user.');
       }
     });
   </script>
