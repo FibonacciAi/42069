@@ -1,57 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>$ItsTheTits by @_D_741Stef – Official Landing Page</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$ItsTheTits – Official Landing Page</title>
   <style>
     * {
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       font-family: Arial, sans-serif;
     }
     body {
       background: #000;
       color: #fff;
-      overflow-x: hidden;
       text-align: center;
-      padding: 0 10px;
-    }
-    .hero {
-      position: relative;
-      width: 100%;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      overflow: hidden;
-    }
-    .hero video {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      min-width: 100%;
-      min-height: 100%;
-      width: auto;
-      height: auto;
-      z-index: -1;
-      object-fit: cover;
-    }
-    .hero-content {
-      z-index: 2;
-      max-width: 800px;
       padding: 20px;
     }
-    .hero h1 {
+    h1 {
       font-size: 2.5rem;
       margin-bottom: 1rem;
     }
-    .hero p {
-      font-size: 1rem;
+    p {
+      font-size: 1.2rem;
       margin-bottom: 1.5rem;
     }
     .buttons-container {
@@ -61,126 +32,115 @@
       gap: 10px;
       margin-bottom: 1.5rem;
     }
-    .hero button, .contract-container button {
+    .button {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
       font-size: 1rem;
-      padding: 10px 15px;
+      color: #fff;
+      background-color: #FF1493;
       border: none;
-      cursor: pointer;
       border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
       transition: background 0.3s ease;
       width: 250px;
       max-width: 90%;
     }
-    .btn-connect {
-      background: #9146FF;
-      color: #fff;
-    }
-    .btn-buy {
-      background: #FF1493;
-      color: #fff;
-    }
-    .btn-connect:hover {
-      background: #682FCC;
-    }
-    .btn-buy:hover {
-      background: #D4147A;
+    .button:hover {
+      background-color: #D4147A;
     }
     .contract-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
     }
-    .contract-text {
+    .contract-address {
       font-size: 1rem;
-      margin-bottom: 5px;
+      word-break: break-all;
     }
-    #contractAddress {
-      width: 90%;
-      max-width: 360px;
-      padding: 8px;
+    .copy-button {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
       font-size: 1rem;
-      text-align: center;
-      background: #222;
       color: #fff;
-      border: 1px solid #444;
-      border-radius: 4px;
-      margin-bottom: 5px;
-    }
-    #copyContract {
-      width: 90%;
-      max-width: 150px;
-      padding: 8px;
-      font-size: 1rem;
-      background: #FF1493;
+      background-color: #FF1493;
       border: none;
-      color: white;
-      cursor: pointer;
       border-radius: 4px;
+      cursor: pointer;
       transition: background 0.3s ease;
     }
-    #copyContract:hover {
-      background: #D4147A;
+    .copy-button:hover {
+      background-color: #D4147A;
+    }
+    .social-links {
+      margin-top: 2rem;
+    }
+    .social-links a {
+      display: inline-block;
+      margin: 5px;
+      padding: 8px 12px;
+      color: white;
+      text-decoration: none;
+      background: #222;
+      border-radius: 4px;
+    }
+    .social-links a:hover {
+      background: #333;
+    }
+    footer {
+      margin-top: 2rem;
+      padding: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.8;
     }
   </style>
 </head>
 <body>
 
-  <!-- HERO SECTION -->
-  <div class="hero">
-    <video autoplay muted loop playsinline>
-      <source src="https://raw.githubusercontent.com/FibonacciAi/42069/291e2456cf891c8d6a3661ba0878e276dd6d3d3f/c7b8104d_588c_4844_8c98_1869beaa6c1a.mp4" type="video/mp4" />
-      Your browser does not support HTML5 video.
-    </video>
+  <h1>$ItsTheTits</h1>
+  <p>“42069: Time to Fly” – Created by <a href="https://x.com/_D_741Stef" target="_blank">@_D_741Stef</a></p>
 
-    <div class="hero-content">
-      <h1>$ItsTheTits</h1>
-      <p>“42069: Time to Fly” — Created by @_D_741Stef</p>
-      
-      <div class="buttons-container">
-        <button class="btn-connect" id="connectPhantom">Connect Phantom</button>
-        <a href="https://pump.fun/#/token/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">
-          <button class="btn-buy">Buy $ItsTheTits</button>
-        </a>
-      </div>
-
-      <!-- CONTRACT ADDRESS BELOW BUY BUTTON -->
-      <div class="contract-container">
-        <p class="contract-text">Contract Address:</p>
-        <input type="text" id="contractAddress" value="8zQCSKhiguXFe4qZmq5Kr1mUA4JP2svt8qZuuvoSpump" readonly />
-        <button id="copyContract">Copy</button>
-      </div>
-    </div>
+  <div class="buttons-container">
+    <button class="button" id="connectPhantom">Connect Phantom</button>
+    <a href="https://phantom.com/tokens/solana/8zQCSKhiguXFe4qZmq5Kr1mUA4JP2svt8qZuuvoSpump?referralId=6te7go2ditr" target="_blank" class="button">Buy $ItsTheTits</a>
+    <a href="https://fibonacciai.github.io/42069/buyitsthetits.html" target="_blank" class="button">Alternate Buy Page</a>
   </div>
 
-  <!-- FOOTER -->
+  <div class="contract-container">
+    <p>Contract Address:</p>
+    <p class="contract-address" id="contractAddress">8zQCSKhiguXFe4qZmq5Kr1mUA4JP2svt8qZuuvoSpump</p>
+    <button class="copy-button" onclick="copyContractAddress()">Copy Address</button>
+  </div>
+
+  <div class="social-links">
+    <a href="https://solscan.io/account/FTYMyRcnLWAL3M7TPV4ZfdXcgDovvid6vgCw1Z9Kixsr" target="_blank">View on Solscan</a>
+    <a href="https://x.com/_D_741Stef" target="_blank">Follow on X</a>
+  </div>
+
   <footer>
-    <p>© 2025 @_D_741Stef. All rights reserved. Built with ❤️ on Solana.</p>
+    <p>© 2025 $ItsTheTits. All rights reserved. Built with ❤️ on Solana.</p>
   </footer>
 
-  <!-- JavaScript -->
   <script>
-    document.getElementById("copyContract").addEventListener("click", function() {
-      const copyText = document.getElementById("contractAddress");
-      copyText.select();
-      navigator.clipboard.writeText(copyText.value);
-      alert("Contract Address Copied: " + copyText.value);
-    });
+    function copyContractAddress() {
+      const contractAddress = document.getElementById('contractAddress').innerText;
+      navigator.clipboard.writeText(contractAddress).then(() => {
+        alert('Contract address copied to clipboard!');
+      });
+    }
 
-    const connectBtn = document.getElementById("connectPhantom");
-    connectBtn.addEventListener("click", async () => {
-      if (!window.solana || !window.solana.isPhantom) {
-        alert('Phantom Wallet not found. Please install Phantom.');
+    document.getElementById('connectPhantom').addEventListener('click', async () => {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const response = await window.solana.connect();
+          alert(`Connected to Phantom wallet: ${response.publicKey.toString()}`);
+        } catch (err) {
+          console.error('Connection to Phantom wallet failed', err);
+        }
+      } else {
+        alert('Phantom wallet not found. Please install the Phantom wallet extension.');
         window.open('https://phantom.app/', '_blank');
-        return;
-      }
-      try {
-        const resp = await window.solana.connect();
-        alert('Phantom Wallet connected!\nAddress: ' + resp.publicKey.toString());
-      } catch (err) {
-        alert('Connection failed.');
       }
     });
   </script>
+
 </body>
 </html>
