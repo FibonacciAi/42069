@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>$UNCEDE – Official Landing Page</title>
   <style>
     * {
@@ -16,31 +16,29 @@
       color: #fff;
       text-align: center;
       padding: 20px;
-      /* Removed overflow:hidden so scrolling (and memory) aren’t forcibly restricted */
     }
     .hero {
       position: relative;
       width: 100%;
+      /* Make the hero fill the viewport height on load */
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      /* Keeping overflow hidden here is usually fine, but you can remove if issues persist */
       overflow: hidden;
     }
-    .hero video {
+    /* GIF as “background” using an absolutely-positioned img */
+    .hero img {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      min-width: 100%;
-      min-height: 100%;
-      width: auto;
-      height: auto;
+      top: 0;
+      left: 0;
+      /* Force it to fill the entire hero area */
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Maintain aspect ratio while filling */
       z-index: -1;
-      object-fit: cover;
     }
     .hero-content {
       z-index: 2;
@@ -100,6 +98,25 @@
     .copy-button:hover {
       background-color: #D4147A;
     }
+
+    /* Mission Statement */
+    .mission {
+      max-width: 800px;
+      margin: 2rem auto 0;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 8px;
+    }
+    .mission h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+    .mission p {
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+
     .social-links {
       margin-top: 2rem;
     }
@@ -126,19 +143,12 @@
 </head>
 <body>
 
-  <!-- HERO SECTION with (potentially) smaller or compressed video -->
+  <!-- HERO SECTION with GIF filling the background -->
   <div class="hero">
-    <video
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="metadata"  <!-- Minimizes upfront load -->
-      poster="https://via.placeholder.com/1920x1080.png?text=Loading+Video..."
-    >
-      <source src="https://fibonacciai.github.io/42069/dfv.mp4" type="video/mp4"/>
-      Your browser does not support HTML5 video.
-    </video>
+    <img 
+      src="https://raw.githubusercontent.com/FibonacciAi/42069/bf36a9a57baa4415b792d1b6dd8db3caabf57b6f/IMG_1680.gif"
+      alt="Full-screen GIF background" 
+    />
 
     <div class="hero-content">
       <h1>$UNCEDE</h1>
@@ -175,6 +185,18 @@
       </div>
     </div>
   </div>
+
+  <!-- MISSION STATEMENT -->
+  <section class="mission">
+    <h2>Our Mission</h2>
+    <p>
+      We believe in the unwavering spirit of retail traders—a force that the GME phenomenon proved unstoppable.
+      $UNCEDE is dedicated to uniting that passion and fairness on the Solana network.
+      Fueled by community and a commitment to decentralized empowerment, we won’t cede
+      control back to old-world institutions. Join us in redefining what’s possible
+      when we stand together—and never give up.
+    </p>
+  </section>
 
   <!-- SOLSCAN LINK -->
   <div class="social-links">
