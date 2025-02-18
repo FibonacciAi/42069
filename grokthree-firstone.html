@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mind Map – Enhanced Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Reset & Base Styles */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(145deg, #0d1117, #1f2a33);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      color: #c9d1d9;
+    }
+    /* Top Bar Controls */
+    #controls {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(13, 17, 23, 0.95);
+      z-index: 100;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 15px rgba(56, 139, 253, 0.1);
+    }
+    input, button {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #58a6ff;
+      background: #222b33;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    input:focus, button:hover {
+      border-color: #388bfd;
+      box-shadow: 0 0 8px rgba(88, 166, 255, 0.4);
+      outline: none;
+    }
+    button {
+      cursor: pointer;
+      background: linear-gradient(45deg, #388bfd, #58a6ff);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+    }
+    button:hover { transform: scale(1.03); }
+    .toggle-button.active { background: #58a6ff; color: #0d1117; }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #388bfd;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    #threshold-slider { width: 90px; accent-color: #58a6ff; }
+    #legend { display: none; margin-left: 1rem; font-size: 0.85rem; }
+    #legend span { margin-right: 0.5rem; }
+    /* Suggestion Container */
+    #suggestion-container {
+      display: none;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+    .suggestion-item {
+      padding: 0.5rem 1rem;
+      background: #222b33;
+      border: 1px solid #58a6ff;
+      border-radius: 6px;
+      color: #c9d1d9;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .suggestion-item:hover { background: #388bfd; color: #fff; }
+    /* Canvas & Particles */
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+      mix-blend-mode: screen;
+    }
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+    /* Status Message */
+    #status {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      padding: 0.4rem 0.8rem;
+      background: rgba(56,139,253,0.08);
+      color: #388bfd;
+      border: 1px solid #388bfd;
+      border-radius: 4px;
+      transition: opacity 0.3s;
+      opacity: 0;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    #status.active { opacity: 1; }
+    /* Thought Elements */
+    .thought {
+      position: absolute;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      color: #fff;
+      cursor: move;
+      min-width: 90px;
+      text-align: center;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      background: linear-gradient(45deg, rgba(50,60,70,0.9), rgba(80,90,100,0.7));
+      backdrop-filter: blur(4px);
+      font-size: 0.95rem;
+      font-weight: 500;
+      z-index: 2;
+      box-shadow: 0 2px 10px rgba(56,139,253,0.2);
+      transition: all 0.2s ease;
+    }
+    .thought:hover {
+      box-shadow: 0 4px 15px rgba(88,166,255,0.4);
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+    .thought.grouped { border: 2px dashed #ffd700; }
+    .thought-delete {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+      background: #388bfd;
+      border-radius: 50%;
+      font-size: 12px;
+      line-height: 18px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+    .thought:hover .thought-delete { opacity: 1; }
+    /* Connection Icons */
+    .connection-icon {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      border: none;
+      box-shadow: 0 0 5px rgba(56,139,253,0.3);
+    }
+    .connection-icon:hover {
+      transform: translate(-50%, -50%) scale(1.25);
+      box-shadow: 0 0 10px rgba(88,166,255,0.6);
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <input type="text" id="thought-input" placeholder="Drop a thought...">
+    <input type="password" id="api-key" placeholder="Enter API Key">
+    <button id="save-key">Set Key</button>
+    <div class="slider-container">
+      <label for="threshold-slider">Threshold:</label>
+      <input type="range" id="threshold-slider" min="0" max="100" value="10" step="1">
+      <span id="threshold-value">0.10</span>
+    </div>
+    <button id="toggle-icons" class="toggle-button">Icons</button>
+    <button id="auto-layout">Auto-Layout</button>
+    <button id="group-thoughts" class="group-button">Group</button>
+    <button id="export-btn">Export</button>
+    <button id="import-btn">Import</button>
+    <button id="suggest-thought" class="suggest-button">Suggest</button>
+    <button id="analyze-button">Analyze</button>
+    <div id="legend">
+      <span style="color: #58a6ff;">● Direct</span>
+      <span style="color: #ffd700;">● Hierarchical</span>
+      <span style="color: #ff6b6b;">● Functional</span>
+      <span style="color: #2ecc71;">● Contextual</span>
+      <span style="color: #9b59b6;">● Causal</span>
+    </div>
+    <div id="suggestion-container"></div>
+  </div>
+  
+  <div id="status">Ready...</div>
+  <canvas id="canvas"></canvas>
+  <canvas id="particle-canvas"></canvas>
+  
+  <script>
+    class AISemanticBrain {
+      constructor() {
+        this.apiKey = localStorage.getItem('api-key') || '';
+        this.isGrok = false;
+        this.thoughtRelations = new Map();
+        this.status = document.getElementById('status');
+        this.initKey();
+      }
+      async validateKey(key) {
+        // Placeholder: Adjust for actual xAI API when available
+        const grokTest = await fetch('https://api.openai.com/v1/models', { // Using OpenAI as proxy
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${key}` }
+        });
+        if (grokTest.ok) { this.isGrok = false; return true; } // Switch to xAI when available
+        return false;
+      }
+      initKey() {
+        const keyInput = document.getElementById('api-key');
+        if (this.apiKey) keyInput.placeholder = 'Key Set ✓';
+        document.getElementById('save-key').addEventListener('click', async () => {
+          const key = keyInput.value.trim();
+          if (key) {
+            this.showStatus('Validating key...');
+            if (await this.validateKey(key)) {
+              this.apiKey = key;
+              localStorage.setItem('api-key', key);
+              keyInput.value = '';
+              keyInput.placeholder = 'Key Set ✓';
+              this.showStatus('API Key saved!');
+            } else {
+              this.showStatus('Invalid key!');
+            }
+          }
+        });
+      }
+      async analyzeRelationship(t1, t2) {
+        if (!this.apiKey) {
+          this.showStatus('No API key set!');
+          return { strength: 0, type: null };
+        }
+        const cacheKey = `${t1}|||${t2}`;
+        if (this.thoughtRelations.has(cacheKey)) return this.thoughtRelations.get(cacheKey);
+        this.showStatus(`Analyzing "${t1}" ↔ "${t2}"...`);
+        try {
+          const url = 'https://api.openai.com/v1/chat/completions'; // Replace with xAI endpoint
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${this.apiKey}` 
+            },
+            body: JSON.stringify({
+              model: "gpt-4-turbo", // Replace with "grok-latest" when xAI API is ready
+              messages: [
+                { role: "system", content: `Analyze semantic relationship. Return JSON: {strength: 0-1, type: "direct"/"hierarchical"/"functional"/"contextual"/"causal", explanation: max 100 chars}` },
+                { role: "user", content: `Analyze: "${t1}" and "${t2}"` }
+              ],
+              temperature: 0.2,
+              max_tokens: 100
+            })
+          });
+          const data = await response.json();
+          if (data.error) throw new Error(data.error.message);
+          const result = JSON.parse(data.choices[0].message.content);
+          this.thoughtRelations.set(cacheKey, result);
+          this.showStatus('Analysis complete.');
+          return result;
+        } catch (e) {
+          this.showStatus(`Error: ${e.message.slice(0, 50)}...`);
+          return { strength: 0, type: null, explanation: "Failed" };
+        }
+      }
+      async suggestThoughts(context) {
+        if (!this.apiKey) {
+          this.showStatus('No API key for suggestions!');
+          return [];
+        }
+        try {
+          const url = 'https://api.openai.com/v1/chat/completions'; // Replace with xAI endpoint
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${this.apiKey}`
+            },
+            body: JSON.stringify({
+              model: "gpt-4-turbo", // Replace with "grok-latest"
+              messages: [
+                { role: "system", content: `Given mind map nodes: ${context.join(', ')}, suggest 3 new concise nodes (max 50 chars) that are contextually relevant to the provided nodes. Return JSON: [{text:"suggestion1"}, {text:"suggestion2"}, {text:"suggestion3"}]` },
+                { role: "user", content: "Suggest 3 new nodes." }
+              ],
+              temperature: 0.7,
+              max_tokens: 150
+            })
+          });
+          const data = await response.json();
+          const suggestions = JSON.parse(data.choices[0].message.content);
+          this.showStatus('Suggestions generated.');
+          return suggestions.map(s => s.text);
+        } catch (e) {
+          this.showStatus(`Suggestion error: ${e.message.slice(0, 50)}...`);
+          return [];
+        }
+      }
+      showStatus(msg) {
+        this.status.textContent = msg;
+        this.status.classList.add('active');
+        clearTimeout(this.statusTimeout);
+        this.statusTimeout = setTimeout(() => this.status.classList.remove('active'), 2500);
+      }
+    }
+    
+    class ParticleSystem {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = [];
+        this.resize();
+        this.animate();
+      }
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+      addParticle(x, y) {
+        this.particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 1.2,
+          vy: (Math.random() - 0.5) * 1.2,
+          life: 1,
+          size: Math.random() * 2.5 + 1,
+          color: `hsla(${Math.random() * 30 + 200}, 70%, 60%, 0.6)`
+        });
+      }
+      animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.particles = this.particles.filter(p => p.life > 0);
+        this.particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life -= 0.03;
+          p.size *= 0.96;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          this.ctx.fillStyle = p.color.replace('0.6', p.life.toFixed(2));
+          this.ctx.fill();
+        });
+        requestAnimationFrame(() => this.animate());
+      }
+    }
+    
+    class MindMap {
+      constructor() {
+        this.thoughts = [];
+        this.connections = [];
+        this.selected = new Set();
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.particleSystem = new ParticleSystem(document.getElementById('particle-canvas'));
+        this.input = document.getElementById('thought-input');
+        this.brain = new AISemanticBrain();
+        this.threshold = 0.1;
+        this.showIcons = false;
+        this.iconThreshold = 0.5;
+        this.history = [];
+        this.redoStack = [];
+        this.LS_KEY = 'mindmapData';
+        this.animateProgress = 0;
+        this.handleResize = this.handleResize.bind(this);
+        this.handleResize();
+        this.setupEvents();
+        this.loadFromLocal();
+        this.draw();
+      }
+      handleResize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.particleSystem.resize();
+      }
+      setupEvents() {
+        window.addEventListener('resize', this.handleResize);
+        this.input.addEventListener('keydown', async (e) => {
+          if (e.key === 'Enter' && this.input.value.trim()) {
+            await this.addThought(this.input.value.trim());
+            this.input.value = '';
+          }
+        });
+        const slider = document.getElementById('threshold-slider');
+        const threshVal = document.getElementById('threshold-value');
+        slider.addEventListener('input', (e) => {
+          this.threshold = e.target.value / 100;
+          threshVal.textContent = this.threshold.toFixed(2);
+          this.updateConnectionVisibility();
+        });
+        document.getElementById('toggle-icons').addEventListener('click', (e) => {
+          this.showIcons = !this.showIcons;
+          e.target.classList.toggle('active');
+          document.getElementById('legend').style.display = this.showIcons ? 'flex' : 'none';
+          this.updateConnectionVisibility();
+        });
+        document.getElementById('auto-layout').addEventListener('click', () => this.autoLayout());
+        document.getElementById('group-thoughts').addEventListener('click', () => this.groupSelected());
+        document.getElementById('export-btn').addEventListener('click', () => this.exportMap());
+        document.getElementById('import-btn').addEventListener('click', () => this.importMap());
+        document.getElementById('suggest-thought').addEventListener('click', () => this.showSuggestions());
+        document.getElementById('analyze-button').addEventListener('click', () => this.showAnalysis());
+        document.addEventListener('keydown', (e) => {
+          if (e.ctrlKey && e.key === 'z') this.undo();
+          if (e.ctrlKey && e.key === 'y') this.redo();
+          if (e.ctrlKey && e.key === 'g') this.groupSelected();
+        });
+      }
+      saveToLocal() {
+        const data = {
+          thoughts: this.thoughts.map(t => ({ text: t.text, x: t.x, y: t.y, group: t.group })),
+          connections: this.connections.map(c => ({
+            fromText: c.from.text,
+            toText: c.to.text,
+            strength: c.strength,
+            type: c.type,
+            explanation: c.explanation
+          }))
+        };
+        localStorage.setItem(this.LS_KEY, JSON.stringify(data));
+      }
+      loadFromLocal() {
+        const data = localStorage.getItem(this.LS_KEY);
+        if (data) {
+          const { thoughts, connections } = JSON.parse(data);
+          thoughts.forEach(t => this.addThought(t.text, t.x, t.y, false, t.group));
+          connections.forEach(c => {
+            const from = this.thoughts.find(t => t.text === c.fromText);
+            const to = this.thoughts.find(t => t.text === c.toText);
+            if (from && to) {
+              const conn = { from, to, ...c };
+              this.connections.push(conn);
+              this.createConnectionIcon(conn);
+              from.connections = (from.connections || 0) + 1;
+              to.connections = (to.connections || 0) + 1;
+              from.totalStrength = (from.totalStrength || 0) + c.strength;
+              to.totalStrength = (to.totalStrength || 0) + c.strength;
+            }
+          });
+          this.updatePositions();
+        }
+      }
+      saveState() {
+        this.history.push({
+          thoughts: this.thoughts.map(t => ({ ...t, element: null })),
+          connections: this.connections.map(c => ({ ...c, icon: null }))
+        });
+        if (this.history.length > 20) this.history.shift();
+        this.redoStack = [];
+      }
+      undo() {
+        if (!this.history.length) return;
+        this.redoStack.push({
+          thoughts: this.thoughts.map(t => ({ ...t, element: null })),
+          connections: this.connections.map(c => ({ ...c, icon: null }))
+        });
+        this.restoreState(this.history.pop());
+      }
+      redo() {
+        if (!this.redoStack.length) return;
+        this.history.push({
+          thoughts: this.thoughts.map(t => ({ ...t, element: null })),
+          connections: this.connections.map(c => ({ ...c, icon: null }))
+        });
+        this.restoreState(this.redoStack.pop());
+      }
+      restoreState(state) {
+        this.thoughts.forEach(t => t.element.remove());
+        this.connections.forEach(c => c.icon?.remove());
+        this.thoughts = [];
+        this.connections = [];
+        state.thoughts.forEach(t => this.addThought(t.text, t.x, t.y, false, t.group));
+        state.connections.forEach(c => {
+          const from = this.thoughts.find(t => t.text === c.fromText);
+          const to = this.thoughts.find(t => t.text === c.toText);
+          if (from && to) {
+            const conn = { from, to, ...c };
+            this.connections.push(conn);
+            this.createConnectionIcon(conn);
+          }
+        });
+      }
+      createThoughtEl(text) {
+        const el = document.createElement('div');
+        el.className = 'thought';
+        el.textContent = text;
+        const del = document.createElement('div');
+        del.className = 'thought-delete';
+        del.innerHTML = '×';
+        del.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.saveState();
+          this.removeThought(el);
+        });
+        el.appendChild(del);
+        document.body.appendChild(el);
+        el.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          this.editThought(el);
+        });
+        let dragging = false, vx = 0, vy = 0, lastX, lastY;
+        el.addEventListener('mousedown', (e) => {
+          if (e.target !== del) {
+            dragging = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            el.style.zIndex = '1000';
+            if (!e.ctrlKey) this.selected.clear();
+            this.selected.add(el);
+            this.thoughts.forEach(t => {
+              if (this.selected.has(t.element)) t.element.classList.add('grouped');
+              else t.element.classList.remove('grouped');
+            });
+          }
+        });
+        document.addEventListener('mousemove', (e) => {
+          if (!dragging) return;
+          const thought = this.thoughts.find(t => t.element === el);
+          if (!thought) return;
+          const newX = Math.max(50, Math.min(window.innerWidth - 50, e.clientX));
+          const newY = Math.max(50, Math.min(window.innerHeight - 50, e.clientY));
+          vx = (newX - lastX) * 0.1;
+          vy = (newY - lastY) * 0.1;
+          lastX = newX;
+          lastY = newY;
+          thought.x = newX;
+          thought.y = newY;
+          this.updatePos(thought);
+          this.particleSystem.addParticle(newX, newY);
+        });
+        document.addEventListener('mouseup', () => {
+          if (dragging) {
+            dragging = false;
+            el.style.zIndex = '2';
+            this.inertia(el, vx, vy);
+            this.saveToLocal();
+            this.saveState();
+          }
+        });
+        return el;
+      }
+      inertia(el, vx, vy) {
+        const thought = this.thoughts.find(t => t.element === el);
+        if (!thought) return;
+        const move = () => {
+          thought.x = Math.max(50, Math.min(window.innerWidth - 50, thought.x + vx));
+          thought.y = Math.max(50, Math.min(window.innerHeight - 50, thought.y + vy));
+          this.updatePos(thought);
+          vx *= 0.95;
+          vy *= 0.95;
+          if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+            this.particleSystem.addParticle(thought.x, thought.y);
+            requestAnimationFrame(move);
+          }
+        };
+        move();
+      }
+      editThought(el) {
+        const thought = this.thoughts.find(t => t.element === el);
+        const oldText = thought.text;
+        const input = document.createElement('input');
+        input.value = oldText;
+        input.style.width = (el.offsetWidth - 25) + 'px';
+        input.style.background = '#161b22';
+        input.style.color = '#388bfd';
+        input.style.border = '1px solid #58a6ff';
+        input.style.padding = '0.3rem';
+        input.style.borderRadius = '4px';
+        input.style.fontSize = '0.95rem';
+        el.textContent = '';
+        el.appendChild(input);
+        input.focus();
+        const confirmEdit = async () => {
+          const newText = input.value.trim() || oldText;
+          el.textContent = newText;
+          el.appendChild(el.querySelector('.thought-delete'));
+          thought.text = newText;
+          this.saveState();
+          await this.updateConnections();
+          this.saveToLocal();
+        };
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') confirmEdit();
+          if (e.key === 'Escape') {
+            el.textContent = oldText;
+            el.appendChild(el.querySelector('.thought-delete'));
+          }
+        });
+        input.addEventListener('blur', confirmEdit);
+      }
+      removeThought(el) {
+        const idx = this.thoughts.findIndex(t => t.element === el);
+        if (idx !== -1) {
+          this.connections = this.connections.filter(c => {
+            if (c.from === this.thoughts[idx] || c.to === this.thoughts[idx]) {
+              c.icon?.remove();
+              return false;
+            }
+            return true;
+          });
+          el.remove();
+          this.thoughts.splice(idx, 1);
+          this.selected.delete(el);
+          this.saveToLocal();
+        }
+      }
+      updatePos(thought) {
+        thought.element.style.left = thought.x + 'px';
+        thought.element.style.top = thought.y + 'px';
+      }
+      async addThought(text, x = null, y = null, analyze = true, group = null) {
+        this.saveState();
+        const thought = {
+          id: Date.now() + Math.random(),
+          text,
+          x: x || window.innerWidth / 2,
+          y: y || window.innerHeight / 2,
+          element: this.createThoughtEl(text),
+          group,
+          connections: 0,
+          totalStrength: 0
+        };
+        this.thoughts.push(thought);
+        if (group) thought.element.classList.add('grouped');
+        this.updatePos(thought);
+        this.particleSystem.addParticle(thought.x, thought.y);
+        this.saveToLocal();
+
+        if (analyze) {
+          setTimeout(async () => {
+            await this.updateConnections();
+          }, 0);
+        }
+      }
+      async updateConnections() {
+        this.connections.forEach(c => c.icon?.remove());
+        const newConnections = [];
+        const existingThoughts = [...this.thoughts];
+        const newThought = existingThoughts[existingThoughts.length - 1];
+
+        if (newThought && existingThoughts.length > 1) {
+          for (let i = 0; i < existingThoughts.length - 1; i++) {
+            const rel = await this.brain.analyzeRelationship(existingThoughts[i].text, newThought.text);
+            if (rel.strength >= this.threshold) {
+              const conn = { from: existingThoughts[i], to: newThought, ...rel };
+              newConnections.push(conn);
+              existingThoughts[i].connections++;
+              newThought.connections++;
+              existingThoughts[i].totalStrength += rel.strength;
+              newThought.totalStrength += rel.strength;
+            }
+          }
+          this.connections = this.connections.filter(c => 
+            existingThoughts.includes(c.from) && existingThoughts.includes(c.to)
+          ).concat(newConnections);
+        } else {
+          this.connections = [];
+          for (let i = 0; i < existingThoughts.length; i++) {
+            existingThoughts[i].connections = 0;
+            existingThoughts[i].totalStrength = 0;
+            for (let j = i + 1; j < existingThoughts.length; j++) {
+              const rel = await this.brain.analyzeRelationship(existingThoughts[i].text, existingThoughts[j].text);
+              if (rel.strength >= this.threshold) {
+                const conn = { from: existingThoughts[i], to: existingThoughts[j], ...rel };
+                newConnections.push(conn);
+                existingThoughts[i].connections++;
+                existingThoughts[j].connections++;
+                existingThoughts[i].totalStrength += rel.strength;
+                existingThoughts[j].totalStrength += rel.strength;
+              }
+            }
+          }
+          this.connections = newConnections;
+        }
+
+        this.connections.forEach(conn => this.createConnectionIcon(conn));
+        this.updatePositions();
+      }
+      updatePositions() {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const baseRadius = Math.min(window.innerWidth, window.innerHeight) / 4;
+        const maxCon = Math.max(...this.thoughts.map(t => t.connections || 0), 1);
+        const maxStr = Math.max(...this.thoughts.map(t => t.totalStrength || 0), 1);
+        this.thoughts.forEach((t, i) => {
+          const angle = (i / this.thoughts.length) * Math.PI * 2;
+          const connFactor = t.connections / maxCon;
+          const strFactor = t.totalStrength / maxStr;
+          const radius = baseRadius * (0.5 + 0.5 * connFactor + 0.5 * strFactor);
+          t.element.style.fontSize = `${0.95 + strFactor * 0.35}rem`;
+          t.element.style.padding = `${0.75 + connFactor * 0.25}rem ${1.25 + connFactor * 0.25}rem`;
+          if (this.thoughts.length === 1) {
+            t.x = centerX;
+            t.y = centerY;
+          } else {
+            t.x = centerX + Math.cos(angle) * radius;
+            t.y = centerY + Math.sin(angle) * radius;
+          }
+          this.updatePos(t);
+        });
+      }
+      updateConnectionVisibility() {
+        this.connections.forEach(c => {
+          if (c.icon) c.icon.style.display = this.showIcons && c.strength >= this.iconThreshold ? 'flex' : 'none';
+        });
+      }
+      createConnectionIcon(conn) {
+        const icon = document.createElement('div');
+        icon.className = `connection-icon icon-${conn.type}`;
+        icon.title = `${conn.type} (${(conn.strength * 100).toFixed(1)}%): ${conn.explanation}`;
+        const colors = {
+          direct: '#58a6ff',
+          hierarchical: '#ffd700',
+          functional: '#ff6b6b',
+          contextual: '#2ecc71',
+          causal: '#9b59b6'
+        };
+        icon.style.background = colors[conn.type] || '#58a6ff';
+        const updatePos = () => {
+          icon.style.left = `${(conn.from.x + conn.to.x) / 2}px`;
+          icon.style.top = `${(conn.from.y + conn.to.y) / 2}px`;
+        };
+        updatePos();
+        icon.style.display = this.showIcons && conn.strength >= this.iconThreshold ? 'flex' : 'none';
+        document.body.appendChild(icon);
+        conn.icon = icon;
+        conn.updateIconPosition = updatePos;
+      }
+      draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.animateProgress = (this.animateProgress + 0.012) % 1;
+        this.connections.forEach(c => {
+          if (c.strength < this.threshold) return;
+          const colors = {
+            direct: [220, 70, 70],
+            hierarchical: [50, 70, 70],
+            functional: [0, 70, 70],
+            contextual: [120, 70, 70],
+            causal: [270, 70, 70]
+          };
+          const [hue, sat, light] = colors[c.type] || [220, 70, 70];
+          const alpha = Math.min(1, c.strength * 1.5);
+          this.ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
+          this.ctx.lineWidth = Math.max(1.5, c.strength * 4);
+          this.ctx.beginPath();
+          this.ctx.moveTo(c.from.x, c.from.y);
+          const midX = (c.from.x + c.to.x) / 2;
+          const midY = (c.from.y + c.to.y) / 2;
+          const wave = Math.sin(this.animateProgress * Math.PI * 2 + c.strength) * 8;
+          this.ctx.quadraticCurveTo(midX, midY + wave, c.to.x, c.to.y);
+          this.ctx.stroke();
+          c.updateIconPosition?.();
+        });
+        requestAnimationFrame(() => this.draw());
+      }
+      autoLayout() {
+        this.saveState();
+        this.updatePositions();
+        this.thoughts.forEach(t => this.particleSystem.addParticle(t.x, t.y));
+        this.saveToLocal();
+      }
+      groupSelected() {
+        if (!this.selected.size) {
+          this.thoughts.forEach(t => {
+            t.group = null;
+            t.element.classList.remove('grouped');
+          });
+          this.brain.showStatus('Cleared groups.');
+          this.saveToLocal();
+          return;
+        }
+        if (this.selected.size < 2) {
+          this.brain.showStatus('Select 2+ thoughts to group.');
+          return;
+        }
+        this.saveState();
+        const groupId = Date.now();
+        this.selected.forEach(el => {
+          const t = this.thoughts.find(t => t.element === el);
+          if (t) {
+            t.group = groupId;
+            t.element.classList.add('grouped');
+          }
+        });
+        this.brain.showStatus(`Grouped ${this.selected.size} thoughts.`);
+        this.saveToLocal();
+      }
+      exportMap() {
+        const data = JSON.stringify({
+          thoughts: this.thoughts.map(t => ({ text: t.text, x: t.x, y: t.y, group: t.group })),
+          connections: this.connections.map(c => ({
+            fromText: c.from.text,
+            toText: c.to.text,
+            strength: c.strength,
+            type: c.type,
+            explanation: c.explanation
+          }))
+        });
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mindmap.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        this.brain.showStatus('Mind map exported!');
+      }
+      importMap() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            this.saveState();
+            const data = JSON.parse(event.target.result);
+            this.thoughts.forEach(t => t.element.remove());
+            this.connections.forEach(c => c.icon?.remove());
+            this.thoughts = [];
+            this.connections = [];
+            this.selected.clear();
+            data.thoughts.forEach(t => this.addThought(t.text, t.x, t.y, false, t.group));
+            data.connections.forEach(c => {
+              const from = this.thoughts.find(t => t.text === c.fromText);
+              const to = this.thoughts.find(t => t.text === c.toText);
+              if (from && to) {
+                const conn = { from, to, ...c };
+                this.connections.push(conn);
+                this.createConnectionIcon(conn);
+              }
+            });
+            this.saveToLocal();
+            this.brain.showStatus('Mind map imported!');
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      }
+      async showSuggestions() {
+        const selectedThoughts = Array.from(this.selected).map(el => this.thoughts.find(t => t.element === el)?.text).filter(Boolean);
+        const existing = this.thoughts.map(t => t.text);
+        if (!existing.length) {
+          this.brain.showStatus('Add some thoughts first!');
+          return;
+        }
+        const context = selectedThoughts.length ? selectedThoughts : existing;
+        const suggestions = await this.brain.suggestThoughts(context);
+        if (!suggestions.length) return;
+        const container = document.getElementById('suggestion-container');
+        container.innerHTML = '';
+        suggestions.forEach(suggestion => {
+          const item = document.createElement('div');
+          item.className = 'suggestion-item';
+          item.textContent = suggestion;
+          item.addEventListener('click', async () => {
+            await this.addThought(suggestion);
+            container.style.display = 'none';
+          });
+          container.appendChild(item);
+        });
+        container.style.display = 'flex';
+      }
+      showAnalysis() {
+        const active = this.connections.filter(c => c.strength >= this.threshold);
+        const avgStrength = this.connections.reduce((sum, c) => sum + c.strength, 0) / (this.connections.length || 1);
+        const typeCount = this.connections.reduce((acc, c) => {
+          acc[c.type] = (acc[c.type] || 0) + 1;
+          return acc;
+        }, {});
+        let analysis = `Thoughts: ${this.thoughts.length}\n`;
+        analysis += `Connections: ${active.length}\n`;
+        analysis += `Avg Strength: ${(avgStrength * 100).toFixed(1)}%\n`;
+        analysis += `Types: ${JSON.stringify(typeCount)}`;
+        alert(analysis);
+      }
+    }
+    
+    const mindMap = new MindMap();
+  </script>
+</body>
+</html>
