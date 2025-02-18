@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>$UNCEDE – Official Landing Page</title>
   <style>
     * {
@@ -106,10 +106,11 @@
       display: inline-block;
       margin: 5px;
       padding: 8px 12px;
-      color: white;
+      color: #fff;
       text-decoration: none;
       background: #222;
       border-radius: 4px;
+      transition: background 0.3s ease;
     }
     .social-links a:hover {
       background: #333;
@@ -135,22 +136,40 @@
       <h1>$UNCEDE</h1>
       <p>The Next Evolution on Solana</p>
 
+      <!-- BUY & CONNECT BUTTONS -->
       <div class="buttons-container">
         <button class="button" id="connectPhantom">Connect Phantom</button>
-        <a href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7" target="_blank" class="button">Buy on Phantom</a>
-        <a href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump" target="_blank" class="button">Buy on Pump.fun</a>
+        <a href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7"
+           target="_blank"
+           class="button">
+          Buy on Phantom
+        </a>
+        <a href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump"
+           target="_blank"
+           class="button">
+          Buy on Pump.fun
+        </a>
       </div>
 
+      <!-- CONTRACT ADDRESS -->
       <div class="contract-container">
         <p>Contract Address:</p>
-        <p class="contract-address" id="contractAddress">EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump</p>
-        <button class="copy-button" onclick="copyContractAddress()">Copy Address</button>
+        <p class="contract-address" id="contractAddress">
+          EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump
+        </p>
+        <button class="copy-button" onclick="copyContractAddress()">
+          Copy Address
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- SOLSCAN LINK -->
   <div class="social-links">
-    <a href="https://solscan.io/account/EZrsvWk3XLNDDHhLY9gDciSrQbQqSfffxevhufAuUF2H" target="_blank">View on Solscan</a>
+    <a href="https://solscan.io/account/EZrsvWk3XLNDDHhLY9gDciSrQbQqSfffxevhufAuUF2H"
+       target="_blank">
+      View on Solscan
+    </a>
   </div>
 
   <footer>
@@ -160,9 +179,8 @@
   <script>
     function copyContractAddress() {
       const contractAddress = document.getElementById('contractAddress').innerText;
-      navigator.clipboard.writeText(contractAddress).then(() => {
-        alert('Contract address copied to clipboard!');
-      });
+      navigator.clipboard.writeText(contractAddress)
+        .then(() => alert('Contract address copied to clipboard!'));
     }
 
     document.getElementById('connectPhantom').addEventListener('click', async () => {
@@ -174,11 +192,10 @@
           console.error('Connection to Phantom wallet failed', err);
         }
       } else {
-        alert('Phantom wallet not found. Please install the Phantom wallet extension.');
+        alert('Phantom wallet not found. Please install the Phantom extension.');
         window.open('https://phantom.app/', '_blank');
       }
     });
   </script>
-
 </body>
 </html>
