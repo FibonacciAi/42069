@@ -1,508 +1,933 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:
-    https://cdnjs.cloudflare.com
-    https://cdn.jsdelivr.net
-    https://code.jquery.com
-    https://unpkg.com
-    https://d3js.org
-    https://threejs.org
-    https://cdn.plot.ly
-    https://stackpath.bootstrapcdn.com
-    https://maps.googleapis.com
-    https://cdn.tailwindcss.com
-    https://ajax.googleapis.com
-    https://kit.fontawesome.com
-    https://cdn.datatables.net
-    https://maxcdn.bootstrapcdn.com
-    https://code.highcharts.com
-    https://tako-static-assets-production.s3.amazonaws.com
-    https://www.youtube.com
-    https://fonts.googleapis.com
-    https://fonts.gstatic.com
-    https://pfst.cf2.poecdn.net
-    https://puc.poecdn.net
-    https://i.imgur.com
-    https://wikimedia.org
-    https://*.icons8.com
-    https://*.giphy.com
-    https://picsum.photos
-    https://images.unsplash.com;
-    connect-src 'self' https://api.openai.com https://api.x.ai;
-    frame-src 'self' https://www.youtube.com https://trytako.com;
-    child-src 'self';
-    manifest-src 'self';
-    worker-src 'self';
-    upgrade-insecure-requests;
-    block-all-mixed-content;
-  ">
-  <script src="https://puc.poecdn.net/standard.c8d3df4d67dddca2ccac.js"></script>
-  <meta charset="utf-8">
-  <title>Poe</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script src="https://puc.poecdn.net/tw.b9024aecac666455e183.js"></script>
-  <script src="https://puc.poecdn.net/deps.ac7e4de820f1e47e84a2.js"></script>
-  <script src="https://puc.poecdn.net/exports.b0f0f482cdeb5302b0b9.js"></script>
-  <script src="https://puc.poecdn.net/renderer.6065bf6c6271ccf44fe1.js"></script>
-
-  <!-- Entire ThoughtNetwork code with corrected analyzeRelationship (including JSON sanitization) -->
-  <script>
-    Object.defineProperty(exports, "__esModule", {value: true});
-    function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-    function _optionalChain(ops) {
-      let lastAccessLHS = undefined;
-      let value = ops[0];
-      let i = 1;
-      while (i < ops.length) {
-        const op = ops[i];
-        const fn = ops[i + 1];
-        i += 2;
-        if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) {
-          return undefined;
-        }
-        if (op === 'access' || op === 'optionalAccess') {
-          lastAccessLHS = value;
-          value = fn(value);
-        } else if (op === 'call' || op === 'optionalCall') {
-          value = fn((...args) => value.call(lastAccessLHS, ...args));
-          lastAccessLHS = undefined;
-        }
-      }
-      return value;
+  <meta charset="UTF-8" />
+  <title>3D Thought Network – Fraud-Focused Analysis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Unravel interconnected networks with deep, critical analysis in an immersive 3D environment." />
+  <meta name="theme-color" content="#0a0a0a">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
     }
-
-    var _react = require('react');
-    var _react2 = _interopRequireDefault(_react);
-    var _framermotion = require('framer-motion');
-
-    const ThoughtNetwork = () => {
-      const [thoughts, setThoughts] = _react.useState([]);
-      const [connections, setConnections] = _react.useState([]);
-      const [inputValue, setInputValue] = _react.useState('');
-      const [apiKey, setApiKey] = _react.useState('');
-      const [apiType, setApiType] = _react.useState(null);
-      const [isApiKeySet, setIsApiKeySet] = _react.useState(false);
-      const [threshold, setThreshold] = _react.useState(0.1);
-      const [showIcons, setShowIcons] = _react.useState(false);
-      const [showAnalysis, setShowAnalysis] = _react.useState(false);
-      const [status, setStatus] = _react.useState('Waiting for API key...');
-      const [showConsole, setShowConsole] = _react.useState(false);
-      const [consoleMessages, setConsoleMessages] = _react.useState([]);
-
-      const logToConsole = (message, isError = false) => {
-        setConsoleMessages(prev => [...prev, { message, isError, timestamp: Date.now() }]);
-        setShowConsole(true);
-      };
-
-      // -------------------------
-      // Corrected analyzeRelationship with JSON sanitization
-      // -------------------------
-      const analyzeRelationship = async (text1, text2) => {
-        try {
-          // Decide endpoint based on detected key
-          const endpoint = apiType === 'openai'
-            ? 'https://api.openai.com/v1/chat/completions'
-            : 'https://api.x.ai/v1/chat/completions';
-
-          // Standard headers for both
-          const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          };
-
-          // Adjust body format for OpenAI vs. xAI
-          const body =
-            apiType === 'openai'
-              ? {
-                  model: 'gpt-4',
-                  temperature: 0.3,
-                  messages: [
-                    {
-                      role: 'system',
-                      content:
-                        'You are a semantic relationship analyzer. For the two concepts provided, return ONLY a JSON object with: strength (0-1), type (direct/hierarchical/functional/contextual/causal), and explanation (brief). No other text.'
-                    },
-                    {
-                      role: 'user',
-                      content: `Analyze: "${text1}" and "${text2}"`
-                    }
-                  ]
-                }
-              : {
-                  model: 'grok-2-latest',
-                  temperature: 0.3,
-                  messages: [
-                    {
-                      role: 'system',
-                      content:
-                        'You are a semantic relationship analyzer. For the two concepts provided, return ONLY a JSON object with: strength (0-1), type (direct/hierarchical/functional/contextual/causal), and explanation (brief). No other text.'
-                    },
-                    {
-                      role: 'user',
-                      content: `Analyze: "${text1}" and "${text2}"`
-                    }
-                  ]
-                };
-
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(body)
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(
-              _optionalChain([errorData, 'access', _ => _.error, 'optionalAccess', _2 => _2.message]) ||
-              `API request failed: ${response.status}`
-            );
-          }
-
-          const data = await response.json();
-          // For both OpenAI or xAI, we expect a 'choices' array with message content
-          let content = data.choices[0].message.content;
-
-          // Strip out triple backticks or code fences
-          content = content.replace(/```(\w+)?|```/g, '').trim();
-
-          // Extract only the JSON portion
-          const match = content.match(/\{[\s\S]*\}/);
-          if (!match) {
-            throw new Error('No JSON object found in the response');
-          }
-
-          return JSON.parse(match[0]);
-        } catch (error) {
-          logToConsole(`Analysis error: ${error.message}`, true);
-          setStatus(`Error: ${error.message}`);
-          return null;
-        }
-      };
-      // --------------------------
-
-      const addThought = async () => {
-        if (!inputValue.trim()) return;
-
-        const newThought = {
-          id: Date.now(),
-          text: inputValue.trim(),
-          x: window.innerWidth / 2 + (Math.random() - 0.5) * 300,
-          y: window.innerHeight / 2 + (Math.random() - 0.5) * 300
-        };
-
-        setThoughts(prev => [...prev, newThought]);
-        setInputValue('');
-
-        if (thoughts.length > 0) {
-          setStatus('Analyzing relationships...');
-          for (const thought of thoughts) {
-            const relationship = await analyzeRelationship(newThought.text, thought.text);
-            if (relationship && relationship.strength >= threshold) {
-              setConnections(prev => [
-                ...prev,
-                {
-                  id: `${newThought.id}-${thought.id}`,
-                  from: newThought.id,
-                  to: thought.id,
-                  ...relationship
-                }
-              ]);
-            }
-          }
-          setStatus('Analysis complete');
-        }
-      };
-
-      const updateThoughtPosition = (id, position) => {
-        setThoughts(prev =>
-          prev.map(t => (t.id === id ? { ...t, x: position.x, y: position.y } : t))
-        );
-      };
-
-      return (
-        _react2.default.createElement('div', { className: "min-h-screen bg-gray-900 text-white relative overflow-hidden" },
-          /* Controls */
-          _react2.default.createElement('div', {
-            className: "fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm p-4 z-50 flex gap-4 items-center"
-          },
-            !isApiKeySet ? (
-              _react2.default.createElement('div', { className: "flex flex-col gap-2 w-full" },
-                _react2.default.createElement('div', { className: "flex gap-2" },
-                  _react2.default.createElement('input', {
-                    type: "password",
-                    value: apiKey,
-                    onChange: (e) => setApiKey(e.target.value),
-                    className: "flex-grow bg-gray-800 rounded px-4 py-2",
-                    placeholder: "Enter OpenAI (sk-...) or xAI (xai-...) API Key"
-                  }),
-                  _react2.default.createElement('button', {
-                    onClick: () => {
-                      const detected = apiKey.startsWith('sk-') ? 'openai'
-                        : apiKey.startsWith('xai-') ? 'grok'
-                        : null;
-                      if (detected) {
-                        setApiType(detected === 'openai' ? 'openai' : 'grok');
-                        setIsApiKeySet(true);
-                        setStatus(`Connected to ${detected === 'openai' ? 'OpenAI' : 'xAI'} API`);
-                      } else {
-                        setStatus('Invalid API key format. OpenAI keys start with sk-, xAI keys start with xai-');
-                      }
-                    },
-                    className: "bg-green-500 px-6 py-2 rounded hover:bg-green-600 transition-colors"
-                  }, "Set Key")
-                ),
-                _react2.default.createElement('div', { className: "text-sm text-gray-400" },
-                  "Enter either an OpenAI API key (starts with sk-) or an xAI API key (starts with xai-)"
-                )
-              )
-            ) : (
-              _react2.default.createElement(_react2.default.Fragment, null,
-                _react2.default.createElement('div', { className: "flex items-center gap-2 min-w-fit" },
-                  _react2.default.createElement('div', {
-                    className: `px-2 py-1 rounded text-sm ${
-                      apiType === 'openai' ? 'bg-green-600' : 'bg-blue-600'
-                    }`
-                  },
-                    apiType === 'openai' ? 'OpenAI' : 'xAI'
-                  ),
-                  _react2.default.createElement('button', {
-                    onClick: () => {
-                      setIsApiKeySet(false);
-                      setApiKey('');
-                      setApiType(null);
-                    },
-                    className: "text-sm text-gray-400 hover:text-white transition-colors"
-                  }, "Change API")
-                ),
-                _react2.default.createElement('input', {
-                  type: "text",
-                  value: inputValue,
-                  onChange: (e) => setInputValue(e.target.value),
-                  onKeyDown: (e) => e.key === 'Enter' && addThought(),
-                  className: "flex-grow bg-gray-800 rounded px-4 py-2",
-                  placeholder: "Enter a thought..."
-                }),
-                _react2.default.createElement('div', { className: "flex items-center gap-4" },
-                  _react2.default.createElement('label', { className: "flex items-center gap-2" }, "Threshold:",
-                    _react2.default.createElement('input', {
-                      type: "range",
-                      min: "0",
-                      max: "100",
-                      value: threshold * 100,
-                      onChange: (e) => setThreshold(e.target.value / 100),
-                      className: "mx-2",
-                    }),
-                    threshold.toFixed(2)
-                  ),
-                  _react2.default.createElement('button', {
-                    onClick: () => setShowIcons(!showIcons),
-                    className: `px-4 py-2 rounded transition-colors ${
-                      showIcons ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-600 hover:bg-gray-700'
-                    }`
-                  }, "Icons"),
-                  _react2.default.createElement('button', {
-                    onClick: () => setShowAnalysis(true),
-                    className: "bg-blue-500 px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-                  }, "Analyze")
-                )
-              )
-            )
-          ),
-
-          /* Status */
-          _react2.default.createElement('div', {
-            className: "fixed bottom-4 left-4 bg-black/80 backdrop-blur-sm px-4 py-2 rounded"
-          },
-            status
-          ),
-
-          /* Console */
-          showConsole && (
-            _react2.default.createElement('div', {
-              className: "fixed bottom-16 left-4 right-4 bg-black/90 backdrop-blur-sm rounded max-h-48 overflow-y-auto"
-            },
-              _react2.default.createElement('div', { className: "flex justify-between items-center p-2 border-b border-gray-800" },
-                _react2.default.createElement('div', { className: "text-sm font-bold" }, "Console"),
-                _react2.default.createElement('button', {
-                  onClick: () => setShowConsole(false),
-                  className: "text-gray-500 hover:text-white"
-                }, "×")
-              ),
-              _react2.default.createElement('div', { className: "p-2 space-y-1 font-mono text-sm" },
-                consoleMessages.map(msg => (
-                  _react2.default.createElement('div', {
-                    key: msg.timestamp,
-                    className: msg.isError ? 'text-red-400' : 'text-gray-300'
-                  }, msg.message)
-                ))
-              )
-            )
-          ),
-
-          /* Connection Lines */
-          _react2.default.createElement('svg', { className: "fixed inset-0 w-full h-full pointer-events-none" },
-            _react2.default.createElement(_framermotion.AnimatePresence, null,
-              connections
-                .filter(conn => conn.strength >= threshold)
-                .map(conn => {
-                  const from = thoughts.find(t => t.id === conn.from);
-                  const to = thoughts.find(t => t.id === conn.to);
-                  if (!from || !to) return null;
-
-                  const color = {
-                    direct: '#ff3e3e',
-                    hierarchical: '#4caf50',
-                    functional: '#2196f3',
-                    contextual: '#9c27b0',
-                    causal: '#ff9800'
-                  }[conn.type] || '#ffffff';
-
-                  return (
-                    _react2.default.createElement('g', { key: conn.id },
-                      _react2.default.createElement(_framermotion.motion.line, {
-                        initial: { pathLength: 0, opacity: 0 },
-                        animate: { pathLength: 1, opacity: conn.strength },
-                        exit: { opacity: 0 },
-                        x1: from.x,
-                        y1: from.y,
-                        x2: to.x,
-                        y2: to.y,
-                        stroke: color,
-                        strokeWidth: conn.strength * 3
-                      }),
-                      showIcons && (
-                        _react2.default.createElement(_framermotion.motion.text, {
-                          x: (from.x + to.x) / 2,
-                          y: (from.y + to.y) / 2,
-                          textAnchor: "middle",
-                          dominantBaseline: "middle",
-                          fill: "white",
-                          fontSize: "12",
-                          initial: { opacity: 0 },
-                          animate: { opacity: 1 },
-                          exit: { opacity: 0 }
-                        },
-                          conn.type === 'direct'
-                            ? '🔗'
-                            : conn.type === 'hierarchical'
-                            ? '⬆️'
-                            : conn.type === 'functional'
-                            ? '⚙️'
-                            : conn.type === 'contextual'
-                            ? '🤝'
-                            : '➡️'
-                        )
-                      )
-                    )
-                  );
-                })
-            )
-          ),
-
-          /* Thoughts */
-          _react2.default.createElement(_framermotion.AnimatePresence, null,
-            thoughts.map(thought => (
-              _react2.default.createElement(_framermotion.motion.div, {
-                key: thought.id,
-                className: "absolute bg-gray-800/80 backdrop-blur px-4 py-2 rounded-xl cursor-move",
-                initial: { scale: 0 },
-                animate: {
-                  scale: 1,
-                  x: thought.x,
-                  y: thought.y
-                },
-                exit: { scale: 0 },
-                style: { transform: 'translate(-50%, -50%)' },
-                drag: true,
-                dragMomentum: false,
-                onDrag: (_, info) => {
-                  updateThoughtPosition(thought.id, {
-                    x: thought.x + info.delta.x,
-                    y: thought.y + info.delta.y
-                  });
-                }
-              },
-                thought.text,
-                _react2.default.createElement('button', {
-                  onClick: () => {
-                    setThoughts(prev => prev.filter(t => t.id !== thought.id));
-                    setConnections(prev => prev.filter(c =>
-                      c.from !== thought.id && c.to !== thought.id
-                    ));
-                  },
-                  className: "absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-                }, "×")
-              )
-            ))
-          ),
-
-          /* Analysis Modal */
-          showAnalysis && (
-            _react2.default.createElement(_framermotion.motion.div, {
-              initial: { opacity: 0 },
-              animate: { opacity: 1 },
-              exit: { opacity: 0 },
-              className: "fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center"
-            },
-              _react2.default.createElement('div', {
-                className: "bg-gray-800 rounded-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto relative"
-              },
-                _react2.default.createElement('button', {
-                  onClick: () => setShowAnalysis(false),
-                  className: "absolute top-4 right-4 text-2xl hover:text-gray-400 transition-colors"
-                }, "×"),
-                _react2.default.createElement('h2', { className: "text-2xl font-bold mb-6" }, "Network Analysis"),
-                _react2.default.createElement('div', { className: "space-y-6" },
-                  _react2.default.createElement('div', { className: "grid grid-cols-2 gap-4" },
-                    _react2.default.createElement('div', { className: "bg-gray-700/50 p-4 rounded" },
-                      _react2.default.createElement('div', { className: "text-2xl" }, thoughts.length),
-                      _react2.default.createElement('div', { className: "text-gray-400" }, "Total Thoughts")
-                    ),
-                    _react2.default.createElement('div', { className: "bg-gray-700/50 p-4 rounded" },
-                      _react2.default.createElement('div', { className: "text-2xl" },
-                        connections.filter(c => c.strength >= threshold).length
-                      ),
-                      _react2.default.createElement('div', { className: "text-gray-400" }, "Active Connections")
-                    )
-                  ),
-                  _react2.default.createElement('div', { className: "space-y-2" },
-                    _react2.default.createElement('h3', { className: "text-xl" }, "Strong Connections"),
-                    connections
-                      .filter(c => c.strength >= threshold)
-                      .sort((a, b) => b.strength - a.strength)
-                      .map(conn => {
-                        const from = thoughts.find(t => t.id === conn.from);
-                        const to = thoughts.find(t => t.id === conn.to);
-                        if (!from || !to) return null;
-                        return (
-                          _react2.default.createElement('div', {
-                            key: conn.id,
-                            className: "bg-gray-700/50 p-3 rounded flex justify-between"
-                          },
-                            _react2.default.createElement('div', null,
-                              from.text, " ↔ ", to.text
-                            ),
-                            _react2.default.createElement('div', null,
-                              conn.type, " (", (conn.strength * 100).toFixed(1), "%)"
-                            )
-                          )
-                        );
-                      })
-                  )
-                )
-              )
-            )
-          )
-        )
-      );
-    };
-
-    exports.default = ThoughtNetwork;
+  }
   </script>
+  <style>
+    :root {
+      --bg-start: #0a0a0a;
+      --bg-end: #1a1a1a;
+      --accent: #00ff80;
+      --btn-bg-start: #2a2a2a;
+      --btn-bg-end: #3a3a3a;
+      --text-color: #e0e0e0;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+      color: var(--text-color);
+      overflow: hidden;
+      cursor: default;
+    }
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .row {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    }
+    .btn {
+      background: linear-gradient(45deg, var(--btn-bg-start), var(--btn-bg-end));
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    .btn:hover {
+      background: linear-gradient(45deg, var(--btn-bg-end), #4a4a4a);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.glow { box-shadow: 0 0 10px rgba(0, 255, 128, 0.5); }
+    .input {
+      background: rgba(20, 20, 20, 0.9);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      min-width: 200px;
+      transition: border-color 0.3s;
+    }
+    .input:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+    .slider-container {
+      display: flex; align-items: center; gap: 8px; color: #bbb;
+    }
+    input[type=range] {
+      width: 120px;
+      accent-color: var(--accent);
+    }
+    .status-box {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      z-index: 100;
+      transition: all 0.3s ease;
+      max-width: 42vw;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .status-box:hover { transform: scale(1.02); }
+    .analysis-log {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      width: 600px;
+      max-height: 60vh;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px;
+      overflow-y: auto;
+      z-index: 150;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .analysis-log-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+    .analysis-log-header button {
+      background: transparent; border: none; color: #fff; font-size: 20px; cursor: pointer;
+      transition: color 0.3s;
+    }
+    .analysis-log-header button:hover { color: #ff5555; }
+    #analysisLogMessages {
+      font-size: 13px; line-height: 1.6; color: #ddd;
+    }
+    .thought-panel {
+      position: fixed;
+      right: 20px; top: 100px;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      width: 340px;
+      max-height: 70vh;
+      overflow-y: auto;
+      z-index: 90;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .thought-item {
+      background: rgba(30, 30, 30, 0.9);
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: all 0.3s;
+    }
+    .thought-item:hover {
+      background: rgba(40, 40, 40, 0.9);
+      transform: translateX(2px);
+    }
+    #threeCanvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+    }
+    /* Additional suggestions styling */
+    .analysisPanel, .nodePanel {
+      margin-top: 10px;
+      padding: 8px;
+      background: rgba(20, 20, 20, 0.8);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .suggestionsPanel {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+    }
+    .suggestion-btn {
+      background: linear-gradient(45deg, #00cc66, var(--accent));
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+    .suggestion-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 8px rgba(0, 255, 128, 0.5);
+    }
+    .lightbox {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 200;
+      animation: fadeIn 0.3s ease;
+    }
+    .lightbox-content {
+      background: #151515;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 80vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      color: var(--text-color);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      animation: slideUp 0.3s ease;
+    }
+    #closeLightboxBtn {
+      position: absolute; top: 15px; right: 15px;
+      background: transparent; border: none; font-size: 28px; color: #fff; cursor: pointer;
+      transition: color 0.3s;
+    }
+    #closeLightboxBtn:hover { color: #ff5555; }
+    .hidden { display: none; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div id="preview-app"></div>
+  <div class="top-bar">
+    <div class="row">
+      <input type="text" class="input" id="apiKeyInput" placeholder="Enter ANY non-empty key">
+      <button class="btn" id="connectKeyBtn">Connect</button>
+      <button class="btn" id="changeApiBtn">Reset API</button>
+      <button class="btn hidden" id="exportBtn">Export Network</button>
+    </div>
+    <div class="row">
+      <input type="text" class="input" id="thoughtInput" placeholder="Add Thought/Org & press Enter">
+      <div class="slider-container">
+        <label for="linkStrength">Link Threshold:</label>
+        <input type="range" id="linkStrength" min="0" max="100" value="50">
+        <span id="strengthValue">0.50</span>
+      </div>
+      <button class="btn" id="toggleAnalysisLogBtn">Analysis</button>
+      <button class="btn" id="toggleThoughtsPanelBtn">Network</button>
+    </div>
+  </div>
+
+  <div class="status-box" id="statusBox">
+    <strong>3D Thought Network</strong><br>
+    Connect a key to map the web of orgs and uncover critical insights.
+
+    <!-- We'll keep these for any manual or dynamic suggestions, if you want them -->
+    <div id="analysisSuggestionsContainer" class="analysisPanel" style="display:none;"></div>
+    <div id="nodeSuggestionsContainer" class="nodePanel" style="display:none;"></div>
+  </div>
+
+  <div class="analysis-log" id="analysisLog">
+    <div class="analysis-log-header">
+      <strong>Critical Network Analysis</strong>
+      <button id="closeAnalysisLogBtn">×</button>
+    </div>
+    <div id="analysisLogMessages"></div>
+  </div>
+
+  <div class="thought-panel" id="thoughtPanel">
+    <h3 style="margin-top:0; font-weight: 600;">Mapped Entities</h3>
+    <div id="thoughtsList"></div>
+  </div>
+
+  <canvas id="threeCanvas"></canvas>
+
+  <div id="lightboxAnalysis" class="lightbox hidden">
+    <div class="lightbox-content">
+      <button id="closeLightboxBtn">×</button>
+      <div id="lightboxContent"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    /******************************************************
+     * GLOBALS & SETUP
+     ******************************************************/
+    let scene, camera, renderer, controls, networkGroup, ambientLight, pointLight;
+    let thoughts = [];      // { id, text, mesh, analysis, velocity }
+    let connections = [];   // { from, to, line, strength }
+    let linkStrength = 0.5;
+    let apiKey = "";
+    let simulationRunning = true;
+
+    // We'll store user queries for dynamic suggestions
+    let lastUserQuery = '';
+
+    // Preloaded data
+    const preloaded = [
+      { name: "USAID", data: "Budget: $43.79B (2023)\nFocus: Global aid", lines: [] },
+      { name: "NATIONAL ENDOWMENT FOR DEMOCRACY\n(EIN: 52-1344831)", data: "Receipts: $363M\nTaxpayer: $362M", lines: [] },
+      { name: "INTERNATIONAL REPUBLICAN INSTITUTE\n(EIN: 52-1340267)", data: "Receipts: $135M\nTaxpayer: $131M", lines: [] },
+      { name: "WORLD ECONOMIC FORUM", data: "USAID Funds: $68M+\nFocus: Globalism", lines: [] },
+      { name: "CLINTON FOUNDATION", data: "USAID Funds: $84M (alleged)", lines: [] },
+      { name: "ECOHEALTH ALLIANCE", data: "USAID Funds: Millions\nWuhan Ties", lines: [] },
+      { name: "ISLAMIC RELIEF AGENCY", data: "USAID Funds: $125K\nTerror-Designated", lines: [] }
+    ];
+    // Hard-coded connections for the first node (USAID)
+    preloaded[0].lines.push({ target: 1, amount: 362000000 });
+    preloaded[0].lines.push({ target: 2, amount: 131000000 });
+    preloaded[0].lines.push({ target: 3, amount: 68000000 });
+    preloaded[0].lines.push({ target: 4, amount: 84000000 });
+    preloaded[0].lines.push({ target: 5, amount: 5000000 });
+    preloaded[0].lines.push({ target: 6, amount: 125000 });
+
+
+    /******************************************************
+     * SCENE INIT & ANIMATION
+     ******************************************************/
+    function initThree() {
+      const canvas = document.getElementById('threeCanvas');
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0a0a);
+
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 200, 800);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      ambientLight = new THREE.AmbientLight(0x606060, 0.8);
+      scene.add(ambientLight);
+      pointLight = new THREE.PointLight(0xffffff, 1.2, 2000);
+      pointLight.position.set(0, 300, 500);
+      scene.add(pointLight);
+
+      networkGroup = new THREE.Group();
+      scene.add(networkGroup);
+
+      // optional grid
+      const grid = new THREE.GridHelper(2000, 20, 0x333333, 0x333333);
+      grid.position.y = -100;
+      scene.add(grid);
+
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (simulationRunning) updatePhysics();
+      controls.update();
+      pointLight.position.copy(camera.position);
+      renderer.render(scene, camera);
+    }
+
+    function updatePhysics() {
+      const repulsionForce = 0.12;
+      const friction = 0.94;
+      thoughts.forEach(n1 => {
+        n1.velocity = n1.velocity || new THREE.Vector3();
+        thoughts.forEach(n2 => {
+          if (n1 === n2) return;
+          const dx = n2.mesh.position.x - n1.mesh.position.x;
+          const dy = n2.mesh.position.y - n1.mesh.position.y;
+          const dz = n2.mesh.position.z - n1.mesh.position.z;
+          const dist = Math.max(0.1, Math.sqrt(dx*dx + dy*dy + dz*dz));
+          if (dist < 180) {
+            const force = repulsionForce * (180 - dist) / dist;
+            n1.velocity.x -= force * dx;
+            n1.velocity.y -= force * dy;
+            n1.velocity.z -= force * dz;
+          }
+        });
+        connections.filter(c => c.from === n1 || c.to === n1).forEach(c => {
+          const other = c.from === n1 ? c.to : c.from;
+          const dx = other.mesh.position.x - n1.mesh.position.x;
+          const dy = other.mesh.position.y - n1.mesh.position.y;
+          const dz = other.mesh.position.z - n1.mesh.position.z;
+          const dist = Math.max(0.1, Math.sqrt(dx*dx + dy*dy + dz*dz));
+          const springForce = 0.006 * (dist - 220) * c.strength;
+          n1.velocity.x += springForce * dx / dist;
+          n1.velocity.y += springForce * dy / dist;
+          n1.velocity.z += springForce * dz / dist;
+        });
+        n1.mesh.position.add(n1.velocity);
+        n1.velocity.multiplyScalar(friction);
+      });
+      connections.forEach(c => {
+        const pts = [c.from.mesh.position, c.to.mesh.position];
+        c.line.geometry.setFromPoints(pts);
+        c.line.geometry.attributes.position.needsUpdate = true;
+      });
+    }
+
+
+    /******************************************************
+     * NODE & CONNECTION CREATION
+     ******************************************************/
+    function createTextSprite(text) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const lines = text.split("\n");
+      const fontSize = 28;
+      const pad = 15;
+      ctx.font = `bold ${fontSize}px Inter`;
+      let maxWidth = 0;
+      lines.forEach(line => {
+        const { width } = ctx.measureText(line);
+        if (width > maxWidth) maxWidth = width;
+      });
+      canvas.width = Math.ceil(maxWidth + pad * 2);
+      canvas.height = fontSize * lines.length + pad * 2;
+      ctx.font = `bold ${fontSize}px Inter`;
+      ctx.fillStyle = '#e0e0e0';
+      ctx.textAlign = 'center';
+      lines.forEach((line, i) => {
+        ctx.fillText(line, canvas.width / 2, pad + fontSize * (i + 1));
+      });
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(canvas.width * 0.35, canvas.height * 0.35, 1);
+      return sprite;
+    }
+
+    function createNodeMesh(title, details) {
+      const geo = new THREE.SphereGeometry(12, 32, 32);
+      const mat = new THREE.MeshPhongMaterial({
+        color: new THREE.Color().setHSL(Math.random(), 0.8, 0.7),
+        shininess: 60,
+        emissive: 0x202020
+      });
+      const sphere = new THREE.Mesh(geo, mat);
+
+      const text = `${title}\n${details}`;
+      const label = createTextSprite(text);
+      label.position.set(0, 25, 0);
+      sphere.add(label);
+
+      sphere.position.set(
+        (Math.random() - 0.5) * 400,
+        (Math.random() - 0.5) * 400,
+        (Math.random() - 0.5) * 400
+      );
+      networkGroup.add(sphere);
+      return sphere;
+    }
+
+    function createConnectionLine(fromObj, toObj, strength) {
+      const pts = [fromObj.mesh.position, toObj.mesh.position];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x00ff80,
+        transparent: true,
+        opacity: Math.max(0.4, strength),
+        linewidth: 2
+      });
+      const line = new THREE.Line(geo, mat);
+      networkGroup.add(line);
+      return line;
+    }
+
+
+    /******************************************************
+     * PRELOADED DATA LOAD
+     ******************************************************/
+    function loadPredefinedNGOs() {
+      if (thoughts.length > 0) return;
+      preloaded.forEach((org, i) => {
+        const node = {
+          id: Date.now() + i,
+          text: org.name,
+          mesh: createNodeMesh(org.name, org.data),
+          analysis: { type: "preloaded", keywords: org.data.split(/\W+/) },
+          velocity: new THREE.Vector3()
+        };
+        node.mesh.userData.thoughtId = node.id;
+        thoughts.push(node);
+      });
+      preloaded.forEach((org, i) => {
+        const fromObj = thoughts[i];
+        org.lines.forEach(l => {
+          const toObj = thoughts[l.target];
+          const scaled = Math.min(1, Math.max(0.2, l.amount / 100000000));
+          const cObj = {
+            from: fromObj,
+            to: toObj,
+            strength: scaled,
+            line: createConnectionLine(fromObj, toObj, scaled)
+          };
+          connections.push(cObj);
+        });
+      });
+      updateThoughtsList();
+      setStatus("Loaded USAID-linked orgs—dig into the web.");
+      updateNetworkAnalysis();
+    }
+
+
+    /******************************************************
+     * SUGGESTIONS & ANALYSIS
+     ******************************************************/
+    // Basic function to log status in the bottom-left
+    function setStatus(msg) {
+      document.getElementById('statusBox').innerHTML = `
+        <strong>3D Thought Network</strong><br>${msg}
+      `;
+    }
+
+    // Basic logging to the Analysis Log
+    function logAnalysis(msg, isError = false) {
+      const container = document.getElementById('analysisLogMessages');
+      const div = document.createElement('div');
+      div.textContent = msg;
+      if (isError) div.style.color = '#ff5555';
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // This is where you would do a real GPT call. For now, we have a mock or placeholder.
+    async function fetchGPTAnalysis(nodeText, connectedNodes, suspiciousFlags) {
+      // EXAMPLE: if you had an actual GPT call:
+      /*
+      const systemPrompt = `You are a suspicious/fraud analysis expert. 
+        The user clicked a node in a scandalous 3D network. The node's text is:
+        "${nodeText}"
+
+        Connected nodes: ${connectedNodes.join(", ")}
+
+        If suspiciousFlags are present, you should highlight them. 
+        Provide a deep, critical analysis about potential fraud or wrongdoing, 
+        and recommend up to 3 additional entity names that might be relevant 
+        to investigate further.
+      `;
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: systemPrompt }
+          ],
+          temperature: 0.7
+        })
+      });
+      const data = await response.json();
+      // parse data.choices[0].message.content
+      // Return something like:
+      return {
+        analysis: "Some GPT-based analysis text...",
+        recommendedEntities: ["Entity A", "Entity B"]
+      };
+      */
+
+      // For now, we'll do a "mock" result:
+      let analysis = `**Critical Fraud Analysis**: The node "${nodeText}" is suspicious, especially given its ties to: ${connectedNodes.join(", ")}`;
+      if (suspiciousFlags.length > 0) {
+        analysis += `\nRed flags: [${suspiciousFlags.join(", ")}] indicate possible illicit funding or unaccountable expenditures.`;
+      }
+      analysis += `\nWe suspect deeper collusion and funds diversion. Keep digging, bro!`;
+
+      // Mock recommended entities
+      const recommendedEntities = ["GLOBAL CORRUPTION WATCH", "OBSCURE HOLDINGS LLC"];
+      return { analysis, recommendedEntities };
+    }
+
+    // Called when the user clicks a node. We do a GPT-based analysis
+    async function analyzeNodeWithGPT(thought) {
+      // Gather the node text
+      const nodeText = thought.text;
+      // Gather the connected nodes
+      const connected = connections
+        .filter(c => c.from === thought || c.to === thought)
+        .map(c => (c.from === thought ? c.to.text : c.from.text));
+
+      // For demonstration, let's see if the node text includes suspicious keywords
+      const suspiciousTriggers = ["fraud", "scandal", "terror", "money laundering", "corrupt"];
+      const nodeLower = nodeText.toLowerCase();
+      const suspiciousFlags = suspiciousTriggers.filter(flag => nodeLower.includes(flag));
+
+      // Actually call GPT (or our mock function)
+      const { analysis, recommendedEntities } = await fetchGPTAnalysis(nodeText, connected, suspiciousFlags);
+      return { analysis, recommendedEntities };
+    }
+
+
+    /******************************************************
+     * MAIN NETWORK ANALYSIS
+     ******************************************************/
+    async function updateNetworkAnalysis() {
+      if (thoughts.length < 2) return;
+      let suspiciousCount = 0, contextualCount = 0, orgCount = 0;
+      let allKeywords = [];
+      let connectionStrengthSum = 0;
+
+      thoughts.forEach(t => {
+        if (t.analysis?.type === "suspicious") suspiciousCount++;
+        else if (t.analysis?.type === "contextual") contextualCount++;
+        else if (t.analysis?.type === "organizational") orgCount++;
+        if (t.analysis?.keywords) allKeywords.push(...t.analysis.keywords);
+      });
+      connections.forEach(c => connectionStrengthSum += c.strength);
+
+      const keywordFreq = {};
+      allKeywords.forEach(w => {
+        w = w.toLowerCase();
+        keywordFreq[w] = (keywordFreq[w] || 0) + 1;
+      });
+      const sortedKeywords = Object.keys(keywordFreq).sort((a, b) => keywordFreq[b] - keywordFreq[a]);
+      const avgStrength = connections.length ? (connectionStrengthSum / connections.length).toFixed(2) : 0;
+
+      const summary = `
+        <strong>Network Web:</strong><br>
+        Entities: ${thoughts.length} | Links: ${connections.length} | Avg Link Strength: ${avgStrength}<br>
+        Suspicious: ${suspiciousCount} | Contextual: ${contextualCount} | Org Ties: ${orgCount}<br>
+        Key Terms: ${sortedKeywords.slice(0, 5).join(", ")}<br><br>
+        <strong>Critical Insight:</strong><br>
+        ${suspiciousCount > 2 ? "High suspicious activity—dig deeper for potential fraud." : "Low red flags—keep exploring."}
+        ${orgCount > thoughts.length / 2 ? " Dense org network—USAID’s tentacles run deep." : " Sparse org links—expand the web."}
+      `;
+      document.getElementById('analysisLogMessages').innerHTML = summary;
+    }
+
+
+    /******************************************************
+     * ADD & REMOVE THOUGHTS
+     ******************************************************/
+    async function addThought(txt) {
+      lastUserQuery = txt;
+      setStatus(`Mapping: "${txt}"`);
+      const tObj = {
+        id: Date.now(),
+        text: txt,
+        mesh: createNodeMesh(txt, ""),
+        analysis: null,
+        velocity: new THREE.Vector3()
+      };
+      tObj.mesh.userData.thoughtId = tObj.id;
+      thoughts.push(tObj);
+      updateThoughtsList();
+
+      if (thoughts.length > 1) {
+        setStatus("Probing connections...");
+        for (const older of thoughts.slice(0, -1)) {
+          const res = await makeAnalysisCall(tObj.text, older.text);
+          tObj.analysis = res;
+          if (res.strength >= linkStrength) {
+            const cObj = {
+              from: tObj,
+              to: older,
+              strength: res.strength,
+              line: createConnectionLine(tObj, older, res.strength)
+            };
+            connections.push(cObj);
+          }
+        }
+      }
+      setStatus(`Mapped: "${txt}"—analyze the web.`);
+      updateNetworkAnalysis();
+    }
+
+    // Simulate an “analysis call” for linking newly added nodes
+    async function makeAnalysisCall(t1, t2) {
+      if (!apiKey) {
+        logAnalysis("[Error] No API key—analysis locked.", true);
+        return { strength: 0, type: "none", keywords: [], critique: "No data source." };
+      }
+      logAnalysis(`[Probing] "${t1}" ↔ "${t2}"`);
+      await new Promise(r => setTimeout(r, 400));
+
+      const suspiciousFlags = ["terror", "fraud", "corrupt", "scandal", "divert", "unaccountable"];
+      const orgFlags = ["usaid", "foundation", "institute", "forum", "alliance"];
+      const t1Lower = t1.toLowerCase();
+      const t2Lower = t2.toLowerCase();
+
+      let strength = 0.3 + Math.random() * 0.2;
+      let type = "contextual";
+      let critique = "Basic overlap detected—needs scrutiny.";
+      const keywords = [...new Set(t1.split(/\W+/).concat(t2.split(/\W+/)).filter(w => w.length > 3))];
+
+      if (suspiciousFlags.some(f => t1Lower.includes(f) || t2Lower.includes(f))) {
+        strength = Math.max(strength, 0.85);
+        type = "suspicious";
+        critique = "Red flags: potential misconduct or hidden agendas.";
+      }
+      if (orgFlags.some(f => t1Lower.includes(f) && t2Lower.includes(f))) {
+        strength = Math.max(strength, 0.7);
+        type = "organizational";
+        critique = "Org-to-org link—follow the money.";
+      }
+      if (t1Lower.includes("usaid") || t2Lower.includes("usaid")) {
+        strength = Math.max(strength, 0.9);
+        critique += " USAID nexus—central to scandal web.";
+      }
+
+      logAnalysis(`   => Strength: ${strength.toFixed(2)} | ${type} | ${critique}`);
+      return { strength, type, keywords, critique };
+    }
+
+    function removeThought(id) {
+      const idx = thoughts.findIndex(t => t.id === id);
+      if (idx < 0) return;
+      const rem = thoughts[idx];
+      connections = connections.filter(c => {
+        if (c.from === rem || c.to === rem) {
+          networkGroup.remove(c.line);
+          return false;
+        }
+        return true;
+      });
+      networkGroup.remove(rem.mesh);
+      thoughts.splice(idx, 1);
+      updateThoughtsList();
+      updateNetworkAnalysis();
+    }
+
+    function updateThoughtsList() {
+      const container = document.getElementById('thoughtsList');
+      container.innerHTML = "";
+      thoughts.forEach(t => {
+        const div = document.createElement('div');
+        div.className = "thought-item";
+        div.innerHTML = `
+          <span>${t.text.split('\n')[0]}</span>
+          <button class="btn" onclick="removeThought(${t.id})">×</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+
+    /******************************************************
+     * LIGHTBOX FOR NODE DETAILS + GPT ANALYSIS
+     ******************************************************/
+    function showLightboxAnalysis(thought) {
+      // Instead of just showing static info, let's call GPT for deeper analysis:
+      analyzeNodeWithGPT(thought).then(({ analysis, recommendedEntities }) => {
+        // Display the final result in the lightbox
+        const content = document.getElementById('lightboxContent');
+        let html = `<h2>${thought.text.split('\n')[0]}</h2>`;
+
+        // Original node info
+        html += `<p><strong>Node/Entity:</strong> ${thought.text}</p>`;
+        if (thought.analysis) {
+          html += `
+            <p><strong>Type:</strong> ${thought.analysis.type}</p>
+            <p><strong>Keywords:</strong> ${thought.analysis.keywords.join(", ")}</p>
+            <p><strong>Critique:</strong> ${thought.analysis.critique}</p>
+          `;
+        }
+
+        // GPT-based analysis
+        html += `<div style="margin-top:10px; padding:10px; background:rgba(40,40,40,0.8); border-radius:6px;">
+          <strong>GPT Fraud Analysis:</strong><br>${analysis.replace(/\n/g, "<br>")}
+        </div>`;
+
+        // If GPT recommended new entities, let user add them
+        if (recommendedEntities && recommendedEntities.length) {
+          html += `<h3 style="margin-top:14px;">Add GPT-Suggested Entities:</h3><ul>`;
+          recommendedEntities.forEach(entity => {
+            html += `<li style="margin-bottom:6px;">
+              ${entity} 
+              <button class="btn" style="margin-left:8px;" onclick="addThought('${entity.replace(/'/g, "\\'")}')">
+                + Add
+              </button>
+            </li>`;
+          });
+          html += `</ul>`;
+        }
+
+        // Show connections from the existing data
+        const related = connections.filter(c => c.from === thought || c.to === thought);
+        if (related.length) {
+          html += `<h3>Connections (${related.length}):</h3><ul>`;
+          related.forEach(c => {
+            const other = c.from === thought ? c.to : c.from;
+            html += `<li>${other.text.split('\n')[0]} (Strength: ${c.strength.toFixed(2)})</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        content.innerHTML = html;
+        document.getElementById('lightboxAnalysis').classList.remove('hidden');
+      });
+    }
+
+    document.getElementById('closeLightboxBtn').addEventListener('click', () => {
+      document.getElementById('lightboxAnalysis').classList.add('hidden');
+    });
+
+
+    /******************************************************
+     * MOUSE/POINTER EVENTS
+     ******************************************************/
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hovered = null;
+
+    function onPointerMove(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(networkGroup.children, true);
+      if (hovered) {
+        hovered.material.emissive.set(0x202020);
+        hovered = null;
+      }
+      if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (obj.userData.thoughtId) {
+          hovered = obj;
+          hovered.material.emissive.set(0x00ff80);
+        }
+      }
+    }
+
+    function onPointerDown(event) {
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(networkGroup.children, true);
+      if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (obj.userData.thoughtId) {
+          const thought = thoughts.find(t => t.id === obj.userData.thoughtId);
+          if (thought) showLightboxAnalysis(thought);
+        }
+      }
+    }
+
+    window.addEventListener('pointermove', onPointerMove, false);
+    window.addEventListener('pointerdown', onPointerDown, false);
+
+
+    /******************************************************
+     * EXPORT
+     ******************************************************/
+    function exportNetwork() {
+      const data = {
+        thoughts: thoughts.map(t => ({
+          id: t.id,
+          text: t.text,
+          position: t.mesh.position.toArray(),
+          analysis: t.analysis
+        })),
+        connections: connections.map(c => ({
+          from: c.from.id,
+          to: c.to.id,
+          strength: c.strength
+        }))
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'usaid-network.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+
+    /******************************************************
+     * UI CONTROLS
+     ******************************************************/
+    document.getElementById('connectKeyBtn').addEventListener('click', () => {
+      const val = document.getElementById('apiKeyInput').value.trim();
+      if (!val) return setStatus("Enter a key to unlock the web.");
+      apiKey = val;
+      setStatus("Key connected—start mapping the scandal.");
+      const loadBtn = document.createElement('button');
+      loadBtn.id = "loadPredefinedBtn";
+      loadBtn.className = "btn glow";
+      loadBtn.textContent = "Load USAID Web";
+      loadBtn.onclick = () => { loadPredefinedNGOs(); loadBtn.disabled = true; };
+      document.querySelector('.top-bar').appendChild(loadBtn);
+      document.getElementById('exportBtn').classList.remove('hidden');
+    });
+
+    document.getElementById('changeApiBtn').addEventListener('click', () => {
+      if (!confirm("Are you sure you want to reset the network?")) return;
+      apiKey = "";
+      thoughts = [];
+      connections = [];
+      networkGroup.clear();
+      updateThoughtsList();
+      setStatus("Reset—enter a new key to rebuild.");
+      document.getElementById('apiKeyInput').value = "";
+      document.getElementById('loadPredefinedBtn')?.remove();
+      document.getElementById('exportBtn').classList.add('hidden');
+      document.getElementById('analysisLogMessages').innerHTML = "";
+    });
+
+    document.getElementById('thoughtInput').addEventListener('keypress', (ev) => {
+      if (ev.key === "Enter" && ev.target.value.trim() && apiKey) {
+        addThought(ev.target.value.trim());
+        ev.target.value = "";
+      }
+    });
+
+    document.getElementById('linkStrength').addEventListener('input', (ev) => {
+      linkStrength = ev.target.value / 100;
+      document.getElementById('strengthValue').textContent = linkStrength.toFixed(2);
+    });
+
+    document.getElementById('toggleAnalysisLogBtn').addEventListener('click', () => {
+      const panel = document.getElementById('analysisLog');
+      panel.style.display = (panel.style.display === "block") ? "none" : "block";
+    });
+
+    document.getElementById('toggleThoughtsPanelBtn').addEventListener('click', () => {
+      const panel = document.getElementById('thoughtPanel');
+      panel.style.display = (panel.style.display === "block") ? "none" : "block";
+    });
+
+    document.getElementById('closeAnalysisLogBtn').addEventListener('click', () => {
+      document.getElementById('analysisLog').style.display = "none";
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', exportNetwork);
+
+    // Expose removeThought for inline onclick
+    window.removeThought = removeThought;
+
+    /******************************************************
+     * INIT
+     ******************************************************/
+    window.addEventListener("DOMContentLoaded", initThree);
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
 </body>
 </html>
