@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Thought Network – Deep Contextual Analysis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Explore and analyze thoughts in a dynamic 3D network with deep contextual insights." />
+  <!-- Import map for Three.js and additional modules -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <style>
+    /* Enhanced Global Styling */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+      color: #e0e0e0;
+      overflow: hidden;
+      cursor: default;
+    }
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      background: linear-gradient(45deg, #2a2a2a, #3a3a3a);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    .btn:hover {
+      background: linear-gradient(45deg, #3a3a3a, #4a4a4a);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.glow { box-shadow: 0 0 10px rgba(0, 255, 128, 0.5); }
+    .input {
+      background: rgba(20, 20, 20, 0.9);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      min-width: 200px;
+      transition: border-color 0.3s;
+    }
+    .input:focus {
+      border-color: #00ff80;
+      outline: none;
+    }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #bbb;
+    }
+    input[type=range] {
+      width: 120px;
+      accent-color: #00ff80;
+    }
+    .status-box {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 100;
+      transition: all 0.3s ease;
+      max-width: 40vw;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .status-box:hover { transform: scale(1.02); }
+    .analysis-log {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      width: 500px;
+      max-height: 50vh;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 16px;
+      overflow-y: auto;
+      z-index: 150;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .analysis-log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 8px;
+    }
+    .analysis-log-header button {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .analysis-log-header button:hover { color: #ff5555; }
+    #analysisLogMessages {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #ddd;
+    }
+    .thought-panel {
+      position: fixed;
+      right: 20px;
+      top: 100px;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 320px;
+      max-height: 70vh;
+      overflow-y: auto;
+      z-index: 90;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .thought-item {
+      background: rgba(30, 30, 30, 0.9);
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s;
+    }
+    .thought-item:hover {
+      background: rgba(40, 40, 40, 0.9);
+      transform: translateX(2px);
+    }
+    #threeCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .suggestionsPanel {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .suggestion-btn {
+      background: linear-gradient(45deg, #00cc66, #00ff80);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+    .suggestion-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 8px rgba(0, 255, 128, 0.5);
+    }
+    /* Enhanced Lightbox Styles */
+    .lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+      animation: fadeIn 0.3s ease;
+    }
+    .lightbox-content {
+      background: #151515;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 80vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      color: #e0e0e0;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      animation: slideUp 0.3s ease;
+    }
+    #closeLightboxBtn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: none;
+      font-size: 28px;
+      color: #fff;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    #closeLightboxBtn:hover { color: #ff5555; }
+    .hidden { display: none; }
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Bar with Enhanced Controls -->
+  <div class="top-bar">
+    <div class="row">
+      <input type="text" class="input" id="apiKeyInput" placeholder="Enter ANY non-empty key">
+      <button class="btn" id="connectKeyBtn">Connect</button>
+      <button class="btn" id="changeApiBtn">Reset API</button>
+      <button class="btn hidden" id="exportBtn">Export Network</button>
+    </div>
+    <div class="row">
+      <input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought & press Enter">
+      <div class="slider-container">
+        <label for="linkStrength">Strength:</label>
+        <input type="range" id="linkStrength" min="0" max="100" value="50">
+        <span id="strengthValue">0.50</span>
+      </div>
+      <button class="btn" id="toggleAnalysisLogBtn">Analysis</button>
+      <button class="btn" id="toggleThoughtsPanelBtn">Thoughts</button>
+    </div>
+  </div>
+
+  <!-- Status and Panels -->
+  <div class="status-box" id="statusBox">
+    <strong>Welcome to 3D Thought Network</strong><br>
+    Connect an API key to unlock deep contextual analysis and explore sample NGOs.
+  </div>
+
+  <div class="analysis-log" id="analysisLog">
+    <div class="analysis-log-header">
+      <strong>Real-Time Analysis</strong>
+      <button id="closeAnalysisLogBtn">×</button>
+    </div>
+    <div id="analysisLogMessages"></div>
+  </div>
+
+  <div class="thought-panel" id="thoughtPanel">
+    <h3 style="margin-top:0; font-weight: 600;">Thought Network</h3>
+    <div id="thoughtsList"></div>
+  </div>
+
+  <!-- Three.js Canvas -->
+  <canvas id="threeCanvas"></canvas>
+
+  <!-- Enhanced Lightbox -->
+  <div id="lightboxAnalysis" class="lightbox hidden">
+    <div class="lightbox-content">
+      <button id="closeLightboxBtn">×</button>
+      <div id="lightboxContent"></div>
+    </div>
+  </div>
+
+  <!-- Main Script -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    /* --------------------------
+       Global Variables and State
+    --------------------------- */
+    let scene, camera, renderer, controls, networkGroup, ambientLight, pointLight;
+    let thoughts = [];      // { id, text, mesh, analysis, velocity }
+    let connections = [];   // { from, to, line, strength }
+    let linkStrength = 0.5;
+    let apiKey = "";
+    let simulationRunning = true;
+
+    // Sample NGO data with richer context
+    const preloaded = [
+      { name: "NATIONAL ENDOWMENT FOR DEMOCRACY\n(EIN: 52-1344831)", data: "Gross receipts: $363M\nTaxpayer funds: $362M\nFocus: Global democracy", lines: [] },
+      { name: "CONSORTIUM FOR ELECTIONS &\n(EIN: 52-1943638)", data: "Gross receipts: $165M\nTaxpayer funds: $165M\nFocus: Election integrity", lines: [] },
+      { name: "INTERNATIONAL FOUNDATION FOR\n(EIN: 52-1527835)", data: "Gross receipts: $78M\nTaxpayer funds: $59M\nFocus: Electoral systems", lines: [] },
+      { name: "NATIONAL DEMOCRATIC INSTITUTE\n(EIN: 52-1338892)", data: "Gross receipts: $172M\nTaxpayer funds: $168M\nFocus: Political training", lines: [] },
+      { name: "CENTER FOR INTERNATIONAL\n(EIN: 52-1398742)", data: "Gross receipts: $50M\nTaxpayer funds: $50M\nFocus: Private enterprise", lines: [] },
+      { name: "INTERNATIONAL REPUBLICAN INSTITUTE\n(EIN: 52-1340267)", data: "Gross receipts: $135M\nTaxpayer funds: $131M\nFocus: Governance", lines: [] },
+      { name: "INTERNEWS NETWORK\n(EIN: 94-3027961)", data: "Gross receipts: $124M\nTaxpayer funds: $94M\nFocus: Media development", lines: [] }
+    ];
+    preloaded[0].lines.push({ target: 1, amount: 49137537 });
+    preloaded[0].lines.push({ target: 2, amount: 107669 });
+    preloaded[0].lines.push({ target: 3, amount: 51707077 });
+    preloaded[0].lines.push({ target: 4, amount: 39199882 });
+    preloaded[0].lines.push({ target: 5, amount: 33751325 });
+    preloaded[0].lines.push({ target: 6, amount: 497201 });
+    preloaded[1].lines.push({ target: 3, amount: 64298125 });
+    preloaded[2].lines.push({ target: 3, amount: 2284520 });
+    preloaded[3].lines.push({ target: 5, amount: 1088062 });
+    preloaded[3].lines.push({ target: 6, amount: 0 });
+    preloaded[5].lines.push({ target: 6, amount: 0 });
+
+    /* --------------------------
+       UI Helper Functions
+    --------------------------- */
+    function setStatus(msg) {
+      document.getElementById('statusBox').innerHTML = msg;
+    }
+    function logAnalysis(msg, isError = false) {
+      const container = document.getElementById('analysisLogMessages');
+      const div = document.createElement('div');
+      div.textContent = msg;
+      if (isError) div.style.color = '#ff5555';
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    /* --------------------------
+       Three.js Setup with Enhanced Visuals
+    --------------------------- */
+    function initThree() {
+      const canvas = document.getElementById('threeCanvas');
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0a0a);
+
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 200, 800);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      // Add lighting
+      ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+      scene.add(ambientLight);
+      pointLight = new THREE.PointLight(0xffffff, 1, 2000);
+      pointLight.position.set(0, 300, 500);
+      scene.add(pointLight);
+
+      networkGroup = new THREE.Group();
+      scene.add(networkGroup);
+
+      // Add subtle background grid
+      const grid = new THREE.GridHelper(2000, 20, 0x222222, 0x222222);
+      grid.position.y = -100;
+      scene.add(grid);
+
+      animate();
+    }
+    function animate() {
+      requestAnimationFrame(animate);
+      if (simulationRunning) updatePhysics();
+      controls.update();
+      pointLight.position.copy(camera.position);
+      renderer.render(scene, camera);
+    }
+    function updatePhysics() {
+      const repulsionForce = 0.1;
+      const friction = 0.95;
+      thoughts.forEach(n1 => {
+        n1.velocity = n1.velocity || new THREE.Vector3();
+        thoughts.forEach(n2 => {
+          if (n1 === n2) return;
+          const dx = n2.mesh.position.x - n1.mesh.position.x;
+          const dy = n2.mesh.position.y - n1.mesh.position.y;
+          const dz = n2.mesh.position.z - n1.mesh.position.z;
+          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
+          if (dist < 150) {
+            const force = repulsionForce * (150 - dist) / dist;
+            n1.velocity.x -= force * dx;
+            n1.velocity.y -= force * dy;
+            n1.velocity.z -= force * dz;
+          }
+        });
+        // Apply connected spring forces
+        connections.filter(c => c.from === n1 || c.to === n1).forEach(c => {
+          const other = c.from === n1 ? c.to : c.from;
+          const dx = other.mesh.position.x - n1.mesh.position.x;
+          const dy = other.mesh.position.y - n1.mesh.position.y;
+          const dz = other.mesh.position.z - n1.mesh.position.z;
+          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
+          const springLength = 200;
+          const springForce = 0.005 * (dist - springLength) * c.strength;
+          n1.velocity.x += springForce * dx / dist;
+          n1.velocity.y += springForce * dy / dist;
+          n1.velocity.z += springForce * dz / dist;
+        });
+        n1.mesh.position.add(n1.velocity);
+        n1.velocity.multiplyScalar(friction);
+      });
+      connections.forEach(c => {
+        const pts = [c.from.mesh.position, c.to.mesh.position];
+        c.line.geometry.setFromPoints(pts);
+        c.line.geometry.attributes.position.needsUpdate = true;
+      });
+    }
+
+    /* --------------------------
+       Node and Label Creation with Visual Flair
+    --------------------------- */
+    function createTextSprite(text) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const lines = text.split("\n");
+      const fontSize = 28;
+      const pad = 15;
+      ctx.font = `bold ${fontSize}px Inter`;
+      let maxWidth = 0;
+      lines.forEach(line => {
+        const { width } = ctx.measureText(line);
+        if (width > maxWidth) maxWidth = width;
+      });
+      canvas.width = Math.ceil(maxWidth + pad * 2);
+      canvas.height = fontSize * lines.length + pad * 2;
+      ctx.font = `bold ${fontSize}px Inter`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      lines.forEach((line, i) => {
+        ctx.fillText(line, canvas.width / 2, pad + fontSize * (i + 1));
+      });
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(canvas.width * 0.35, canvas.height * 0.35, 1);
+      return sprite;
+    }
+    function createNodeMesh(title, details) {
+      const geo = new THREE.SphereGeometry(12, 32, 32);
+      const mat = new THREE.MeshPhongMaterial({
+        color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6),
+        shininess: 50
+      });
+      const sphere = new THREE.Mesh(geo, mat);
+
+      const text = `${title}\n${details}`;
+      const label = createTextSprite(text);
+      label.position.set(0, 25, 0);
+      sphere.add(label);
+
+      sphere.position.set(
+        (Math.random() - 0.5) * 400,
+        (Math.random() - 0.5) * 400,
+        (Math.random() - 0.5) * 400
+      );
+      networkGroup.add(sphere);
+      return sphere;
+    }
+
+    /* --------------------------
+       Connection Lines with Gradient
+    --------------------------- */
+    function createConnectionLine(fromObj, toObj, strength) {
+      const pts = [fromObj.mesh.position, toObj.mesh.position];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x00ff80,
+        transparent: true,
+        opacity: Math.max(0.3, strength),
+        linewidth: 2
+      });
+      const line = new THREE.Line(geo, mat);
+      networkGroup.add(line);
+      return line;
+    }
+
+    /* --------------------------
+       Preloading Sample NGOs
+    --------------------------- */
+    function loadPredefinedNGOs() {
+      if (thoughts.length > 0) return;
+      preloaded.forEach((org, i) => {
+        const node = {
+          id: Date.now() + i,
+          text: org.name,
+          mesh: createNodeMesh(org.name, org.data),
+          analysis: { type: "preloaded", keywords: org.data.split(/\W+/) },
+          velocity: new THREE.Vector3()
+        };
+        node.mesh.userData.thoughtId = node.id;
+        thoughts.push(node);
+      });
+      preloaded.forEach((org, i) => {
+        const fromObj = thoughts[i];
+        org.lines.forEach(l => {
+          const toObj = thoughts[l.target];
+          const scaled = Math.min(1, Math.max(0.2, l.amount / 50000000));
+          const cObj = {
+            from: fromObj,
+            to: toObj,
+            strength: scaled,
+            line: createConnectionLine(fromObj, toObj, scaled)
+          };
+          connections.push(cObj);
+        });
+      });
+      updateThoughtsList();
+      setStatus("Loaded sample NGOs with enhanced visualization.");
+      updateNetworkAnalysis();
+    }
+
+    /* --------------------------
+       Enhanced Analysis Functions
+    --------------------------- */
+    async function makeAnalysisCall(t1, t2) {
+      if (!apiKey) {
+        logAnalysis("[Error] No API key provided", true);
+        return { strength: 0, type: "none", keywords: [] };
+      }
+      logAnalysis(`[Analyzing] "${t1}" vs "${t2}"`);
+      await new Promise(r => setTimeout(r, 500)); // Simulate async API call
+      const suspiciousKeywords = ["illegal", "corrupt", "fraud", "suspicious", "improper", "grift"];
+      const foundSuspicious = suspiciousKeywords.some(k => t1.toLowerCase().includes(k) || t2.toLowerCase().includes(k));
+      const strength = foundSuspicious ? 0.9 : 0.4 + Math.random() * 0.5;
+      const type = foundSuspicious ? "suspicious" : "contextual";
+      const keywords = [...new Set(t1.split(/\W+/).concat(t2.split(/\W+/)).filter(w => w.length > 3))];
+      logAnalysis(`   => Strength: ${strength.toFixed(2)}, Type: ${type}, Keywords: ${keywords.slice(0, 5).join(", ")}`);
+      return { strength, type, keywords };
+    }
+    function generateSuggestions(suspiciousCount, contextualCount, sortedKeywords) {
+      let candidates = suspiciousCount > contextualCount ? [
+        "Investigate Funding Sources",
+        "Congressional Oversight",
+        "FBI Investigation",
+        "Audit Taxpayer Funds",
+        "Foreign Influence",
+        "Financial Transparency"
+      ] : [
+        "Policy Reform",
+        "Public Accountability",
+        "Ethical Standards",
+        "Regulatory Compliance",
+        "Open Data Initiative"
+      ];
+      sortedKeywords.slice(0, 5).forEach(k => candidates.push(k.charAt(0).toUpperCase() + k.slice(1)));
+      const boardTerms = new Set(thoughts.flatMap(t => t.text.toLowerCase().split(/\W+/)));
+      return candidates.filter(t => !boardTerms.has(t.toLowerCase())).slice(0, 6);
+    }
+    async function updateNetworkAnalysis() {
+      if (thoughts.length < 2) return;
+      let suspiciousCount = 0;
+      let contextualCount = 0;
+      let allKeywords = [];
+      thoughts.forEach(t => {
+        if (t.analysis?.type === "suspicious") suspiciousCount++;
+        else if (t.analysis?.type === "contextual") contextualCount++;
+        if (t.analysis?.keywords) allKeywords.push(...t.analysis.keywords);
+      });
+      const keywordFreq = {};
+      allKeywords.forEach(w => {
+        w = w.toLowerCase();
+        keywordFreq[w] = (keywordFreq[w] || 0) + 1;
+      });
+      const sortedKeywords = Object.keys(keywordFreq).sort((a, b) => keywordFreq[b] - keywordFreq[a]);
+      const summary = `
+        <strong>Network Overview:</strong><br>
+        Nodes: ${thoughts.length} | Connections: ${connections.length}<br>
+        Suspicious: ${suspiciousCount} | Contextual: ${contextualCount}<br>
+        Top Keywords: ${sortedKeywords.slice(0, 5).join(", ")}
+      `;
+      const suggestions = generateSuggestions(suspiciousCount, contextualCount, sortedKeywords);
+      const analysisText = `${summary}<br><br><strong>Suggestions:</strong><br>${suggestions.join(", ")}`;
+      document.getElementById('analysisLogMessages').innerHTML = analysisText;
+      renderSuggestions(suggestions);
+    }
+    setInterval(() => thoughts.length >= 2 && updateNetworkAnalysis(), 10000);
+
+    /* --------------------------
+       Thought Management
+    --------------------------- */
+    async function addThought(txt) {
+      setStatus(`Adding: "${txt}"`);
+      const tObj = {
+        id: Date.now(),
+        text: txt,
+        mesh: createNodeMesh(txt, ""),
+        analysis: null,
+        velocity: new THREE.Vector3()
+      };
+      tObj.mesh.userData.thoughtId = tObj.id;
+      thoughts.push(tObj);
+      updateThoughtsList();
+
+      if (thoughts.length > 1) {
+        setStatus("Analyzing connections...");
+        for (const older of thoughts.slice(0, -1)) {
+          const res = await makeAnalysisCall(tObj.text, older.text);
+          tObj.analysis = res;
+          if (res.strength >= linkStrength) {
+            const cObj = {
+              from: tObj,
+              to: older,
+              strength: res.strength,
+              line: createConnectionLine(tObj, older, res.strength)
+            };
+            connections.push(cObj);
+          }
+        }
+      }
+      setStatus(`Added: "${txt}"`);
+      updateNetworkAnalysis();
+    }
+    function removeThought(id) {
+      const idx = thoughts.findIndex(t => t.id === id);
+      if (idx < 0) return;
+      const rem = thoughts[idx];
+      connections = connections.filter(c => {
+        if (c.from === rem || c.to === rem) {
+          networkGroup.remove(c.line);
+          return false;
+        }
+        return true;
+      });
+      networkGroup.remove(rem.mesh);
+      thoughts.splice(idx, 1);
+      updateThoughtsList();
+      updateNetworkAnalysis();
+    }
+    function updateThoughtsList() {
+      const container = document.getElementById('thoughtsList');
+      container.innerHTML = "";
+      thoughts.forEach(t => {
+        const div = document.createElement('div');
+        div.className = "thought-item";
+        div.innerHTML = `
+          <span>${t.text.split('\n')[0]}</span>
+          <button class="btn" onclick="removeThought(${t.id})">×</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+    function renderSuggestions(list) {
+      let panel = document.getElementById('statusBoxSuggestions') || document.createElement('div');
+      panel.className = "suggestionsPanel";
+      panel.id = "statusBoxSuggestions";
+      panel.innerHTML = "";
+      list.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = "suggestion-btn";
+        btn.textContent = item;
+        btn.onclick = () => addThought(item);
+        panel.appendChild(btn);
+      });
+      document.getElementById('statusBox').appendChild(panel);
+    }
+
+    /* --------------------------
+       Enhanced Lightbox Analysis
+    --------------------------- */
+    function showLightboxAnalysis(thought) {
+      const content = document.getElementById('lightboxContent');
+      let html = `<h2>${thought.text.split('\n')[0]}</h2>`;
+      html += `<p><strong>Details:</strong> ${thought.text}</p>`;
+      if (thought.analysis) {
+        html += `
+          <p><strong>Analysis Type:</strong> ${thought.analysis.type}</p>
+          <p><strong>Keywords:</strong> ${thought.analysis.keywords.join(", ")}</p>
+        `;
+      }
+      const related = connections.filter(c => c.from === thought || c.to === thought);
+      if (related.length) {
+        html += `<h3>Connections (${related.length}):</h3><ul>`;
+        related.forEach(c => {
+          const other = c.from === thought ? c.to : c.from;
+          html += `<li>${other.text.split('\n')[0]} (Strength: ${c.strength.toFixed(2)})</li>`;
+        });
+        html += `</ul>`;
+      }
+      content.innerHTML = html;
+      document.getElementById('lightboxAnalysis').classList.remove('hidden');
+    }
+    document.getElementById('closeLightboxBtn').addEventListener('click', () => {
+      document.getElementById('lightboxAnalysis').classList.add('hidden');
+    });
+
+    /* --------------------------
+       Raycaster with Highlight
+    --------------------------- */
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hovered = null;
+    function onMouseMove(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(networkGroup.children, true);
+      if (hovered) {
+        hovered.material.emissive.set(0x000000);
+        hovered = null;
+      }
+      if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (obj.userData.thoughtId) {
+          hovered = obj;
+          hovered.material.emissive.set(0x00ff80);
+        }
+      }
+    }
+    function onMouseClick(event) {
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(networkGroup.children, true);
+      if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (obj.userData.thoughtId) {
+          const thought = thoughts.find(t => t.id === obj.userData.thoughtId);
+          if (thought) showLightboxAnalysis(thought);
+        }
+      }
+    }
+    window.addEventListener('mousemove', onMouseMove, false);
+    window.addEventListener('click', onMouseClick, false);
+
+    /* --------------------------
+       Export Network Feature
+    --------------------------- */
+    function exportNetwork() {
+      const data = {
+        thoughts: thoughts.map(t => ({ id: t.id, text: t.text, position: t.mesh.position.toArray() })),
+        connections: connections.map(c => ({ from: c.from.id, to: c.to.id, strength: c.strength }))
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'thought-network.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* --------------------------
+       UI Event Listeners
+    --------------------------- */
+    document.getElementById('connectKeyBtn').addEventListener('click', () => {
+      const val = document.getElementById('apiKeyInput').value.trim();
+      if (!val) return setStatus("Please enter a non-empty key.");
+      apiKey = val;
+      setStatus("API Key connected. Ready for analysis.");
+      const loadBtn = document.createElement('button');
+      loadBtn.id = "loadPredefinedBtn";
+      loadBtn.className = "btn glow";
+      loadBtn.textContent = "Load Sample NGOs";
+      loadBtn.onclick = () => { loadPredefinedNGOs(); loadBtn.disabled = true; };
+      document.querySelector('.top-bar').appendChild(loadBtn);
+      document.getElementById('exportBtn').classList.remove('hidden');
+    });
+    document.getElementById('changeApiBtn').addEventListener('click', () => {
+      apiKey = "";
+      thoughts = [];
+      connections = [];
+      networkGroup.clear();
+      updateThoughtsList();
+      setStatus("API reset. Enter a new key.");
+      document.getElementById('apiKeyInput').value = "";
+      document.getElementById('statusBoxSuggestions')?.remove();
+      document.getElementById('loadPredefinedBtn')?.remove();
+      document.getElementById('exportBtn').classList.add('hidden');
+    });
+    document.getElementById('thoughtInput').addEventListener('keypress', (ev) => {
+      if (ev.key === "Enter" && ev.target.value.trim() && apiKey) {
+        addThought(ev.target.value.trim());
+        ev.target.value = "";
+      }
+    });
+    document.getElementById('linkStrength').addEventListener('input', (ev) => {
+      linkStrength = ev.target.value / 100;
+      document.getElementById('strengthValue').textContent = linkStrength.toFixed(2);
+    });
+    document.getElementById('toggleAnalysisLogBtn').addEventListener('click', () => {
+      const panel = document.getElementById('analysisLog');
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    });
+    document.getElementById('toggleThoughtsPanelBtn').addEventListener('click', () => {
+      const panel = document.getElementById('thoughtPanel');
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    });
+    document.getElementById('closeAnalysisLogBtn').addEventListener('click', () => {
+      document.getElementById('analysisLog').style.display = "none";
+    });
+    document.getElementById('exportBtn').addEventListener('click', exportNetwork);
+
+    window.removeThought = removeThought;
+
+    /* --------------------------
+       Initialization
+    --------------------------- */
+    window.addEventListener("DOMContentLoaded", initThree);
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
