@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>$UNCEDE – Official Landing Page</title>
   <style>
     * {
@@ -16,7 +16,7 @@
       color: #fff;
       text-align: center;
       padding: 20px;
-      overflow: hidden;
+      /* Removed overflow:hidden so scrolling (and memory) aren’t forcibly restricted */
     }
     .hero {
       position: relative;
@@ -27,6 +27,7 @@
       align-items: center;
       justify-content: center;
       text-align: center;
+      /* Keeping overflow hidden here is usually fine, but you can remove if issues persist */
       overflow: hidden;
     }
     .hero video {
@@ -125,10 +126,17 @@
 </head>
 <body>
 
-  <!-- HERO SECTION with Animated Background -->
+  <!-- HERO SECTION with (potentially) smaller or compressed video -->
   <div class="hero">
-    <video autoplay muted loop playsinline>
-      <source src="https://fibonacciai.github.io/42069/dfv.mp4" type="video/mp4">
+    <video
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"  <!-- Minimizes upfront load -->
+      poster="https://via.placeholder.com/1920x1080.png?text=Loading+Video..."
+    >
+      <source src="https://fibonacciai.github.io/42069/dfv.mp4" type="video/mp4"/>
       Your browser does not support HTML5 video.
     </video>
 
@@ -139,14 +147,18 @@
       <!-- BUY & CONNECT BUTTONS -->
       <div class="buttons-container">
         <button class="button" id="connectPhantom">Connect Phantom</button>
-        <a href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7"
-           target="_blank"
-           class="button">
+        <a
+          href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7"
+          target="_blank"
+          class="button"
+        >
           Buy on Phantom
         </a>
-        <a href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump"
-           target="_blank"
-           class="button">
+        <a
+          href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump"
+          target="_blank"
+          class="button"
+        >
           Buy on Pump.fun
         </a>
       </div>
@@ -166,8 +178,10 @@
 
   <!-- SOLSCAN LINK -->
   <div class="social-links">
-    <a href="https://solscan.io/account/EZrsvWk3XLNDDHhLY9gDciSrQbQqSfffxevhufAuUF2H"
-       target="_blank">
+    <a
+      href="https://solscan.io/account/EZrsvWk3XLNDDHhLY9gDciSrQbQqSfffxevhufAuUF2H"
+      target="_blank"
+    >
       View on Solscan
     </a>
   </div>
@@ -187,7 +201,7 @@
       if (window.solana && window.solana.isPhantom) {
         try {
           const response = await window.solana.connect();
-          alert(`Connected to Phantom wallet: ${response.publicKey.toString()}`);
+          alert(\`Connected to Phantom wallet: \${response.publicKey.toString()}\`);
         } catch (err) {
           console.error('Connection to Phantom wallet failed', err);
         }
