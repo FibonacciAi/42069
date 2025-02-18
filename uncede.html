@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Token – Official Landing Page</title>
+  <title>$UNCEDE – Official Landing Page</title>
   <style>
     * {
       margin: 0;
@@ -15,6 +15,35 @@
       background: #000;
       color: #fff;
       text-align: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+    .hero {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -1;
+      object-fit: cover;
+    }
+    .hero-content {
+      z-index: 2;
+      max-width: 800px;
       padding: 20px;
     }
     h1 {
@@ -95,19 +124,29 @@
 </head>
 <body>
 
-  <h1>Your Token</h1>
-  <p>The future of decentralized trading.</p>
+  <!-- HERO SECTION with Animated Background -->
+  <div class="hero">
+    <video autoplay muted loop playsinline>
+      <source src="https://fibonacciai.github.io/42069/dfv.mp4" type="video/mp4">
+      Your browser does not support HTML5 video.
+    </video>
 
-  <div class="buttons-container">
-    <button class="button" id="connectPhantom">Connect Phantom</button>
-    <a href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7" target="_blank" class="button">Buy on Phantom</a>
-    <a href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump" target="_blank" class="button">Buy on Pump.fun</a>
-  </div>
+    <div class="hero-content">
+      <h1>$UNCEDE</h1>
+      <p>The Next Evolution on Solana</p>
 
-  <div class="contract-container">
-    <p>Contract Address:</p>
-    <p class="contract-address" id="contractAddress">EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump</p>
-    <button class="copy-button" onclick="copyContractAddress()">Copy Address</button>
+      <div class="buttons-container">
+        <button class="button" id="connectPhantom">Connect Phantom</button>
+        <a href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7" target="_blank" class="button">Buy on Phantom</a>
+        <a href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump" target="_blank" class="button">Buy on Pump.fun</a>
+      </div>
+
+      <div class="contract-container">
+        <p>Contract Address:</p>
+        <p class="contract-address" id="contractAddress">EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump</p>
+        <button class="copy-button" onclick="copyContractAddress()">Copy Address</button>
+      </div>
+    </div>
   </div>
 
   <div class="social-links">
@@ -115,7 +154,7 @@
   </div>
 
   <footer>
-    <p>© 2025 Your Token. All rights reserved. Built with ❤️ on Solana.</p>
+    <p>© 2025 $UNCEDE. All rights reserved. Built with ❤️ on Solana.</p>
   </footer>
 
   <script>
