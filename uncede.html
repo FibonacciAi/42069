@@ -190,11 +190,11 @@
   <section class="mission">
     <h2>Our Mission</h2>
     <p>
-      We believe in the unwavering spirit of retail traders—a force that the GME phenomenon proved unstoppable.
-      $UNCEDE is dedicated to uniting that passion and fairness on the Solana network.
-      Fueled by community and a commitment to decentralized empowerment, we won’t cede
-      control back to old-world institutions. Join us in redefining what’s possible
-      when we stand together—and never give up.
+      We believe in the unstoppable resilience of everyday investors—a collective power 
+      that thrives on fairness and community-driven innovation. $UNCEDE is dedicated 
+      to uniting that passion on the Solana network. Fueled by the synergy of a global 
+      community, we won’t cede control back to centralized gatekeepers. Join us 
+      in redefining what’s possible when we stand together—and never give up.
     </p>
   </section>
 
@@ -223,7 +223,7 @@
       if (window.solana && window.solana.isPhantom) {
         try {
           const response = await window.solana.connect();
-          alert(\`Connected to Phantom wallet: \${response.publicKey.toString()}\`);
+          alert(`Connected to Phantom wallet: ${response.publicKey.toString()}`);
         } catch (err) {
           console.error('Connection to Phantom wallet failed', err);
         }
