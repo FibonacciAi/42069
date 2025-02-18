@@ -3,190 +3,240 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="description" content="$UNCEDE - The Next Evolution on Solana Network"/>
   <title>$UNCEDE – Official Landing Page</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
     }
+
     body {
       background: #000;
       color: #fff;
       text-align: center;
       padding: 20px;
+      line-height: 1.6;
+      overflow-x: hidden;
     }
+
+    /* Enhanced Hero Section */
     .hero {
       position: relative;
-      width: 100%;
-      /* Make the hero fill the viewport height on load */
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      text-align: center;
+      align-items: center;
       overflow: hidden;
+      background: linear-gradient(45deg, rgba(0,0,0,0.8), rgba(20,0,20,0.6));
     }
-    /* GIF as “background” using an absolutely-positioned img */
+
     .hero img {
       position: absolute;
       top: 0;
       left: 0;
-      /* Force it to fill the entire hero area */
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Maintain aspect ratio while filling */
+      object-fit: cover;
       z-index: -1;
+      animation: zoom 20s infinite alternate;
+      opacity: 0.9;
     }
+
+    @keyframes zoom {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); }
+    }
+
     .hero-content {
       z-index: 2;
-      max-width: 800px;
-      padding: 20px;
+      max-width: 900px;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      backdrop-filter: blur(5px);
+      animation: fadeIn 1.5s ease-in;
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-    p {
-      font-size: 1.2rem;
+      font-size: 3.5rem;
       margin-bottom: 1.5rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(45deg, #FF1493, #fff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
+
+    p {
+      font-size: 1.3rem;
+      margin-bottom: 2rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
     .buttons-container {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 2rem;
     }
+
     .button {
-      display: inline-block;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
+      position: relative;
+      padding: 0.9rem 2rem;
+      font-size: 1.1rem;
+      font-weight: bold;
       color: #fff;
-      background-color: #FF1493;
+      background: linear-gradient(45deg, #FF1493, #D4147A);
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       text-decoration: none;
-      transition: background 0.3s ease;
       width: 250px;
-      max-width: 90%;
+      max-width: 100%;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
+
+    .button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease, height 0.6s ease;
+    }
+
     .button:hover {
-      background-color: #D4147A;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(255,20,147,0.4);
     }
+
+    .button:hover::after {
+      width: 300px;
+      height: 300px;
+    }
+
     .contract-container {
-      margin-top: 1.5rem;
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
     }
+
     .contract-address {
       font-size: 1rem;
       word-break: break-all;
-    }
-    .copy-button {
-      margin-top: 0.5rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      color: #fff;
-      background-color: #FF1493;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    .copy-button:hover {
-      background-color: #D4147A;
+      color: #FF1493;
+      padding: 0.5rem;
     }
 
-    /* Mission Statement */
+    .copy-button {
+      margin-top: 0.75rem;
+      padding: 0.6rem 1.5rem;
+      background: linear-gradient(45deg, #FF1493, #D4147A);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .copy-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(255,20,147,0.4);
+    }
+
+    /* Enhanced Mission Section */
     .mission {
-      max-width: 800px;
-      margin: 2rem auto 0;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 8px;
+      max-width: 900px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: linear-gradient(135deg, rgba(20,0,20,0.8), rgba(0,0,0,0.9));
+      border-radius: 12px;
+      border: 1px solid rgba(255,20,147,0.2);
+      animation: fadeIn 1s ease-in 0.5s both;
     }
+
     .mission h2 {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
+      color: #FF1493;
       text-transform: uppercase;
-    }
-    .mission p {
-      font-size: 1.1rem;
-      line-height: 1.5;
+      letter-spacing: 1px;
     }
 
     .social-links {
-      margin-top: 2rem;
+      margin: 3rem 0;
     }
+
     .social-links a {
-      display: inline-block;
-      margin: 5px;
-      padding: 8px 12px;
-      color: #fff;
-      text-decoration: none;
-      background: #222;
-      border-radius: 4px;
-      transition: background 0.3s ease;
+      margin: 8px;
+      padding: 10px 20px;
+      background: linear-gradient(45deg, #222, #333);
+      border-radius: 6px;
+      font-weight: bold;
+      transition: all 0.3s ease;
     }
+
     .social-links a:hover {
-      background: #333;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255,20,147,0.3);
     }
+
     footer {
-      margin-top: 2rem;
-      padding: 1rem;
-      font-size: 0.9rem;
-      opacity: 0.8;
+      margin-top: 3rem;
+      padding: 1.5rem;
+      font-size: 1rem;
+      background: rgba(20,0,20,0.8);
+      border-top: 1px solid rgba(255,20,147,0.1);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      h1 { font-size: 2.5rem; }
+      p { font-size: 1.1rem; }
+      .hero-content { padding: 20px; }
+      .mission { padding: 1.5rem; }
+      .button { width: 200px; padding: 0.8rem 1.5rem; }
     }
   </style>
 </head>
 <body>
-
-  <!-- HERO SECTION with GIF filling the background -->
   <div class="hero">
     <img 
       src="https://raw.githubusercontent.com/FibonacciAi/42069/bf36a9a57baa4415b792d1b6dd8db3caabf57b6f/IMG_1680.gif"
-      alt="Full-screen GIF background" 
+      alt="Dynamic Background" 
     />
-
     <div class="hero-content">
       <h1>$UNCEDE</h1>
       <p>The Next Evolution on Solana</p>
-
-      <!-- BUY & CONNECT BUTTONS -->
       <div class="buttons-container">
         <button class="button" id="connectPhantom">Connect Phantom</button>
-        <a
-          href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7"
-          target="_blank"
-          class="button"
-        >
-          Buy on Phantom
-        </a>
-        <a
-          href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump"
-          target="_blank"
-          class="button"
-        >
-          Buy on Pump.fun
-        </a>
+        <a href="https://phantom.com/tokens/solana/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump?referralId=393ncvi2gv7" target="_blank" class="button">Buy on Phantom</a>
+        <a href="https://pump.fun/#/token/EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump" target="_blank" class="button">Buy on Pump.fun</a>
       </div>
-
-      <!-- CONTRACT ADDRESS -->
       <div class="contract-container">
         <p>Contract Address:</p>
-        <p class="contract-address" id="contractAddress">
-          EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump
-        </p>
-        <button class="copy-button" onclick="copyContractAddress()">
-          Copy Address
-        </button>
+        <p class="contract-address" id="contractAddress">EM88n5iXgnstGQZ6dHx9ekYNPj8qBnCcqChPg3Zipump</p>
+        <button class="copy-button" onclick="copyContractAddress()">Copy Address</button>
       </div>
     </div>
   </div>
 
-  <!-- MISSION STATEMENT -->
   <section class="mission">
     <h2>Our Mission</h2>
     <p>
@@ -198,14 +248,8 @@
     </p>
   </section>
 
-  <!-- SOLSCAN LINK -->
   <div class="social-links">
-    <a
-      href="https://solscan.io/account/EZrsvWk3XLNDDHhLY9gDciSrQbQqSfffxevhufAuUF2H"
-      target="_blank"
-    >
-      View on Solscan
-    </a>
+    <a href="https://solscan.io/account/EZrsvWk3XLNDDHhLY9gDciSrQbQqSfffxevhufAuUF2H" target="_blank">View on Solscan</a>
   </div>
 
   <footer>
@@ -216,20 +260,36 @@
     function copyContractAddress() {
       const contractAddress = document.getElementById('contractAddress').innerText;
       navigator.clipboard.writeText(contractAddress)
-        .then(() => alert('Contract address copied to clipboard!'));
+        .then(() => {
+          const btn = document.querySelector('.copy-button');
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = 'Copy Address', 2000);
+        })
+        .catch(err => alert('Failed to copy address: ' + err));
     }
 
     document.getElementById('connectPhantom').addEventListener('click', async () => {
-      if (window.solana && window.solana.isPhantom) {
+      if (window.solana?.isPhantom) {
         try {
           const response = await window.solana.connect();
-          alert(`Connected to Phantom wallet: ${response.publicKey.toString()}`);
+          const publicKey = response.publicKey.toString();
+          document.getElementById('connectPhantom').textContent = 'Connected';
+          localStorage.setItem('phantomConnected', publicKey);
+          alert(`Connected: ${publicKey.slice(0,6)}...${publicKey.slice(-4)}`);
         } catch (err) {
-          console.error('Connection to Phantom wallet failed', err);
+          console.error('Phantom connection failed:', err);
+          alert('Connection failed. Please try again.');
         }
       } else {
-        alert('Phantom wallet not found. Please install the Phantom extension.');
+        alert('Phantom wallet not detected. Install it to continue.');
         window.open('https://phantom.app/', '_blank');
+      }
+    });
+
+    // Check if already connected
+    window.addEventListener('load', () => {
+      if (localStorage.getItem('phantomConnected') && window.solana?.isPhantom) {
+        document.getElementById('connectPhantom').textContent = 'Connected';
       }
     });
   </script>
