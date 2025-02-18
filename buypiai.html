@@ -1,20 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pi Network AI (PIAI) – Official Landing Page</title>
   <style>
+    /* Global reset and font */
     body {
       margin: 0;
-      padding: 0;
+      overflow: hidden;
       font-family: Arial, sans-serif;
       background-color: #000;
       color: #fff;
-      text-align: center;
+    }
+    /* The Three.js canvas will be appended dynamically */
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: block;
+      z-index: 0;
+    }
+    /* Optional π value display in the corner */
+    #info {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      color: #fff;
+      font-family: monospace;
+      text-shadow: 0 0 5px #00f;
+      pointer-events: none;
+      z-index: 5;
+    }
+    /* Overlay container for coin page content */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none; /* Let clicks pass through unless needed */
+    }
+    /* Make sure interactive elements are clickable */
+    .overlay * {
+      pointer-events: auto;
     }
     .container {
+      text-align: center;
       padding: 20px;
+      background-color: rgba(0, 0, 0, 0.55);
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 20px;
     }
     h1 {
       font-size: 2.5rem;
@@ -30,7 +72,7 @@
       margin: 0.5rem;
       font-size: 1rem;
       color: #fff;
-      background-color: #FF1493;
+      background-color: #ff1493;
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -38,7 +80,7 @@
       transition: background 0.3s ease;
     }
     .button:hover {
-      background-color: #D4147A;
+      background-color: #d4147a;
     }
     .contract-address {
       margin-top: 1.5rem;
@@ -50,38 +92,228 @@
       padding: 0.5rem 1rem;
       font-size: 1rem;
       color: #fff;
-      background-color: #FF1493;
+      background-color: #ff1493;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.3s ease;
     }
     .copy-button:hover {
-      background-color: #D4147A;
+      background-color: #d4147a;
     }
     footer {
-      margin-top: 2rem;
-      padding: 1rem;
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      z-index: 10;
       font-size: 0.9rem;
       opacity: 0.8;
+    }
+    /* Responsive scaling */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+      p {
+        font-size: 1rem;
+      }
+      .button {
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Pi Network AI (PIAI)</h1>
-    <p>The AI-Powered Future of Pi on the Solana Blockchain</p>
-    <button class="button" id="connectPhantom">Connect Phantom Wallet</button>
-    <a href="https://phantom.com/tokens/solana/B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB" target="_blank" class="button">Buy PIAI</a>
-    <div class="contract-address">
-      <p>Contract Address:</p>
-      <p id="contractAddress">B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB</p>
-      <button class="copy-button" onclick="copyContractAddress()">Copy Address</button>
+  <!-- π value display (optional) -->
+  <div id="info">π ≈ <span id="piValue">3.14159...</span></div>
+
+  <!-- Overlay content for coin page -->
+  <div class="overlay">
+    <div class="container">
+      <h1>Pi Network AI (PIAI)</h1>
+      <p>The AI-Powered Future of Pi on the Solana Blockchain</p>
+      <button class="button" id="connectPhantom">Connect Phantom Wallet</button>
+      <a href="https://phantom.com/tokens/solana/B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB" target="_blank" class="button">Buy PIAI</a>
+      <div class="contract-address">
+        <p>Contract Address:</p>
+        <p id="contractAddress">B7NPUGvxC8BUF5a8BdxurBNxCjV3HwyN6DaRivtqNAjB</p>
+        <button class="copy-button" onclick="copyContractAddress()">Copy Address</button>
+      </div>
     </div>
   </div>
+
   <footer>
     <p>© 2025 Pi Network AI. All rights reserved. Built with ❤️ on the Solana Blockchain.</p>
   </footer>
+
+  <!-- Load Three.js and OrbitControls in the classic way (globals) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    let scene, camera, renderer, controls, points, spiral;
+    let terms = [];
+    let frame = 0;
+
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 50;
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.domElement.style.position = 'fixed';
+      renderer.domElement.style.top = '0';
+      renderer.domElement.style.left = '0';
+      renderer.domElement.style.zIndex = '0';
+      document.body.appendChild(renderer.domElement);
+
+      // OrbitControls (global THREE object)
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotate = true;      // auto rotate camera
+      controls.autoRotateSpeed = 0.5;
+      controls.minDistance = 10;
+      controls.maxDistance = 150;
+      controls.enablePan = false;
+
+      // Calculate π terms (Leibniz series)
+      let sum = 0;
+      for (let i = 0; i < 1000; i++) {
+        let term = 1 / (2 * i + 1) * (i % 2 ? -1 : 1);
+        sum += term;
+        terms.push({ term, sum: sum * 4 });
+      }
+
+      // Create geometry for particles
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(terms.length * 3);
+      const colors = new Float32Array(terms.length * 3);
+      const sizes = new Float32Array(terms.length);
+
+      terms.forEach((t, i) => {
+        const phi = i * 0.1;
+        const theta = i * 0.2;
+        const r = 20 + Math.abs(t.term) * 100;
+
+        positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        positions[i * 3 + 2] = r * Math.cos(phi);
+
+        const color = new THREE.Color();
+        color.setHSL(i / terms.length, 1, 0.5);
+        colors[i * 3]     = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
+
+        sizes[i] = Math.max(0.1, Math.abs(t.term) * 20);
+      });
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      // Custom point shader
+      const shader = THREE.ShaderLib.points;
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          ...THREE.UniformsUtils.clone(shader.uniforms),
+          time: { value: 0 },
+          size: { value: 1 }
+        },
+        vertexShader: `
+          attribute float size;
+          uniform float time;
+          varying vec3 vColor;
+          void main() {
+              vColor = color;
+              vec3 pos = position;
+              pos.x += sin(time * 0.001 + position.z * 0.1) * 0.5;
+              pos.y += cos(time * 0.001 + position.x * 0.1) * 0.5;
+              vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+              gl_PointSize = size * (300.0 / -mvPosition.z);
+              gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vColor;
+          void main() {
+              vec2 xy = gl_PointCoord.xy - vec2(0.5);
+              float r = length(xy);
+              if (r > 0.5) discard;
+              float a = 1.0 - smoothstep(0.45, 0.5, r);
+              gl_FragColor = vec4(vColor, a);
+          }
+        `,
+        transparent: true,
+        vertexColors: true
+      });
+
+      points = new THREE.Points(geometry, material);
+      scene.add(points);
+
+      // Create connecting spiral
+      const spiralGeometry = new THREE.BufferGeometry();
+      const spiralPositions = new Float32Array(terms.length * 3);
+      terms.forEach((t, i) => {
+        const phi = i * 0.1;
+        const theta = i * 0.2;
+        const r = 20 + Math.abs(t.term) * 100;
+        spiralPositions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+        spiralPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        spiralPositions[i * 3 + 2] = r * Math.cos(phi);
+      });
+      spiralGeometry.setAttribute('position', new THREE.BufferAttribute(spiralPositions, 3));
+
+      const spiralMaterial = new THREE.LineBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.3
+      });
+      spiral = new THREE.Line(spiralGeometry, spiralMaterial);
+      scene.add(spiral);
+
+      // Lights for subtle illumination
+      scene.add(new THREE.AmbientLight(0x404040));
+      const pointLight = new THREE.PointLight(0xffffff, 1);
+      pointLight.position.set(10, 10, 10);
+      scene.add(pointLight);
+
+      // Resize
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      frame++;
+
+      // Pass frame to the custom uniform
+      points.material.uniforms.time.value = frame;
+
+      // Update controls for autoRotate & damping
+      controls.update();
+
+      // Update π value display
+      const currentTerm = Math.floor(frame / 10) % terms.length;
+      document.getElementById('piValue').textContent = terms[currentTerm].sum.toFixed(8);
+
+      renderer.render(scene, camera);
+    }
+
+    init();
+    animate();
+  </script>
+
+  <!-- Wallet connection and copy functionality -->
   <script>
     function copyContractAddress() {
       const contractAddress = document.getElementById('contractAddress').innerText;
