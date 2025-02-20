@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Superstonk DD Chatbot</title>
+    <style>
+        body { 
+            background: #1a1a1a; 
+            color: #ffffff; 
+            font-family: 'Roboto', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+        input, button { 
+            border: 2px solid #00b4d8; 
+            background: #2a2a2a; 
+            color: #ffffff; 
+            padding: 10px; 
+            margin: 5px; 
+        }
+        button:hover { 
+            background: #00b4d8; 
+        }
+        #response { 
+            margin-top: 20px; 
+            padding: 10px; 
+            background: #2a2a2a; 
+            border-radius: 5px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Superstonk DD Chatbot</h1>
+        <input id="question" type="text" placeholder="Ask me about GME...">
+        <button onclick="ask()">Ask</button>
+        <div id="response"></div>
+        <script>
+            async function ask() {
+                const question = document.getElementById("question").value;
+                const res = await fetch("/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question })
+                });
+                const data = await res.json();
+                document.getElementById("response").innerHTML = data.response;
+            }
+        </script>
+    </div>
+</body>
+</html>
