@@ -1,499 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recursive Fractal Page</title>
-  <meta name="description" content="Gamestop (GME) and SIRI reports. Real-time cryptocurrency prices" />
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <!-- Google Fonts for Modern Typography -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-
-  <style>
-    :root {
-      /* Color Palette */
-      --bg-primary: #121212;
-      --accent: #1DA1F2;
-      --accent-hover: #0d8ddb;
-      --button-bg: #1DA1F2;
-      --button-hover-bg: #0d8ddb;
-      --text-primary: #e0e0e0;
-      --text-secondary: #a0a0a0;
-      --footer-bg: #1e1e1e;
-      --border-color: #333333;
-
-      /* Font */
-      --font-family: 'Inter', sans-serif;
-
-      /* Layout */
-      --max-width-container: 1200px;
-      --transition-speed: 0.3s;
-    }
-
-    /* Global Reset */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html,
-    body {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      font-family: var(--font-family);
-      color: var(--text-primary);
-      background: var(--bg-primary);
-    }
-
-    /* Full-screen canvas as fractal background */
-    #fractal-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      background: var(--bg-primary);
-    }
-
-    .container {
-      position: relative;
-      z-index: 1; /* Content above canvas */
-      width: 100%;
-      max-width: var(--max-width-container);
-      margin: 0 auto;
-      padding: 20px;
-      text-align: center;
-    }
-
-    /* Header (tagline only) */
-    header {
-      margin-bottom: 40px;
-    }
-
-    p.tagline {
-      font-size: 1.2rem;
-      color: var(--text-secondary);
-      max-width: 800px;
-      margin: 0 auto 20px;
-      line-height: 1.5;
-    }
-
-    /* Navigation Report Links */
-    .report-links {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      max-width: 800px;
-      margin: 20px auto 60px;
-    }
-
-    .report-links a {
-      background-color: var(--button-bg);
-      color: #ffffff;
-      text-decoration: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: background-color var(--transition-speed), transform var(--transition-speed);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    .report-links a:hover,
-    .report-links a:focus {
-      background-color: var(--button-hover-bg);
-      transform: translateY(-2px);
-      outline: none;
-    }
-
-    /* Cryptocurrency Trackers Section */
-    .section-group {
-      margin-bottom: 60px;
-    }
-
-    .section-group h2 {
-      font-size: 2.5rem;
-      font-weight: 600;
-      color: var(--accent);
-      margin-bottom: 30px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    .trackers {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-    }
-
-    .tracker {
-      background: rgba(30, 30, 30, 0.8);
-      padding: 25px;
-      border-radius: 12px;
-      width: 280px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-    }
-
-    .tracker:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .tracker h3 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--accent);
-      margin-bottom: 15px;
-    }
-
-    .price {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 10px;
-    }
-
-    .goal-text {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      margin-bottom: 15px;
-    }
-
-    .progress-container {
-      background-color: #333;
-      border-radius: 10px;
-      overflow: hidden;
-      height: 15px;
-      width: 100%;
-    }
-
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background-color: var(--accent);
-      transition: width var(--transition-speed), background-color var(--transition-speed);
-    }
-
-    /* Footer */
-    footer {
-      background-color: var(--footer-bg);
-      padding: 20px;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      width: 100%;
-      border-top: 1px solid var(--border-color);
-      margin-top: 40px;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      p.tagline {
-        font-size: 1rem;
-      }
-      .section-group h2 {
-        font-size: 2rem;
-      }
-      .tracker {
-        width: 100%;
-        max-width: 400px;
-      }
-      .report-links a {
-        font-size: 0.95rem;
-        padding: 10px 20px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      p.tagline {
-        font-size: 0.9rem;
-      }
-      .section-group h2 {
-        font-size: 1.8rem;
-      }
-      .tracker {
-        padding: 20px;
-      }
-      .tracker h3 {
-        font-size: 1.3rem;
-      }
-      .price {
-        font-size: 1.6rem;
-      }
-      .report-links a {
-        font-size: 0.9rem;
-        padding: 8px 16px;
-      }
-    }
-
-    /* Accessibility Focus Styles */
-    a:focus {
-      outline: 3px solid var(--accent-hover);
-      outline-offset: 4px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameStop 42069 - Home</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .content {
+            margin-bottom: 20px;
+        }
+        .chatbot-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 5px;
+        }
+        .chatbot-container h2 {
+            margin-top: 0;
+            color: #00b4d8;
+        }
+        .chatbot-container input, .chatbot-container button {
+            border: 2px solid #00b4d8;
+            background: #2a2a2a;
+            color: #ffffff;
+            padding: 10px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .chatbot-container button:hover {
+            background: #00b4d8;
+            cursor: pointer;
+        }
+        .chatbot-container #response {
+            margin-top: 20px;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            word-wrap: break-word;
+        }
+    </style>
 </head>
 <body>
-  <!-- Full-screen Canvas for Recursive Fractal Background -->
-  <canvas id="fractal-canvas"></canvas>
-
-  <div class="container">
-    <!-- Header with tagline only -->
-    <header>
-      <p class="tagline"></p>
-    </header>
-
-    <!-- Navigation Report Links -->
-    <nav class="report-links" aria-label="Report Links">
-      <a href="GME.html" aria-label="View GME Report">GME Report</a>
-      <a href="SIRI.html" aria-label="View SIRI Report">SIRI Report</a>
-    </nav>
-
-    <!-- Main Content: Cryptocurrency Trackers -->
-    <main>
-      <section class="section-group">
-        <h2>Cryptocurrency Trackers</h2>
-        <div class="trackers">
-          <div class="tracker" aria-live="polite">
-            <h3>Bitcoin</h3>
-            <div class="price" id="bitcoin-price">Loading Bitcoin Price...</div>
-            <div class="goal-text">Progress towards $100,000</div>
-            <div class="progress-container" aria-hidden="true">
-              <div class="progress-bar bitcoin-progress-bar"></div>
-            </div>
-          </div>
-
-          <div class="tracker" aria-live="polite">
-            <h3>Ethereum (ETH)</h3>
-            <div class="price" id="eth-price">Loading Ethereum Price...</div>
-            <div class="goal-text">Progress towards $5,000</div>
-            <div class="progress-container" aria-hidden="true">
-              <div class="progress-bar eth-progress-bar"></div>
-            </div>
-          </div>
-
-          <div class="tracker" aria-live="polite">
-            <h3>Litecoin</h3>
-            <div class="price" id="litecoin-price">Loading Litecoin Price...</div>
-            <div class="goal-text">Progress towards $420</div>
-            <div class="progress-container" aria-hidden="true">
-              <div class="progress-bar litecoin-progress-bar"></div>
-            </div>
-          </div>
-
-          <div class="tracker" aria-live="polite">
-            <h3>XRP</h3>
-            <div class="price" id="xrp-price">Loading XRP Price...</div>
-            <div class="goal-text">Progress towards $5</div>
-            <div class="progress-container" aria-hidden="true">
-              <div class="progress-bar xrp-progress-bar"></div>
-            </div>
-          </div>
-
-          <div class="tracker" aria-live="polite">
-            <h3>Stellar Lumens</h3>
-            <div class="price" id="stellar-price">Loading Stellar Price...</div>
-            <div class="goal-text">Progress towards $1</div>
-            <div class="progress-container" aria-hidden="true">
-              <div class="progress-bar stellar-progress-bar"></div>
-            </div>
-          </div>
-
-          <div class="tracker" aria-live="polite">
-            <h3>Dogecoin</h3>
-            <div class="price" id="dogecoin-price">Loading Dogecoin Price...</div>
-            <div class="goal-text">Progress towards $1</div>
-            <div class="progress-container" aria-hidden="true">
-              <div class="progress-bar dogecoin-progress-bar"></div>
-            </div>
-          </div>
+    <div class="container">
+        <div class="content">
+            <h1>Welcome to GameStop 42069</h1>
+            <p>This is the main page for GameStop-related content, tools, and due diligence. Check out our Superstonk DD Chatbot below!</p>
+            <!-- Add any existing content or sections here -->
         </div>
-      </section>
-    </main>
 
-    <!-- Footer -->
-    <footer>
-      &copy; 2025 Recursive Fractal Page. All Rights Reserved.
-    </footer>
-  </div>
+        <!-- Chatbot Integration -->
+        <div class="chatbot-container">
+            <h2>Superstonk DD Chatbot</h2>
+            <input id="question" type="text" placeholder="Ask me about GME...">
+            <button onclick="ask()">Ask</button>
+            <div id="response"></div>
+        </div>
+    </div>
 
-  <script>
-    /*******************
-     * Recursive Fractal Background (Sierpinski Triangle)
-     *******************/
-    const canvas = document.getElementById('fractal-canvas');
-    const ctx = canvas.getContext('2d');
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      drawFractal();
-    }
-
-    // Draw a filled triangle given three points
-    function drawTriangle(ctx, p1, p2, p3, color) {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.lineTo(p3.x, p3.y);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Recursive function to draw the Sierpinski triangle
-    function drawSierpinski(ctx, p1, p2, p3, depth) {
-      if (depth === 0) {
-        drawTriangle(ctx, p1, p2, p3, 'rgba(29, 161, 242, 0.5)');
-      } else {
-        const mid12 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-        const mid23 = { x: (p2.x + p3.x) / 2, y: (p2.y + p3.y) / 2 };
-        const mid31 = { x: (p3.x + p1.x) / 2, y: (p3.y + p1.y) / 2 };
-
-        drawSierpinski(ctx, p1, mid12, mid31, depth - 1);
-        drawSierpinski(ctx, mid12, p2, mid23, depth - 1);
-        drawSierpinski(ctx, mid31, mid23, p3, depth - 1);
-      }
-    }
-
-    function drawFractal() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const size = Math.min(canvas.width, canvas.height) * 0.8;
-      const offsetX = (canvas.width - size) / 2;
-      const offsetY = (canvas.height - size) / 2;
-      const p1 = { x: offsetX + size / 2, y: offsetY };
-      const p2 = { x: offsetX, y: offsetY + size };
-      const p3 = { x: offsetX + size, y: offsetY + size };
-
-      const depth = 6;
-      drawSierpinski(ctx, p1, p2, p3, depth);
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    /*******************
-     * Cryptocurrency Price Tracking (WebSocket)
-     *******************/
-    document.addEventListener('DOMContentLoaded', function () {
-      const assets = {
-        bitcoin: {
-          type: 'crypto',
-          elementId: 'bitcoin-price',
-          progressBarClass: 'bitcoin-progress-bar',
-          goal: 100000,
-        },
-        ethereum: {
-          type: 'crypto',
-          elementId: 'eth-price',
-          progressBarClass: 'eth-progress-bar',
-          goal: 5000,
-        },
-        litecoin: {
-          type: 'crypto',
-          elementId: 'litecoin-price',
-          progressBarClass: 'litecoin-progress-bar',
-          goal: 420,
-        },
-        xrp: {
-          type: 'crypto',
-          elementId: 'xrp-price',
-          progressBarClass: 'xrp-progress-bar',
-          goal: 5,
-        },
-        stellar: {
-          type: 'crypto',
-          elementId: 'stellar-price',
-          progressBarClass: 'stellar-progress-bar',
-          goal: 1,
-        },
-        dogecoin: {
-          type: 'crypto',
-          elementId: 'dogecoin-price',
-          progressBarClass: 'dogecoin-progress-bar',
-          goal: 1,
-        },
-      };
-
-      const serverUrl = 'https://your-server-url.com';
-
-      function initializeCryptoWebSockets() {
-        const cryptoAssets = Object.keys(assets);
-        if (cryptoAssets.length > 0) {
-          const cryptoWsUrl = `wss://ws.coincap.io/prices?assets=${cryptoAssets.join(',')}`;
-          const cryptoWs = new WebSocket(cryptoWsUrl);
-
-          cryptoWs.onopen = function () {
-            console.log('CoinCap WebSocket connection established.');
-          };
-
-          cryptoWs.onmessage = function (event) {
-            try {
-              const data = JSON.parse(event.data);
-              for (const asset in data) {
-                if (assets[asset]) {
-                  const price = parseFloat(data[asset]);
-                  updatePrice(asset, price);
-                }
-              }
-            } catch (error) {
-              console.error('Error parsing CoinCap message:', error);
-            }
-          };
-
-          cryptoWs.onerror = function (error) {
-            console.error('CoinCap WebSocket error:', error);
-          };
-
-          cryptoWs.onclose = function (event) {
-            console.warn(`WebSocket closed: ${event.reason}. Reconnecting in 5 seconds...`);
-            setTimeout(initializeCryptoWebSockets, 5000);
-          };
+    <script>
+        async function ask() {
+            const question = document.getElementById("question").value;
+            const res = await fetch("/query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question })
+            });
+            const data = await res.json();
+            document.getElementById("response").innerHTML = data.response || "Sorry, I couldn't find an answer. Try rephrasing your question!";
         }
-      }
-
-      function updatePrice(assetKey, price) {
-        const asset = assets[assetKey];
-        if (!asset) return;
-
-        const priceElement = document.getElementById(asset.elementId);
-        if (priceElement) {
-          priceElement.innerText = `${formatAssetName(assetKey)} Price: $${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        }
-
-        const progressBar = document.querySelector(`.${asset.progressBarClass}`);
-        if (progressBar) {
-          const percentage = Math.min((price / asset.goal) * 100, 100);
-          progressBar.style.width = `${percentage}%`;
-
-          if (percentage < 50) {
-            progressBar.style.backgroundColor = '#f7931a';
-          } else if (percentage < 75) {
-            progressBar.style.backgroundColor = 'var(--accent)';  // Fixed: wrapped in quotes
-          } else {
-            progressBar.style.backgroundColor = '#0a74da';
-          }
-        }
-      }
-
-      function formatAssetName(key) {
-        switch (key) {
-          case 'bitcoin': return 'Bitcoin';
-          case 'ethereum': return 'Ethereum';
-          case 'litecoin': return 'Litecoin';
-          case 'xrp': return 'XRP';
-          case 'stellar': return 'Stellar Lumens';
-          case 'dogecoin': return 'Dogecoin';
-          default: return key.toUpperCase();
-        }
-      }
-
-      initializeCryptoWebSockets();
-    });
-  </script>
+    </script>
 </body>
 </html>
