@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GameStop 42069 - Home</title>
     <style>
+        /* Base site styling */
         body {
             background: #000;
             color: #fff;
@@ -17,17 +18,24 @@
             margin: 0 auto;
         }
         .content {
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
+        .content h1 {
+            color: #00b4d8; /* Matching chatbot accent for consistency */
+        }
+
+        /* Chatbot-specific styling */
         .chatbot-container {
-            margin-top: 20px;
+            margin-top: 30px;
             padding: 15px;
             background: #1a1a1a;
             border-radius: 5px;
+            border: 2px solid #00b4d8; /* Highlight the chatbot section */
         }
         .chatbot-container h2 {
-            margin-top: 0;
+            margin: 0 0 15px 0;
             color: #00b4d8;
+            font-size: 1.5em;
         }
         .chatbot-container input, .chatbot-container button {
             border: 2px solid #00b4d8;
@@ -36,6 +44,8 @@
             padding: 10px;
             margin: 5px;
             font-size: 14px;
+            border-radius: 3px;
+            transition: background 0.3s;
         }
         .chatbot-container button:hover {
             background: #00b4d8;
@@ -47,6 +57,8 @@
             background: #2a2a2a;
             border-radius: 5px;
             word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -54,30 +66,53 @@
     <div class="container">
         <div class="content">
             <h1>Welcome to GameStop 42069</h1>
-            <p>This is the main page for GameStop-related content, tools, and due diligence. Check out our Superstonk DD Chatbot below!</p>
+            <p>Explore the latest GameStop due diligence and tools. Use the Superstonk DD Chatbot below to ask questions about GME!</p>
             <!-- Add any existing content or sections here -->
         </div>
 
-        <!-- Chatbot Integration -->
+        <!-- Superstonk DD Chatbot Integration -->
         <div class="chatbot-container">
             <h2>Superstonk DD Chatbot</h2>
-            <input id="question" type="text" placeholder="Ask me about GME...">
+            <input id="question" type="text" placeholder="Ask me about GME..." autocomplete="off">
             <button onclick="ask()">Ask</button>
             <div id="response"></div>
         </div>
     </div>
 
     <script>
+        // Chatbot functionality
         async function ask() {
-            const question = document.getElementById("question").value;
-            const res = await fetch("/query", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question })
-            });
-            const data = await res.json();
-            document.getElementById("response").innerHTML = data.response || "Sorry, I couldn't find an answer. Try rephrasing your question!";
+            const question = document.getElementById("question").value.trim();
+            if (!question) {
+                document.getElementById("response").innerHTML = "Please enter a question!";
+                return;
+            }
+
+            document.getElementById("response").innerHTML = "Loading..."; // Show loading state
+
+            try {
+                const res = await fetch("/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question })
+                });
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                const data = await res.json();
+                document.getElementById("response").innerHTML = data.response || "Sorry, I couldn’t find an answer. Try rephrasing your question!";
+            } catch (error) {
+                document.getElementById("response").innerHTML = `Error: ${error.message}. Please try again later.`;
+                console.error("Fetch error:", error);
+            }
         }
+
+        // Optional: Add Enter key support for convenience
+        document.getElementById("question").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                ask();
+            }
+        });
     </script>
 </body>
 </html>
