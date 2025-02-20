@@ -1,65 +1,70 @@
-import json
-import os
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from openai import OpenAI
-from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
+from flask import Flask, request, session, render_template
+import os
+import json
 import logging
-from typing import List, Dict
+from sentence_transformers import SentenceTransformer
 
-# Setup
-logging.basicConfig(level=logging.INFO)
+# Initialize Flask app
+app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # Replace with a secure random key
+
+# Configure logging
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
-templates = Jinja2Templates(directory="templates")
-openai_client = OpenAI(api_key="")
-
 # Load JSON data
-output_file = "/Users/dimitristefanopoulos/Downloads/42069/42069/yek/output/yek-output-fc1d7a0c.json"
-model = SentenceTransformer('all-MiniLM-L6-v2')
-
-# Load and index data
-def load_data():
+def load_and_index_data():
+    output_file = "/Users/dimitristefanopoulos/Downloads/42069/42069/yek/output/yek-output.json"
     if not os.path.exists(output_file):
-        logger.error(f"Data file {output_file} not found")
+        logger.error("Data file 'output_file' not found")
         raise HTTPException(status_code=500, detail="Data file not found")
     with open(output_file, 'r') as f:
         data = json.load(f)
     if not data:
         logger.error("No data loaded from JSON")
-        return [], []
+        return []
     texts = [item.get('content', '') for item in data]
+    model = SentenceTransformer('all-MiniLM-L6-v2')
     embeddings = model.encode(texts, show_progress_bar=True)
-    index = faiss.IndexFlatL2(embeddings.shape[1])
-    index.add(np.array(embeddings))
-    return texts, index
+    return texts, embeddings
 
-texts, index = load_data()
+# Route for the homepage (index.html)
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        api_key = request.form.get('api_key')
+        if api_key:
+            session['api_key'] = api_key
+            return render_template('index.html', message="API Key saved!")
+    return render_template('index.html')
 
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+# Route to set API key
+@app.route('/set_api_key', methods=['POST'])
+def set_api_key():
+    data = request.json
+    api_key = data.get('api_key')
+    if api_key:
+        session['api_key'] = api_key
+        return {"message": "API Key set"}, 200
+    return {"error": "No API key provided"}, 400
 
-@app.post("/query")
-async def query(request: Request):
-    data = await request.json()
-    question = data.get("question", "")
+# Route for chatbot query
+@app.route('/query', methods=['POST'])
+def query():
+    data = request.json
+    question = data.get('question')
     if not question:
-        raise HTTPException(status_code=400, detail="No question provided")
+        return {"error": "No question provided"}, 400
+    if not session.get('api_key'):
+        return {"error": "Please set an OpenAI API key first"}, 400
     
-    # Semantic search
-    query_embedding = model.encode([question])
-    distances, indices = index.search(np.array(query_embedding), k=5)
-    relevant_texts = [texts[idx] for idx in indices[0]]
+    # Initialize OpenAI client with user-provided key
+    openai_client = OpenAI(api_key=session['api_key'])
     
-    # OpenAI response
-    context = "\n".join(relevant_texts)
-    response = openai_client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": f"Using this data: {context[:1000]}, answer: {question}"}]
-    )
-    return {"response": response.choices[0].message.content}
+    # Your chatbot logic here (e.g., GME DD response using texts, embeddings)
+    texts, embeddings = load_and_index_data()
+    response = {"response": "Here's your answer about GME..."}  # Replace with actual logic
+    return response, 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
