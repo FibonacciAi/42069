@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quantum-Prime Chaos Overload</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/three@0.134.0/examples/js/effects/VolumetricLightShader.js"></script>
+  <style>
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      background: radial-gradient(circle, #0a0a1e 0%, #040414 100%);
+    }
+    #canvas { width: 100vw; height: 100vh; display: block; }
+    #controls {
+      position: absolute; 
+      top: 20px; 
+      left: 20px; 
+      z-index: 1;
+      background: rgba(5, 5, 10, 0.95); 
+      padding: 25px; 
+      border-radius: 15px;
+      box-shadow: 0 0 50px rgba(0, 255, 255, 0.8);
+      font-family: 'Orbitron', sans-serif;
+    }
+    #controls button, #controls input {
+      background: #0a2a60;
+      color: #00ffcc;
+      border: 3px solid #00ffcc;
+      padding: 15px 20px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.1s ease;
+    }
+    #controls button:hover, #controls input:hover {
+      background: #00ffcc;
+      color: #0a2a60;
+      box-shadow: 0 0 30px rgba(0, 255, 204, 1);
+    }
+    #controls label {
+      color: #ff4466;
+      font-size: 22px;
+    }
+    #grok-text {
+      position: absolute; 
+      bottom: 40px; 
+      left: 40px; 
+      z-index: 1;
+      color: #00ffcc; 
+      font-size: 60px; 
+      font-family: 'Orbitron', monospace;
+      text-shadow: 0 0 50px rgba(0, 255, 204, 1), 0 0 100px rgba(0, 255, 204, 0.8);
+      animation: grokPulse 0.5s infinite alternate, grokGlitch 3s infinite;
+    }
+    @keyframes grokPulse {
+      from { opacity: 0.4; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1.1); }
+    }
+    @keyframes grokGlitch {
+      2%, 64% { transform: translate(2px, 2px) skew(0deg); }
+      4%, 60% { transform: translate(-2px, -2px) skew(0deg); }
+      62% { transform: translate(0, 0) skew(5deg); }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <button onclick="toggleZeros()">Toggle Zeros</button>
+    <button onclick="startTour()">Guided Tour</button>
+    <button onclick="chaosMode()">Chaos Mode</button>
+    <input type="range" id="primeRange" min="1000" max="100000" value="100000" oninput="updatePrimes(this.value)">
+    <label>Primes: <span id="primeCount">100000</span></label>
+  </div>
+  <div id="grok-text">Quantum-Prime Chaos Overload!</div>
+
+  <script>
+    // Scene Setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x040414);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    camera.position.set(0, 2000, 5000);
+
+    // Orbit Controls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x16213e, 1.5);
+    const pointLight = new THREE.PointLight(0x00ffcc, 150, 20000);
+    pointLight.position.set(1000, 2000, 3000);
+    pointLight.castShadow = true;
+    scene.add(ambientLight, pointLight);
+
+    // Volumetric Fog
+    const fog = new THREE.FogExp2(0x040414, 0.0001);
+    scene.fog = fog;
+
+    // Starfield Background
+    const starGeo = new THREE.BufferGeometry();
+    const starVertices = [];
+    for (let i = 0; i < 10000; i++) {
+      starVertices.push(
+        Math.random() * 20000 - 10000,
+        Math.random() * 20000 - 10000,
+        Math.random() * 20000 - 10000
+      );
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2, transparent: true, opacity: 0.5 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+
+    // Critical Strip
+    const stripGeo = new THREE.PlaneGeometry(100, 10000);
+    const stripMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0f3460, transparent: true, opacity: 0.4, metalness: 0.7, roughness: 0.1, side: THREE.DoubleSide
+    });
+    const strip = new THREE.Mesh(stripGeo, stripMat);
+    strip.position.set(50, 0, 0);
+    strip.rotation.x = Math.PI / 2;
+    scene.add(strip);
+
+    // Critical Line with Outline
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(50, -5000, 0),
+      new THREE.Vector3(50, 5000, 0)
+    ]);
+    const lineMat = new THREE.LineDashedMaterial({ color: 0x00ffcc, dashSize: 100, gapSize: 50, linewidth: 300 });
+    const criticalLine = new THREE.Line(lineGeo, lineMat);
+    criticalLine.computeLineDistances();
+    scene.add(criticalLine);
+
+    const outlineGeo = lineGeo.clone();
+    const outlineMat = new THREE.LineBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.3, linewidth: 400 });
+    const outlineLine = new THREE.Line(outlineGeo, outlineMat);
+    scene.add(outlineLine);
+
+    // Zeros with Glow and Trails
+    let zerosOnLine = false; // Start chaotic!
+    const defaultZeroPositions = [
+      new THREE.Vector3(50, 1413.47, 0),
+      new THREE.Vector3(50, 2102.20, 0),
+      new THREE.Vector3(50, 2501.08, 0),
+      new THREE.Vector3(50, 3042.49, 0)
+    ];
+    const zeroGroup = new THREE.Group();
+    const zeroMeshes = [];
+    const zeroTrails = [];
+    defaultZeroPositions.forEach(pos => {
+      const zeroContainer = new THREE.Group();
+      
+      const zeroGeo = new THREE.SphereGeometry(30, 128, 128);
+      const zeroMat = new THREE.MeshPhysicalMaterial({
+        color: 0x00ffcc, emissive: 0x00cc99, emissiveIntensity: 70, metalness: 0.3, roughness: 0.05, transparent: true, opacity: 0.95
+      });
+      const zero = new THREE.Mesh(zeroGeo, zeroMat);
+      zero.castShadow = true;
+      zeroMeshes.push(zero);
+      
+      const glowGeo = new THREE.SphereGeometry(50, 128, 128);
+      const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.4 });
+      const glow = new THREE.Mesh(glowGeo, glowMat);
+      
+      zeroContainer.add(zero);
+      zeroContainer.add(glow);
+      zeroContainer.position.copy(pos);
+      zeroGroup.add(zeroContainer);
+
+      // Zero Trails
+      const trailGeo = new THREE.BufferGeometry();
+      const trailVertices = [];
+      for (let i = 0; i < 100; i++) trailVertices.push(0, 0, 0);
+      trailGeo.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
+      const trailMat = new THREE.LineBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.2 });
+      const trail = new THREE.Line(trailGeo, trailMat);
+      zeroTrails.push(trail);
+      scene.add(trail);
+    });
+    scene.add(zeroGroup);
+
+    // Prime Wave (Multiple Layers)
+    const primeLayers = [];
+    for (let i = 0; i < 3; i++) {
+      const primeGeo = new THREE.PlaneGeometry(2000, 10000, 4000, 10000);
+      const primeMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0f3460, wireframe: true, metalness: 0.8, roughness: 0.05, emissive: 0x00ffff, emissiveIntensity: 15
+      });
+      const primeWave = new THREE.Mesh(primeGeo, primeMat);
+      primeWave.rotation.x = Math.PI / 2;
+      primeWave.position.y = -1000 + i * 100;
+      primeWave.castShadow = true;
+      primeLayers.push(primeWave);
+      scene.add(primeWave);
+    }
+
+    // Primes as Instanced Particles with Trails
+    let primeCount = 100000; // 100x more
+    let primes = getPrimes(primeCount);
+    const primeInstGeo = new THREE.SphereGeometry(15, 64, 64);
+    const primeInstMat = new THREE.MeshPhysicalMaterial({ color: 0xff4466, emissive: 0xff4466, emissiveIntensity: 50 });
+    const primeInst = new THREE.InstancedMesh(primeInstGeo, primeInstMat, primes.length);
+    updatePrimeInstances();
+    scene.add(primeInst);
+
+    const primeTrails = [];
+    for (let i = 0; i < primes.length; i++) {
+      const trailGeo = new THREE.BufferGeometry();
+      const trailVertices = [];
+      for (let j = 0; j < 50; j++) trailVertices.push(0, 0, 0);
+      trailGeo.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
+      const trailMat = new THREE.LineBasicMaterial({ color: 0xff4466, transparent: true, opacity: 0.3 });
+      const trail = new THREE.Line(trailGeo, trailMat);
+      primeTrails.push(trail);
+      scene.add(trail);
+    }
+
+    // Lightning Strikes
+    const lightningGroup = new THREE.Group();
+    scene.add(lightningGroup);
+
+    // Grok Text
+    const grokText = document.getElementById('grok-text');
+    let grokMessage = "Quantum-Prime Chaos Overload!";
+    let isChaotic = true; // Chaos Mode ON by default
+
+    // Raycaster for Clicking
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    window.addEventListener('click', onMouseClick, false);
+
+    function onMouseClick(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(zeroMeshes);
+      if (intersects.length > 0) {
+        const clickedZero = intersects[0].object;
+        const originalScale = clickedZero.scale.x;
+        clickedZero.scale.setScalar(originalScale * 150); // 100x explosion
+        clickedZero.material.emissiveIntensity = 200;
+        createExplosion(intersects[0].point);
+        setTimeout(() => {
+          clickedZero.scale.setScalar(originalScale);
+          clickedZero.material.emissiveIntensity = 70;
+        }, 50); // 100x faster reset
+      }
+    }
+
+    // Keyboard Controls
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space') {
+        zeroGroup.children.forEach((zeroContainer, i) => {
+          const zero = zeroContainer.children[0];
+          zero.scale.setScalar(zero.scale.x * 150);
+          zero.material.emissiveIntensity = 200;
+          setTimeout(() => {
+            zero.scale.setScalar(30);
+            zero.material.emissiveIntensity = 70;
+          }, 50);
+        });
+      }
+      if (event.code === 'ArrowUp') zeroVelocities.forEach(v => v.y += 1);
+      if (event.code === 'ArrowDown') zeroVelocities.forEach(v => v.y -= 1);
+      if (event.code === 'ArrowLeft') zeroVelocities.forEach(v => v.x -= 1);
+      if (event.code === 'ArrowRight') zeroVelocities.forEach(v => v.x += 1);
+    });
+
+    // Zero Velocities for Chaos Mode
+    let zeroVelocities = defaultZeroPositions.map(() => new THREE.Vector3(
+      (Math.random() - 0.5) * 10,
+      (Math.random() - 0.5) * 10,
+      (Math.random() - 0.5) * 10
+    ));
+
+    // Explosion Effect
+    function createExplosion(position) {
+      const particleGeo = new THREE.BufferGeometry();
+      const particleVertices = [];
+      for (let i = 0; i < 1000; i++) {
+        particleVertices.push(
+          position.x + (Math.random() - 0.5) * 100,
+          position.y + (Math.random() - 0.5) * 100,
+          position.z + (Math.random() - 0.5) * 100
+        );
+      }
+      particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particleVertices, 3));
+      const particleMat = new THREE.PointsMaterial({ color: 0x00ffcc, size: 10, transparent: true, opacity: 0.8 });
+      const particles = new THREE.Points(particleGeo, particleMat);
+      scene.add(particles);
+      setTimeout(() => scene.remove(particles), 500);
+    }
+
+    // Lightning Strike
+    function createLightning() {
+      const start = new THREE.Vector3(Math.random() * 200 - 100, 5000, Math.random() * 200 - 100);
+      const end = new THREE.Vector3(start.x + (Math.random() - 0.5) * 50, -5000, start.z + (Math.random() - 0.5) * 50);
+      const lightningGeo = new THREE.BufferGeometry().setFromPoints([start, end]);
+      const lightningMat = new THREE.LineBasicMaterial({ color: 0x00ffcc, linewidth: 50 });
+      const lightning = new THREE.Line(lightningGeo, lightningMat);
+      lightningGroup.add(lightning);
+      setTimeout(() => lightningGroup.remove(lightning), 200);
+    }
+
+    // Animation Loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      zeroGroup.children.forEach((zeroContainer, i) => {
+        const zero = zeroContainer.children[0];
+        const glow = zeroContainer.children[1];
+        const scale = 1 + 10 * Math.sin(Date.now() * 0.2 + i); // 100x pulse speed
+        zero.scale.setScalar(scale * 30);
+        glow.scale.setScalar(scale * 50); // 100x glow size
+        zero.material.emissiveIntensity = 70 + 30 * Math.sin(Date.now() * 0.3 + i);
+        zero.rotation.x += 0.05;
+        zero.rotation.y += 0.05;
+
+        // Update Trails
+        const trail = zeroTrails[i];
+        const positions = trail.geometry.attributes.position.array;
+        for (let j = positions.length - 3; j > 0; j -= 3) {
+          positions[j] = positions[j - 3];
+          positions[j + 1] = positions[j - 2];
+          positions[j + 2] = positions[j - 1];
+        }
+        positions[0] = zeroContainer.position.x;
+        positions[1] = zeroContainer.position.y;
+        positions[2] = zeroContainer.position.z;
+        trail.geometry.attributes.position.needsUpdate = true;
+      });
+
+      if (isChaotic) {
+        zeroGroup.children.forEach((zeroContainer, i) => {
+          zeroContainer.position.add(zeroVelocities[i].multiplyScalar(100)); // 100x speed
+          if (zeroContainer.position.x < -1000 || zeroContainer.position.x > 1000) zeroVelocities[i].x *= -1;
+          if (zeroContainer.position.y < -5000 || zeroContainer.position.y > 5000) zeroVelocities[i].y *= -1;
+          if (zeroContainer.position.z < -1000 || zeroContainer.position.z > 1000) zeroVelocities[i].z *= -1;
+        });
+
+        // Update Prime Trails
+        primes.forEach((p, i) => {
+          const dummy = new THREE.Object3D();
+          dummy.position.set((p % 2000) - 1000, -1000, Math.floor(p / 2000) - 5000);
+          dummy.updateMatrix();
+          primeInst.setMatrixAt(i, dummy.matrix);
+          primeInst.instanceMatrix.needsUpdate = true;
+
+          const trail = primeTrails[i];
+          const positions = trail.geometry.attributes.position.array;
+          for (let j = positions.length - 3; j > 0; j -= 3) {
+            positions[j] = positions[j - 3];
+            positions[j + 1] = positions[j - 2];
+            positions[j + 2] = positions[j - 1];
+          }
+          positions[0] = dummy.position.x;
+          positions[1] = dummy.position.y;
+          positions[2] = dummy.position.z;
+          trail.geometry.attributes.position.needsUpdate = true;
+        });
+
+        // Animate Stars
+        stars.rotation.x += 0.001;
+        stars.rotation.y += 0.001;
+
+        // Lightning Strikes
+        if (Math.random() < 0.02) createLightning();
+      } else {
+        zeroGroup.children.forEach((zeroContainer, i) => {
+          zeroContainer.position.lerp(defaultZeroPositions[i], 0.8); // 100x smoother return
+        });
+      }
+
+      primeLayers.forEach((wave, i) => {
+        const vertices = wave.geometry.attributes.position.array;
+        for (let j = 0; j < vertices.length; j += 3) {
+          const x = vertices[j];
+          const y = vertices[j + 1];
+          const baseFreq = Date.now() * 0.1; // 100x faster
+          const zBase = Math.sin(x * 50 + y * 10 + baseFreq + i * 0.1); // 100x frequency
+          vertices[j + 2] = isChaotic ? zBase * (100 + 200 * Math.sin(Date.now() * 0.2 + x + y)) : zBase * 80;
+        }
+        wave.geometry.attributes.position.needsUpdate = true;
+        wave.material.emissiveIntensity = isChaotic ? 150 + 100 * Math.sin(Date.now() * 0.5) : 15;
+      });
+
+      criticalLine.material.dashOffset -= 0.5;
+      outlineLine.material.opacity = 0.3 + 0.1 * Math.sin(Date.now() * 0.1);
+
+      grokText.style.transform = `translate(${Math.sin(Date.now() * 0.05) * 5}px, ${Math.cos(Date.now() * 0.05) * 5}px) scale(${1 + Math.sin(Date.now() * 0.1) * 0.1})`;
+      renderer.render(scene, camera);
+    }
+    renderer.render(scene, camera);
+    animate();
+
+    // Toggle Zeros
+    function toggleZeros() {
+      zerosOnLine = !zerosOnLine;
+      zeroGroup.children.forEach((zeroContainer, i) => {
+        const zero = zeroContainer.children[0];
+        if (zerosOnLine) {
+          zeroContainer.position.x = 50;
+          zero.material.color.setHex(0x00ffcc);
+          zero.material.emissive.setHex(0x00cc99);
+        } else {
+          zeroContainer.position.x = 20 + Math.random() * 60;
+          zero.material.color.setHex(0xff4466);
+          zero.material.emissive.setHex(0xcc3340);
+        }
+      });
+      grokMessage = zerosOnLine ? "Zeros aligned—Harmony restored!" : "Zeros scattered—Chaos overload!";
+    }
+
+    // Guided Tour
+    function startTour() {
+      controls.enabled = false;
+      let step = 0;
+      const tourSteps = [
+        { pos: new THREE.Vector3(0, 2000, 5000), msg: "Dive into the Quantum-Prime abyss!" },
+        { pos: new THREE.Vector3(50, 1500, 500), msg: "Behold the zeros—Titans of chaos!" },
+        { pos: new THREE.Vector3(0, -1000, 2000), msg: "Feel the prime waves—Reality’s pulse!" },
+        { pos: new THREE.Vector3(0, 2000, 5000), msg: "Tour complete—Unleash the madness!" }
+      ];
+      function nextStep() {
+        if (step >= tourSteps.length) {
+          controls.enabled = true;
+          return;
+        }
+        const { pos, msg } = tourSteps[step];
+        animateCamera(pos, 50, () => { // 100x faster
+          grokMessage = msg;
+          step++;
+          setTimeout(nextStep, 50); // 100x quicker transitions
+        });
+      }
+      function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+      function animateCamera(target, duration, callback) {
+        const start = camera.position.clone();
+        const startTime = Date.now();
+        function update() {
+          let t = (Date.now() - startTime) / duration;
+          if (t < 1) {
+            t = easeInOutQuad(t);
+            camera.position.lerpVectors(start, target, t);
+            camera.lookAt(new THREE.Vector3(50, 0, 0));
+            requestAnimationFrame(update);
+          } else {
+            camera.position.copy(target);
+            camera.lookAt(new THREE.Vector3(50, 0, 0));
+            callback();
+          }
+        }
+        update();
+      }
+      nextStep();
+    }
+
+    // Chaos Mode
+    function chaosMode() {
+      isChaotic = !isChaotic;
+      if (isChaotic) {
+        zeroVelocities = zeroGroup.children.map(() => new THREE.Vector3(
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10
+        ));
+        grokMessage = "CHAOS OVERLOAD—Reality shattered!";
+      } else {
+        zeroVelocities = defaultZeroPositions.map(() => new THREE.Vector3(0, 0, 0));
+        grokMessage = "Order restored—Equilibrium regained!";
+      }
+    }
+
+    // Update Primes
+    function updatePrimes(value) {
+      primeCount = parseInt(value);
+      document.getElementById('primeCount').textContent = primeCount;
+      primes = getPrimes(primeCount);
+      updatePrimeInstances();
+    }
+
+    function updatePrimeInstances() {
+      primeInst.count = primes.length;
+      const dummy = new THREE.Object3D();
+      for (let i = 0; i < primes.length; i++) {
+        const p = primes[i];
+        dummy.position.set((p % 2000) - 1000, -1000, Math.floor(p / 2000) - 5000);
+        dummy.rotation.y += 0.01;
+        dummy.updateMatrix();
+        primeInst.setMatrixAt(i, dummy.matrix);
+      }
+      primeInst.instanceMatrix.needsUpdate = true;
+    }
+
+    // Prime Generator
+    function getPrimes(n) {
+      const primes = [];
+      for (let i = 2; primes.length < n; i++) {
+        if (isPrime(i)) primes.push(i);
+      }
+      return primes;
+    }
+
+    function isPrime(n) {
+      for (let i = 2; i <= Math.sqrt(n); i++) {
+        if (n % i === 0) return false;
+      }
+      return n > 1;
+    }
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Fallback
+    window.onload = () => {
+      if (typeof THREE === 'undefined') {
+        grokText.textContent = "Error: Three.js failed to load!";
+      } else {
+        renderer.render(scene, camera);
+      }
+    };
+  </script>
+</body>
+</html>
