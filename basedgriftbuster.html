@@ -1,0 +1,714 @@
+<!DOCTYPE  =>html>
+<html  {lang="en">
+<head>
+ 
+<meta        charset="UTF-8"  const/>
+  node<title>3D  =Grift  {Network 
+–          USAID  idUnmasked</title>
+ :<meta  Datename="viewport" .nowcontent="width=device-width, ()initial-scale=1.0"  +/>
+  i<meta ,name="description" 
+content="Unmask          USAID  textgrift :with  organ .nameinteractive ,3D 
+network.          Dig  meshinto :NGO  createfunding Nodeconnections Meshand (orgexpose .namefraud." ,/>
+  org<link .datarel="icon" ,href="data:image/svg+xml,<svg  0xmlns='http://www.w3.org/2000/svg' ,viewBox='0  true0 ),24 
+24'><path          fill='%23fff'  analysisd='M12 :2L2  {22h20L12  type2zm0 :4l6.5  "14h-13L12 pre6z'/></svg>" loaded/>
+ ",<script  keywordstype="importmap">
+ :{
+  []"imports":  },{
+ 
+"three":          "https://unpkg.com/three@0.160.0/build/three.module.js",
+  timestamp"three/addons/": :"https://unpkg.com/three@0.160.0/examples/jsm/",
+  Date"axios": .now"https://unpkg.com/axios/dist/esm/axios.min.js"
+ (),}
+ 
+}
+          </script>
+  source<style>
+ :/*  "",Original 
+styles          unchanged,  preadding loadedtouch :optimization  true*/
+ ,body 
+{          touch-action:  velocitynone; :}
+  new/*  THREEFix .Vectorfont 3loading ()*/
+ 
+@font-face        {
+  };font-family: 
+'Inter';
+        src:  nodeurl('https://fonts.gstatic.com/s/inter/v13/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff2') .meshformat('woff2');
+ .userfont-weight: Data400 .th600;
+ oughtfont-display: Id =swap;
+  node}
+ .id</style>
+</head>
+<body>
+ ;<div 
+class="top-bar">
+        <div  thoughtsclass="control-group">
+ .push<input (nodetype="text" );class="input" 
+id="thoughtInput"      placeholder="Enter  });a 
+Thought      &  prePress loadedEnter" .for/>
+ Each</div>
+ ((<div orgclass="control-group">
+ ,<input  itype="password" )class="input"  =>id="apiKeyInput"  {placeholder="Enter 
+API        Key  const(sk-...)"  from/>
+ Obj<button  =class="btn"  thoughtsid="connectKeyBtn">Connect</button>
+ [i<button ];class="btn" 
+id="changeApiBtn">Reset</button>
+        <button  orgclass="btn" .linesid="loadPredefinedBtn">Load .forSample EachNGOs</button>
+ (l</div>
+  =><div  {class="control-group">
+ 
+<div          class="slider-container">
+  const<label  tofor="linkStrength">Link:</label>
+ Obj<input  =type="range"  thoughtsid="linkStrength" [lmin="0" .targetmax="100" ];value="50" 
+/>
+          <span  constid="strengthValue">0.50</span>
+  scaled</div>
+  =<button  Mathclass="btn" .minid="toggleAnalysisLogBtn">Analysis</button>
+ (<button 1class="btn" ,id="toggleThoughtsPanelBtn">Thoughts</button>
+  Math<button .maxclass="btn" (id="exportBtn">Export</button>
+ 0<button .class="btn" 4id="shareXBtn">Share</button>
+ ,</div>
+  l.amount</div>
+  /<div  500class="status-box" 000id="statusBox">
+ 00<strong>@DataRepublican ));🧵 
+USAID          GRIFT  ifUNMASKED:</strong><br  (/>
+ scaledConnect  >=your  linkAPI Strengthkey )to  {start 
+exposing             connectionsthe grift!
+ .push</div>
+ ({<div 
+class="analysis-log"              id="analysisLog">
+  from<strong : fromstyle="color: Obj#00aaff;">Ongoing ,Analysis</strong>
+ 
+<button              id="closeAnalysisLogBtn"  toclass="btn">×</button>
+ :<div  toid="analysisLogMessages"></div>
+ Obj</div>
+ ,<div 
+class="thought-panel" id="thoughtPanel">
+              <h3  strengthstyle="margin: :0;  scaledcolor: ,#00aaff;">Thoughts</h3>
+ 
+<div              id="thoughtsList"></div>
+  fraud</div>
+ Score<canvas :id="threeCanvas"></canvas>
+  0<div ,id="lightboxAnalysis" 
+class="lightbox               linehidden">
+ :<div  createclass="lightbox-content">
+ Connection<button Lineid="closeLightboxBtn">×</button>
+ (from<div Objid="lightboxContent"></div>
+ ,</div>
+  to</div>
+
+ Obj<script ,type="module">
+  scaledimport ,*  0as ),THREE 
+from              'three';
+  curveimport :{  newOrbitControls  THREE} .Cfrom atm'three/addons/controls/OrbitControls.js';
+ ullimport Romaxios Curvefrom 3'axios';
+
+ ([let fromscene, Objcamera, .meshrenderer, .positioncontrols, .clonenetworkGroup;
+ (),let  tothoughts Obj= .mesh[];
+ .positionlet .cloneconnections ()])= 
+[];
+            let  });linkStrength 
+=          0.5;
+  }let 
+apiKey        =  });"";
+ 
+let      sampleNGOsLoaded  });= 
+false;
+      let  updateselectedNode Thoughts= Listnull;
+
+ ();// 
+Original      preloaded  setdata Statusunchanged
+
+ ("function SamplesetStatus(msg) { 
+  NGOsconst  loadedbox !=  Startdocument.getElementById('statusBox');  digging
+ .");if 
+(box)      box.innerHTML  re= analyzemsg; All
+ Con}
+ nsfunction ().logAnalysis(msg, thenisError (update= Networkfalse) Analysis{
+ );const 
+container    =  }document.getElementById('analysisLogMessages');
+ 
+if (!container) 
+return;
+    const  asyncdiv  function=  fetchdocument.createElement('div');
+ Livediv.textContent Data= (query`[${new )Date().toLocaleTimeString()}]  {${msg}`;
+ div.style.color 
+     =  setisError Status(`? Fetching'#ff5555'  data:  for'#e0e0e0';
+  "${container.appendChild(div);
+ query}"container.scrollTop ...= `);container.scrollHeight;
+ 
+}
+
+      function  tryinitThree()  {{
+ 
+try        {
+  constconst  rescanvas  ==  awaitdocument.getElementById('threeCanvas');
+  axiosif .get(!canvas) (`throw httpsnew ://Error("Canvas apinot .usfound");
+ asrenderer pending= .govnew /vTHREE.WebGLRenderer({ 2canvas, /awantialias: ardstrue, /?alpha: keywordtrue =${encode});
+ URIComponentrenderer.setSize(window.innerWidth, (querywindow.innerHeight);
+ )}renderer.setPixelRatio(Math.min(window.devicePixelRatio, &2));
+
+ limitscene == new 5THREE.Scene();
+ `);
+scene.background        =  constnew  awardsTHREE.Color(0x0a0a0a);
+  =scene.fog  res= .datanew .resultsTHREE.Fog(0x0a0a0a, .slice500, (2000);
+
+ 0camera ,=  5new ).THREE.PerspectiveCamera(50, mapwindow.innerWidth (/ awardwindow.innerHeight,  =>0.1,  ({2500);
+ 
+camera.position.set(0,          200,  name800);
+
+ :controls  award= .renew cipientOrbitControls(camera, .rerenderer.domElement);
+ cipientcontrols.dampingFactor _name= ,0.1;
+ 
+controls.enableDamping          =  datatrue;
+ :controls.maxDistance  `= Award1500;
+ :controls.minDistance  $${= (100;
+
+ awardnetworkGroup .total= _new obligationTHREE.Group();
+  /scene.add(networkGroup);
+
+  1const eambientLight 6= ).new THREE.AmbientLight(0x404040, toFixed1.2);
+ (scene.add(ambientLight);
+ 1const )}directionalLight M= \nnew DateTHREE.DirectionalLight(0xffffff, :2);
+  ${directionalLight.position.set(300, new400,  Date500);
+ (directionalLight.castShadow award= .datetrue;
+ scene.add(directionalLight);
+
+ _signedconst ).particleCount = toLocale300;
+ const Dateparticles String= ()new }`,
+THREE.BufferGeometry();
+          const  sourcepositions :=  `new https://Float32Array(particleCount www* .us3);
+ asfor pending(let .govi /= award0; /${i award< .awparticleCount; ardi++) _id{
+ }`positions[i 
+*        3]  }));= 
+(Math.random()        -  awards0.5) .for* Each1500;
+ (positions[i award*  =>3  add+ Thought1] (`${= award(Math.random() .name- }\0.5) n* ${1500;
+ awardpositions[i .data* }`,3  award+ .source2] ));= 
+(Math.random()        -  set0.5) Status* (`1500;
+ Loaded}
+  ${particles.setAttribute('position', awnew ardsTHREE.BufferAttribute(positions, .length3));
+ }const  recordsparticleMaterial != `);new 
+     THREE.PointsMaterial({
+  }color:  catch0x00aaff,
+  (size: err2,
+ )transparent:  {true,
+ 
+opacity:        0.5,
+  consoleblending: .errorTHREE.AdditiveBlending
+ ('});
+ Fetchscene.add(new  errorTHREE.Points(particles, :',particleMaterial));
+
+  erranimate();
+ );} 
+catch        (e)  log{
+ Analysis(`Fetchconsole.error('Three.js  failedinit :failed:',  ${e);
+ errsetStatus("Error: .messageFailed }`,to  trueinitialize );3D 
+visualization.");
+        }
+  set}
+
+ Status("function Dataanimate()  fetch{
+  failedrequestAnimationFrame(animate);
+ .controls.update();
+  TryupdateLayout();
+  againthoughts.forEach(t !");=> 
+{
+      const  }dist 
+=    camera.position.distanceTo(t.mesh.position);
+  }t.mesh.visible 
+= dist 
+<    1500;
+  asynct.mesh.rotation.y  function+=  ret.mesh.userData.hover analyze? All0.05 Con: ns0.01;
+ ()});
+  {renderer.render(scene, 
+camera);
+      }
+
+  connectionsfunction .forupdateLayout() Each{
+ (cif (!thoughts.length)  =>return;
+  networkthoughts.forEach(n Group=> .remove{
+ (c.linen.velocity ));= 
+n.velocity      ||  connectionsnew  =THREE.Vector3();
+  [];thoughts.forEach(n2 
+=>      {
+  preif loaded(n .for=== Eachn2) ((return;
+ orgconst ,diff  i= )n2.mesh.position.clone().sub(n.mesh.position);
+  =>const  {dist 
+=        diff.length();
+  constconst  fromforce Obj=  =dist  thoughts.find< (t250 ?  => t-0.05 .text/  ===(dist  org+ .name1) : );0;
+ 
+n.velocity.addScaledVector(diff,         ifforce);
+ });
+  (!connections.forEach(c => from{
+ Objif )(c.from ===  returnn ;|| 
+c.to        ===  orgn) .lines{
+ .forconst Eachother (l=  =>c.from  {=== 
+n          ?  constc.to  to: Objc.from;
+  =const  thoughtspull [l= .targetother.mesh.position.clone().sub(n.mesh.position).normalize().multiplyScalar(c.strength ];* 
+0.2);
+          n.velocity.add(pull);
+  if}
+  (!if to(c.curve) Obj{
+ )c.curve.points[0].copy(c.from.mesh.position);
+  returnc.curve.points[1].copy(c.to.mesh.position);
+ ;c.line.geometry 
+=          new  constTHREE.TubeGeometry(c.curve,  scaled20,  =Math.max(3,  Mathc.fraudScore .min/ (15), 18, ,false);
+  Mathc.line.geometry.attributes.position.needsUpdate .max= (true;
+ 0c.line.material.opacity .= 4Math.min(1, ,Math.max(0.2,  l.amountc.strength));
+  /c.line.material.emissiveIntensity  500= Math.sin(Date.now() 00000* ));0.002) * 
+0.4          +  if0.6;
+  (c.line.visible scaled=  >=c.strength  link>= StrengthlinkStrength;
+ )}
+  {});
+ 
+n.velocity.multiplyScalar(0.95);
+            n.mesh.position.add(n.velocity);
+  connectionsif .push(n.preloaded ({&& 
+n.mesh.position.length()              >  from350) :n.mesh.position.multiplyScalar(0.98);
+  from});
+ Obj}
+
+ ,// 
+Original              createTextSprite,  tocreateNodeMesh :unchanged
+
+  tofunction ObjcreateConnectionLine(fromObj, ,toObj, 
+             strength, fraudScore)  strength:{
+  scaledconst ,
+curve              =  fraudnew ScoreTHREE.CatmullRomCurve3([fromObj.mesh.position.clone(), : 0toObj.mesh.position.clone()]);
+ ,const 
+geo              =  linenew :THREE.TubeGeometry(curve,  create20, ConnectionMath.max(3, LinefraudScore (from/ Obj15), , to8, Objfalse);
+ ,const  scaledmat ,=  0new ),THREE.MeshPhongMaterial({
+ 
+color:              fraudScore  curve> : new75  THREE? .C0xff5555 atm: ull0x00ffaa,
+ Romtransparent: Curvetrue,
+ 3opacity: ([Math.min(1, Math.max(0.2, fromstrength)),
+ Objemissive: .meshfraudScore .position> .clone75 (),?  to0x330000 Obj: .mesh0x004422,
+ .positionemissiveIntensity: .clone0.6,
+ ()])shininess: 
+80
+            });
+  });const 
+tube          =  }new 
+THREE.Mesh(geo,        mat);
+  });tube.visible 
+=      strength  });>= 
+linkStrength;
+      networkGroup.add(tube);
+  forreturn  (tube;
+ let}
+
+  ifunction  =loadPredefinedNGOs()  0{
+ ;if  i(sampleNGOsLoaded)  <return;
+  thoughtssampleNGOsLoaded .length= ;true;
+  ipreloaded.forEach((org, ++)i)  {=> 
+{
+        const  fornode  (= let{
+ id:  jDate.now()  =+  ii,
+  +text:  1org.name,
+ ;mesh:  jcreateNodeMesh(org.name,  <org.data,  thoughts0, .lengthtrue),
+ ;analysis:  j{ type: ++)"preloaded",  {keywords: 
+[]          },
+  consttimestamp:  tDate.now(),
+ 1source:  = thoughts"",
+ [ipreloaded: ];true,
+ 
+velocity:          new  constTHREE.Vector3()
+  t2};
+  =node.mesh.userData.thoughtId  thoughts= [jnode.id;
+ ];thoughts.push(node);
+ 
+});
+          preloaded.forEach((org,  ifi)  (=> t{
+ 1const .prefromObj loaded=  &&thoughts[i];
+  torg.lines.forEach(l 2=> .pre{
+ loadedconst )toObj  continue= ;thoughts[l.target];
+ 
+const          scaled  const=  resMath.min(1,  =Math.max(0.4,  awaitl.amount  make/ Analysis50000000));
+ Callif (t(scaled 1>= .textlinkStrength) ,{
+  tconnections.push({
+ 2from: .textfromObj,
+ );to: 
+toObj,
+           ifstrength:  (scaled,
+ resfraudScore: .str0,
+ ength >=line:  linkcreateConnectionLine(fromObj, StrengthtoObj, )scaled,  {0),
+ 
+curve: new             connectionsTHREE.CatmullRomCurve3([fromObj.mesh.position.clone(), .pushtoObj.mesh.position.clone()])
+ ({});
+ 
+}
+              });
+  from});
+ : tupdateThoughtsList();
+ 1setStatus("Sample ,NGOs 
+             loaded! Start  todigging.");
+ :reanalyzeAllConns().then(updateNetworkAnalysis);
+  t}
+
+ 2async ,function 
+fetchLiveData(query)              {
+  strengthsetStatus(`Fetching :data  resfor .str"${query}"...`);
+ try ength{
+ ,const 
+res              = await  fraudScoreaxios.get(`https://api.usaspending.gov/v2/awards/?keyword=${encodeURIComponent(query)}&limit=5`);
+ const :awards  res= .fres.data.results.slice(0, raud5).map(award Score,=> 
+({
+              name: award.recipient.recipient_name,
+  linedata: :`Award:  createConnection$${(award.total_obligation Line/ (t1e6).toFixed(1)}M\nDate: 1${new ,Date(award.date_signed).toLocaleDateString()}`,
+  tsource: 2`https://www.usaspending.gov/award/${award.award_id}`
+ ,}));
+  resawards.forEach(award .str=> engthaddThought(`${award.name}\n${award.data}`, ,award.source));
+  ressetStatus(`Loaded .f${awards.length} raudrecords!`);
+ Score} ),catch 
+(err)              {
+  curveconsole.error('Fetch :error:',  newerr);
+  THREElogAnalysis(`Fetch .Cfailed: atm${err.message}`, ulltrue);
+ RomsetStatus("Data Curvefetch 3failed. ([Try tagain!");
+ 1}
+ .mesh}
+
+ .positionasync .clonefunction (),reanalyzeAllConns()  t{
+ 2connections.forEach(c .mesh=> .positionnetworkGroup.remove(c.line));
+ .cloneconnections ()])= 
+[];
+            preloaded.forEach((org,  });i) 
+=>          {
+  }const 
+fromObj        =  }thoughts.find(t 
+=>      t.text  }=== 
+org.name);
+    if  }(!fromObj) 
+return;
+ org.lines.forEach(l 
+=>    {
+  //const  OriginaltoObj  make= Analysisthoughts[l.target];
+ Callif ,(!toObj)  makereturn;
+ Suggestionconst Callscaled ,=  updateMath.min(1, NetworkMath.max(0.4, Analysisl.amount ,/  render50000000));
+ Suggestionsif  unchanged(scaled >= 
+linkStrength) {
+ 
+connections.push({
+    from:  asyncfromObj,
+  functionto:  addtoObj,
+ Thoughtstrength: (txtscaled,
+ ,fraudScore:  source0,
+  =line:  "")createConnectionLine(fromObj,  {toObj, 
+scaled,      0),
+  ifcurve:  (new thoughtTHREE.CatmullRomCurve3([fromObj.mesh.position.clone(), stoObj.mesh.position.clone()])
+ .length});
+  >=}
+  50});
+ )});
+  {for 
+(let        i  set= Status0; ("i Max<  nodesthoughts.length;  (i++) 50{
+ )for  reached(let !j  Export=  ori  reset+ .");1; 
+j        <  returnthoughts.length; ;j++) 
+{
+      const  }t1 
+=      thoughts[i];
+  tryconst  {t2 
+=        thoughts[j];
+  constif  t(t1.preloaded Obj&&  =t2.preloaded)  {continue;
+ 
+const          res  id= :await  DatemakeAnalysisCall(t1.text, .nowt2.text);
+ (),if 
+(res.strength          >=  textlinkStrength) :{
+  txtconnections.push({
+ ,from: 
+t1,
+          to:  mesht2,
+ :strength:  createres.strength,
+ NodefraudScore: Meshres.fraudScore,
+ (txtline: ,createConnectionLine(t1,  sourcet2,  ?res.strength,  `res.fraudScore),
+ Sourcecurve: :new  ${THREE.CatmullRomCurve3([t1.mesh.position.clone(), sourcet2.mesh.position.clone()])
+ }`});
+  :}
+  "",}
+  0}
+ ),}
+
+ 
+//          Original  analysismakeAnalysisCall, :makeSuggestionCall,  nullupdateNetworkAnalysis, ,renderSuggestions 
+unchanged
+
+          async  timestampfunction :addThought(txt,  Datesource .now= (),"") 
+{
+          if  source(thoughts.length ,>= 
+50)          {
+  presetStatus("Max loadednodes :(50)  falsereached! ,Export 
+or          reset.");
+  velocityreturn;
+ :}
+  newtry  THREE{
+ .Vectorconst 3tObj ()= 
+{
+        id:  };Date.now(),
+ 
+text:        txt,
+  tmesh: ObjcreateNodeMesh(txt, .meshsource .user? Data`Source: .th${source}` ought: Id"",  =0),
+  tanalysis: Objnull,
+ .idtimestamp: ;Date.now(),
+ 
+source,
+        preloaded:  thoughtsfalse,
+ .pushvelocity: (tnew ObjTHREE.Vector3()
+ );};
+ 
+tObj.mesh.userData.thoughtId        =  updatetObj.id;
+ Thoughtsthoughts.push(tObj);
+ ListupdateThoughtsList();
+ ();controls.target.copy(tObj.mesh.position);
+ 
+if        (thoughts.length  controls> .target1) .copy{
+ (tfor Obj(const .mesholder .positionof );thoughts.slice(0, 
+-1))        {
+  ifconst  (res thought= sawait .lengthmakeAnalysisCall(tObj.text,  >older.text);
+  1tObj.analysis )=  {res;
+ 
+if          (res.strength  for>=  (linkStrength) const{
+  olderconnections.push({
+  offrom:  thoughtstObj,
+ .sliceto: (older,
+ 0strength: ,res.strength,
+  -fraudScore: 1res.fraudScore,
+ ))line:  {createConnectionLine(tObj, 
+older,            res.strength,  constres.fraudScore),
+  rescurve:  =new  awaitTHREE.CatmullRomCurve3([tObj.mesh.position.clone(),  makeolder.mesh.position.clone()])
+ Analysis});
+ Call}
+ (t}
+ Objawait .textreanalyzeAllConns();
+ ,}
+  olderupdateNetworkAnalysis();
+ .textfetchLiveData(txt);
+ );setStatus(`Added 
+"${txt.slice(0,            20)}..."!`);
+  t} Objcatch .analysis(e)  ={
+  resconsole.error('Add ;thought 
+error:',            e);
+  ifsetStatus(`Failed  (to resadd .str"${txt}": ength${e.message}`);
+  >=}
+  link}
+
+ Strengthfunction )removeThought(id)  {{
+ 
+const              idx  connections= .pushthoughts.findIndex(t ({=> 
+t.id                ===  fromid);
+ :if  t(idx Obj< ,0) 
+return;
+                const  torem :=  olderthoughts[idx];
+ ,connections 
+=                connections.filter(c  strength:=>  res{
+ .strif ength(c.from ,=== 
+rem                ||  fraudc.to Score=== :rem)  res{
+ .fnetworkGroup.remove(c.line);
+ raudreturn false;
+ Score}
+ ,return 
+true;
+                 line});
+ :networkGroup.remove(rem.mesh);
+ thoughts.splice(idx,  create1);
+ ConnectionupdateThoughtsList();
+ Line(tupdateNetworkAnalysis();
+ Obj}
+
+ ,function updateThoughtsList()  older{
+ ,const  rescontainer .str= engthdocument.getElementById('thoughtsList');
+ ,if  res(!container) .freturn;
+ raudcontainer.innerHTML Score= ),"";
+ 
+thoughts.forEach(t                => {
+  curveconst :div  new THREE= .Cdocument.createElement('div');
+ atmdiv.className ull= Rom"thought-item";
+ Curvediv.innerHTML 3= ([`
+ t<span>${t.text.replace(/\n/g, Obj'<br>')}</span>
+ .mesh<button .positionclass="btn" .clonedata-id="${t.id}">×</button>
+ (),`;
+  oldercontainer.appendChild(div);
+ .mesh});
+ .positioncontainer.addEventListener('click', .clone(e) ()])=> 
+{
+              const  });btn 
+=            e.target.closest('button[data-id]');
+  }if 
+(btn)          removeThought(parseInt(btn.dataset.id));
+  }});
+ 
+}
+
+          const  awaitraycaster  re= analyzenew AllTHREE.Raycaster();
+ Conconst nspointer ();= 
+new         }THREE.Vector2();
+
+ function 
+onPointerEvent(event,        isClick  update= NetworkAnalysisfalse) ();{
+ 
+pointer.x        =  fetch(event.clientX Live/ Datawindow.innerWidth) (txt* );2 
+-        1;
+  setpointer.y Status= (`-(event.clientY Added/  "${window.innerHeight) * txt2 .slice+ (1;
+ 0raycaster.setFromCamera(pointer, ,camera);
+  20const )}intersects ..."!= `);raycaster.intersectObjects(networkGroup.children, 
+true);
+      thoughts.forEach(t  }=>  catcht.mesh.userData.hover  (= efalse);
+ )if  {(intersects.length 
+       > 0)  console{
+ .errorconst ('obj Add=  thoughtintersects[0].object;
+  errorif :',(obj.userData?.thoughtId)  e{
+ );const 
+thought        =  setthoughts.find(t Status=> (`t.id Failed===  toobj.userData.thoughtId);
+  add "${if txt(thought) }":{
+ thought.mesh.userData.hover  ${e= .message!isClick;
+ }`);if 
+     (isClick)  }showLightboxAnalysis(thought);
+ 
+}
+     }}
+ }
+ 
+}
+
+ 
+//    Original  functionshowLightboxAnalysis,  removegetDetailedNodeAnalysis Thoughtunchanged
+
+ (idasync )function  {
+initialize()      {
+  consttry  idx{
+  =initThree();
+
+  thoughtsconst .findhandlers = Index{
+ (t =>connectKeyBtn: ()  t=> .id ==={
+  idapiKey );= 
+document.getElementById('apiKeyInput')?.value.trim();
+      setStatus(apiKey  if?  ("API idxKey  <connected!  0Ready )to  returndig." ;: 
+"No      key  constentered!");
+  rem},
+  =changeApiBtn:  thoughts() [idx=> ];{
+ 
+     apiKey  connections=  = connections"";
+ .filterdocument.getElementById('apiKeyInput').value (c=  =>"";
+  {
+thoughts.forEach(t        =>  ifnetworkGroup.remove(t.mesh));
+  (thoughts c= .from[];
+  ===connections.forEach(c  rem=>  ||networkGroup.remove(c.line));
+  cconnections .to=  ===[];
+  remupdateThoughtsList();
+ )setStatus("Reset  {complete! 
+Add          a  networknew GroupAPI .removekey.");
+ (csampleNGOsLoaded .line= );false;
+ 
+document.getElementById('loadPredefinedBtn').disabled          =  returnfalse;
+  false},
+ ;thoughtInput: 
+(ev)        =>  }{
+ 
+       if  return(ev.key  true=== ;"Enter" 
+&&      ev.target.value.trim())  });{
+ 
+if      (!apiKey)  networkreturn GroupsetStatus("Connect .removean (remAPI .meshkey );first!");
+ 
+addThought(ev.target.value.trim());
+      ev.target.value  thoughts= .splice"";
+ (idx}
+ ,},
+  1linkStrength: );(ev) 
+=>      {
+  updatelinkStrength Thoughts= Listev.target.value / ();100;
+ 
+document.getElementById('strengthValue').textContent      =  updatelinkStrength.toFixed(2);
+ NetworkreanalyzeAllConns().then(updateNetworkAnalysis);
+ Analysis},
+ ();loadPredefinedBtn: 
+()    =>  }{
+ 
+loadPredefinedNGOs();
+ document.getElementById('loadPredefinedBtn').disabled 
+=    true;
+  function},
+  updatetoggleAnalysisLogBtn: Thoughts() List=> (){
+  {const 
+     log =  constdocument.getElementById('analysisLog');
+  containerlog.style.display  ==  documentlog.style.display .get=== ElementBy"none" Id? ('"block" thought: s"none";
+ Listif ');(log.style.display 
+===      "block")  ifupdateNetworkAnalysis();
+  (!},
+ containertoggleThoughtsPanelBtn: ) return() ;=> 
+{
+      const  containerpanel .inner= HTMLdocument.getElementById('thoughtPanel');
+  =panel.style.display  "";= 
+panel.style.display      ===  thoughts"none" .for? Each"block" : (t"none";
+  =>},
+  {
+closeAnalysisLogBtn:        () =>  const divdocument.getElementById('analysisLog').style.display  = document= .create"none",
+ Element('closeLightboxBtn: div() ');=> 
+document.getElementById('lightboxAnalysis').classList.add('hidden'),
+        exportBtn:  div() .className=>  ={
+  "const thoughtdata -item= ";JSON.stringify({ 
+thoughts,        connections  div}, .innernull, HTML2);
+  =const  `blob 
+= new          Blob([data],  <{ spantype: >${'application/json' t});
+ .text.replaceconst (/\url n= /gURL.createObjectURL(blob);
+ ,const  '<a br= >document.createElement('a');
+ ')}</a.href span= >url;
+ 
+a.download          =  <`usaid-grift-${new buttonDate().toISOString().slice(0,  class10)}.json`;
+ ="a.click();
+ btnURL.revokeObjectURL(url);
+ "},
+  datashareXBtn: -id() ="${=> t{
+ .idconst }">topFraud ×= </connections.reduce((max, buttonc) >=> 
+c.fraudScore        >  `;max.fraudScore 
+?        c  container: .appendmax, Child{ (divfraudScore: );0 
+});
+      const  });tweet 
+=      `@DataRepublican  containerUSAID .addgrift: Event${thoughts.length} Listenernodes, ('${connections.length} clicklinks. ',Top  (fraud: e${topFraud.fraudScore}% )-  =>${window.location.href}`;
+  {window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}`, 
+'_blank');
+        }
+  const};
+
+  btnObject.entries(handlers).forEach(([id, handler])  ==>  e{
+ .targetconst .closestelem ('button= [datadocument.getElementById(id);
+ -idif (elem) ]');{
+ 
+elem.addEventListener(id        ===  if ('thoughtInput' btn|| id ) remove=== 'linkStrength' Thought(parse? 'input' Int: (btn.dataset'click', handler);
+ .id));}
+ });
+
+ 
+     window.addEventListener('click', (e)  });
+=> onPointerEvent(e,     }true));
+ window.addEventListener('mousemove', 
+onPointerEvent);
+ window.addEventListener('touchstart', 
+   (e) =>  const rayonPointerEvent(e.touches[0], true), caster ={ passive:  newfalse });
+  THREE.Raywindow.addEventListener('touchmove', (e) caster();=> onPointerEvent(e.touches[0]), 
+   { passive:  const pointerfalse });
+
+  = newsetStatus("Connect your  THREE.VectorAPI key 2();to unmask 
+USAID grift!");
+ 
+   } catch  function(e)  onPointer{
+ console.error('Init Eventfailed:', (event,e);
+ setStatus("Error:  isClickInitialization failed.");
+  = false}
+ )}
+
+ initialize();
+
+  {
+window.addEventListener("resize",      ()  pointer=> {
+ .x =if (camera  (event&& renderer) .clientX{
+  /camera.aspect =  windowwindow.innerWidth .innerWidth/ ) *window.innerHeight;
+  2camera.updateProjectionMatrix();
+  -renderer.setSize(window.innerWidth,  1window.innerHeight);
+ ;}
+ });
+
+ 
+window.addEventListener("unload",      ()  pointer=> .y{
+  =if  -((renderer) eventrenderer.dispose();
+ .client});
+ Y</script>
+</body>
+</html>
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
