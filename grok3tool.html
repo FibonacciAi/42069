@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quantum-Prime Explorer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+    #canvas { width: 100vw; height: 100vh; display: block; }
+    #controls {
+      position: absolute; 
+      top: 20px; 
+      left: 20px; 
+      z-index: 1;
+      background: rgba(10, 10, 20, 0.9); 
+      padding: 15px; 
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+      font-family: 'Orbitron', sans-serif;
+    }
+    #controls button, #controls input {
+      background: #0f3460;
+      color: #00ffff;
+      border: 1px solid #00ffff;
+      padding: 8px 12px;
+      margin: 5px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    #controls button:hover, #controls input:hover {
+      background: #00ffff;
+      color: #0f3460;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    #controls label {
+      color: #e94560;
+      font-size: 14px;
+    }
+    #grok-text {
+      position: absolute; 
+      bottom: 20px; 
+      left: 20px; 
+      z-index: 1;
+      color: #00ffcc; 
+      font-size: 22px; 
+      font-family: 'Orbitron', monospace;
+      text-shadow: 0 0 10px rgba(0, 255, 204, 0.8), 0 0 20px rgba(0, 255, 204, 0.4);
+      animation: grokPulse 1.5s infinite alternate;
+    }
+    @keyframes grokPulse {
+      from { opacity: 0.6; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <button onclick="toggleZeros()">Toggle Zeros</button>
+    <button onclick="startTour()">Guided Tour</button>
+    <button onclick="chaosMode()">Chaos Mode</button>
+    <input type="range" id="primeRange" min="10" max="1000" value="100" oninput="updatePrimes(this.value)">
+    <label>Primes: <span id="primeCount">100</span></label>
+  </div>
+  <div id="grok-text">Quantum-Prime Explorer online!</div>
+
+  <script>
+    // Scene Setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    camera.position.set(0, 20, 50);
+
+    // Orbit Controls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x16213e, 0.6);
+    const pointLight = new THREE.PointLight(0x00ffff, 1.5, 200);
+    pointLight.position.set(10, 20, 30);
+    pointLight.castShadow = true;
+    scene.add(ambientLight, pointLight);
+
+    // Critical Strip
+    const stripGeo = new THREE.PlaneGeometry(1, 100);
+    const stripMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0f3460, transparent: true, opacity: 0.2, metalness: 0.3, roughness: 0.4, side: THREE.DoubleSide
+    });
+    const strip = new THREE.Mesh(stripGeo, stripMat);
+    strip.position.set(0.5, 0, 0);
+    strip.rotation.x = Math.PI / 2;
+    scene.add(strip);
+
+    // Critical Line
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0.5, -50, 0),
+      new THREE.Vector3(0.5, 50, 0)
+    ]);
+    const lineMat = new THREE.LineDashedMaterial({ color: 0x00ffcc, dashSize: 1, gapSize: 0.5, linewidth: 3 });
+    const criticalLine = new THREE.Line(lineGeo, lineMat);
+    criticalLine.computeLineDistances();
+    scene.add(criticalLine);
+
+    // Zeros
+    let zerosOnLine = true;
+    const defaultZeroPositions = [
+      new THREE.Vector3(0.5, 14.1347, 0),
+      new THREE.Vector3(0.5, 21.0220, 0),
+      new THREE.Vector3(0.5, 25.0108, 0),
+      new THREE.Vector3(0.5, 30.4249, 0)
+    ];
+    const zeroGroup = new THREE.Group();
+    defaultZeroPositions.forEach(pos => {
+      const zeroGeo = new THREE.SphereGeometry(0.3, 32, 32);
+      const zeroMat = new THREE.MeshPhysicalMaterial({
+        color: 0x00ffcc, emissive: 0x00cc99, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.3, transparent: true, opacity: 0.85
+      });
+      const zero = new THREE.Mesh(zeroGeo, zeroMat);
+      zero.position.copy(pos);
+      zero.castShadow = true;
+      zeroGroup.add(zero);
+    });
+    scene.add(zeroGroup);
+
+    // Prime Wave
+    const primeGeo = new THREE.PlaneGeometry(20, 100, 40, 100);
+    const primeMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0f3460, wireframe: true, metalness: 0.4, roughness: 0.3, emissive: 0x00ffff, emissiveIntensity: 0.15
+    });
+    const primeWave = new THREE.Mesh(primeGeo, primeMat);
+    primeWave.rotation.x = Math.PI / 2;
+    primeWave.position.y = -10;
+    primeWave.castShadow = true;
+    scene.add(primeWave);
+
+    // Primes as Instanced Particles
+    let primeCount = 100;
+    let primes = getPrimes(primeCount);
+    const primeInstGeo = new THREE.SphereGeometry(0.15, 16, 16);
+    const primeInstMat = new THREE.MeshPhysicalMaterial({ color: 0xe94560, emissive: 0xe94560, emissiveIntensity: 0.5 });
+    const primeInst = new THREE.InstancedMesh(primeInstGeo, primeInstMat, primes.length);
+    updatePrimeInstances();
+    scene.add(primeInst);
+
+    // Grok Text
+    const grokText = document.getElementById('grok-text');
+    let grokMessage = "Quantum-Prime Explorer online!";
+    let isChaotic = false;
+
+    // Animation Loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      zeroGroup.children.forEach((zero, i) => {
+        const scale = 1 + 0.1 * Math.sin(Date.now() * 0.002 + i);
+        zero.scale.setScalar(scale);
+        zero.material.emissiveIntensity = 0.7 + 0.3 * Math.sin(Date.now() * 0.003 + i);
+      });
+
+      const vertices = primeWave.geometry.attributes.position.array;
+      for (let i = 0; i < vertices.length; i += 3) {
+        const x = vertices[i];
+        const y = vertices[i + 1];
+        const baseFreq = Date.now() * 0.001;
+        const zBase = Math.sin(x * 0.5 + y * 0.1 + baseFreq);
+        vertices[i + 2] = isChaotic ? zBase * (1 + Math.random() * 2) : zBase * 0.8;
+      }
+      primeWave.geometry.attributes.position.needsUpdate = true;
+      primeWave.material.emissiveIntensity = isChaotic ? 0.4 : 0.15;
+
+      grokText.textContent = grokMessage;
+      renderer.render(scene, camera);
+    }
+    renderer.render(scene, camera); // Initial render to kickstart
+    animate();
+
+    // Toggle Zeros
+    function toggleZeros() {
+      zerosOnLine = !zerosOnLine;
+      zeroGroup.children.forEach((zero, i) => {
+        if (zerosOnLine) {
+          zero.position.x = 0.5;
+          zero.material.color.setHex(0x00ffcc);
+          zero.material.emissive.setHex(0x00cc99);
+        } else {
+          zero.position.x = 0.2 + Math.random() * 0.6;
+          zero.material.color.setHex(0xe94560);
+          zero.material.emissive.setHex(0xcc3340);
+        }
+      });
+      grokMessage = zerosOnLine ? "Zeros aligned at Re(s) = 1/2—Harmony restored!" : "Zeros scattered—Chaos encroaching!";
+    }
+
+    // Guided Tour
+    function startTour() {
+      controls.enabled = false;
+      let step = 0;
+      const tourSteps = [
+        { pos: new THREE.Vector3(0, 20, 50), msg: "Welcome to the Quantum-Prime frontier!" },
+        { pos: new THREE.Vector3(0.5, 15, 5), msg: "Gaze upon the zeros—Guardians of Re(s) = 1/2!" },
+        { pos: new THREE.Vector3(0, -10, 20), msg: "Feel the prime wave—Order or chaos awaits!" },
+        { pos: new THREE.Vector3(0, 20, 50), msg: "Tour complete—Unleash your exploration!" }
+      ];
+      function nextStep() {
+        if (step >= tourSteps.length) {
+          controls.enabled = true;
+          return;
+        }
+        const { pos, msg } = tourSteps[step];
+        animateCamera(pos, 2000, () => {
+          grokMessage = msg;
+          step++;
+          setTimeout(nextStep, 1000);
+        });
+      }
+      function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+      function animateCamera(target, duration, callback) {
+        const start = camera.position.clone();
+        const startTime = Date.now();
+        function update() {
+          let t = (Date.now() - startTime) / duration;
+          if (t < 1) {
+            t = easeInOutQuad(t);
+            camera.position.lerpVectors(start, target, t);
+            requestAnimationFrame(update);
+          } else {
+            camera.position.copy(target);
+            callback();
+          }
+        }
+        update();
+      }
+      nextStep();
+    }
+
+    // Chaos Mode
+    function chaosMode() {
+      isChaotic = !isChaotic;
+      if (isChaotic) {
+        zeroGroup.children.forEach(zero => {
+          zero.position.set(Math.random() * 2 - 1, Math.random() * 100 - 50, Math.random() * 20 - 10);
+          zero.material.color.setHex(0xe94560);
+          zero.material.emissive.setHex(0xcc3340);
+        });
+        grokMessage = "CHAOS UNLEASHED—Reality fracturing!";
+      } else {
+        zeroGroup.children.forEach((zero, i) => {
+          zero.position.copy(defaultZeroPositions[i]);
+          zero.material.color.setHex(0x00ffcc);
+          zero.material.emissive.setHex(0x00cc99);
+        });
+        grokMessage = "Order restored—Equilibrium achieved!";
+      }
+    }
+
+    // Update Primes
+    function updatePrimes(value) {
+      primeCount = parseInt(value);
+      document.getElementById('primeCount').textContent = primeCount;
+      primes = getPrimes(primeCount);
+      updatePrimeInstances();
+    }
+
+    function updatePrimeInstances() {
+      primeInst.count = primes.length;
+      const dummy = new THREE.Object3D();
+      for (let i = 0; i < primes.length; i++) {
+        const p = primes[i];
+        dummy.position.set((p % 20) - 10, -10, Math.floor(p / 20) - 50);
+        dummy.updateMatrix();
+        primeInst.setMatrixAt(i, dummy.matrix);
+      }
+      primeInst.instanceMatrix.needsUpdate = true;
+    }
+
+    // Prime Generator
+    function getPrimes(n) {
+      const primes = [];
+      for (let i = 2; primes.length < n; i++) {
+        if (isPrime(i)) primes.push(i);
+      }
+      return primes;
+    }
+
+    function isPrime(n) {
+      for (let i = 2; i <= Math.sqrt(n); i++) {
+        if (n % i === 0) return false;
+      }
+      return n > 1;
+    }
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Fallback if scripts fail to load
+    window.onload = () => {
+      if (typeof THREE === 'undefined') {
+        grokText.textContent = "Error: Three.js failed to load!";
+      } else {
+        renderer.render(scene, camera); // Ensure initial render
+      }
+    };
+  </script>
+</body>
+</html>
