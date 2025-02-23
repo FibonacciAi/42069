@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>3D Thought Network – Deep Contextual Analysis</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="description" content="Explore and analyze thoughts in a dynamic 3D network with deep contextual insights." />
-  <!-- Import map for Three.js and additional modules -->
   <script type="importmap">
   {
     "imports": {
@@ -15,7 +14,6 @@
   }
   </script>
   <style>
-    /* Enhanced Global Styling */
     *, *::before, *::after { box-sizing: border-box; }
     body {
       margin: 0;
@@ -24,7 +22,7 @@
       background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
       color: #e0e0e0;
       overflow: hidden;
-      cursor: default;
+      touch-action: manipulation;
     }
     .top-bar {
       position: fixed;
@@ -33,10 +31,7 @@
       right: 0;
       background: rgba(10, 10, 10, 0.95);
       backdrop-filter: blur(12px);
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      padding: 8px;
       z-index: 100;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -44,18 +39,22 @@
     .row {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 6px;
       align-items: center;
+      justify-content: center;
+      padding: 4px;
     }
     .btn {
       background: linear-gradient(45deg, #2a2a2a, #3a3a3a);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      padding: 8px 16px;
+      border-radius: 6px;
+      padding: 6px 12px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       font-weight: 500;
+      font-size: 14px;
+      touch-action: manipulation;
     }
     .btn:hover {
       background: linear-gradient(45deg, #3a3a3a, #4a4a4a);
@@ -63,15 +62,17 @@
       transform: translateY(-1px);
     }
     .btn:active { transform: translateY(1px); }
-    .btn.glow { box-shadow: 0 0 10px rgba(0, 255, 128, 0.5); }
+    .btn.glow { box-shadow: 0 0 8px rgba(0, 255, 128, 0.5); }
     .input {
       background: rgba(20, 20, 20, 0.9);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 8px 12px;
-      min-width: 200px;
-      transition: border-color 0.3s;
+      border-radius: 6px;
+      padding: 6px 10px;
+      width: 100%;
+      max-width: 250px;
+      font-size: 14px;
+      transition: border-color 0.2s;
     }
     .input:focus {
       border-color: #00ff80;
@@ -80,92 +81,91 @@
     .slider-container {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       color: #bbb;
+      font-size: 12px;
     }
     input[type=range] {
-      width: 120px;
+      width: 80px;
       accent-color: #00ff80;
     }
     .status-box {
       position: fixed;
-      bottom: 20px;
-      left: 20px;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
       background: rgba(10, 10, 10, 0.95);
       backdrop-filter: blur(12px);
-      padding: 12px 20px;
-      border-radius: 10px;
+      padding: 10px;
+      border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       z-index: 100;
-      transition: all 0.3s ease;
-      max-width: 40vw;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+      font-size: 14px;
     }
-    .status-box:hover { transform: scale(1.02); }
+    .status-box:hover { transform: scale(1.01); }
     .analysis-log {
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
       background: rgba(10, 10, 10, 0.95);
       backdrop-filter: blur(12px);
-      width: 500px;
-      max-height: 50vh;
+      max-width: 90vw;
+      max-height: 60vh;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 16px;
+      border-radius: 8px;
+      padding: 12px;
       overflow-y: auto;
       z-index: 150;
       display: none;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      font-size: 13px;
     }
     .analysis-log-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
     }
     .analysis-log-header button {
       background: transparent;
       border: none;
       color: #fff;
-      font-size: 20px;
+      font-size: 18px;
       cursor: pointer;
-      transition: color 0.3s;
+      transition: color 0.2s;
     }
     .analysis-log-header button:hover { color: #ff5555; }
-    #analysisLogMessages {
-      font-size: 13px;
-      line-height: 1.5;
-      color: #ddd;
-    }
+    #analysisLogMessages { line-height: 1.4; }
     .thought-panel {
       position: fixed;
-      right: 20px;
-      top: 100px;
+      top: 10%;
+      right: 10px;
       background: rgba(10, 10, 10, 0.95);
       backdrop-filter: blur(12px);
-      padding: 20px;
-      border-radius: 10px;
+      padding: 12px;
+      border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      width: 320px;
-      max-height: 70vh;
+      width: 90%;
+      max-width: 300px;
+      max-height: 80vh;
       overflow-y: auto;
       z-index: 90;
       display: none;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
     .thought-item {
       background: rgba(30, 30, 30, 0.9);
-      padding: 10px 14px;
-      border-radius: 6px;
-      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: all 0.3s;
+      transition: all 0.2s;
+      font-size: 13px;
     }
     .thought-item:hover {
       background: rgba(40, 40, 40, 0.9);
@@ -181,77 +181,86 @@
     }
     .suggestionsPanel {
       display: flex;
-      gap: 8px;
-      margin-top: 12px;
+      gap: 6px;
+      margin-top: 8px;
       flex-wrap: wrap;
+      justify-content: center;
     }
     .suggestion-btn {
       background: linear-gradient(45deg, #00cc66, #00ff80);
       color: #fff;
       border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
+      border-radius: 4px;
+      padding: 5px 10px;
       cursor: pointer;
-      font-size: 13px;
-      transition: all 0.3s;
+      font-size: 12px;
+      transition: all 0.2s;
     }
     .suggestion-btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 8px rgba(0, 255, 128, 0.5);
+      box-shadow: 0 0 6px rgba(0, 255, 128, 0.5);
     }
-    /* Enhanced Lightbox Styles */
     .lightbox {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.9);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 200;
-      animation: fadeIn 0.3s ease;
+      padding: 10px;
+      overflow-y: auto;
     }
     .lightbox-content {
       background: #151515;
-      padding: 25px;
-      border-radius: 12px;
-      max-width: 80vw;
-      max-height: 80vh;
+      padding: 15px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 90vw;
+      max-height: 90vh;
       overflow-y: auto;
       position: relative;
       color: #e0e0e0;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-      animation: slideUp 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
     }
     #closeLightboxBtn {
       position: absolute;
-      top: 15px;
-      right: 15px;
+      top: 10px;
+      right: 10px;
       background: transparent;
       border: none;
-      font-size: 28px;
+      font-size: 24px;
       color: #fff;
       cursor: pointer;
-      transition: color 0.3s;
+      transition: color 0.2s;
     }
     #closeLightboxBtn:hover { color: #ff5555; }
     .hidden { display: none; }
-    /* Animations */
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @media (max-width: 600px) {
+      .top-bar { padding: 6px; }
+      .btn { padding: 5px 10px; font-size: 12px; }
+      .input { font-size: 12px; padding: 5px 8px; max-width: 200px; }
+      .slider-container { font-size: 10px; }
+      input[type=range] { width: 60px; }
+      .status-box { font-size: 12px; padding: 8px; }
+      .analysis-log { padding: 10px; font-size: 12px; }
+      .thought-panel { padding: 10px; max-width: 90%; }
+      .thought-item { font-size: 12px; padding: 6px; }
+      .suggestion-btn { font-size: 11px; padding: 4px 8px; }
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Top Bar with Enhanced Controls -->
   <div class="top-bar">
     <div class="row">
       <input type="text" class="input" id="apiKeyInput" placeholder="Enter ANY non-empty key">
       <button class="btn" id="connectKeyBtn">Connect</button>
       <button class="btn" id="changeApiBtn">Reset API</button>
-      <button class="btn hidden" id="exportBtn">Export Network</button>
+      <button class="btn hidden" id="exportBtn">Export</button>
     </div>
     <div class="row">
       <input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought & press Enter">
@@ -265,7 +274,6 @@
     </div>
   </div>
 
-  <!-- Status and Panels -->
   <div class="status-box" id="statusBox">
     <strong>Welcome to 3D Thought Network</strong><br>
     Connect an API key to unlock deep contextual analysis and explore sample NGOs.
@@ -280,14 +288,12 @@
   </div>
 
   <div class="thought-panel" id="thoughtPanel">
-    <h3 style="margin-top:0; font-weight: 600;">Thought Network</h3>
+    <h3 style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px;">Thought Network</h3>
     <div id="thoughtsList"></div>
   </div>
 
-  <!-- Three.js Canvas -->
   <canvas id="threeCanvas"></canvas>
 
-  <!-- Enhanced Lightbox -->
   <div id="lightboxAnalysis" class="lightbox hidden">
     <div class="lightbox-content">
       <button id="closeLightboxBtn">×</button>
@@ -295,22 +301,18 @@
     </div>
   </div>
 
-  <!-- Main Script -->
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    /* --------------------------
-       Global Variables and State
-    --------------------------- */
     let scene, camera, renderer, controls, networkGroup, ambientLight, pointLight;
-    let thoughts = [];      // { id, text, mesh, analysis, velocity }
-    let connections = [];   // { from, to, line, strength }
+    let thoughts = [];
+    let connections = [];
     let linkStrength = 0.5;
     let apiKey = "";
     let simulationRunning = true;
+    let isMobile = window.innerWidth <= 600;
 
-    // Sample NGO data with richer context
     const preloaded = [
       { name: "NATIONAL ENDOWMENT FOR DEMOCRACY\n(EIN: 52-1344831)", data: "Gross receipts: $363M\nTaxpayer funds: $362M\nFocus: Global democracy", lines: [] },
       { name: "CONSORTIUM FOR ELECTIONS &\n(EIN: 52-1943638)", data: "Gross receipts: $165M\nTaxpayer funds: $165M\nFocus: Election integrity", lines: [] },
@@ -332,9 +334,6 @@
     preloaded[3].lines.push({ target: 6, amount: 0 });
     preloaded[5].lines.push({ target: 6, amount: 0 });
 
-    /* --------------------------
-       UI Helper Functions
-    --------------------------- */
     function setStatus(msg) {
       document.getElementById('statusBox').innerHTML = msg;
     }
@@ -347,9 +346,6 @@
       container.scrollTop = container.scrollHeight;
     }
 
-    /* --------------------------
-       Three.js Setup with Enhanced Visuals
-    --------------------------- */
     function initThree() {
       const canvas = document.getElementById('threeCanvas');
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -357,27 +353,27 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0a0a0a);
+      scene.background = null;
 
       camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
-      camera.position.set(0, 200, 800);
+      camera.position.set(0, isMobile ? 400 : 200, isMobile ? 1200 : 800);
 
       controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
+      controls.enableZoom = true;
+      controls.enablePan = !isMobile;
 
-      // Add lighting
-      ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+      ambientLight = new THREE.AmbientLight(0x606060, 0.8);
       scene.add(ambientLight);
-      pointLight = new THREE.PointLight(0xffffff, 1, 2000);
+      pointLight = new THREE.PointLight(0xffffff, 1.5, 2000);
       pointLight.position.set(0, 300, 500);
       scene.add(pointLight);
 
       networkGroup = new THREE.Group();
       scene.add(networkGroup);
 
-      // Add subtle background grid
-      const grid = new THREE.GridHelper(2000, 20, 0x222222, 0x222222);
+      const grid = new THREE.GridHelper(2000, 20, 0x333333, 0x333333);
       grid.position.y = -100;
       scene.add(grid);
 
@@ -391,7 +387,7 @@
       renderer.render(scene, camera);
     }
     function updatePhysics() {
-      const repulsionForce = 0.1;
+      const repulsionForce = isMobile ? 0.15 : 0.1;
       const friction = 0.95;
       thoughts.forEach(n1 => {
         n1.velocity = n1.velocity || new THREE.Vector3();
@@ -401,21 +397,20 @@
           const dy = n2.mesh.position.y - n1.mesh.position.y;
           const dz = n2.mesh.position.z - n1.mesh.position.z;
           const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
-          if (dist < 150) {
-            const force = repulsionForce * (150 - dist) / dist;
+          if (dist < (isMobile ? 200 : 150)) {
+            const force = repulsionForce * ((isMobile ? 200 : 150) - dist) / dist;
             n1.velocity.x -= force * dx;
             n1.velocity.y -= force * dy;
             n1.velocity.z -= force * dz;
           }
         });
-        // Apply connected spring forces
         connections.filter(c => c.from === n1 || c.to === n1).forEach(c => {
           const other = c.from === n1 ? c.to : c.from;
           const dx = other.mesh.position.x - n1.mesh.position.x;
           const dy = other.mesh.position.y - n1.mesh.position.y;
           const dz = other.mesh.position.z - n1.mesh.position.z;
           const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
-          const springLength = 200;
+          const springLength = isMobile ? 300 : 200;
           const springForce = 0.005 * (dist - springLength) * c.strength;
           n1.velocity.x += springForce * dx / dist;
           n1.velocity.y += springForce * dy / dist;
@@ -431,15 +426,12 @@
       });
     }
 
-    /* --------------------------
-       Node and Label Creation with Visual Flair
-    --------------------------- */
     function createTextSprite(text) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const lines = text.split("\n");
-      const fontSize = 28;
-      const pad = 15;
+      const fontSize = isMobile ? 24 : 28;
+      const pad = 10;
       ctx.font = `bold ${fontSize}px Inter`;
       let maxWidth = 0;
       lines.forEach(line => {
@@ -457,51 +449,46 @@
       const texture = new THREE.CanvasTexture(canvas);
       const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
       const sprite = new THREE.Sprite(material);
-      sprite.scale.set(canvas.width * 0.35, canvas.height * 0.35, 1);
+      sprite.scale.set(canvas.width * (isMobile ? 0.3 : 0.35), canvas.height * (isMobile ? 0.3 : 0.35), 1);
       return sprite;
     }
     function createNodeMesh(title, details) {
-      const geo = new THREE.SphereGeometry(12, 32, 32);
+      const geo = new THREE.SphereGeometry(isMobile ? 16 : 12, 32, 32);
       const mat = new THREE.MeshPhongMaterial({
-        color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6),
-        shininess: 50
+        color: new THREE.Color().setHSL(Math.random(), 0.7, 0.7), // Brighter, more vibrant colors
+        shininess: 80,
+        emissive: 0x101010,
       });
       const sphere = new THREE.Mesh(geo, mat);
 
       const text = `${title}\n${details}`;
       const label = createTextSprite(text);
-      label.position.set(0, 25, 0);
+      label.position.set(0, isMobile ? 30 : 25, 0);
       sphere.add(label);
 
       sphere.position.set(
-        (Math.random() - 0.5) * 400,
-        (Math.random() - 0.5) * 400,
-        (Math.random() - 0.5) * 400
+        (Math.random() - 0.5) * (isMobile ? 600 : 400),
+        (Math.random() - 0.5) * (isMobile ? 600 : 400),
+        (Math.random() - 0.5) * (isMobile ? 600 : 400)
       );
       networkGroup.add(sphere);
       return sphere;
     }
 
-    /* --------------------------
-       Connection Lines with Gradient
-    --------------------------- */
     function createConnectionLine(fromObj, toObj, strength) {
       const pts = [fromObj.mesh.position, toObj.mesh.position];
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const mat = new THREE.LineBasicMaterial({
         color: 0x00ff80,
         transparent: true,
-        opacity: Math.max(0.3, strength),
-        linewidth: 2
+        opacity: Math.max(0.4, strength),
+        linewidth: isMobile ? 3 : 2
       });
       const line = new THREE.Line(geo, mat);
       networkGroup.add(line);
       return line;
     }
 
-    /* --------------------------
-       Preloading Sample NGOs
-    --------------------------- */
     function loadPredefinedNGOs() {
       if (thoughts.length > 0) return;
       preloaded.forEach((org, i) => {
@@ -534,16 +521,13 @@
       updateNetworkAnalysis();
     }
 
-    /* --------------------------
-       Enhanced Analysis Functions
-    --------------------------- */
     async function makeAnalysisCall(t1, t2) {
       if (!apiKey) {
         logAnalysis("[Error] No API key provided", true);
         return { strength: 0, type: "none", keywords: [] };
       }
       logAnalysis(`[Analyzing] "${t1}" vs "${t2}"`);
-      await new Promise(r => setTimeout(r, 500)); // Simulate async API call
+      await new Promise(r => setTimeout(r, 500));
       const suspiciousKeywords = ["illegal", "corrupt", "fraud", "suspicious", "improper", "grift"];
       const foundSuspicious = suspiciousKeywords.some(k => t1.toLowerCase().includes(k) || t2.toLowerCase().includes(k));
       const strength = foundSuspicious ? 0.9 : 0.4 + Math.random() * 0.5;
@@ -600,9 +584,6 @@
     }
     setInterval(() => thoughts.length >= 2 && updateNetworkAnalysis(), 10000);
 
-    /* --------------------------
-       Thought Management
-    --------------------------- */
     async function addThought(txt) {
       setStatus(`Adding: "${txt}"`);
       const tObj = {
@@ -679,25 +660,22 @@
       document.getElementById('statusBox').appendChild(panel);
     }
 
-    /* --------------------------
-       Enhanced Lightbox Analysis
-    --------------------------- */
     function showLightboxAnalysis(thought) {
       const content = document.getElementById('lightboxContent');
-      let html = `<h2>${thought.text.split('\n')[0]}</h2>`;
-      html += `<p><strong>Details:</strong> ${thought.text}</p>`;
+      let html = `<h2 style="font-size: ${isMobile ? '16px' : '20px'};">${thought.text.split('\n')[0]}</h2>`;
+      html += `<p style="font-size: ${isMobile ? '12px' : '14px'};"><strong>Details:</strong> ${thought.text}</p>`;
       if (thought.analysis) {
         html += `
-          <p><strong>Analysis Type:</strong> ${thought.analysis.type}</p>
-          <p><strong>Keywords:</strong> ${thought.analysis.keywords.join(", ")}</p>
+          <p style="font-size: ${isMobile ? '12px' : '14px'};"><strong>Analysis Type:</strong> ${thought.analysis.type}</p>
+          <p style="font-size: ${isMobile ? '12px' : '14px'};"><strong>Keywords:</strong> ${thought.analysis.keywords.join(", ")}</p>
         `;
       }
       const related = connections.filter(c => c.from === thought || c.to === thought);
       if (related.length) {
-        html += `<h3>Connections (${related.length}):</h3><ul>`;
+        html += `<h3 style="font-size: ${isMobile ? '14px' : '16px'};">Connections (${related.length}):</h3><ul>`;
         related.forEach(c => {
           const other = c.from === thought ? c.to : c.from;
-          html += `<li>${other.text.split('\n')[0]} (Strength: ${c.strength.toFixed(2)})</li>`;
+          html += `<li style="font-size: ${isMobile ? '12px' : '14px'};">${other.text.split('\n')[0]} (Strength: ${c.strength.toFixed(2)})</li>`;
         });
         html += `</ul>`;
       }
@@ -708,33 +686,30 @@
       document.getElementById('lightboxAnalysis').classList.add('hidden');
     });
 
-    /* --------------------------
-       Raycaster with Highlight
-    --------------------------- */
     const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
+    const pointer = new THREE.Vector2();
     let hovered = null;
-    function onMouseMove(event) {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
+
+    function onPointerEvent(event, isClick = false) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
       const intersects = raycaster.intersectObjects(networkGroup.children, true);
-      if (hovered) {
-        hovered.material.emissive.set(0x000000);
-        hovered = null;
-      }
-      if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        if (obj.userData.thoughtId) {
-          hovered = obj;
-          hovered.material.emissive.set(0x00ff80);
+
+      if (!isClick) {
+        if (hovered) {
+          hovered.material.emissive.set(0x101010);
+          hovered = null;
         }
-      }
-    }
-    function onMouseClick(event) {
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(networkGroup.children, true);
-      if (intersects.length > 0) {
+        if (intersects.length > 0) {
+          const obj = intersects[0].object;
+          if (obj.userData.thoughtId) {
+            hovered = obj;
+            hovered.material.emissive.set(0x00ff80);
+          }
+        }
+      } else if (intersects.length > 0) {
         const obj = intersects[0].object;
         if (obj.userData.thoughtId) {
           const thought = thoughts.find(t => t.id === obj.userData.thoughtId);
@@ -742,12 +717,14 @@
         }
       }
     }
-    window.addEventListener('mousemove', onMouseMove, false);
-    window.addEventListener('click', onMouseClick, false);
 
-    /* --------------------------
-       Export Network Feature
-    --------------------------- */
+    window.addEventListener('mousemove', (e) => onPointerEvent(e));
+    window.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      onPointerEvent(e.touches[0], true);
+    }, { passive: false });
+    window.addEventListener('click', (e) => onPointerEvent(e, true));
+
     function exportNetwork() {
       const data = {
         thoughts: thoughts.map(t => ({ id: t.id, text: t.text, position: t.mesh.position.toArray() })),
@@ -762,9 +739,6 @@
       URL.revokeObjectURL(url);
     }
 
-    /* --------------------------
-       UI Event Listeners
-    --------------------------- */
     document.getElementById('connectKeyBtn').addEventListener('click', () => {
       const val = document.getElementById('apiKeyInput').value.trim();
       if (!val) return setStatus("Please enter a non-empty key.");
@@ -815,14 +789,14 @@
 
     window.removeThought = removeThought;
 
-    /* --------------------------
-       Initialization
-    --------------------------- */
     window.addEventListener("DOMContentLoaded", initThree);
     window.addEventListener("resize", () => {
+      isMobile = window.innerWidth <= 600;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.position.z = isMobile ? 1200 : 800;
+      camera.position.y = isMobile ? 400 : 200;
     });
   </script>
 </body>
