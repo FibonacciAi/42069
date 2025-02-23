@@ -1,0 +1,3 @@
+[submodule "yek"]
+	path = yek
+	url = https://github.com/bodo-run/yek.git
