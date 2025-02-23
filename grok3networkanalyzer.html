@@ -5,14 +5,6 @@
   <title>3D Thought Network – Deep Contextual Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="description" content="Explore and analyze thoughts in a dynamic 3D network with deep contextual insights." />
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body {
@@ -302,8 +294,8 @@
   </div>
 
   <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
     let scene, camera, renderer, controls, networkGroup, ambientLight, pointLight;
     let thoughts = [];
@@ -347,45 +339,58 @@
     }
 
     function initThree() {
-      const canvas = document.getElementById('threeCanvas');
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      try {
+        if (!window.WebGLRenderingContext || !document.createElement('canvas').getContext('webgl')) {
+          setStatus("Error: Your browser or device does not support WebGL.");
+          return;
+        }
+        const canvas = document.getElementById('threeCanvas');
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-      scene = new THREE.Scene();
-      scene.background = null;
+        scene = new THREE.Scene();
+        scene.background = null;
 
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
-      camera.position.set(0, isMobile ? 400 : 200, isMobile ? 1200 : 800);
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, isMobile ? 400 : 200, isMobile ? 1200 : 800);
 
-      controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controls.enableZoom = true;
-      controls.enablePan = !isMobile;
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.enablePan = !isMobile;
 
-      ambientLight = new THREE.AmbientLight(0x606060, 0.8);
-      scene.add(ambientLight);
-      pointLight = new THREE.PointLight(0xffffff, 1.5, 2000);
-      pointLight.position.set(0, 300, 500);
-      scene.add(pointLight);
+        ambientLight = new THREE.AmbientLight(0x606060, 0.8);
+        scene.add(ambientLight);
+        pointLight = new THREE.PointLight(0xffffff, 1.5, 2000);
+        pointLight.position.set(0, 300, 500);
+        scene.add(pointLight);
 
-      networkGroup = new THREE.Group();
-      scene.add(networkGroup);
+        networkGroup = new THREE.Group();
+        scene.add(networkGroup);
 
-      const grid = new THREE.GridHelper(2000, 20, 0x333333, 0x333333);
-      grid.position.y = -100;
-      scene.add(grid);
+        const grid = new THREE.GridHelper(2000, 20, 0x333333, 0x333333);
+        grid.position.y = -100;
+        scene.add(grid);
 
-      animate();
+        animate();
+      } catch (e) {
+        console.error('Failed to initialize Three.js:', e);
+        setStatus("Error: Unable to initialize 3D visualization. Check console for details.");
+      }
     }
+
     function animate() {
       requestAnimationFrame(animate);
-      if (simulationRunning) updatePhysics();
-      controls.update();
-      pointLight.position.copy(camera.position);
-      renderer.render(scene, camera);
+      if (simulationRunning && renderer && scene && camera) {
+        updatePhysics();
+        controls.update();
+        pointLight.position.copy(camera.position);
+        renderer.render(scene, camera);
+      }
     }
+
     function updatePhysics() {
       const repulsionForce = isMobile ? 0.15 : 0.1;
       const friction = 0.95;
@@ -452,10 +457,11 @@
       sprite.scale.set(canvas.width * (isMobile ? 0.3 : 0.35), canvas.height * (isMobile ? 0.3 : 0.35), 1);
       return sprite;
     }
+
     function createNodeMesh(title, details) {
       const geo = new THREE.SphereGeometry(isMobile ? 16 : 12, 32, 32);
       const mat = new THREE.MeshPhongMaterial({
-        color: new THREE.Color().setHSL(Math.random(), 0.7, 0.7), // Brighter, more vibrant colors
+        color: new THREE.Color().setHSL(Math.random(), 0.7, 0.7),
         shininess: 80,
         emissive: 0x101010,
       });
@@ -536,6 +542,7 @@
       logAnalysis(`   => Strength: ${strength.toFixed(2)}, Type: ${type}, Keywords: ${keywords.slice(0, 5).join(", ")}`);
       return { strength, type, keywords };
     }
+
     function generateSuggestions(suspiciousCount, contextualCount, sortedKeywords) {
       let candidates = suspiciousCount > contextualCount ? [
         "Investigate Funding Sources",
@@ -555,6 +562,7 @@
       const boardTerms = new Set(thoughts.flatMap(t => t.text.toLowerCase().split(/\W+/)));
       return candidates.filter(t => !boardTerms.has(t.toLowerCase())).slice(0, 6);
     }
+
     async function updateNetworkAnalysis() {
       if (thoughts.length < 2) return;
       let suspiciousCount = 0;
@@ -616,6 +624,7 @@
       setStatus(`Added: "${txt}"`);
       updateNetworkAnalysis();
     }
+
     function removeThought(id) {
       const idx = thoughts.findIndex(t => t.id === id);
       if (idx < 0) return;
@@ -632,6 +641,7 @@
       updateThoughtsList();
       updateNetworkAnalysis();
     }
+
     function updateThoughtsList() {
       const container = document.getElementById('thoughtsList');
       container.innerHTML = "";
@@ -645,6 +655,7 @@
         container.appendChild(div);
       });
     }
+
     function renderSuggestions(list) {
       let panel = document.getElementById('statusBoxSuggestions') || document.createElement('div');
       panel.className = "suggestionsPanel";
@@ -691,6 +702,7 @@
     let hovered = null;
 
     function onPointerEvent(event, isClick = false) {
+      if (!renderer || !camera) return;
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -752,6 +764,7 @@
       document.querySelector('.top-bar').appendChild(loadBtn);
       document.getElementById('exportBtn').classList.remove('hidden');
     });
+
     document.getElementById('changeApiBtn').addEventListener('click', () => {
       apiKey = "";
       thoughts = [];
@@ -764,39 +777,55 @@
       document.getElementById('loadPredefinedBtn')?.remove();
       document.getElementById('exportBtn').classList.add('hidden');
     });
+
     document.getElementById('thoughtInput').addEventListener('keypress', (ev) => {
       if (ev.key === "Enter" && ev.target.value.trim() && apiKey) {
         addThought(ev.target.value.trim());
         ev.target.value = "";
       }
     });
+
     document.getElementById('linkStrength').addEventListener('input', (ev) => {
       linkStrength = ev.target.value / 100;
       document.getElementById('strengthValue').textContent = linkStrength.toFixed(2);
     });
+
     document.getElementById('toggleAnalysisLogBtn').addEventListener('click', () => {
       const panel = document.getElementById('analysisLog');
       panel.style.display = panel.style.display === "block" ? "none" : "block";
     });
+
     document.getElementById('toggleThoughtsPanelBtn').addEventListener('click', () => {
       const panel = document.getElementById('thoughtPanel');
       panel.style.display = panel.style.display === "block" ? "none" : "block";
     });
+
     document.getElementById('closeAnalysisLogBtn').addEventListener('click', () => {
       document.getElementById('analysisLog').style.display = "none";
     });
+
     document.getElementById('exportBtn').addEventListener('click', exportNetwork);
 
     window.removeThought = removeThought;
 
-    window.addEventListener("DOMContentLoaded", initThree);
+    window.addEventListener("DOMContentLoaded", () => {
+      try {
+        initThree();
+      } catch (e) {
+        console.error('Initialization error:', e);
+        setStatus("Failed to start visualization. Check console for details.");
+      }
+    });
+
     window.addEventListener("resize", () => {
       isMobile = window.innerWidth <= 600;
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.position.z = isMobile ? 1200 : 800;
-      camera.position.y = isMobile ? 400 : 200;
+      if (camera && renderer) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.z = isMobile ? 1200 : 800;
+        camera.position.y = isMobile ? 400 : 200;
+      }
     });
   </script>
 </body>
