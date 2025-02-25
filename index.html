@@ -5,64 +5,122 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GameStop 42069 - Home</title>
     <style>
-        /* Base site styling */
+        /* Base site styling with improved responsiveness */
         body {
             background: #000;
             color: #fff;
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
+            line-height: 1.6;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 15px;
         }
         .content {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            text-align: center;
         }
         .content h1 {
-            color: #00b4d8; /* Matching chatbot accent for consistency */
+            color: #00b4d8;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 180, 216, 0.5);
+        }
+        .content p {
+            font-size: 1.1em;
+            color: #a0a0a0;
         }
 
-        /* Chatbot-specific styling */
+        /* Chatbot-specific styling with animations */
         .chatbot-container {
             margin-top: 30px;
-            padding: 15px;
+            padding: 20px;
             background: #1a1a1a;
-            border-radius: 5px;
+            border-radius: 8px;
             border: 2px solid #00b4d8;
+            box-shadow: 0 0 15px rgba(0, 180, 216, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .chatbot-container:hover {
+            transform: translateY(-5px);
         }
         .chatbot-container h2 {
-            margin: 0 0 15px 0;
+            margin: 0 0 20px 0;
             color: #00b4d8;
-            font-size: 1.5em;
+            font-size: 1.8em;
+            text-align: center;
+        }
+        .chatbot-container .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .chatbot-container input, .chatbot-container button {
             border: 2px solid #00b4d8;
             background: #2a2a2a;
             color: #ffffff;
-            padding: 10px;
-            margin: 5px;
-            font-size: 14px;
-            border-radius: 3px;
-            transition: background 0.3s;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            transition: background 0.3s, transform 0.2s;
+            flex: 1;
+            min-width: 200px;
         }
         .chatbot-container button:hover {
             background: #00b4d8;
+            transform: scale(1.05);
             cursor: pointer;
         }
         .chatbot-container #response {
             margin-top: 20px;
-            padding: 10px;
+            padding: 15px;
             background: #2a2a2a;
             border-radius: 5px;
             word-wrap: break-word;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
+            border: 1px solid #00b4d8;
+            animation: fadeIn 0.5s ease-in;
         }
-        .error {
+        .chatbot-container .loading, .chatbot-container .error {
             color: #ff4444;
             font-weight: bold;
+            text-align: center;
+        }
+        .chat-history {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #00b4d8;
+        }
+        .chat-history p {
+            margin: 5px 0;
+            color: #a0a0a0;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .chatbot-container .input-group {
+                flex-direction: column;
+            }
+            .chatbot-container input, .chatbot-container button {
+                min-width: 100%;
+            }
+            .content h1 {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
@@ -76,50 +134,84 @@
         <!-- Superstonk DD Chatbot Integration -->
         <div class="chatbot-container">
             <h2>Superstonk DD Chatbot</h2>
-            <input id="question" type="text" placeholder="Ask me about GME..." autocomplete="off">
-            <button onclick="ask()">Ask</button>
+            <div class="chat-history" id="chatHistory"></div>
+            <div class="input-group">
+                <input id="question" type="text" placeholder="Ask me about GME..." autocomplete="off">
+                <button onclick="ask()">Ask</button>
+            </div>
             <div id="response"></div>
         </div>
     </div>
 
     <script>
-        // Chatbot functionality
+        // Chatbot functionality with local mock data (since no backend)
+        let chatHistory = [];
+
         async function ask() {
             const question = document.getElementById("question").value.trim();
+            const responseDiv = document.getElementById("response");
+            const chatHistoryDiv = document.getElementById("chatHistory");
+
             if (!question) {
-                document.getElementById("response").innerHTML = '<span class="error">Please enter a question!</span>';
+                responseDiv.innerHTML = '<span class="error">Please enter a question!</span>';
                 return;
             }
 
-            document.getElementById("response").innerHTML = "Loading..."; // Show loading state
+            // Clear previous response and show loading
+            responseDiv.innerHTML = '<span class="loading">Loading...</span>';
 
             try {
-                // Adjust this URL based on your backend location (e.g., local or deployed server)
-                const res = await fetch("/query", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ question })
-                });
-                if (!res.ok) {
-                    throw new Error(`HTTP error! Status: ${res.status}`);
-                }
-                const data = await res.json();
-                document.getElementById("response").innerHTML = data.response || '<span class="error">Sorry, I couldn’t find an answer. Try rephrasing your question!</span>';
+                // Mock backend response (replace with real fetch when backend is ready)
+                const mockResponse = await simulateBackendResponse(question);
+                responseDiv.innerHTML = mockResponse || '<span class="error">Sorry, I couldn’t find an answer. Try rephrasing your question!</span>';
+
+                // Add to chat history
+                chatHistory.push({ question, response: mockResponse });
+                updateChatHistory();
             } catch (error) {
-                document.getElementById("response").innerHTML = `<span class="error">Error: ${error.message}. If using GitHub Pages, note that /query requires a backend server (not supported here). Try testing locally with a server or deploy to a platform like Vercel.</span>`;
+                responseDiv.innerHTML = `<span class="error">Error: ${error.message}. Check if your backend is running or test locally.</span>`;
                 console.error("Fetch error:", error);
             }
+
+            // Clear input
+            document.getElementById("question").value = '';
         }
 
-        // Optional: Add Enter key support for convenience
+        // Mock backend response function (replace with real API call)
+        function simulateBackendResponse(question) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // Example responses based on GME/DD themes (expand with Yek-serialized data)
+                    const responses = {
+                        "what is gme": "GameStop (GME) is a retail company known for video games. Recent DD suggests potential short squeezes and market movements—check Superstonk for detailed analysis!",
+                        "tell me about the short squeeze": "The GME short squeeze refers to a 2021 event where retail investors on platforms like Reddit drove up the stock price, squeezing short sellers. Latest DD indicates ongoing interest—dig into Superstonk for updates!",
+                        "what’s the latest dd": "Based on recent Superstonk DD, GME is showing strong fundamentals, potential catalysts, and retail momentum. Check the serialized data in your Yek files for specifics!",
+                        default: "Sorry, I couldn’t find an answer for that. Try asking about GME, short squeezes, or Superstonk DD!"
+                    };
+                    resolve(responses[question.toLowerCase()] || responses.default);
+                }, 1000); // Simulate network delay
+            });
+        }
+
+        // Update chat history display
+        function updateChatHistory() {
+            const chatHistoryDiv = document.getElementById("chatHistory");
+            chatHistoryDiv.innerHTML = chatHistory.map(item => 
+                `<p><strong>You:</strong> ${item.question}<br><strong>Bot:</strong> ${item.response}</p>`
+            ).join('');
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight; // Auto-scroll to latest
+        }
+
+        // Add Enter key support and input focus
         document.getElementById("question").addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 ask();
             }
         });
+        document.getElementById("question").focus();
 
-        // Log to console for debugging
-        console.log("Chatbot script loaded. Ensure backend /query endpoint is running!");
+        // Log for debugging
+        console.log("Chatbot script loaded. Use this mock data or set up a backend with Yek-serialized DD!");
     </script>
 </body>
 </html>
