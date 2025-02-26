@@ -1,850 +1,1306 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>3D Grift Network – USAID Unmasked</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Unmask USAID grift with an interactive 3D network. Dig into NGO funding connections and expose fraud." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23fff' d='M12 2L2 22h20L12 2zm0 4l6.5 14h-13L12 6z'/></svg>" />
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-      "axios": "https://unpkg.com/axios/dist/esm/axios.min.js"
-    }
-  }
-  </script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
-      overflow: hidden;
-      line-height: 1.6;
-    }
-    .top-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(20, 20, 20, 0.9);
-      backdrop-filter: blur(10px);
-      padding: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      z-index: 100;
-      border-bottom: 1px solid #404040;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
-    }
-    .control-group {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex: 1;
-      min-width: 280px;
-    }
-    .btn {
-      background: #252525;
-      color: #fff;
-      border: 1px solid #505050;
-      border-radius: 5px;
-      padding: 6px 12px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    .btn:hover { background: #353535; border-color: #707070; transform: translateY(-1px); }
-    .btn:active { transform: translateY(1px); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .input {
-      background: #151515;
-      color: #e0e0e0;
-      border: 1px solid #404040;
-      border-radius: 5px;
-      padding: 6px 10px;
-      flex: 1;
-      font-size: 14px;
-    }
-    .input:focus { border-color: #00aaff; outline: none; }
-    .slider-container { display: flex; align-items: center; gap: 5px; }
-    input[type=range] { width: 80px; accent-color: #00aaff; }
-    #strengthValue { width: 32px; text-align: center; font-family: monospace; }
-    .status-box {
-      position: fixed;
-      bottom: 15px;
-      left: 15px;
-      background: rgba(20, 20, 20, 0.9);
-      backdrop-filter: blur(10px);
-      padding: 10px 15px;
-      border-radius: 6px;
-      border: 1px solid #404040;
-      z-index: 100;
-      max-width: 40vw;
-      font-size: 13px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-    .analysis-log {
-      position: fixed;
-      bottom: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(20, 20, 20, 0.9);
-      backdrop-filter: blur(10px);
-      width: 400px;
-      max-height: 40vh;
-      border: 1px solid #404040;
-      border-radius: 6px;
-      padding: 10px;
-      overflow-y: auto;
-      z-index: 150;
-      display: none;
-      font-size: 13px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-    .thought-panel {
-      position: fixed;
-      right: 15px;
-      top: 80px;
-      background: rgba(20, 20, 20, 0.9);
-      backdrop-filter: blur(10px);
-      padding: 15px;
-      border-radius: 6px;
-      border: 1px solid #404040;
-      width: 300px;
-      max-height: 60vh;
-      overflow-y: auto;
-      z-index: 90;
-      display: none;
-      font-size: 13px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-    .thought-item {
-      background: #1a1a1a;
-      padding: 8px 12px;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .thought-item:hover { background: #252525; }
-    #threeCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-    .suggestions-panel {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-    .suggestion-btn {
-      background: #303030;
-      color: #e0e0e0;
-      border: 1px solid #505050;
-      border-radius: 4px;
-      padding: 4px 10px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .suggestion-btn:hover { background: #404040; border-color: #707070; }
-    .lightbox {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 200;
-    }
-    .lightbox-content {
-      background: #151515;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 80vw;
-      max-height: 80vh;
-      overflow-y: auto;
-      color: #e0e0e0;
-      font-size: 14px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
-    }
-    #closeLightboxBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #fff;
-      cursor: pointer;
-    }
-    #closeLightboxBtn:hover { color: #00aaff; }
-    .hidden { display: none; }
-    @media (max-width: 600px) {
-      .top-bar { padding: 8px; }
-      .control-group { min-width: 100%; }
-      .status-box { max-width: 80vw; font-size: 12px; }
-      .analysis-log { width: 90vw; }
-      .thought-panel { width: 90vw; right: 5vw; }
-    }
-    @font-face {
-      font-family: 'Inter';
-      src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap') format('woff2');
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>3D Grift Network -- USAID Unmasked</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Unmask USAID grift with an interactive 3D network. Explore NGO funding connections and expose fraud." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23fff' d='M12 2L2 22h20L12 2zm0 4l6.5 14h-13L12 6z'/></svg>" />
+<script type="importmap">
+{
+"imports": {
+"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+"three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+"axios": "https://unpkg.com/axios/dist/esm/axios.min.js"
+}
+}
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body {
+margin: 0;
+padding: 0;
+font-family: 'Inter', system-ui, sans-serif;
+background: #0a0a0a;
+color: #e0e0e0;
+overflow: hidden;
+line-height: 1.6;
+}
+.top-bar {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+background: rgba(20, 20, 20, 0.95);
+backdrop-filter: blur(10px);
+padding: 10px;
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+z-index: 100;
+border-bottom: 1px solid #404040;
+box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.control-group {
+display: flex;
+gap: 8px;
+align-items: center;
+flex: 1;
+min-width: 280px;
+}
+.btn {
+background: #252525;
+color: #fff;
+border: 1px solid #505050;
+border-radius: 5px;
+padding: 6px 12px;
+cursor: pointer;
+font-weight: 500;
+transition: all 0.2s ease;
+}
+.btn:hover { background: #353535; border-color: #707070; transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+background: #1a1a1a;
+border-color: #303030;
+}
+.input {
+background: #151515;
+color: #e0e0e0;
+border: 1px solid #404040;
+border-radius: 5px;
+padding: 6px 10px;
+flex: 1;
+font-size: 14px;
+transition: border-color 0.2s ease;
+}
+.input:focus { border-color: #00aaff; outline: none; }
+.slider-container { display: flex; align-items: center; gap: 5px; }
+input[type=range] { width: 80px; accent-color: #00aaff; }
+#strengthValue { width: 32px; text-align: center; font-family: monospace; }
+.status-box {
+position: fixed;
+bottom: 15px;
+left: 15px;
+background: rgba(20, 20, 20, 0.95);
+backdrop-filter: blur(10px);
+padding: 10px 15px;
+border-radius: 6px;
+border: 1px solid #404040;
+z-index: 100;
+max-width: 40vw;
+font-size: 13px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.analysis-log {
+position: fixed;
+bottom: 15px;
+left: 50%;
+transform: translateX(-50%);
+background: rgba(20, 20, 20, 0.95);
+backdrop-filter: blur(10px);
+width: 400px;
+max-height: 40vh;
+border: 1px solid #404040;
+border-radius: 6px;
+padding: 10px;
+overflow-y: auto;
+z-index: 150;
+display: none;
+font-size: 13px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.thought-panel {
+position: fixed;
+right: 15px;
+top: 80px;
+background: rgba(20, 20, 20, 0.95);
+backdrop-filter: blur(10px);
+padding: 15px;
+border-radius: 6px;
+border: 1px solid #404040;
+width: 300px;
+max-height: 60vh;
+overflow-y: auto;
+z-index: 90;
+display: none;
+font-size: 13px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.thought-item {
+background: #1a1a1a;
+padding: 8px 12px;
+border-radius: 4px;
+margin-bottom: 8px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+cursor: pointer;
+transition: background 0.2s ease;
+}
+.thought-item:hover { background: #252525; }
+#threeCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+.suggestions-panel {
+display: flex;
+gap: 6px;
+margin-top: 8px;
+flex-wrap: wrap;
+}
+.suggestion-btn {
+background: #303030;
+color: #e0e0e0;
+border: 1px solid #505050;
+border-radius: 4px;
+padding: 4px 10px;
+cursor: pointer;
+font-size: 12px;
+transition: all 0.2s ease;
+}
+.suggestion-btn:hover { background: #404040; border-color: #707070; }
+.lightbox {
+position: fixed;
+top: 0;
+left: 0;
+width: 100vw;
+height: 100vh;
+background: rgba(0, 0, 0, 0.9);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 200;
+}
+.lightbox-content {
+background: #151515;
+padding: 20px;
+border-radius: 8px;
+max-width: 80vw;
+max-height: 80vh;
+overflow-y: auto;
+color: #e0e0e0;
+font-size: 14px;
+box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+}
+#closeLightboxBtn {
+position: absolute;
+top: 10px;
+right: 10px;
+background: none;
+border: none;
+font-size: 24px;
+color: #fff;
+cursor: pointer;
+transition: color 0.2s ease;
+}
+#closeLightboxBtn:hover { color: #00aaff; }
+.hidden { display: none; }
+#tooltip {
+position: absolute;
+background: rgba(20, 20, 20, 0.95);
+padding: 5px 10px;
+border-radius: 4px;
+font-size: 12px;
+pointer-events: none;
+z-index: 100;
+display: none;
+}
+#loadingIndicator {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+display: none;
+flex-direction: column;
+align-items: center;
+z-index: 250;
+}
+#loadingIndicator .spinner {
+width: 40px;
+height: 40px;
+border: 4px solid rgba(0, 170, 255, 0.2);
+border-top: 4px solid #00aaff;
+border-radius: 50%;
+animation: spin 1s linear infinite;
+}
+#loadingIndicator .label {
+margin-top: 10px;
+font-size: 14px;
+color: #00aaff;
+text-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+}
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+@media (max-width: 600px) {
+.top-bar { padding: 8px; }
+.control-group { min-width: 100%; }
+.status-box { max-width: 80vw; font-size: 12px; }
+.analysis-log { width: 90vw; }
+.thought-panel { width: 90vw; right: 5vw; }
+}
+@font-face {
+font-family: 'Inter';
+src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap') format('woff2');
+}
+</style>
 </head>
 <body>
-  <div class="top-bar">
-    <div class="control-group">
-      <input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought & Press Enter" />
-    </div>
-    <div class="control-group">
-      <input type="password" class="input" id="apiKeyInput" placeholder="Enter API Key (sk-...)" />
-      <button class="btn" id="connectKeyBtn">Connect</button>
-      <button class="btn" id="changeApiBtn">Reset</button>
-      <button class="btn" id="loadPredefinedBtn">Load Sample NGOs</button>
-    </div>
-    <div class="control-group">
-      <div class="slider-container">
-        <label for="linkStrength">Link:</label>
-        <input type="range" id="linkStrength" min="0" max="100" value="50" />
-        <span id="strengthValue">0.50</span>
-      </div>
-      <button class="btn" id="toggleAnalysisLogBtn">Analysis</button>
-      <button class="btn" id="toggleThoughtsPanelBtn">Thoughts</button>
-      <button class="btn" id="exportBtn">Export</button>
-      <button class="btn" id="shareXBtn">Share</button>
-    </div>
-  </div>
-  <div class="status-box" id="statusBox">
-    <strong>@DataRepublican 🧵 USAID GRIFT UNMASKED:</strong><br />
-    Connect your API key to start exposing the grift!
-  </div>
-  <div class="analysis-log" id="analysisLog">
-    <strong style="color: #00aaff;">Ongoing Analysis</strong>
-    <button id="closeAnalysisLogBtn" class="btn">×</button>
-    <div id="analysisLogMessages"></div>
-  </div>
-  <div class="thought-panel" id="thoughtPanel">
-    <h3 style="margin: 0; color: #00aaff;">Thoughts</h3>
-    <div id="thoughtsList"></div>
-  </div>
-  <canvas id="threeCanvas"></canvas>
-  <div id="lightboxAnalysis" class="lightbox hidden">
-    <div class="lightbox-content">
-      <button id="closeLightboxBtn">×</button>
-      <div id="lightboxContent"></div>
-    </div>
-  </div>
+<div class="top-bar">
+<div class="control-group">
+<input type="text" class="input" id="thoughtInput" placeholder="Enter a Thought & Press Enter" />
+</div>
+<div class="control-group">
+<input type="password" class="input" id="apiKeyInput" placeholder="Enter API Key (sk-... or gk-...)" />
+<button class="btn" id="connectKeyBtn" data-tooltip="Link your API key">Connect</button>
+<button class="btn" id="changeApiBtn" data-tooltip="Clear all data">Reset</button>
+<button class="btn" id="loadPredefinedBtn" data-tooltip="Load demo NGOs">Load Sample NGOs</button>
+</div>
+<div class="control-group">
+<div class="slider-container">
+<label for="linkStrength">Link:</label>
+<input type="range" id="linkStrength" min="0" max="100" value="50" />
+<span id="strengthValue">0.50</span>
+</div>
+<button class="btn" id="toggleWeakLinksBtn" data-tooltip="Toggle weak links">Hide Weak</button>
+<button class="btn" id="toggleAnalysisLogBtn" data-tooltip="Run full network analysis">Analyze</button>
+<button class="btn" id="toggleThoughtsPanelBtn" data-tooltip="Show thoughts list">Thoughts</button>
+<button class="btn" id="exportBtn" data-tooltip="Save as JSON">Export</button>
+<button class="btn" id="postXBtn" data-tooltip="Share on X">Post on X</button>
+</div>
+</div>
+<div class="status-box" id="statusBox">
+<strong>@DataRepublican 🧵 USAID GRIFT UNMASKED:</strong><br />
+Connect your API key to start exposing the grift!
+</div>
+<div class="analysis-log" id="analysisLog">
+<strong style="color: #00aaff;">Network Analysis</strong>
+<button id="closeAnalysisLogBtn" class="btn">×</button>
+<div id="analysisLogMessages"></div>
+</div>
+<div class="thought-panel" id="thoughtPanel">
+<h3 style="margin: 0; color: #00aaff;">Thoughts</h3>
+<div id="thoughtsList"></div>
+</div>
+<canvas id="threeCanvas"></canvas>
+<div id="lightboxAnalysis" class="lightbox hidden">
+<div class="lightbox-content">
+<button id="closeLightboxBtn">×</button>
+<div id="lightboxContent"></div>
+</div>
+</div>
+<div id="tooltip"></div>
+<div id="loadingIndicator">
+<div class="spinner"></div>
+<div class="label">Analyzing...</div>
+</div>
 
-  <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import axios from 'axios';
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import axios from 'axios';
 
-    let scene, camera, renderer, controls, networkGroup;
-    let thoughts = [];
-    let connections = [];
-    let linkStrength = 0.5;
-    let apiKey = "";
-    let sampleNGOsLoaded = false;
-    let selectedNode = null;
+const state = {
+scene: null,
+camera: null,
+renderer: null,
+controls: null,
+networkGroup: null,
+thoughts: [],
+connections: [],
+linkStrength: 0.5,
+apiKey: "",
+apiProvider: "openai",
+sampleNGOsLoaded: false,
+showWeakLinks: true,
+isAnalysisVisible: false,
+isThoughtsVisible: false,
+analysisCache: new Map(),
+irsDataCache: new Map(),
+suggestionCache: null,
+boundingSphere: new THREE.Sphere(new THREE.Vector3(0, 0, 0), 400),
+geometryCache: new Map()
+};
 
-    const preloaded = [
-      { name: "NATIONAL ENDOWMENT FOR DEMOCRACY\n(EIN: 52-1344831)", data: "Gross receipts: $363M\nTaxpayer funds: $362M", lines: [] },
-      { name: "CONSORTIUM FOR ELECTIONS &\n(EIN: 52-1943638)", data: "Gross receipts: $165M\nTaxpayer funds: $165M", lines: [] },
-      { name: "INTERNATIONAL FOUNDATION FOR\n(EIN: 52-1527835)", data: "Gross receipts: $78M\nTaxpayer funds: $59M", lines: [] },
-      { name: "NATIONAL DEMOCRATIC INSTITUTE\n(EIN: 52-1338892)", data: "Gross receipts: $172M\nTaxpayer funds: $168M", lines: [] },
-      { name: "CENTER FOR INTERNATIONAL\n(EIN: 52-1398742)", data: "Gross receipts: $50M\nTaxpayer funds: $50M", lines: [] },
-      { name: "INTERNATIONAL REPUBLICAN INSTITUTE\n(EIN: 52-1340267)", data: "Gross receipts: $135M\nTaxpayer funds: $131M", lines: [] },
-      { name: "INTERNEWS NETWORK\n(EIN: 94-3027961)", data: "Gross receipts: $124M\nTaxpayer funds: $94M", lines: [] }
-    ];
-    preloaded[0].lines.push({ target: 1, amount: 49137537 });
-    preloaded[0].lines.push({ target: 2, amount: 107669 });
-    preloaded[0].lines.push({ target: 3, amount: 51707077 });
-    preloaded[0].lines.push({ target: 4, amount: 39199882 });
-    preloaded[0].lines.push({ target: 5, amount: 33751325 });
-    preloaded[0].lines.push({ target: 6, amount: 497201 });
-    preloaded[1].lines.push({ target: 3, amount: 64298125 });
-    preloaded[2].lines.push({ target: 3, amount: 2284520 });
-    preloaded[3].lines.push({ target: 5, amount: 1088062 });
-    preloaded[3].lines.push({ target: 6, amount: 0 });
-    preloaded[5].lines.push({ target: 6, amount: 0 });
+const cachedAnalysis = localStorage.getItem('analysisCache');
+if (cachedAnalysis) state.analysisCache = new Map(JSON.parse(cachedAnalysis));
 
-    function setStatus(msg) { document.getElementById('statusBox').innerHTML = msg; }
-    function logAnalysis(msg, isError = false) {
-      const container = document.getElementById('analysisLogMessages');
-      const div = document.createElement('div');
-      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-      div.style.color = isError ? '#ff5555' : '#e0e0e0';
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
+const preloadedNGOs = [
+{ name: "NATIONAL ENDOWMENT FOR DEMOCRACY\n(EIN: 52-1344831)", data: "Gross receipts: $363M\nTaxpayer funds: $362M", lines: [] },
+{ name: "CONSORTIUM FOR ELECTIONS &\n(EIN: 52-1943638)", data: "Gross receipts: $165M\nTaxpayer funds: $165M", lines: [] },
+{ name: "INTERNATIONAL FOUNDATION FOR\n(EIN: 52-1527835)", data: "Gross receipts: $78M\nTaxpayer funds: $59M", lines: [] },
+{ name: "NATIONAL DEMOCRATIC INSTITUTE\n(EIN: 52-1338892)", data: "Gross receipts: $172M\nTaxpayer funds: $168M", lines: [] },
+{ name: "CENTER FOR INTERNATIONAL\n(EIN: 52-1398742)", data: "Gross receipts: $50M\nTaxpayer funds: $50M", lines: [] },
+{ name: "INTERNATIONAL REPUBLICAN INSTITUTE\n(EIN: 52-1340267)", data: "Gross receipts: $135M\nTaxpayer funds: $131M", lines: [] },
+{ name: "INTERNEWS NETWORK\n(EIN: 94-3027961)", data: "Gross receipts: $124M\nTaxpayer funds: $94M", lines: [] }
+];
+preloadedNGOs[0].lines.push({ target: 1, amount: 49137537 });
+preloadedNGOs[0].lines.push({ target: 2, amount: 107669 });
+preloadedNGOs[0].lines.push({ target: 3, amount: 51707077 });
+preloadedNGOs[0].lines.push({ target: 4, amount: 39199882 });
+preloadedNGOs[0].lines.push({ target: 5, amount: 33751325 });
+preloadedNGOs[0].lines.push({ target: 6, amount: 497201 });
+preloadedNGOs[1].lines.push({ target: 3, amount: 64298125 });
+preloadedNGOs[2].lines.push({ target: 3, amount: 2284520 });
+preloadedNGOs[3].lines.push({ target: 5, amount: 1088062 });
+preloadedNGOs[3].lines.push({ target: 6, amount: 0 });
+preloadedNGOs[5].lines.push({ target: 6, amount: 0 });
 
-    function initThree() {
-      const canvas = document.getElementById('threeCanvas');
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+function setStatus(msg, suggestions = null) {
+const statusBox = document.getElementById('statusBox');
+statusBox.innerHTML = `<strong>@DataRepublican 🧵 USAID GRIFT UNMASKED:</strong><br />${msg}`;
+if (suggestions) renderSuggestions(suggestions);
+}
 
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0a0a0a);
-      scene.fog = new THREE.Fog(0x0a0a0a, 500, 2000);
+function logAnalysis(msg, isError = false) {
+const container = document.getElementById('analysisLogMessages');
+const div = document.createElement('div');
+div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+div.style.color = isError ? '#ff5555' : '#e0e0e0';
+container.appendChild(div);
+container.scrollTop = container.scrollHeight;
+}
 
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2500);
-      camera.position.set(0, 200, 800);
+function showLoading(show) {
+document.getElementById('loadingIndicator').style.display = show ? 'flex' : 'none';
+}
 
-      controls = new OrbitControls(camera, renderer.domElement);
-      controls.dampingFactor = 0.1;
-      controls.enableDamping = true;
-      controls.maxDistance = 1500;
-      controls.minDistance = 100;
+function detectApiProvider(key) {
+if (key.startsWith('sk-')) return 'openai';
+if (key.startsWith('gk-')) return 'xai';
+return 'openai';
+}
 
-      networkGroup = new THREE.Group();
-      scene.add(networkGroup);
+async function batchFetchIRSData(eins) {
+const uncached = eins.filter(ein => !state.irsDataCache.has(ein));
+if (uncached.length === 0) return Promise.all(eins.map(ein => state.irsDataCache.get(ein)));
 
-      const ambientLight = new THREE.AmbientLight(0x404040, 1.2);
-      scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-      directionalLight.position.set(300, 400, 500);
-      directionalLight.castShadow = true;
-      scene.add(directionalLight);
+const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // Use a CORS proxy (ensure it's active or replace with your own)
+const promises = uncached.map(ein =>
+axios.get(`${proxyUrl}https://projects.propublica.org/nonprofits/api/v2/organizations/${ein}.json`, {
+headers: { 'Origin': window.location.origin } // Optional: Specify origin
+})
+.then(res => {
+const { organization } = res.data;
+const irsData = {
+revenue: organization.revenue_amount || 0,
+expenses: organization.total_expense_amount || 0,
+assets: organization.asset_amount || 0,
+filingYear: organization.filing_year || "Unknown"
+};
+state.irsDataCache.set(ein, irsData);
+return irsData;
+})
+.catch(err => {
+logAnalysis(`IRS fetch failed for ${ein}: ${err.message}`, true);
+return { revenue: 0, expenses: 0, assets: 0, filingYear: "Unknown" };
+})
+);
+return Promise.all(promises).then(results => eins.map(ein => state.irsDataCache.get(ein)));
+}
 
-      const particleCount = 300;
-      const particles = new THREE.BufferGeometry();
-      const positions = new Float32Array(particleCount * 3);
-      for (let i = 0; i < particleCount; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * 1500;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 1500;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 1500;
-      }
-      particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const particleMaterial = new THREE.PointsMaterial({
-        color: 0x00aaff,
-        size: 2,
-        transparent: true,
-        opacity: 0.5,
-        blending: THREE.AdditiveBlending
-      });
-      scene.add(new THREE.Points(particles, particleMaterial));
+function initThree() {
+const canvas = document.getElementById('threeCanvas');
+state.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+state.renderer.setSize(window.innerWidth, window.innerHeight, false);
+state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-      animate();
-    }
+state.scene = new THREE.Scene();
+state.scene.background = new THREE.Color(0x0a0a0a);
+state.scene.fog = new THREE.Fog(0x0a0a0a, 500, 2000);
 
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      updateLayout();
-      thoughts.forEach(t => {
-        const dist = camera.position.distanceTo(t.mesh.position);
-        t.mesh.visible = dist < 1500;
-        t.mesh.rotation.y += t.mesh.userData.hover ? 0.05 : 0.01;
-      });
-      renderer.render(scene, camera);
-    }
+state.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2500);
+state.camera.position.set(0, 200, 800);
 
-    function updateLayout() {
-      thoughts.forEach(n => {
-        n.velocity = n.velocity || new THREE.Vector3();
-        thoughts.forEach(n2 => {
-          if (n === n2) return;
-          const diff = n2.mesh.position.clone().sub(n.mesh.position);
-          const dist = diff.length();
-          const force = dist < 250 ? -0.05 / (dist + 1) : 0;
-          n.velocity.addScaledVector(diff, force);
-        });
-        connections.forEach(c => {
-          if (c.from === n || c.to === n) {
-            const other = c.from === n ? c.to : c.from;
-            const pull = other.mesh.position.clone().sub(n.mesh.position).normalize().multiplyScalar(c.strength * 0.2);
-            n.velocity.add(pull);
-          }
-          // Optimized connection rendering: update positions without recreating geometry
-          if (!c.curve) c.curve = new THREE.CatmullRomCurve3([c.from.mesh.position, c.to.mesh.position]);
-          c.curve.points[0].copy(c.from.mesh.position);
-          c.curve.points[1].copy(c.to.mesh.position);
-          c.line.geometry.computeBoundingSphere(); // Update bounding sphere for frustum culling
-          c.line.geometry.attributes.position.needsUpdate = true; // Flag position updates
-          c.line.material.opacity = Math.min(1, Math.max(0.2, c.strength)); // Ensure visibility
-          c.line.material.emissiveIntensity = Math.sin(Date.now() * 0.002) * 0.4 + 0.6;
-          c.line.visible = c.strength >= linkStrength; // Toggle visibility based on threshold
-        });
-        n.velocity.multiplyScalar(0.95);
-        n.mesh.position.add(n.velocity);
-        if (n.preloaded && n.mesh.position.length() > 350) n.mesh.position.multiplyScalar(0.98);
-      });
-    }
+state.controls = new OrbitControls(state.camera, state.renderer.domElement);
+state.controls.dampingFactor = 0.05;
+state.controls.enableDamping = true;
+state.controls.maxDistance = 1200;
+state.controls.minDistance = 100;
 
-    function createTextSprite(text) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const lines = text.split("\n");
-      const fontSize = 24;
-      const pad = 10;
-      ctx.font = `bold ${fontSize}px Inter`;
-      const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
-      canvas.width = maxWidth + pad * 2;
-      canvas.height = fontSize * lines.length + pad * 2;
-      ctx.font = `bold ${fontSize}px Inter`;
-      ctx.fillStyle = '#e0e0e0';
-      ctx.shadowColor = '#00aaff';
-      ctx.shadowBlur = 6;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      lines.forEach((line, i) => ctx.fillText(line, pad, pad + fontSize * i + fontSize / 2));
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.minFilter = THREE.LinearFilter;
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
-      sprite.scale.set(0.3 * canvas.width, 0.3 * canvas.height, 1);
-      return sprite;
-    }
+state.networkGroup = new THREE.Group();
+state.scene.add(state.networkGroup);
 
-    function createNodeMesh(title, details, fraudScore = 0, preloaded = false) {
-      const geo = new THREE.SphereGeometry(12 + fraudScore / 8, 32, 32);
-      const mat = new THREE.MeshPhongMaterial({
-        color: fraudScore > 75 ? 0xff5555 : 0x00aaff,
-        emissive: fraudScore > 75 ? 0x550000 : 0x002244,
-        emissiveIntensity: 0.5,
-        shininess: 100,
-        specular: 0x888888
-      });
-      const sphere = new THREE.Mesh(geo, mat);
-      sphere.castShadow = true;
-      const label = createTextSprite(`${title}\n${details}\nFraud: ${fraudScore}%`);
-      label.position.set(0, 25 + fraudScore / 10, 0);
-      sphere.add(label);
-      sphere.position.set((Math.random() - 0.5) * 150, (Math.random() - 0.5) * 150, (Math.random() - 0.5) * 150);
-      sphere.preloaded = preloaded;
-      sphere.userData.hover = false;
-      networkGroup.add(sphere);
-      return sphere;
-    }
+const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+state.scene.add(ambientLight);
 
-    function createConnectionLine(fromObj, toObj, strength, fraudScore) {
-      const curve = new THREE.CatmullRomCurve3([fromObj.mesh.position.clone(), toObj.mesh.position.clone()]);
-      const geo = new THREE.TubeGeometry(curve, 20, Math.max(3, fraudScore / 15), 8, false);
-      const mat = new THREE.MeshPhongMaterial({
-        color: fraudScore > 75 ? 0xff5555 : 0x00ffaa,
-        transparent: true,
-        opacity: Math.min(1, Math.max(0.2, strength)),
-        emissive: fraudScore > 75 ? 0x330000 : 0x004422,
-        emissiveIntensity: 0.6,
-        shininess: 80
-      });
-      const tube = new THREE.Mesh(geo, mat);
-      tube.visible = strength >= linkStrength; // Initial visibility
-      networkGroup.add(tube);
-      return tube;
-    }
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+directionalLight.position.set(300, 400, 500);
+state.scene.add(directionalLight);
 
-    function loadPredefinedNGOs() {
-      if (sampleNGOsLoaded) return;
-      sampleNGOsLoaded = true;
-      preloaded.forEach((org, i) => {
-        const node = {
-          id: Date.now() + i,
-          text: org.name,
-          mesh: createNodeMesh(org.name, org.data, 0, true),
-          analysis: { type: "preloaded", keywords: [] },
-          timestamp: Date.now(),
-          source: "",
-          preloaded: true
-        };
-        node.mesh.userData.thoughtId = node.id;
-        thoughts.push(node);
-      });
-      preloaded.forEach((org, i) => {
-        const fromObj = thoughts[i];
-        org.lines.forEach(l => {
-          const toObj = thoughts[l.target];
-          const scaled = Math.min(1, Math.max(0.4, l.amount / 50000000));
-          if (scaled >= linkStrength) {
-            connections.push({
-              from: fromObj,
-              to: toObj,
-              strength: scaled,
-              fraudScore: 0,
-              line: createConnectionLine(fromObj, toObj, scaled, 0),
-              curve: null // Will be initialized in updateLayout
-            });
-          }
-        });
-      });
-      updateThoughtsList();
-      setStatus("Sample NGOs loaded! Start digging.");
-      reanalyzeAllConns().then(updateNetworkAnalysis);
-    }
+const particleCount = 200;
+const positions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+const radius = Math.random() * 1200;
+const theta = Math.random() * Math.PI * 2;
+const phi = Math.random() * Math.PI;
+positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+positions[i * 3 + 2] = radius * Math.cos(phi);
+}
+const particles = new THREE.Points(
+new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(positions, 3)),
+new THREE.PointsMaterial({
+color: 0x00aaff,
+size: 1.5,
+transparent: true,
+opacity: 0.3,
+blending: THREE.AdditiveBlending,
+sizeAttenuation: true
+})
+);
+state.scene.add(particles);
 
-    async function fetchLiveData(query) {
-      setStatus(`Fetching data for "${query}"...`);
-      try {
-        const res = await axios.get(`https://api.usaspending.gov/v2/awards/?keyword=${encodeURIComponent(query)}&limit=5`);
-        const awards = res.data.results.slice(0, 5).map(award => ({
-          name: award.recipient.recipient_name,
-          data: `Award: $${(award.total_obligation / 1e6).toFixed(1)}M\nDate: ${new Date(award.date_signed).toLocaleDateString()}`,
-          source: `https://www.usaspending.gov/award/${award.award_id}`
-        }));
-        awards.forEach(award => addThought(`${award.name}\n${award.data}`, award.source));
-        setStatus(`Loaded ${awards.length} records!`);
-      } catch (err) {
-        logAnalysis(`Fetch failed: ${err.message}`, true);
-        setStatus("Data fetch failed. Try again!");
-      }
-    }
+animate();
+}
 
-    async function reanalyzeAllConns() {
-      connections.forEach(c => networkGroup.remove(c.line));
-      connections = [];
+let lastFrame = 0;
+function animate(timestamp) {
+requestAnimationFrame(animate);
+if (timestamp - lastFrame < 33) return;
+lastFrame = timestamp;
 
-      // Restore preloaded connections
-      preloaded.forEach((org, i) => {
-        const fromObj = thoughts.find(t => t.text === org.name);
-        if (!fromObj) return;
-        org.lines.forEach(l => {
-          const toObj = thoughts[l.target];
-          if (!toObj) return;
-          const scaled = Math.min(1, Math.max(0.4, l.amount / 50000000));
-          if (scaled >= linkStrength) {
-            connections.push({
-              from: fromObj,
-              to: toObj,
-              strength: scaled,
-              fraudScore: 0,
-              line: createConnectionLine(fromObj, toObj, scaled, 0),
-              curve: null
-            });
-          }
-        });
-      });
+state.controls.update();
+updateLayout();
+updateConnections();
+state.thoughts.forEach(t => {
+const dist = state.camera.position.distanceTo(t.mesh.position);
+t.mesh.visible = dist < 1500;
+if (t.mesh.userData.hover) {
+t.mesh.rotation.y += 0.02;
+} else {
+t.mesh.rotation.y *= 0.95;
+}
+if (t.mesh.userData.fraudScore > 75) {
+t.mesh.material.emissiveIntensity = 0.5 + Math.sin(timestamp * 0.001) * 0.3;
+}
+});
+state.renderer.render(state.scene, state.camera);
+}
 
-      // Analyze non-preloaded or mixed connections
-      for (let i = 0; i < thoughts.length; i++) {
-        for (let j = i + 1; j < thoughts.length; j++) {
-          const t1 = thoughts[i];
-          const t2 = thoughts[j];
-          if (t1.preloaded && t2.preloaded) continue; // Skip preloaded pairs
-          const res = await makeAnalysisCall(t1.text, t2.text);
-          if (res.strength >= linkStrength) {
-            connections.push({
-              from: t1,
-              to: t2,
-              strength: res.strength,
-              fraudScore: res.fraudScore,
-              line: createConnectionLine(t1, t2, res.strength, res.fraudScore),
-              curve: null
-            });
-          }
-        }
-      }
-    }
+function updateLayout() {
+state.thoughts.forEach(n => {
+n.velocity = n.velocity || new THREE.Vector3();
+let totalForce = new THREE.Vector3();
 
-    async function makeAnalysisCall(t1, t2) {
-      if (!apiKey) return { strength: Math.random() * 0.5 + 0.4, fraudScore: Math.random() * 100, type: "mock", keywords: ["test"] }; // Mock for testing
-      logAnalysis(`Analyzing "${t1.slice(0, 15)}..." vs "${t2.slice(0, 15)}..."`);
-      const prompt = `Analyze these texts for fraud or corruption (e.g., circular funding, shell entities). Return JSON with:
-- "strength": (0-1) connection strength,
-- "fraudScore": (0-100) likelihood of fraud,
-- "type": "suspicious" if fraud detected, else "contextual",
-- "keywords": relevant terms.
-Text 1: "${t1}"
-Text 2: "${t2}"`;
-      try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "system", content: "You’re a fraud detection expert." }, { role: "user", content: prompt }],
-            temperature: 0.3
-          })
-        });
-        const data = await response.json();
-        const result = JSON.parse(data.choices[0].message.content);
-        logAnalysis(`Strength: ${result.strength.toFixed(2)}, Fraud: ${result.fraudScore}%`);
-        return result;
-      } catch (err) {
-        logAnalysis(`Analysis error: ${err.message}`, true);
-        return { strength: 0, fraudScore: 0, type: "none", keywords: [] };
-      }
-    }
+state.thoughts.forEach(n2 => {
+if (n === n2) return;
+const diff = n.mesh.position.clone().sub(n2.mesh.position);
+const dist = diff.length();
+if (dist < 150) {
+totalForce.add(diff.normalize().multiplyScalar(0.5 * (1 - dist / 150)));
+}
+});
 
-    async function makeSuggestionCall(currentThoughts) {
-      if (!apiKey) return [];
-      const combinedTexts = currentThoughts.map(t => t.text).join("\n");
-      const prompt = `Based on these NGO funding texts, suggest 3 new terms or entities (e.g., agencies, people) not mentioned to uncover USAID connections. Return JSON array of strings.
-Texts:
-${combinedTexts}`;
-      try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "system", content: "You’re an investigative journalist." }, { role: "user", content: prompt }],
-            temperature: 0.5
-          })
-        });
-        const data = await response.json();
-        const suggestions = JSON.parse(data.choices[0].message.content).slice(0, 3);
-        logAnalysis(`Suggested: ${suggestions.join(", ")}`);
-        return suggestions;
-      } catch (err) {
-        logAnalysis(`Suggestion error: ${err.message}`, true);
-        return [];
-      }
-    }
+state.connections.forEach(c => {
+if (c.from === n || c.to === n) {
+const other = c.from === n ? c.to : c.from;
+const diff = other.mesh.position.clone().sub(n.mesh.position);
+const dist = diff.length();
+if (dist > 200) {
+totalForce.add(diff.normalize().multiplyScalar(c.strength * 0.2 * (dist - 200) / 200));
+}
+}
+});
 
-    async function updateNetworkAnalysis() {
-      if (thoughts.length < 1) return;
-      const suspicious = connections.filter(c => c.fraudScore > 75).length;
-      const total = connections.length;
-      const summary = `Nodes: ${thoughts.length} | Links: ${total}<br>Suspicious Links: ${suspicious}`;
-      document.getElementById('analysisLogMessages').innerHTML = summary;
-      const suggestions = await makeSuggestionCall(thoughts);
-      renderSuggestions(suggestions);
-    }
+const centerDist = n.mesh.position.length();
+if (centerDist > state.boundingSphere.radius) {
+totalForce.add(n.mesh.position.clone().normalize().multiplyScalar(-0.05 * (centerDist - state.boundingSphere.radius)));
+}
 
-    function renderSuggestions(list) {
-      const panel = document.createElement('div');
-      panel.className = "suggestions-panel";
-      panel.innerHTML = "<strong style='color: #00aaff;'>Suggested:</strong>";
-      list.forEach(item => {
-        const btn = document.createElement('button');
-        btn.className = "suggestion-btn";
-        btn.textContent = item;
-        btn.onclick = () => addThought(item);
-        panel.appendChild(btn);
-      });
-      const statusBox = document.getElementById('statusBox');
-      statusBox.innerHTML = statusBox.innerHTML.split('<div')[0];
-      statusBox.appendChild(panel);
-    }
+n.velocity.add(totalForce).multiplyScalar(0.92);
+n.mesh.position.add(n.velocity);
+if (n.mesh.position.length() > state.boundingSphere.radius) {
+n.mesh.position.normalize().multiplyScalar(state.boundingSphere.radius * 0.95);
+}
 
-    async function addThought(txt, source = "") {
-      if (thoughts.length >= 50) {
-        setStatus("Max nodes (50) reached! Export or reset.");
-        return;
-      }
-      const tObj = {
-        id: Date.now(),
-        text: txt,
-        mesh: createNodeMesh(txt, source ? `Source: ${source}` : "", 0),
-        analysis: null,
-        timestamp: Date.now(),
-        source,
-        preloaded: false
-      };
-      tObj.mesh.userData.thoughtId = tObj.id;
-      thoughts.push(tObj);
-      updateThoughtsList();
-      controls.target.copy(tObj.mesh.position);
-      if (thoughts.length > 1) {
-        for (const older of thoughts.slice(0, -1)) {
-          const res = await makeAnalysisCall(tObj.text, older.text);
-          tObj.analysis = res;
-          if (res.strength >= linkStrength) {
-            connections.push({
-              from: tObj,
-              to: older,
-              strength: res.strength,
-              fraudScore: res.fraudScore,
-              line: createConnectionLine(tObj, older, res.strength, res.fraudScore),
-              curve: null
-            });
-          }
-        }
-        await reanalyzeAllConns();
-      }
-      updateNetworkAnalysis();
-      fetchLiveData(txt);
-      setStatus(`Added "${txt.slice(0, 20)}..."!`);
-    }
+const label = n.mesh.children[0];
+if (label) {
+const dist = state.camera.position.distanceTo(n.mesh.position);
+const scale = dist < 800 ? 0.3 : 0.2;
+label.scale.set(scale * label.material.map.image.width, scale * label.material.map.image.height, 1);
+label.visible = dist < 1500;
+}
+});
+}
 
-    function removeThought(id) {
-      const idx = thoughts.findIndex(t => t.id === id);
-      if (idx < 0) return;
-      const rem = thoughts[idx];
-      connections = connections.filter(c => {
-        if (c.from === rem || c.to === rem) {
-          networkGroup.remove(c.line);
-          return false;
-        }
-        return true;
-      });
-      networkGroup.remove(rem.mesh);
-      thoughts.splice(idx, 1);
-      updateThoughtsList();
-      updateNetworkAnalysis();
-    }
+function updateConnections() {
+state.connections.forEach(c => {
+const fromPos = c.from.mesh.position.clone();
+const toPos = c.to.mesh.position.clone();
+const mid = fromPos.clone().add(toPos).multiplyScalar(0.5);
+mid.add(new THREE.Vector3(0, 1, 0).multiplyScalar(fromPos.distanceTo(toPos) * 0.15));
+const curve = new THREE.QuadraticBezierCurve3(fromPos, mid, toPos);
 
-    function updateThoughtsList() {
-      const container = document.getElementById('thoughtsList');
-      container.innerHTML = "";
-      thoughts.forEach(t => {
-        const div = document.createElement('div');
-        div.className = "thought-item";
-        div.innerHTML = `<span>${t.text.replace(/\n/g, '<br>')}</span><button class="btn" onclick="removeThought(${t.id})">×</button>`;
-        container.appendChild(div);
-      });
-    }
+const key = `${c.from.id}-${c.to.id}`;
+let geometry;
 
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    function onClick(event) {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(networkGroup.children, true);
-      if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        if (obj.userData?.thoughtId) {
-          const thought = thoughts.find(t => t.id === obj.userData.thoughtId);
-          if (thought) showLightboxAnalysis(thought);
-        }
-      }
-    }
+if (!state.geometryCache.has(key)) {
+geometry = new THREE.TubeGeometry(curve, 20, Math.max(1, c.strength * 5), 8, false);
+state.geometryCache.set(key, geometry);
+} else {
+// Create a new geometry instead of trying to reuse cached one
+geometry = new THREE.TubeGeometry(curve, 20, Math.max(1, c.strength * 5), 8, false);
+}
 
-    function onMouseMove(event) {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(networkGroup.children, true);
-      thoughts.forEach(t => t.mesh.userData.hover = false);
-      if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        if (obj.userData?.thoughtId) {
-          thoughts.find(t => t.id === obj.userData.thoughtId).mesh.userData.hover = true;
-        }
-      }
-    }
+if (c.line.geometry) {
+c.line.geometry.dispose();
+}
 
-    async function showLightboxAnalysis(thought) {
-      const lightbox = document.getElementById('lightboxAnalysis');
-      const content = document.getElementById('lightboxContent');
-      content.innerHTML = "<p>Analyzing...</p>";
-      lightbox.classList.remove('hidden');
-      const analysis = await getDetailedNodeAnalysis(thought);
-      content.innerHTML = `<h2 style="color: #00aaff;">${thought.text}</h2><p>${analysis.replace(/\n/g, '<br>')}</p>`;
-      selectedNode = thought;
-    }
+c.line.geometry = geometry;
+c.line.material.opacity = Math.min(1, Math.max(0.2, c.strength));
+c.line.material.emissiveIntensity = c.fraudScore > 75 ? 0.5 + Math.sin(Date.now() * 0.001) * 0.3 : 0.5;
+c.line.visible = state.showWeakLinks || c.strength >= state.linkStrength;
+});
+}
 
-    async function getDetailedNodeAnalysis(thought) {
-      if (!apiKey) return "No API key connected!";
-      const related = connections.filter(c => c.from === thought || c.to === thought)
-                                 .map(c => `${c.from === thought ? c.to.text : c.from.text} (Fraud: ${c.fraudScore}%)`);
-      const prompt = `Analyze this thought and its connections for USAID funding corruption. Suggest 2-3 next steps. Return concise text.
-Thought: "${thought.text}"
-Connected: ${related.join("; ") || "None"}`;
-      try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "system", content: "You’re an expert investigator." }, { role: "user", content: prompt }],
-            temperature: 0.4
-          })
-        });
-        const data = await response.json();
-        return data.choices[0].message.content;
-      } catch (err) {
-        return `Analysis failed: ${err.message}`;
-      }
-    }
+function createTextSprite(text, scaleFactor = 0.3) {
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+const lines = text.split("\n");
+const fontSize = 24;
+const padding = 10;
 
-    window.addEventListener('click', onClick);
-    window.addEventListener('mousemove', onMouseMove);
-    window.removeThought = removeThought;
+ctx.font = `bold ${fontSize}px Inter`;
+const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+canvas.width = maxWidth + padding * 2;
+canvas.height = fontSize * lines.length + padding * 2;
 
-    document.getElementById('connectKeyBtn').addEventListener('click', () => {
-      apiKey = document.getElementById('apiKeyInput').value.trim();
-      setStatus(apiKey ? "API Key connected! Ready to dig." : "No key entered!");
-    });
-    document.getElementById('changeApiBtn').addEventListener('click', () => {
-      apiKey = "";
-      document.getElementById('apiKeyInput').value = "";
-      thoughts.forEach(t => networkGroup.remove(t.mesh));
-      thoughts = [];
-      connections.forEach(c => networkGroup.remove(c.line));
-      connections = [];
-      updateThoughtsList();
-      setStatus("Reset complete! Add a new API key.");
-      sampleNGOsLoaded = false;
-      document.getElementById('loadPredefinedBtn').disabled = false;
-    });
-    document.getElementById('thoughtInput').addEventListener('keypress', (ev) => {
-      if (ev.key === "Enter" && ev.target.value.trim()) {
-        if (!apiKey) return setStatus("Connect an API key first!");
-        addThought(ev.target.value.trim());
-        ev.target.value = "";
-      }
-    });
-    document.getElementById('linkStrength').addEventListener('input', (ev) => {
-      linkStrength = ev.target.value / 100;
-      document.getElementById('strengthValue').textContent = linkStrength.toFixed(2);
-      reanalyzeAllConns().then(updateNetworkAnalysis);
-    });
-    document.getElementById('loadPredefinedBtn').addEventListener('click', () => {
-      loadPredefinedNGOs();
-      document.getElementById('loadPredefinedBtn').disabled = true;
-    });
-    document.getElementById('toggleAnalysisLogBtn').addEventListener('click', () => {
-      const log = document.getElementById('analysisLog');
-      log.style.display = log.style.display === "none" ? "block" : "none";
-      if (log.style.display === "block") updateNetworkAnalysis();
-    });
-    document.getElementById('toggleThoughtsPanelBtn').addEventListener('click', () => {
-      const panel = document.getElementById('thoughtPanel');
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-    });
-    document.getElementById('closeAnalysisLogBtn').addEventListener('click', () => {
-      document.getElementById('analysisLog').style.display = "none";
-    });
-    document.getElementById('closeLightboxBtn').addEventListener('click', () => {
-      document.getElementById('lightboxAnalysis').classList.add('hidden');
-    });
-    document.getElementById('exportBtn').addEventListener('click', () => {
-      const data = JSON.stringify({ thoughts, connections }, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `usaid-grift-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-    document.getElementById('shareXBtn').addEventListener('click', () => {
-      const topFraud = connections.reduce((max, c) => c.fraudScore > max.fraudScore ? c : max, { fraudScore: 0 });
-      const tweet = `@DataRepublican USAID grift: ${thoughts.length} nodes, ${connections.length} links. Top fraud: ${topFraud.fraudScore}% - ${window.location.href}`;
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}`, '_blank');
-    });
+ctx.fillStyle = 'rgba(10, 10, 10, 0.7)';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.font = `bold ${fontSize}px Inter`;
+ctx.fillStyle = '#ffffff';
+ctx.shadowColor = '#00aaff';
+ctx.shadowBlur = 6;
+ctx.textAlign = 'left';
+ctx.textBaseline = 'middle';
 
-    window.addEventListener("DOMContentLoaded", () => {
-      initThree();
-      setStatus("Connect your API key to unmask USAID grift!");
-    });
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+lines.forEach((line, i) => ctx.fillText(line, padding, padding + fontSize * (i + 0.5)));
+
+const texture = new THREE.CanvasTexture(canvas);
+texture.minFilter = THREE.LinearFilter;
+const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+sprite.scale.set(scaleFactor * canvas.width, scaleFactor * canvas.height, 1);
+return sprite;
+}
+
+function createNodeMesh(title, details, fraudScore = 10, preloaded = false) {
+const radius = 10 + fraudScore / 10;
+const mesh = new THREE.Mesh(
+new THREE.SphereGeometry(radius, 32, 32),
+new THREE.MeshPhongMaterial({
+color: fraudScore > 75 ? 0xff5555 : 0x00aaff,
+emissive: fraudScore > 75 ? 0x550000 : 0x002244,
+emissiveIntensity: 0.5,
+shininess: 100,
+specular: 0x888888
+})
+);
+const label = createTextSprite(`${title}\n${details}\nFraud: ${fraudScore}%`);
+label.position.set(0, radius * 2.2, 0);
+mesh.add(label);
+
+const r = Math.random() * 200;
+const theta = Math.random() * Math.PI * 2;
+const phi = Math.random() * Math.PI;
+mesh.position.set(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
+mesh.userData = { hover: false, title, details, fraudScore, preloaded };
+state.networkGroup.add(mesh);
+return mesh;
+}
+
+function createConnectionLine(fromObj, toObj, strength, fraudScore) {
+const start = fromObj.mesh.position.clone();
+const end = toObj.mesh.position.clone();
+const mid = start.clone().add(end).multiplyScalar(0.5);
+mid.add(new THREE.Vector3(0, 1, 0).multiplyScalar(start.distanceTo(end) * 0.15));
+
+const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+const line = new THREE.Mesh(
+new THREE.TubeGeometry(curve, 20, Math.max(1.5, fraudScore / 20), 8, false),
+new THREE.MeshPhongMaterial({
+color: fraudScore > 75 ? 0xff5555 : 0x00ffaa,
+transparent: true,
+opacity: Math.min(1, Math.max(0.2, strength)),
+emissive: fraudScore > 75 ? 0x330000 : 0x004422,
+emissiveIntensity: 0.6,
+shininess: 80
+})
+);
+line.visible = strength >= state.linkStrength;
+state.networkGroup.add(line);
+return line;
+}
+
+function updateNodeAppearance(mesh, fraudScore) {
+mesh.material.color.set(fraudScore > 75 ? 0xff5555 : 0x00aaff);
+mesh.material.emissive.set(fraudScore > 75 ? 0x550000 : 0x002244);
+const label = mesh.children[0];
+if (label && label.material.map) {
+label.material.map.dispose();
+label.material.map = createTextSprite(`${mesh.userData.title}\n${mesh.userData.details}\nFraud: ${fraudScore}%`).material.map;
+}
+}
+
+async function loadPredefinedNGOs() {
+if (state.sampleNGOsLoaded) return;
+state.sampleNGOsLoaded = true;
+showLoading(true);
+setStatus("Loading sample NGOs...");
+
+try {
+const eins = preloadedNGOs.map(org => org.name.match(/EIN: (\d{2}-\d{7})/)?.[1]).filter(Boolean);
+const irsDataBatch = await batchFetchIRSData(eins);
+
+preloadedNGOs.forEach((org, i) => {
+const ein = eins[i];
+const irsData = irsDataBatch[i] || { revenue: 0, expenses: 0, assets: 0, filingYear: "Unknown" };
+const fraudScore = calculateHeuristicFraud(org.data, org.name);
+const node = {
+id: Date.now() + i,
+text: org.name,
+mesh: createNodeMesh(org.name, org.data, fraudScore, true),
+analysis: { type: "preloaded", keywords: [] },
+timestamp: Date.now(),
+source: "",
+preloaded: true,
+ein,
+irsData
+};
+node.mesh.userData.thoughtId = node.id;
+state.thoughts.push(node);
+});
+
+preloadedNGOs.forEach((org, i) => {
+const fromObj = state.thoughts[i];
+org.lines.forEach(l => {
+const toObj = state.thoughts[l.target];
+const strength = Math.min(1, Math.max(0.4, l.amount / 50000000));
+const fraudScore = calculateHeuristicFraud(`${fromObj.data}\n${toObj.data}`, `${fromObj.text} → ${toObj.text}`);
+const line = createConnectionLine(fromObj, toObj, strength, fraudScore);
+state.connections.push({ from: fromObj, to: toObj, strength, fraudScore, line, amount: l.amount });
+});
+});
+
+updateThoughtsList();
+setStatus("Sample NGOs loaded! Analyzing...");
+await reanalyzeAllConnections();
+const suggestions = await generateSuggestions();
+setStatus("Sample NGOs loaded and analyzed!", suggestions);
+document.getElementById('loadPredefinedBtn').disabled = true;
+} catch (err) {
+console.error("Error loading NGOs:", err);
+setStatus("Failed to load NGOs. Check console.");
+} finally {
+showLoading(false);
+}
+}
+
+async function fetchLiveData(query) {
+setStatus(`Fetching data for "${query}"...`);
+try {
+const res = await axios.get(`https://api.usaspending.gov/v2/awards/?keyword=${encodeURIComponent(query)}&limit=5`, {
+headers: { 'Accept': 'application/json' }
+});
+const awards = res.data.results.slice(0, 5).map(award => ({
+name: award.recipient.recipient_name,
+data: `Award: $${(award.total_obligation / 1e6).toFixed(1)}M\nDate: ${new Date(award.date_signed).toLocaleDateString()}`,
+source: `https://www.usaspending.gov/award/${award.award_id}`,
+ein: award.recipient.duns || award.recipient.uei || "Unknown"
+}));
+const eins = awards.map(a => a.ein);
+const irsDataBatch = await batchFetchIRSData(eins);
+
+awards.forEach((award, i) => {
+if (!state.thoughts.some(t => t.text.includes(award.name) || t.ein === award.ein)) {
+const fraudScore = calculateHeuristicFraud(award.data, award.name);
+const irsData = irsDataBatch[i];
+const node = {
+id: Date.now() + Math.random(),
+text: award.name,
+mesh: createNodeMesh(award.name, award.data, fraudScore),
+analysis: { type: "live", keywords: ["USAspending"] },
+timestamp: Date.now(),
+source: award.source,
+preloaded: false,
+ein: award.ein,
+irsData
+};
+node.mesh.userData.thoughtId = node.id;
+state.thoughts.push(node);
+updateThoughtsList();
+}
+});
+
+await reanalyzeAllConnections();
+const suggestions = await generateSuggestions();
+setStatus(`Loaded ${awards.length} records!`, suggestions);
+} catch (err) {
+console.error("Fetch error:", err);
+setStatus("Failed to fetch data.");
+}
+}
+
+function calculateHeuristicFraud(data, name) {
+let score = 10;
+const receiptMatch = data.match(/Gross receipts: \$([\d.]+)M/);
+const taxMatch = data.match(/Taxpayer funds: \$([\d.]+)M/);
+const awardMatch = data.match(/Award: \$([\d.]+)M/);
+if (receiptMatch && taxMatch) {
+const receipts = parseFloat(receiptMatch[1]) || 0;
+const taxpayer = parseFloat(taxMatch[1]) || 0;
+if (taxpayer / receipts > 0.9) score += 40;
+if (receipts - taxpayer < 5) score += 20;
+}
+if (awardMatch && parseFloat(awardMatch[1]) > 100) score += 30;
+if (name.toLowerCase().includes("international") || name.toLowerCase().includes("global")) score += 20;
+return Math.min(100, score);
+}
+
+async function reanalyzeAllConnections() {
+showLoading(true);
+setStatus("Reanalyzing network...");
+try {
+state.connections.forEach(c => state.networkGroup.remove(c.line));
+state.connections = [];
+
+const pairs = [];
+for (let i = 0; i < state.thoughts.length; i++) {
+for (let j = i + 1; j < state.thoughts.length; j++) {
+pairs.push([state.thoughts[i], state.thoughts[j]]);
+}
+}
+
+const results = await Promise.all(pairs.map(([t1, t2]) => analyzeConnection(t1, t2)));
+results.forEach((res, idx) => {
+const [fromObj, toObj] = pairs[idx];
+if (res.strength >= state.linkStrength) {
+const line = createConnectionLine(fromObj, toObj, res.strength, res.fraudScore);
+state.connections.push({ from: fromObj, to: toObj, strength: res.strength, fraudScore: res.fraudScore, line, amount: res.amount });
+fromObj.mesh.userData.fraudScore = Math.max(fromObj.mesh.userData.fraudScore, res.fraudScore);
+toObj.mesh.userData.fraudScore = Math.max(toObj.mesh.userData.fraudScore, res.fraudScore);
+updateNodeAppearance(fromObj.mesh, fromObj.mesh.userData.fraudScore);
+updateNodeAppearance(toObj.mesh, toObj.mesh.userData.fraudScore);
+}
+});
+
+detectFundingCliques();
+const suggestions = await generateSuggestions();
+setStatus("Network reanalyzed!", suggestions);
+} catch (err) {
+console.error("Reanalysis error:", err);
+setStatus("Failed to reanalyze network.");
+} finally {
+showLoading(false);
+}
+}
+
+async function analyzeConnection(t1Obj, t2Obj) {
+const cacheKey = `${t1Obj.id}-${t2Obj.id}`;
+if (state.analysisCache.has(cacheKey)) return state.analysisCache.get(cacheKey);
+
+const heuristicScore = calculateHeuristicFraud(`${t1Obj.data}\n${t2Obj.data}`, `${t1Obj.text} → ${t2Obj.text}`);
+if (heuristicScore < 50 || !state.apiKey) {
+const result = { strength: state.linkStrength, fraudScore: heuristicScore, type: "heuristic", keywords: ["fallback"], reasoning: "Low risk or no API", amount: 0 };
+state.analysisCache.set(cacheKey, result);
+localStorage.setItem('analysisCache', JSON.stringify([...state.analysisCache]));
+return result;
+}
+
+state.apiProvider = detectApiProvider(state.apiKey);
+const networkContext = state.thoughts.map(t => `${t.text} (EIN: ${t.ein || "Unknown"})`).join("\n");
+const existingConn = state.connections.find(c => (c.from === t1Obj && c.to === t2Obj) || (c.from === t2Obj && c.to === t1Obj));
+const amount = existingConn?.amount || 0;
+const t1IRS = t1Obj.irsData || { revenue: 0 };
+const t2IRS = t2Obj.irsData || { revenue: 0 };
+
+const config = {
+openai: {
+endpoint: 'https://api.openai.com/v1/chat/completions',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+body: JSON.stringify({
+model: "gpt-4o-mini",
+messages: [
+{ role: "system", content: "Forensic accountant" },
+{ role: "user", content: `Analyze USAID fraud:\n${networkContext}\nNode 1: "${t1Obj.text}" (EIN: ${t1Obj.ein || "Unknown"}, ${t1Obj.data}, IRS: $${(t1IRS.revenue / 1e6).toFixed(1)}M)\nNode 2: "${t2Obj.text}" (EIN: ${t2Obj.ein || "Unknown"}, ${t2Obj.data}, IRS: $${(t2IRS.revenue / 1e6).toFixed(1)}M)\nTransfer: $${(amount / 1e6).toFixed(1)}M\nCheck circular funding, shells, offshore ties. Return JSON: "strength" (0-1, min ${state.linkStrength}), "fraudScore" (0-100), "type", "keywords" (3-5), "reasoning", "amount".` }
+],
+temperature: 0.3
+})
+},
+xai: {
+endpoint: 'https://api.grok.xai/v1/completions',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+body: JSON.stringify({
+model: "grok-3",
+prompt: `Analyze USAID fraud:\n- "${t1Obj.text}" (EIN: ${t1Obj.ein || "Unknown"}, ${t1Obj.data}, IRS: $${(t1IRS.revenue / 1e6).toFixed(1)}M)\n- "${t2Obj.text}" (EIN: ${t2Obj.ein || "Unknown"}, ${t2Obj.data}, IRS: $${(t2IRS.revenue / 1e6).toFixed(1)}M)\nNetwork: ${networkContext}\nTransfer: $${(amount / 1e6).toFixed(1)}M\nJSON: "strength" (0-1, min ${state.linkStrength}), "fraudScore" (0-100), "type", "keywords" (3-5), "reasoning", "amount".`,
+max_tokens: 250,
+temperature: 0.3
+})
+}
+};
+
+try {
+const { endpoint, headers, body } = config[state.apiProvider];
+const response = await fetch(endpoint, { method: 'POST', headers, body });
+if (!response.ok) throw new Error(`HTTP ${response.status}`);
+const data = await response.json();
+const result = state.apiProvider === "openai" ? JSON.parse(data.choices[0].message.content) : JSON.parse(data.choices[0].text.replace(/```json\n|\n```/g, ''));
+result.strength = Math.max(state.linkStrength, result.strength || 0.4);
+result.fraudScore = Math.max(heuristicScore, result.fraudScore || 0);
+result.amount = amount || result.amount || 0;
+state.analysisCache.set(cacheKey, result);
+localStorage.setItem('analysisCache', JSON.stringify([...state.analysisCache]));
+return result;
+} catch (err) {
+console.error("API analysis error:", err);
+const fallback = { strength: state.linkStrength, fraudScore: heuristicScore, type: "error", keywords: ["api-fail"], reasoning: `API error: ${err.message}`, amount };
+state.analysisCache.set(cacheKey, fallback);
+localStorage.setItem('analysisCache', JSON.stringify([...state.analysisCache]));
+return fallback;
+}
+}
+
+function detectFundingCliques() {
+const graph = new Map(state.thoughts.map(t => [t.id, new Set()]));
+state.connections.forEach(c => {
+graph.get(c.from.id).add(c.to.id);
+graph.get(c.to.id).add(c.from.id);
+});
+
+const cliques = [];
+const visited = new Set();
+function findClique(nodeId, currentClique) {
+if (currentClique.length >= 3) {
+const cliqueNodes = currentClique.map(id => state.thoughts.find(t => t.id === id));
+const fraudScore = cliqueNodes.reduce((sum, t) => sum + t.mesh.userData.fraudScore, 0) / cliqueNodes.length;
+const amount = state.connections.reduce((sum, c) => currentClique.includes(c.from.id) && currentClique.includes(c.to.id) ? sum + c.amount : sum, 0);
+if (fraudScore > 50) cliques.push({ nodes: cliqueNodes, fraudScore, amount });
+}
+graph.get(nodeId).forEach(neighbor => {
+if (!visited.has(neighbor) && currentClique.every(id => id === nodeId || graph.get(id).has(neighbor))) {
+visited.add(neighbor);
+findClique(neighbor, [...currentClique, neighbor]);
+visited.delete(neighbor);
+}
+});
+}
+
+graph.forEach((_, nodeId) => {
+if (!visited.has(nodeId) && cliques.length < 3) {
+visited.add(nodeId);
+findClique(nodeId, [nodeId]);
+}
+});
+return cliques;
+}
+
+async function generateSuggestions() {
+if (!state.apiKey) {
+const topFraudNodes = state.thoughts.sort((a, b) => b.mesh.userData.fraudScore - a.mesh.userData.fraudScore).slice(0, 2);
+const suggestions = [
+`Audit ${topFraudNodes[0]?.text.split("\n")[0]} for funding sources`,
+`Investigate ${topFraudNodes[1]?.text.split("\n")[0]} ties to government grants`,
+`Trace ${state.connections.length > 0 ? "top connection flow" : "network patterns"}`
+].filter(Boolean);
+return suggestions.length >= 3 ? suggestions : ["Audit USAID grants", "Investigate Senate ties", "Trace GAO discrepancies"];
+}
+
+const topFraudNodes = state.thoughts.sort((a, b) => b.mesh.userData.fraudScore - a.mesh.userData.fraudScore)
+.slice(0, 2).map(t => `${t.text.split("\n")[0]} (EIN: ${t.ein || "Unknown"}, Fraud: ${t.mesh.userData.fraudScore}%)`);
+const fraudPatterns = state.connections.filter(c => c.fraudScore > 50).sort((a, b) => b.fraudScore - a.fraudScore)
+.slice(0, 2).map(c => `${c.from.text.split("\n")[0]} → ${c.to.text.split("\n")[0]}: $${(c.amount / 1e6).toFixed(1)}M, ${c.fraudScore}%`);
+const cliques = detectFundingCliques();
+const cliqueText = cliques.length ? cliques[0].nodes.map(n => n.text.split("\n")[0]).join(" → ") + ` ($${cliques[0].amount / 1e6}M)` : "None";
+
+const config = {
+openai: {
+endpoint: 'https://api.openai.com/v1/chat/completions',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+body: JSON.stringify({
+model: "gpt-4o-mini",
+messages: [
+{ role: "system", content: "Investigative journalist" },
+{ role: "user", content: `Track USAID fraud:\n- Top fraud: ${topFraudNodes.join(", ") || "None"}\n- Patterns: ${fraudPatterns.join("; ") || "None"}\n- Cliques: ${cliqueText}\nSuggest 3 specific leads (e.g., "Audit EIN 52-1234567's subs") not in network, tied to fraud patterns. JSON array of 3 strings.` }
+],
+temperature: 0.5
+})
+},
+xai: {
+endpoint: 'https://api.grok.xai/v1/completions',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+body: JSON.stringify({
+model: "grok-3",
+prompt: `Suggest 3 leads:\n- Top fraud: ${topFraudNodes.join(", ") || "None"}\n- Patterns: ${fraudPatterns.join("; ") || "None"}\n- Cliques: ${cliqueText}\nJSON array of 3 strings, tied to fraud.`,
+max_tokens: 150,
+temperature: 0.5
+})
+}
+};
+
+try {
+const { endpoint, headers, body } = config[state.apiProvider];
+const response = await fetch(endpoint, { method: 'POST', headers, body });
+if (!response.ok) throw new Error(`HTTP ${response.status}`);
+const data = await response.json();
+state.suggestionCache = state.apiProvider === "openai" ? JSON.parse(data.choices[0].message.content) : JSON.parse(data.choices[0].text.replace(/```json\n|\n```/g, ''));
+return state.suggestionCache.slice(0, 3);
+} catch (err) {
+console.error("Suggestion error:", err);
+return ["Audit USAID grants", "Investigate Senate ties", "Trace GAO discrepancies"];
+}
+}
+
+async function updateNetworkAnalysis() {
+if (!state.thoughts.length) return;
+showLoading(true);
+try {
+const suspicious = state.connections.filter(c => c.fraudScore > 50).length;
+const totalFunds = state.connections.reduce((sum, c) => sum + c.amount, 0) / 1e6;
+const fraudFunds = state.connections.filter(c => c.fraudScore > 50).reduce((sum, c) => sum + c.amount, 0) / 1e6;
+const irsRevenue = state.thoughts.reduce((sum, t) => sum + (t.irsData?.revenue || 0), 0) / 1e6;
+const cliques = detectFundingCliques();
+
+const topNodes = state.thoughts.sort((a, b) => b.mesh.userData.fraudScore - a.mesh.userData.fraudScore)
+.slice(0, 3).map(t => `${t.text.split("\n")[0]} (${t.mesh.userData.fraudScore}%, EIN: ${t.ein})`);
+const hubs = Object.entries(calculateCentrality()).sort((a, b) => b[1] - a[1])
+.slice(0, 3).map(([id]) => state.thoughts.find(t => t.id === parseInt(id)).text.split("\n")[0]);
+const topFlows = state.connections.filter(c => c.fraudScore > 50).sort((a, b) => b.fraudScore - a.fraudScore)
+.slice(0, 3).map(c => `${c.from.text.split("\n")[0]} → ${c.to.text.split("\n")[0]} (${c.fraudScore}%, $${(c.amount / 1e6).toFixed(1)}M)`);
+
+document.getElementById('analysisLogMessages').innerHTML = `
+<strong>Overview:</strong> ${state.thoughts.length} nodes, ${state.connections.length} links, ${suspicious} suspicious.<br>
+Funds: $${totalFunds.toFixed(1)}M tracked, $${fraudFunds.toFixed(1)}M fraud-linked (${((fraudFunds / totalFunds) * 100 || 0).toFixed(1)}%).<br>
+IRS Revenue: $${irsRevenue.toFixed(1)}M.<br>
+<strong>Top Nodes:</strong> ${topNodes.join(", ")}<br>
+<strong>Key Hubs:</strong> ${hubs.join(", ")}<br>
+<strong>Flows:</strong><br>${topFlows.join("<br>") || "None"}<br>
+<strong>Cliques:</strong><br>${cliques.length ? cliques.map(c => `${c.nodes.map(n => n.text.split("\n")[0]).join(" → ")} (${c.fraudScore.toFixed(1)}%)`).join("<br>") : "None"}<br>
+<strong>Steps:</strong><br>
+1. Subpoena ${topNodes[0].split(" (")[0]} (EIN: ${state.thoughts.find(t => t.text.includes(topNodes[0].split(" (")[0])).ein}).<br>
+2. Check ${cliques[0]?.nodes[0].text.split("\n")[0] || "top clique"} for $${(fraudFunds * 0.5).toFixed(1)}M.<br>
+3. Audit ${hubs[0]} for $${(irsRevenue * 0.2).toFixed(1)}M discrepancies.
+`;
+const suggestions = await generateSuggestions();
+setStatus("Network analysis complete!", suggestions);
+} catch (err) {
+console.error("Analysis error:", err);
+setStatus("Failed to analyze network.");
+} finally {
+showLoading(false);
+}
+}
+
+function calculateCentrality() {
+const centrality = Object.fromEntries(state.thoughts.map(t => [t.id, 0]));
+state.connections.forEach(c => {
+centrality[c.from.id] += c.strength * (c.amount / 1e6 || 1);
+centrality[c.to.id] += c.strength * (c.amount / 1e6 || 1);
+});
+const max = Math.max(...Object.values(centrality));
+for (const id in centrality) centrality[id] /= max || 1;
+return centrality;
+}
+
+function renderSuggestions(list) {
+const panel = document.createElement('div');
+panel.className = "suggestions-panel";
+panel.innerHTML = "<strong style='color: #00aaff;'>Next Leads:</strong>";
+list.forEach(item => {
+const btn = document.createElement('button');
+btn.className = "suggestion-btn";
+btn.textContent = item;
+btn.onclick = () => addThought(item);
+panel.appendChild(btn);
+});
+document.getElementById('statusBox').innerHTML = document.getElementById('statusBox').innerHTML.split('<div')[0];
+document.getElementById('statusBox').appendChild(panel);
+}
+
+async function addThought(txt, source = "") {
+if (state.thoughts.length >= 50) return setStatus("Max nodes (50) reached!");
+showLoading(true);
+try {
+const fraudScore = calculateHeuristicFraud(source ? `Source: ${source}` : "", txt);
+const ein = txt.match(/EIN: (\d{2}-\d{7})/)?.[1] || "Unknown";
+const irsData = ein !== "Unknown" ? (await batchFetchIRSData([ein]))[0] : { revenue: 0, expenses: 0, assets: 0, filingYear: "Unknown" };
+const node = {
+id: Date.now() + Math.random(),
+text: txt,
+mesh: createNodeMesh(txt, source ? `Source: ${source}` : "", fraudScore),
+analysis: null,
+timestamp: Date.now(),
+source,
+preloaded: false,
+ein,
+irsData
+};
+node.mesh.userData.thoughtId = node.id;
+state.thoughts.push(node);
+updateThoughtsList();
+state.controls.target.copy(node.mesh.position);
+
+if (state.thoughts.length > 1) {
+const newConns = state.thoughts.slice(0, -1).map(old => [node, old]);
+const results = await Promise.all(newConns.map(([t1, t2]) => analyzeConnection(t1, t2)));
+results.forEach((res, idx) => {
+const [fromObj, toObj] = newConns[idx];
+if (res.strength >= state.linkStrength) {
+const line = createConnectionLine(fromObj, toObj, res.strength, res.fraudScore);
+state.connections.push({ from: fromObj, to: toObj, strength: res.strength, fraudScore: res.fraudScore, line, amount: res.amount });
+}
+});
+}
+
+const suggestions = await generateSuggestions();
+setStatus(`Added "${txt.slice(0, 20)}..."!`, suggestions);
+fetchLiveData(txt);
+} catch (err) {
+console.error("Add thought error:", err);
+setStatus(`Failed to add "${txt.slice(0, 20)}...".`);
+} finally {
+showLoading(false);
+}
+}
+
+function removeThought(id) {
+const idx = state.thoughts.findIndex(t => t.id === id);
+if (idx < 0) return;
+const removed = state.thoughts[idx];
+state.connections = state.connections.filter(c => {
+if (c.from === removed || c.to === removed) {
+state.networkGroup.remove(c.line);
+return false;
+}
+return true;
+});
+state.networkGroup.remove(removed.mesh);
+state.thoughts.splice(idx, 1);
+updateThoughtsList();
+generateSuggestions().then(suggestions => setStatus("Node removed!", suggestions));
+}
+
+function updateThoughtsList() {
+const container = document.getElementById('thoughtsList');
+container.innerHTML = "";
+state.thoughts.forEach(t => {
+const div = document.createElement('div');
+div.className = "thought-item";
+div.innerHTML = `<span>${t.text.replace(/\n/g, '<br>')}</span><button class="btn" onclick="removeThought(${t.id})">×</button>`;
+div.onclick = e => { if (e.target.tagName !== 'BUTTON') showLightboxAnalysis(t); };
+container.appendChild(div);
+});
+}
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function onClick(event) {
+mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+raycaster.setFromCamera(mouse, state.camera);
+const intersects = raycaster.intersectObjects(state.networkGroup.children, true);
+if (intersects.length) {
+const obj = intersects[0].object;
+const thought = state.thoughts.find(t => t.id === obj.userData.thoughtId);
+if (thought) showLightboxAnalysis(thought);
+}
+}
+
+function onMouseMove(event) {
+mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+raycaster.setFromCamera(mouse, state.camera);
+const intersects = raycaster.intersectObjects(state.networkGroup.children, true);
+state.thoughts.forEach(t => t.mesh.userData.hover = false);
+const tooltip = document.getElementById('tooltip');
+tooltip.style.display = 'none';
+
+if (intersects.length) {
+const obj = intersects[0].object;
+const thought = state.thoughts.find(t => t.id === obj.userData.thoughtId);
+if (thought) {
+thought.mesh.userData.hover = true;
+tooltip.style.display = 'block';
+tooltip.style.left = `${event.clientX + 10}px`;
+tooltip.style.top = `${event.clientY + 10}px`;
+tooltip.textContent = `${thought.text}\nFraud: ${thought.mesh.userData.fraudScore}%`;
+}
+}
+}
+
+async function showLightboxAnalysis(thought) {
+const lightbox = document.getElementById('lightboxAnalysis');
+const content = document.getElementById('lightboxContent');
+content.innerHTML = "<p>Analyzing...</p>";
+lightbox.classList.remove('hidden');
+const analysis = await getDetailedNodeAnalysis(thought);
+content.innerHTML = `<h2 style="color: #00aaff;">${thought.text}</h2><p>${analysis.replace(/\n/g, '<br>')}</p>`;
+}
+
+async function getDetailedNodeAnalysis(thought) {
+if (!state.apiKey) return "No API key connected!";
+showLoading(true);
+try {
+const related = state.connections.filter(c => c.from === thought || c.to === thought)
+.map(c => `${(c.from === thought ? c.to : c.from).text} (Fraud: ${c.fraudScore}%, $${(c.amount / 1e6).toFixed(1)}M)`);
+const networkContext = state.thoughts.map(t => `${t.text} (EIN: ${t.ein || "Unknown"})`).join("\n");
+const heuristicScore = calculateHeuristicFraud(thought.data, thought.text);
+const irsData = thought.irsData || { revenue: 0, filingYear: "Unknown" };
+
+const config = {
+openai: {
+endpoint: 'https://api.openai.com/v1/chat/completions',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+body: JSON.stringify({
+model: "gpt-4o-mini",
+messages: [
+{ role: "system", content: "Forensic investigator" },
+{ role: "user", content: `Analyze USAID fraud:\n${networkContext}\nNode: "${thought.text}" (EIN: ${thought.ein || "Unknown"}, ${thought.data}, Heuristic: ${heuristicScore}%, IRS: $${(irsData.revenue / 1e6).toFixed(1)}M)\nConnected: ${related.join("; ") || "None"}\nAssess fraud with financial anomalies, network patterns, 3 precise steps. Concise text.` }
+],
+temperature: 0.2
+})
+},
+xai: {
+endpoint: 'https://api.grok.xai/v1/completions',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+body: JSON.stringify({
+model: "grok-3",
+prompt: `Analyze USAID node "${thought.text}" (EIN: ${thought.ein || "Unknown"}, ${thought.data}, Heuristic: ${heuristicScore}%, IRS: $${(irsData.revenue / 1e6).toFixed(1)}M) in:\n${networkContext}\nConnections: ${related.join("; ") || "None"}\nText: fraud assessment, 3 steps.`,
+max_tokens: 300,
+temperature: 0.2
+})
+}
+};
+
+const { endpoint, headers, body } = config[state.apiProvider];
+const response = await fetch(endpoint, { method: 'POST', headers, body });
+if (!response.ok) throw new Error(`HTTP ${response.status}`);
+const data = await response.json();
+return state.apiProvider === "openai" ? data.choices[0].message.content : data.choices[0].text;
+} catch (err) {
+console.error("Detailed analysis error:", err);
+return `Analysis failed: ${err.message}`;
+} finally {
+showLoading(false);
+}
+}
+
+window.addEventListener('click', onClick);
+window.addEventListener('mousemove', onMouseMove);
+window.removeThought = removeThought;
+
+function connectApiKey() {
+const apiKeyInput = document.getElementById('apiKeyInput');
+state.apiKey = apiKeyInput.value.trim();
+if (!state.apiKey || !/^(sk-|gk-)/.test(state.apiKey)) {
+setStatus("Enter a valid API key (starts with 'sk-' or 'gk-')!");
+return;
+}
+state.apiProvider = detectApiProvider(state.apiKey);
+setStatus(`Connected to ${state.apiProvider} API! Ready to analyze.`);
+document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+if (state.thoughts.length) generateSuggestions().then(suggestions => setStatus("Connected!", suggestions));
+}
+
+document.getElementById('apiKeyInput').addEventListener('keypress', e => e.key === 'Enter' && connectApiKey());
+document.getElementById('connectKeyBtn').addEventListener('click', connectApiKey);
+
+document.getElementById('changeApiBtn').addEventListener('click', () => {
+state.apiKey = "";
+state.apiProvider = "openai";
+document.getElementById('apiKeyInput').value = "";
+state.thoughts.forEach(t => state.networkGroup.remove(t.mesh));
+state.thoughts = [];
+state.connections.forEach(c => state.networkGroup.remove(c.line));
+state.connections = [];
+state.analysisCache.clear();
+state.irsDataCache.clear();
+state.suggestionCache = null;
+localStorage.removeItem('analysisCache');
+updateThoughtsList();
+setStatus("Reset complete! Add a new API key.");
+state.sampleNGOsLoaded = false;
+document.getElementById('loadPredefinedBtn').disabled = false;
+document.querySelectorAll('.btn:not(#connectKeyBtn)').forEach(btn => btn.disabled = true);
+});
+
+document.getElementById('thoughtInput').addEventListener('keypress', e => {
+if (e.key === "Enter" && e.target.value.trim()) {
+if (!state.apiKey) return setStatus("Connect an API key first!");
+addThought(e.target.value.trim());
+e.target.value = "";
+}
+});
+
+document.getElementById('linkStrength').addEventListener('input', e => {
+state.linkStrength = e.target.value / 100;
+document.getElementById('strengthValue').textContent = state.linkStrength.toFixed(2);
+reanalyzeAllConnections();
+});
+
+document.getElementById('loadPredefinedBtn').addEventListener('click', loadPredefinedNGOs);
+
+document.getElementById('toggleWeakLinksBtn').addEventListener('click', () => {
+state.showWeakLinks = !state.showWeakLinks;
+document.getElementById('toggleWeakLinksBtn').textContent = state.showWeakLinks ? "Hide Weak" : "Show Weak";
+updateConnections();
+});
+
+document.getElementById('toggleAnalysisLogBtn').addEventListener('click', () => {
+state.isAnalysisVisible = !state.isAnalysisVisible;
+document.getElementById('analysisLog').style.display = state.isAnalysisVisible ? "block" : "none";
+if (state.isAnalysisVisible) updateNetworkAnalysis();
+});
+
+document.getElementById('toggleThoughtsPanelBtn').addEventListener('click', () => {
+state.isThoughtsVisible = !state.isThoughtsVisible;
+document.getElementById('thoughtPanel').style.display = state.isThoughtsVisible ? "block" : "none";
+});
+
+document.getElementById('closeAnalysisLogBtn').addEventListener('click', () => {
+document.getElementById('analysisLog').style.display = "none";
+state.isAnalysisVisible = false;
+});
+
+document.getElementById('closeLightboxBtn').addEventListener('click', () => {
+document.getElementById('lightboxAnalysis').classList.add('hidden');
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+const summary = state.connections.filter(c => c.fraudScore > 50).map(c => ({
+from: c.from.text,
+to: c.to.text,
+fraudScore: c.fraudScore,
+amount: c.amount
+}));
+const data = JSON.stringify({ thoughts: state.thoughts, connections: state.connections, summary }, null, 2);
+const blob = new Blob([data], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `usaid-grift-${new Date().toISOString().slice(0, 10)}.json`;
+a.click();
+URL.revokeObjectURL(url);
+});
+
+document.getElementById('postXBtn').addEventListener('click', () => {
+const topFraud = state.connections.reduce((max, c) => c.fraudScore > max.fraudScore ? c : max, { fraudScore: 0, from: { text: "Unknown" }, to: { text: "Unknown" } });
+const tweet = `@DataRepublican USAID grift: ${topFraud.from.text.split("\n")[0]} → ${topFraud.to.text.split("\n")[0]} (${topFraud.fraudScore}%, $${(topFraud.amount / 1e6).toFixed(1)}M). Dig: ${window.location.href}`;
+window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweet.slice(0, 280))}`, '_blank');
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+initThree();
+setStatus("Connect your API key to unmask USAID grift!");
+document.querySelectorAll('.btn:not(#connectKeyBtn)').forEach(btn => btn.disabled = true);
+});
+
+window.addEventListener("resize", () => {
+state.camera.aspect = window.innerWidth / window.innerHeight;
+state.camera.updateProjectionMatrix();
+state.renderer.setSize(window.innerWidth, window.innerHeight, false);
+});
+</script>
 </body>
 </html>
-​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
