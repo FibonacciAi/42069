@@ -376,10 +376,10 @@ async function batchFetchIRSData(eins) {
 const uncached = eins.filter(ein => !state.irsDataCache.has(ein));
 if (uncached.length === 0) return Promise.all(eins.map(ein => state.irsDataCache.get(ein)));
 
-const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // Use a CORS proxy (ensure it's active or replace with your own)
+const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
 const promises = uncached.map(ein =>
 axios.get(`${proxyUrl}https://projects.propublica.org/nonprofits/api/v2/organizations/${ein}.json`, {
-headers: { 'Origin': window.location.origin } // Optional: Specify origin
+headers: { 'Origin': window.location.origin }
 })
 .then(res => {
 const { organization } = res.data;
@@ -540,7 +540,6 @@ if (!state.geometryCache.has(key)) {
 geometry = new THREE.TubeGeometry(curve, 20, Math.max(1, c.strength * 5), 8, false);
 state.geometryCache.set(key, geometry);
 } else {
-// Create a new geometry instead of trying to reuse cached one
 geometry = new THREE.TubeGeometry(curve, 20, Math.max(1, c.strength * 5), 8, false);
 }
 
@@ -744,9 +743,10 @@ setStatus("Failed to fetch data.");
 
 function calculateHeuristicFraud(data, name) {
 let score = 10;
-const receiptMatch = data.match(/Gross receipts: \$([\d.]+)M/);
-const taxMatch = data.match(/Taxpayer funds: \$([\d.]+)M/);
-const awardMatch = data.match(/Award: \$([\d.]+)M/);
+const safeData = typeof data === 'string' ? data : "";
+const receiptMatch = safeData.match(/Gross receipts: \$([\d.]+)M/);
+const taxMatch = safeData.match(/Taxpayer funds: \$([\d.]+)M/);
+const awardMatch = safeData.match(/Award: \$([\d.]+)M/);
 if (receiptMatch && taxMatch) {
 const receipts = parseFloat(receiptMatch[1]) || 0;
 const taxpayer = parseFloat(taxMatch[1]) || 0;
@@ -820,7 +820,7 @@ openai: {
 endpoint: 'https://api.openai.com/v1/chat/completions',
 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
 body: JSON.stringify({
-model: "gpt-4o-mini",
+model: "gpt-4o",
 messages: [
 { role: "system", content: "Forensic accountant" },
 { role: "user", content: `Analyze USAID fraud:\n${networkContext}\nNode 1: "${t1Obj.text}" (EIN: ${t1Obj.ein || "Unknown"}, ${t1Obj.data}, IRS: $${(t1IRS.revenue / 1e6).toFixed(1)}M)\nNode 2: "${t2Obj.text}" (EIN: ${t2Obj.ein || "Unknown"}, ${t2Obj.data}, IRS: $${(t2IRS.revenue / 1e6).toFixed(1)}M)\nTransfer: $${(amount / 1e6).toFixed(1)}M\nCheck circular funding, shells, offshore ties. Return JSON: "strength" (0-1, min ${state.linkStrength}), "fraudScore" (0-100), "type", "keywords" (3-5), "reasoning", "amount".` }
@@ -832,7 +832,7 @@ xai: {
 endpoint: 'https://api.grok.xai/v1/completions',
 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
 body: JSON.stringify({
-model: "grok-3",
+model: "grok",
 prompt: `Analyze USAID fraud:\n- "${t1Obj.text}" (EIN: ${t1Obj.ein || "Unknown"}, ${t1Obj.data}, IRS: $${(t1IRS.revenue / 1e6).toFixed(1)}M)\n- "${t2Obj.text}" (EIN: ${t2Obj.ein || "Unknown"}, ${t2Obj.data}, IRS: $${(t2IRS.revenue / 1e6).toFixed(1)}M)\nNetwork: ${networkContext}\nTransfer: $${(amount / 1e6).toFixed(1)}M\nJSON: "strength" (0-1, min ${state.linkStrength}), "fraudScore" (0-100), "type", "keywords" (3-5), "reasoning", "amount".`,
 max_tokens: 250,
 temperature: 0.3
@@ -846,7 +846,7 @@ const response = await fetch(endpoint, { method: 'POST', headers, body });
 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 const data = await response.json();
 const result = state.apiProvider === "openai" ? JSON.parse(data.choices[0].message.content) : JSON.parse(data.choices[0].text.replace(/```json\n|\n```/g, ''));
-result.strength = Math.max(state.linkStrength, result.strength || 0.4);
+result.strength = Math.max(state.linkStrength, result.strength || 0);
 result.fraudScore = Math.max(heuristicScore, result.fraudScore || 0);
 result.amount = amount || result.amount || 0;
 state.analysisCache.set(cacheKey, result);
@@ -918,7 +918,7 @@ openai: {
 endpoint: 'https://api.openai.com/v1/chat/completions',
 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
 body: JSON.stringify({
-model: "gpt-4o-mini",
+model: "gpt-4o",
 messages: [
 { role: "system", content: "Investigative journalist" },
 { role: "user", content: `Track USAID fraud:\n- Top fraud: ${topFraudNodes.join(", ") || "None"}\n- Patterns: ${fraudPatterns.join("; ") || "None"}\n- Cliques: ${cliqueText}\nSuggest 3 specific leads (e.g., "Audit EIN 52-1234567's subs") not in network, tied to fraud patterns. JSON array of 3 strings.` }
@@ -930,7 +930,7 @@ xai: {
 endpoint: 'https://api.grok.xai/v1/completions',
 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
 body: JSON.stringify({
-model: "grok-3",
+model: "grok",
 prompt: `Suggest 3 leads:\n- Top fraud: ${topFraudNodes.join(", ") || "None"}\n- Patterns: ${fraudPatterns.join("; ") || "None"}\n- Cliques: ${cliqueText}\nJSON array of 3 strings, tied to fraud.`,
 max_tokens: 150,
 temperature: 0.5
@@ -952,43 +952,57 @@ return ["Audit USAID grants", "Investigate Senate ties", "Trace GAO discrepancie
 }
 
 async function updateNetworkAnalysis() {
-if (!state.thoughts.length) return;
-showLoading(true);
-try {
-const suspicious = state.connections.filter(c => c.fraudScore > 50).length;
-const totalFunds = state.connections.reduce((sum, c) => sum + c.amount, 0) / 1e6;
-const fraudFunds = state.connections.filter(c => c.fraudScore > 50).reduce((sum, c) => sum + c.amount, 0) / 1e6;
-const irsRevenue = state.thoughts.reduce((sum, t) => sum + (t.irsData?.revenue || 0), 0) / 1e6;
-const cliques = detectFundingCliques();
+  if (!state.thoughts.length) return;
+  showLoading(true);
+  try {
+    const suspicious = state.connections.filter(c => c.fraudScore > 50).length;
+    const totalFunds = state.connections.reduce((sum, c) => sum + c.amount, 0) / 1e6;
+    const fraudFunds = state.connections.filter(c => c.fraudScore > 50).reduce((sum, c) => sum + c.amount, 0) / 1e6;
+    const irsRevenue = state.thoughts.reduce((sum, t) => sum + (t.irsData?.revenue || 0), 0) / 1e6;
+    const cliques = detectFundingCliques();
 
-const topNodes = state.thoughts.sort((a, b) => b.mesh.userData.fraudScore - a.mesh.userData.fraudScore)
-.slice(0, 3).map(t => `${t.text.split("\n")[0]} (${t.mesh.userData.fraudScore}%, EIN: ${t.ein})`);
-const hubs = Object.entries(calculateCentrality()).sort((a, b) => b[1] - a[1])
-.slice(0, 3).map(([id]) => state.thoughts.find(t => t.id === parseInt(id)).text.split("\n")[0]);
-const topFlows = state.connections.filter(c => c.fraudScore > 50).sort((a, b) => b.fraudScore - a.fraudScore)
-.slice(0, 3).map(c => `${c.from.text.split("\n")[0]} → ${c.to.text.split("\n")[0]} (${c.fraudScore}%, $${(c.amount / 1e6).toFixed(1)}M)`);
+    const topRisks = state.thoughts
+      .sort((a, b) => b.mesh.userData.fraudScore - a.mesh.userData.fraudScore)
+      .slice(0, 3)
+      .map(t => `${t.text.split("\n")[0]} (${t.mesh.userData.fraudScore}%, $${(t.irsData?.revenue / 1e6 || 0).toFixed(1)}M)`);
+    const topFlows = state.connections
+      .filter(c => c.fraudScore > 50)
+      .sort((a, b) => b.fraudScore - a.fraudScore)
+      .slice(0, 3)
+      .map(c => `${c.from.text.split("\n")[0]} → ${c.to.text.split("\n")[0]} ($${c.amount / 1e6}M, ${c.fraudScore}%)`);
 
-document.getElementById('analysisLogMessages').innerHTML = `
-<strong>Overview:</strong> ${state.thoughts.length} nodes, ${state.connections.length} links, ${suspicious} suspicious.<br>
-Funds: $${totalFunds.toFixed(1)}M tracked, $${fraudFunds.toFixed(1)}M fraud-linked (${((fraudFunds / totalFunds) * 100 || 0).toFixed(1)}%).<br>
-IRS Revenue: $${irsRevenue.toFixed(1)}M.<br>
-<strong>Top Nodes:</strong> ${topNodes.join(", ")}<br>
-<strong>Key Hubs:</strong> ${hubs.join(", ")}<br>
-<strong>Flows:</strong><br>${topFlows.join("<br>") || "None"}<br>
-<strong>Cliques:</strong><br>${cliques.length ? cliques.map(c => `${c.nodes.map(n => n.text.split("\n")[0]).join(" → ")} (${c.fraudScore.toFixed(1)}%)`).join("<br>") : "None"}<br>
-<strong>Steps:</strong><br>
-1. Subpoena ${topNodes[0].split(" (")[0]} (EIN: ${state.thoughts.find(t => t.text.includes(topNodes[0].split(" (")[0])).ein}).<br>
-2. Check ${cliques[0]?.nodes[0].text.split("\n")[0] || "top clique"} for $${(fraudFunds * 0.5).toFixed(1)}M.<br>
-3. Audit ${hubs[0]} for $${(irsRevenue * 0.2).toFixed(1)}M discrepancies.
-`;
-const suggestions = await generateSuggestions();
-setStatus("Network analysis complete!", suggestions);
-} catch (err) {
-console.error("Analysis error:", err);
-setStatus("Failed to analyze network.");
-} finally {
-showLoading(false);
-}
+    document.getElementById('analysisLogMessages').innerHTML = `
+      <p><strong>Overview</strong></p>
+      <ul>
+        <li>Nodes: ${state.thoughts.length} | Links: ${state.connections.length} | Suspicious: ${suspicious}</li>
+        <li>Funds Tracked: $${totalFunds.toFixed(1)}M | Fraud-Linked: $${fraudFunds.toFixed(1)}M (${((fraudFunds / totalFunds) * 100 || 0).toFixed(1)}%)</li>
+        <li>Total IRS Revenue: $${irsRevenue.toFixed(1)}M</li>
+      </ul>
+      <p><strong>Top Risks</strong></p>
+      <ul>
+        ${topRisks.length ? topRisks.map(r => `<li>${r}</li>`).join("") : "<li>None detected</li>"}
+      </ul>
+      <p><strong>Key Flows</strong></p>
+      <ul>
+        ${topFlows.length ? topFlows.map(f => `<li>${f}</li>`).join("") : "<li>No high-risk flows</li>"}
+      </ul>
+      <p><strong>Next Steps</strong></p>
+      <ol>
+        ${topRisks.length ? `
+          <li>Audit ${topRisks[0].split(" (")[0]} for fund origins</li>
+          <li>Trace ${topFlows[0]?.split(" (")[0] || "top flow"} for circular patterns</li>
+          <li>Probe clique (${cliques[0]?.nodes.map(n => n.text.split("\n")[0]).join(", ") || "none"}) for $${cliques[0]?.amount / 1e6 || 0}M overlap</li>
+        ` : "<li>Add more nodes to uncover fraud</li>"}
+      </ol>
+    `;
+    const suggestions = await generateSuggestions();
+    setStatus("Network analysis complete!", suggestions);
+  } catch (err) {
+    console.error("Analysis error:", err);
+    setStatus("Failed to analyze network.");
+  } finally {
+    showLoading(false);
+  }
 }
 
 function calculateCentrality() {
@@ -1021,13 +1035,14 @@ async function addThought(txt, source = "") {
 if (state.thoughts.length >= 50) return setStatus("Max nodes (50) reached!");
 showLoading(true);
 try {
-const fraudScore = calculateHeuristicFraud(source ? `Source: ${source}` : "", txt);
+const data = source ? `Source: ${source}` : "No data available";
+const fraudScore = calculateHeuristicFraud(data, txt);
 const ein = txt.match(/EIN: (\d{2}-\d{7})/)?.[1] || "Unknown";
 const irsData = ein !== "Unknown" ? (await batchFetchIRSData([ein]))[0] : { revenue: 0, expenses: 0, assets: 0, filingYear: "Unknown" };
 const node = {
 id: Date.now() + Math.random(),
 text: txt,
-mesh: createNodeMesh(txt, source ? `Source: ${source}` : "", fraudScore),
+mesh: createNodeMesh(txt, data, fraudScore),
 analysis: null,
 timestamp: Date.now(),
 source,
@@ -1135,55 +1150,106 @@ const content = document.getElementById('lightboxContent');
 content.innerHTML = "<p>Analyzing...</p>";
 lightbox.classList.remove('hidden');
 const analysis = await getDetailedNodeAnalysis(thought);
-content.innerHTML = `<h2 style="color: #00aaff;">${thought.text}</h2><p>${analysis.replace(/\n/g, '<br>')}</p>`;
+content.innerHTML = `<h2 style="color: #00aaff;">${thought.text}</h2>${analysis}`;
 }
 
 async function getDetailedNodeAnalysis(thought) {
-if (!state.apiKey) return "No API key connected!";
-showLoading(true);
-try {
-const related = state.connections.filter(c => c.from === thought || c.to === thought)
-.map(c => `${(c.from === thought ? c.to : c.from).text} (Fraud: ${c.fraudScore}%, $${(c.amount / 1e6).toFixed(1)}M)`);
-const networkContext = state.thoughts.map(t => `${t.text} (EIN: ${t.ein || "Unknown"})`).join("\n");
-const heuristicScore = calculateHeuristicFraud(thought.data, thought.text);
-const irsData = thought.irsData || { revenue: 0, filingYear: "Unknown" };
+  if (!state.apiKey) return "<p>No API key connected!</p>";
+  console.log("Analyzing thought:", thought);
+  showLoading(true);
+  try {
+    const related = state.connections.filter(c => c.from === thought || c.to === thought)
+      .map(c => ({
+        name: (c.from === thought ? c.to : c.from).text.split("\n")[0],
+        ein: (c.from === thought ? c.to : c.from).ein || "Unknown",
+        fraudScore: c.fraudScore,
+        amount: c.amount / 1e6,
+        direction: c.from === thought ? "out" : "in"
+      }));
+    const networkContext = state.thoughts.map(t => `${t.text} (EIN: ${t.ein || "Unknown"}, Fraud: ${t.mesh.userData.fraudScore}%)`).join("\n");
+    const fraudScore = thought.mesh.userData.fraudScore || calculateHeuristicFraud(thought.data || "", thought.text);
+    const irsData = thought.irsData || { revenue: 0, filingYear: "Unknown" };
+    const inflows = related.filter(r => r.direction === "in").map(r => `${r.name} ($${r.amount.toFixed(2)}M, ${r.fraudScore}%)`).join("; ") || "None";
+    const outflows = related.filter(r => r.direction === "out").map(r => `${r.name} ($${r.amount.toFixed(2)}M, ${r.fraudScore}%)`).join("; ") || "None";
+    const totalInflows = related.filter(r => r.direction === "in").reduce((sum, r) => sum + r.amount, 0).toFixed(2);
+    const totalOutflows = related.filter(r => r.direction === "out").reduce((sum, r) => sum + r.amount, 0).toFixed(2);
 
-const config = {
-openai: {
-endpoint: 'https://api.openai.com/v1/chat/completions',
-headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
-body: JSON.stringify({
-model: "gpt-4o-mini",
-messages: [
-{ role: "system", content: "Forensic investigator" },
-{ role: "user", content: `Analyze USAID fraud:\n${networkContext}\nNode: "${thought.text}" (EIN: ${thought.ein || "Unknown"}, ${thought.data}, Heuristic: ${heuristicScore}%, IRS: $${(irsData.revenue / 1e6).toFixed(1)}M)\nConnected: ${related.join("; ") || "None"}\nAssess fraud with financial anomalies, network patterns, 3 precise steps. Concise text.` }
-],
-temperature: 0.2
-})
-},
-xai: {
-endpoint: 'https://api.grok.xai/v1/completions',
-headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
-body: JSON.stringify({
-model: "grok-3",
-prompt: `Analyze USAID node "${thought.text}" (EIN: ${thought.ein || "Unknown"}, ${thought.data}, Heuristic: ${heuristicScore}%, IRS: $${(irsData.revenue / 1e6).toFixed(1)}M) in:\n${networkContext}\nConnections: ${related.join("; ") || "None"}\nText: fraud assessment, 3 steps.`,
-max_tokens: 300,
-temperature: 0.2
-})
-}
-};
+    state.apiProvider = detectApiProvider(state.apiKey);
+    const config = {
+      openai: {
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: "You’re a forensic investigator tearing into USAID fraud—cut the fluff, hit hard with facts, and expose the grift." },
+            {
+              role: "user",
+              content: `Analyze node "${thought.text}" (EIN: ${thought.ein || "Unknown"}, Fraud: ${fraudScore}%, IRS Revenue: $${(irsData.revenue / 1e6).toFixed(1)}M, In: $${totalInflows}M, Out: $${totalOutflows}M). Inflows: ${inflows}. Outflows: ${outflows}. Network: ${networkContext}. Deliver a tight, brutal analysis—max 4 short points per section:
+1. Context: Node’s role and why its fraud score is ${fraudScore}%—use hard numbers (taxpayer %, connections).
+2. Fraud Signals: Top USAID grift red flags—quantify with figures.
+3. Network Ties: Key connections driving fraud—name nodes, amounts, risks.
+4. Action: 3 precise steps to bust it open—EIN, connections, USAID focus.`
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1000  // Increased from 500 to ensure full output
+        })
+      },
+      xai: {
+        endpoint: 'https://api.grok.xai/v1/completions',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+        body: JSON.stringify({
+          model: "grok",
+          prompt: `Analyze node "${thought.text}" (EIN: ${thought.ein || "Unknown"}, Fraud: ${fraudScore}%, IRS Revenue: $${(irsData.revenue / 1e6).toFixed(1)}M, In: $${totalInflows}M, Out: $${totalOutflows}M). Inflows: ${inflows}. Outflows: ${outflows}. Network: ${networkContext}. Give a tight, brutal analysis—max 4 short points per section:
+1. Context: Node’s role and why its fraud score is ${fraudScore}%—use numbers (taxpayer %, connections).
+2. Fraud Signals: Top USAID grift red flags—quantify with figures.
+3. Network Ties: Key connections driving fraud—name nodes, amounts, risks.
+4. Action: 3 precise steps to bust it open—EIN, connections, USAID focus.`,
+          max_tokens: 500,
+          temperature: 0.2
+        })
+      }
+    };
 
-const { endpoint, headers, body } = config[state.apiProvider];
-const response = await fetch(endpoint, { method: 'POST', headers, body });
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-const data = await response.json();
-return state.apiProvider === "openai" ? data.choices[0].message.content : data.choices[0].text;
-} catch (err) {
-console.error("Detailed analysis error:", err);
-return `Analysis failed: ${err.message}`;
-} finally {
-showLoading(false);
-}
+    const { endpoint, headers, body } = config[state.apiProvider];
+    const response = await fetch(endpoint, { method: 'POST', headers, body });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const rawAnalysis = state.apiProvider === "openai" ? data.choices[0].message.content : data.choices[0].text;
+
+    // Format the output with proper HTML
+    const analysisLines = rawAnalysis.split('\n').filter(line => line.trim());
+    let formattedAnalysis = `<p><strong>${thought.text} (EIN: ${thought.ein || "Unknown"})</strong></p><p>Fraud Score: ${fraudScore}%</p>`;
+    let section = "";
+    analysisLines.forEach(line => {
+      const lowerLine = line.toLowerCase().trim();
+      if (lowerLine.includes("context")) {
+        section = "Context";
+        formattedAnalysis += `<p><strong>Context</strong></p><ul>`;
+      } else if (lowerLine.includes("fraud signals")) {
+        section = "Fraud Signals";
+        formattedAnalysis += `</ul><p><strong>Fraud Signals</strong></p><ul>`;
+      } else if (lowerLine.includes("network ties")) {
+        section = "Network Ties";
+        formattedAnalysis += `</ul><p><strong>Network Ties</strong></p><ul>`;
+      } else if (lowerLine.includes("action")) {
+        section = "Action";
+        formattedAnalysis += `</ul><p><strong>Action</strong></p><ol>`;
+      } else if (section && line.trim()) {
+        const itemText = line.replace(/^[-*]|\d+\.\s*/, '').trim();
+        formattedAnalysis += section === "Action" ? `<li>${itemText}</li>` : `<li>${itemText}</li>`;
+      }
+    });
+    formattedAnalysis += section === "Action" ? "</ol>" : "</ul>";
+
+    return formattedAnalysis;
+  } catch (err) {
+    console.error("Detailed analysis error:", err);
+    return `<p>Analysis failed: ${err.message}</p>`;
+  } finally {
+    showLoading(false);
+  }
 }
 
 window.addEventListener('click', onClick);
@@ -1198,7 +1264,7 @@ setStatus("Enter a valid API key (starts with 'sk-' or 'gk-')!");
 return;
 }
 state.apiProvider = detectApiProvider(state.apiKey);
-setStatus(`Connected to ${state.apiProvider} API! Ready to analyze.`);
+setStatus(`Connected to ${state.apiProvider === 'openai' ? 'OpenAI GPT-4o' : 'xAI Grok'} API! Ready to analyze.`);
 document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
 if (state.thoughts.length) generateSuggestions().then(suggestions => setStatus("Connected!", suggestions));
 }
