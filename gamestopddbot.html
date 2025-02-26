@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameStop 42069 - Home</title>
+    <style>
+        /* CSS unchanged for brevity - same as before */
+        body { background: #000; color: #fff; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+        .content { margin-bottom: 40px; text-align: center; }
+        .content h1 { color: #00b4d8; font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0, 180, 216, 0.5); }
+        .content p { font-size: 1.1em; color: #a0a0a0; }
+        .chatbot-container { margin-top: 30px; padding: 20px; background: #1a1a1a; border-radius: 8px; border: 2px solid #00b4d8; box-shadow: 0 0 15px rgba(0, 180, 216, 0.2); transition: transform 0.3s ease; }
+        .chatbot-container:hover { transform: translateY(-5px); }
+        .chatbot-container h2 { margin: 0 0 20px 0; color: #00b4d8; font-size: 1.8em; text-align: center; }
+        .chatbot-container .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .chatbot-container input, .chatbot-container button, .chatbot-container select { border: 2px solid #00b4d8; background: #2a2a2a; color: #ffffff; padding: 12px; font-size: 16px; border-radius: 5px; transition: background 0.3s, transform 0.2s; flex: 1; min-width: 200px; }
+        .chatbot-container button:hover { background: #00b4d8; transform: scale(1.05); cursor: pointer; }
+        .chatbot-container #response { margin-top: 20px; padding: 15px; background: #2a2a2a; border-radius: 5px; word-wrap: break-word; max-height: 300px; overflow-y: auto; border: 1px solid #00b4d8; animation: fadeIn 0.5s ease-in; }
+        .chatbot-container .loading { color: #00b4d8; font-weight: bold; text-align: center; }
+        .chatbot-container .error { color: #ff4444; font-weight: bold; text-align: center; }
+        .chat-history { margin-top: 15px; max-height: 200px; overflow-y: auto; background: #1a1a1a; padding: 10px; border-radius: 5px; border: 1px solid #00b4d8; }
+        .chat-history p { margin: 5px 0; color: #a0a0a0; }
+        .api-key-section { margin-top: 15px; padding: 15px; background: #2a2a2a; border-radius: 5px; border: 1px solid #00b4d8; }
+        .api-key-section label { display: block; margin-bottom: 10px; color: #a0a0a0; }
+        .api-key-section input, .api-key-section select { width: 100%; max-width: 300px; margin-bottom: 10px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (max-width: 768px) { .chatbot-container .input-group { flex-direction: column; } .chatbot-container input, .chatbot-container button, .chatbot-container select { min-width: 100%; } .content h1 { font-size: 2em; } .api-key-section { padding: 10px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <h1>Welcome to GameStop 42069</h1>
+            <p>Explore the latest GameStop due diligence and tools. Use the Superstonk DD Chatbot below to query GME DD with your preferred AI model!</p>
+        </div>
+
+        <div class="chatbot-container">
+            <h2>Superstonk DD Chatbot</h2>
+            <div class="chat-history" id="chatHistory"></div>
+            <div class="input-group">
+                <input id="question" type="text" placeholder="Ask me about GME..." autocomplete="off">
+                <button onclick="ask()">Ask</button>
+            </div>
+            <div id="response"></div>
+
+            <div class="api-key-section">
+                <label for="apiKey">Enter Your API Key:</label>
+                <input type="password" id="apiKey" placeholder="Your API Key" autocomplete="off" onblur="detectApiKey()" onkeypress="if(event.key === 'Enter') detectApiKey()">
+                <label for="modelSelect">Choose Your Model:</label>
+                <select id="modelSelect" disabled>
+                    <option value="">Detecting API key...</option>
+                </select>
+                <button onclick="saveApiKey()">Save API Key & Model</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chatHistory = [];
+        let apiKey = '';
+        let detectedAPI = '';
+        let selectedModel = '';
+        const SERVER_DD_ENDPOINT = 'http://your-server.com/api/gamestop-dd'; // REPLACE WITH YOUR ACTUAL SERVER ENDPOINT
+
+        // API key patterns
+        const apiPatterns = {
+            openai: /^sk-[A-Za-z0-9_-]{20,}$/,
+            xai: /^[A-Za-z0-9-]{32,}$/,
+            anthropic: /^sk-ant-[A-Za-z0-9]{32,}$/,
+            deepseek: /^[A-Za-z0-9]{32,}$/
+        };
+
+        // Available models per API
+        const apiModels = {
+            openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+            xai: ['grok-3', 'grok-2'],
+            anthropic: ['claude-3.5-sonnet-20241022', 'claude-3-opus-20240229'],
+            deepseek: ['deepseek-chat', 'deepseek-coder']
+        };
+
+        // API endpoints
+        const apiEndpoints = {
+            openai: 'https://api.openai.com/v1/chat/completions',
+            xai: 'https://api.x.ai/v1/chat/completions', // Placeholder - replace with real xAI endpoint
+            anthropic: 'https://api.anthropic.com/v1/messages',
+            deepseek: 'https://api.deepseek.com/v1/chat/completions'
+        };
+
+        // Detect API key type
+        function detectApiKey() {
+            const apiKeyInput = document.getElementById('apiKey').value.trim();
+            const modelSelect = document.getElementById('modelSelect');
+            const responseDiv = document.getElementById('response');
+
+            modelSelect.disabled = true;
+            modelSelect.innerHTML = '<option value="">Detecting API key...</option>';
+            responseDiv.innerHTML = '<span class="loading">Detecting API key...</span>';
+
+            if (!apiKeyInput) {
+                modelSelect.innerHTML = '<option value="">Enter an API key first</option>';
+                responseDiv.innerHTML = '<span class="error">Please enter an API key!</span>';
+                return;
+            }
+
+            detectedAPI = '';
+            for (const [api, pattern] of Object.entries(apiPatterns)) {
+                if (pattern.test(apiKeyInput)) {
+                    detectedAPI = api;
+                    modelSelect.disabled = false;
+                    modelSelect.innerHTML = apiModels[api].map(model => `<option value="${model}">${model}</option>`).join('');
+                    responseDiv.innerHTML = `<span class="loading">Detected ${api.toUpperCase()} API key. Select a model!</span>`;
+                    console.log(`Detected ${api.toUpperCase()} API key: ${apiKeyInput.substring(0, 10)}... (length: ${apiKeyInput.length})`);
+                    return;
+                }
+            }
+            modelSelect.innerHTML = '<option value="">Invalid API key format</option>';
+            responseDiv.innerHTML = `<span class="error">Invalid API key format. For OpenAI, use sk- followed by 20+ chars.</span>`;
+            console.log(`Failed to detect API key: ${apiKeyInput.substring(0, 10)}... (length: ${apiKeyInput.length})`);
+        }
+
+        // Save API key and model
+        function saveApiKey() {
+            const apiKeyInput = document.getElementById('apiKey').value.trim();
+            const modelSelect = document.getElementById('modelSelect');
+            const selectedModelValue = modelSelect.value;
+            const responseDiv = document.getElementById('response');
+
+            if (!apiKeyInput || !detectedAPI) {
+                responseDiv.innerHTML = '<span class="error">Enter and detect a valid API key first!</span>';
+                return;
+            }
+            if (!selectedModelValue) {
+                responseDiv.innerHTML = '<span class="error">Please select a model!</span>';
+                return;
+            }
+
+            apiKey = apiKeyInput;
+            selectedModel = selectedModelValue;
+            responseDiv.innerHTML = `<span class="loading">Saved ${detectedAPI.toUpperCase()} API key with ${selectedModel}. Ready to query!</span>`;
+            console.log(`Saved ${detectedAPI.toUpperCase()} API key (first 10 chars: ${apiKey.substring(0, 10)}...) with model ${selectedModel}`);
+        }
+
+        // Fetch Yek-serialized DD from server with enhanced CORS handling and 403-specific feedback
+        async function fetchGameStopDD() {
+            try {
+                console.log(`Attempting to fetch DD from ${SERVER_DD_ENDPOINT}`);
+                const response = await fetch(SERVER_DD_ENDPOINT, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'cors', // Explicitly set CORS mode
+                    credentials: 'include' // Include credentials if needed
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server responded with ${response.status}: ${errorText}`);
+                }
+                const ddData = await response.json();
+                console.log('Fetched DD from server:', ddData);
+                return ddData; // Expected to be Yek-serialized JSON
+            } catch (error) {
+                console.error('DD Fetch Error:', error);
+                if (error.message.includes('403')) {
+                    console.warn('403 Forbidden error detected. Ensure your server allows CORS for GET and OPTIONS, and check permissions or authentication.');
+                }
+                throw new Error(`Failed to fetch DD: ${error.message}. Using mock data instead.`);
+            }
+        }
+
+        // Query LLM with DD context
+        async function fetchLLMAnalysis(question, api, model, apiKey, ddContext) {
+            const endpoint = apiEndpoints[api];
+            const ddString = JSON.stringify(ddContext, null, 2).substring(0, 4000);
+            const prompt = `You are an expert on GameStop (GME) due diligence. Using this Yek-serialized Superstonk DD context:\n\n${ddString}\n\nAnswer this question: ${question}`;
+
+            let config;
+            if (api === 'anthropic') {
+                config = {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        max_tokens: 1000,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                };
+            } else {
+                config = {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            { role: 'system', content: 'You are an expert on GameStop (GME) due diligence from Superstonk.' },
+                            { role: 'user', content: prompt }
+                        ],
+                        max_tokens: 1000
+                    })
+                };
+            }
+
+            try {
+                console.log(`Sending request to ${endpoint} with model ${model}, prompt length: ${prompt.length} chars`);
+                const response = await fetch(endpoint, config);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API error: ${response.status} - ${errorText}`);
+                }
+                const data = await response.json();
+                console.log('API response:', data);
+                return api === 'anthropic' ? data.content[0].text : data.choices[0].message.content;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Handle asking the question
+        async function ask() {
+            const question = document.getElementById('question').value.trim();
+            const responseDiv = document.getElementById('response');
+            const chatHistoryDiv = document.getElementById('chatHistory');
+
+            if (!question) {
+                responseDiv.innerHTML = '<span class="error">Please enter a question!</span>';
+                return;
+            }
+            if (!apiKey || !detectedAPI || !selectedModel) {
+                responseDiv.innerHTML = '<span class="error">Save a valid API key and model first!</span>';
+                return;
+            }
+
+            responseDiv.innerHTML = `<span class="loading">Querying ${selectedModel} with Yek-serialized DD...</span>`;
+            try {
+                const ddContext = await fetchGameStopDD();
+                if (!ddContext) throw new Error('No DD context retrieved from server');
+
+                const llmResponse = await fetchLLMAnalysis(question, detectedAPI, selectedModel, apiKey, ddContext);
+                responseDiv.innerHTML = llmResponse || '<span class="error">No response from LLM.</span>';
+
+                chatHistory.push({ question, response: llmResponse });
+                updateChatHistory();
+            } catch (error) {
+                responseDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+                console.error('Ask Error:', error);
+                // Fallback to mock DD if server fetch fails
+                if (error.message.includes('Failed to fetch DD')) {
+                    const mockDD = { 
+                        gme: 'Mock DD: GameStop info from Superstonk (retail momentum strong as of Feb 2025).',
+                        short_squeeze: 'Mock DD: Potential short squeeze indicators from Superstonk data.'
+                    };
+                    try {
+                        const llmResponse = await fetchLLMAnalysis(question, detectedAPI, selectedModel, apiKey, mockDD);
+                        responseDiv.innerHTML = `${llmResponse} (Note: Used mock DD due to server error: ${error.message})`;
+                        chatHistory.push({ question, response: llmResponse });
+                        updateChatHistory();
+                    } catch (mockError) {
+                        responseDiv.innerHTML = `<span class="error">Error with mock DD: ${mockError.message}</span>`;
+                    }
+                }
+            }
+
+            document.getElementById('question').value = '';
+        }
+
+        // Update chat history
+        function updateChatHistory() {
+            const chatHistoryDiv = document.getElementById('chatHistory');
+            chatHistoryDiv.innerHTML = chatHistory.map(item =>
+                `<p><strong>You:</strong> ${item.question}<br><strong>Bot:</strong> ${item.response}</p>`
+            ).join('');
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+        }
+
+        // Event listeners
+        document.getElementById('question').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') ask();
+        });
+        document.getElementById('question').focus();
+    </script>
+</body>
+</html>
