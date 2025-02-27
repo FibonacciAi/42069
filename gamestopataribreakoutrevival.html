@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <title>💥Follow @_D_741Stef🍻</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Google Font for improved typography -->
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
   <style>
-    /* Reset & global settings */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Montserrat', sans-serif;
@@ -15,7 +13,6 @@
       color: #fff;
       overflow: hidden;
     }
-    /* Fullscreen wrapper to center the game container */
     #gameWrapper {
       width: 100vw;
       height: 100vh;
@@ -23,7 +20,6 @@
       align-items: center;
       justify-content: center;
     }
-    /* Title styling */
     h1 {
       position: absolute;
       top: 20px;
@@ -37,7 +33,6 @@
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
       z-index: 10;
     }
-    /* Game container with its own background image */
     .game-container {
       position: relative;
       width: 480px;
@@ -46,12 +41,10 @@
       background-size: cover;
       border: 2px solid #555;
     }
-    /* The canvas will be retina‐ified via script */
     canvas {
       display: block;
       background-color: rgba(0, 0, 0, 0.75);
     }
-    /* Bottom left accent image (hybrid logo) */
     #power-accent {
       position: absolute;
       bottom: 10px;
@@ -68,24 +61,21 @@
   </style>
 </head>
 <body>
-  <!-- Title -->
   <h1>💥Follow @_D_741Stef🍻</h1>
-  <!-- Fullscreen game wrapper -->
   <div id="gameWrapper">
     <div class="game-container" id="gameContainer">
       <canvas id="gameCanvas"></canvas>
-      <!-- Using absolute URL for the logo -->
-      <img id="power-accent" src="https://fibonacciai.github.io/42069/image-306.jpg" alt="Hybrid Gamestop &amp; Atari Logo" crossorigin="anonymous">
+      <img id="power-accent" src="https://fibonacciai.github.io/42069/image-306.jpg" alt="Hybrid Gamestop & Atari Logo" crossorigin="anonymous">
     </div>
   </div>
 
+  <!-- Farcaster Frame SDK (Replace with actual URL when available) -->
+  <script src="https://cdn.example.com/farcaster-sdk.js"></script>
   <script>
-    // Base game dimensions
     const baseWidth = 480;
     const baseHeight = 320;
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     
-    /* =================== High-DPI Canvas Setup =================== */
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const ratio = window.devicePixelRatio || 1;
@@ -95,7 +85,6 @@
     canvas.style.height = baseHeight + "px";
     ctx.scale(ratio, ratio);
     
-    /* =================== Programmatic Sound Setup =================== */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playTone(frequency, duration, type) {
       const oscillator = audioCtx.createOscillator();
@@ -116,31 +105,26 @@
     function playGameoverSound() { playTone(150, 0.3, 'sine'); }
     function playWinSound()      { playTone(800, 0.2, 'square'); }
     
-    /* =================== Background Music =================== */
     const backgroundMusic = new Audio("https://fibonacciai.github.io/42069/Fury.mp3");
     backgroundMusic.loop = true;
     
-    /* =================== Ball Setup =================== */
     const ballImage = new Image();
     ballImage.src = "https://fibonacciai.github.io/42069/power-512.png";
     ballImage.crossOrigin = "anonymous";
-    let ballRadius = 16; // Rendered as 32x32 pixels
+    let ballRadius = 16;
     let ballX = baseWidth / 2;
     let ballY = baseHeight - 30;
     let dx = 2;
     let dy = -2;
     let ballAngle = 0;
     
-    /* =================== Paddle Setup =================== */
     let paddleHeight = 10;
     let paddleWidth = 75;
     let paddleX = (baseWidth - paddleWidth) / 2;
     
-    /* =================== Input Flags =================== */
     let rightPressed = false;
     let leftPressed = false;
     
-    /* =================== Brick Setup =================== */
     let brickRowCount = 5;
     let brickColumnCount = 7;
     let brickWidth = 55;
@@ -149,7 +133,6 @@
     let brickOffsetTop = 30;
     let brickOffsetLeft = 35;
     
-    // Funny brick images including kennyg.png
     const brickImageSources = [
       "https://fibonacciai.github.io/42069/dougcifu.png",
       "https://fibonacciai.github.io/42069/stevecohen.png",
@@ -157,13 +140,12 @@
       "https://fibonacciai.github.io/42069/gabeplotkin.png",
       "https://fibonacciai.github.io/42069/kennyg.png"
     ];
-    const brickImages = [];
-    for (let i = 0; i < brickImageSources.length; i++) {
+    const brickImages = brickImageSources.map(src => {
       let img = new Image();
       img.crossOrigin = "anonymous";
-      img.src = brickImageSources[i];
-      brickImages.push(img);
-    }
+      img.src = src;
+      return img;
+    });
     let bricks = [];
     for (let c = 0; c < brickColumnCount; c++) {
       bricks[c] = [];
@@ -172,14 +154,11 @@
       }
     }
     
-    /* =================== Score & Lives =================== */
-    let lives = 9;  // Lives set to 9
+    let lives = 9;
     let score = 0;
-    // Score increment such that total score becomes 42069 when all bricks are broken.
     const totalBricks = brickRowCount * brickColumnCount;
     const scoreIncrement = 42069 / totalBricks;
     
-    /* =================== Particle System =================== */
     let particles = [];
     function spawnParticles(x, y, color) {
       for (let i = 0; i < 15; i++) {
@@ -214,13 +193,9 @@
       }
     }
     
-    /* =================== Game State =================== */
-    let gameState = 'start';  // "start", "playing", "gameover", "win"
-    
-    /* =================== Global Scale Factor =================== */
+    let gameState = 'start';
     let currentScale = 1;
     
-    /* =================== Overlay Drawing Function =================== */
     function drawOverlay(message) {
       ctx.save();
       ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
@@ -231,13 +206,12 @@
       let lineHeight = 26;
       let lines = message.split("\n");
       let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
-      for (let i = 0; i < lines.length; i++) {
+      for (let i = 0; i < lines.length; i°) {
         ctx.fillText(lines[i], baseWidth / 2, startY + i * lineHeight);
       }
       ctx.restore();
     }
     
-    /* =================== Event Listeners =================== */
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
     document.addEventListener("mousemove", mouseMoveHandler, false);
@@ -246,33 +220,23 @@
     canvas.addEventListener("touchmove", handleTouchMove, false);
     
     function keyDownHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") {
-        rightPressed = true;
-      } else if (e.key === "Left" || e.key === "ArrowLeft") {
-        leftPressed = true;
-      }
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
     }
     function keyUpHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") {
-        rightPressed = false;
-      } else if (e.key === "Left" || e.key === "ArrowLeft") {
-        leftPressed = false;
-      }
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
     }
     function mouseMoveHandler(e) {
       const rect = canvas.getBoundingClientRect();
       let relativeX = (e.clientX - rect.left) / currentScale;
-      if (relativeX > 0 && relativeX < baseWidth) {
-        paddleX = relativeX - paddleWidth / 2;
-      }
+      if (relativeX > 0 && relativeX < baseWidth) paddleX = relativeX - paddleWidth / 2;
     }
     function handleTouchStart(e) {
       e.preventDefault();
       if (gameState === 'start') {
         gameState = 'playing';
-        if (backgroundMusic.paused) {
-          backgroundMusic.play().catch(err => console.log("Music play error:", err));
-        }
+        if (backgroundMusic.paused) backgroundMusic.play().catch(err => console.log("Music play error:", err));
       } else if (gameState === 'gameover' || gameState === 'win') {
         document.location.reload();
       }
@@ -282,35 +246,28 @@
       const rect = canvas.getBoundingClientRect();
       let touch = e.touches[0];
       let relativeX = (touch.clientX - rect.left) / currentScale;
-      if (relativeX > 0 && relativeX < baseWidth) {
-        paddleX = relativeX - paddleWidth / 2;
-      }
+      if (relativeX > 0 && relativeX < baseWidth) paddleX = relativeX - paddleWidth / 2;
     }
     function keyPressHandler(e) {
       if (gameState === 'start' && e.key === 'Enter') {
         gameState = 'playing';
-        if (backgroundMusic.paused) {
-          backgroundMusic.play().catch(err => console.log("Music play error:", err));
-        }
+        if (backgroundMusic.paused) backgroundMusic.play().catch(err => console.log("Music play error:", err));
       } else if ((gameState === 'gameover' || gameState === 'win') && e.key === 'Enter') {
         document.location.reload();
       }
     }
     
-    /* =================== Collision Detection =================== */
     function collisionDetection() {
       for (let c = 0; c < brickColumnCount; c++) {
         for (let r = 0; r < brickRowCount; r++) {
           let b = bricks[c][r];
           if (b.status === 1) {
-            if (ballX > b.x && ballX < b.x + brickWidth &&
-                ballY > b.y && ballY < b.y + brickHeight) {
+            if (ballX > b.x && ballX < b.x + brickWidth && ballY > b.y && ballY < b.y + brickHeight) {
               dy = -dy;
               b.status = 0;
               score += scoreIncrement;
               playBrickSound();
               spawnParticles(ballX, ballY, "#FFFFFF");
-              // Increase speed slightly
               dx *= 1.02;
               dy *= 1.02;
               if (score >= 42069) {
@@ -323,7 +280,6 @@
       }
     }
     
-    /* =================== Drawing Functions =================== */
     function drawBall() {
       ctx.save();
       ctx.translate(ballX, ballY);
@@ -378,21 +334,6 @@
       ctx.fillStyle = "#fff";
       ctx.fillText("Lives: " + lives, baseWidth - 65, 20);
     }
-    function drawOverlay(message) {
-      ctx.save();
-      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-      ctx.fillRect(0, 0, baseWidth, baseHeight);
-      ctx.font = "22px 'Montserrat', sans-serif";
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "center";
-      let lineHeight = 26;
-      let lines = message.split("\n");
-      let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
-      for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], baseWidth / 2, startY + i * lineHeight);
-      }
-      ctx.restore();
-    }
     
     function draw() {
       ctx.clearRect(0, 0, baseWidth, baseHeight);
@@ -405,12 +346,8 @@
     
       if (gameState === 'playing') {
         collisionDetection();
-        if (rightPressed && paddleX < baseWidth - paddleWidth) {
-          paddleX += 7;
-        }
-        if (leftPressed && paddleX > 0) {
-          paddleX -= 7;
-        }
+        if (rightPressed && paddleX < baseWidth - paddleWidth) paddleX += 7;
+        if (leftPressed && paddleX > 0) paddleX -= 7;
         if (ballX + dx > baseWidth - ballRadius || ballX + dx < ballRadius) {
           dx = -dx;
           playWallSound();
@@ -454,7 +391,6 @@
     
       requestAnimationFrame(draw);
     }
-    draw();
     
     function adjustGameScale() {
       const scale = Math.min(window.innerWidth / baseWidth, window.innerHeight / baseHeight);
@@ -466,6 +402,17 @@
     }
     window.addEventListener("resize", adjustGameScale);
     adjustGameScale();
+
+    // Farcaster Frame SDK Integration
+    const sdk = window.FarcasterSDK;
+    if (sdk) {
+      sdk.actions.ready();
+      if (sdk.context && sdk.context.user) {
+        console.log("Player FID:", sdk.context.user.fid);
+      }
+    }
+
+    draw();
   </script>
 </body>
 </html>
