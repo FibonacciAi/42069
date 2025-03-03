@@ -35,8 +35,8 @@
     <p id="status"></p>
   </div>
 
-  <!-- Include ethers.js from a CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+  <!-- Use the UMD build of ethers.js to avoid module export errors -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script>
     let provider, signer, userAddress;
     const statusEl = document.getElementById("status");
