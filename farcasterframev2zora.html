@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enhanced NFT Fractal Generator</title>
+  <!-- For development only. In production, install Tailwind CSS via npm/PostCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Coinbase Wallet SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@3/dist/coinbase-wallet-sdk.min.js"></script>
+  <style>
+    :root {
+      --primary: #5D5CDE;
+      --primary-hover: #4b4ab8;
+      --canvas-bg: #000000;
+      --bg-main: #FFFFFF;
+      --text-main: #1F2937;
+      --panel-bg: #F3F4F6;
+      --slider-bg: #d1d5db;
+    }
+    /* Dark mode overrides */
+    .dark {
+      --bg-main: #181818;
+      --text-main: #E5E7EB;
+      --panel-bg: #262626;
+      --slider-bg: #3d3d3d;
+    }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      transition: background-color 0.3s ease;
+    }
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background-color: var(--canvas-bg);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .controls-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: var(--panel-bg);
+      border-radius: 0 0 0 10px;
+      padding: 15px;
+      z-index: 10;
+      width: 360px;
+      max-height: 100vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    .controls-collapsed {
+      transform: translateX(calc(100% - 40px));
+    }
+    .controls-toggle {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px;
+      cursor: pointer;
+      z-index: 11;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 5px;
+      width: 100%;
+    }
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 5px;
+      width: 100%;
+    }
+    .preset-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      margin: 5px;
+      border-radius: 4px;
+      background-color: var(--panel-bg);
+      border: 1px solid var(--primary);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    #loading {
+      position: fixed;
+      z-index: 999;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: white;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 15px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #preview-modal, #wallet-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    #preview-modal.hidden, #wallet-modal.hidden {
+      display: none;
+    }
+    .preview-content img,
+    .preview-content video {
+      max-width: 90vw;
+      max-height: 70vh;
+    }
+    .wallet-modal-content {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
+      max-width: 90%;
+    }
+    .wallet-option {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: var(--panel-bg);
+      transition: all 0.2s;
+    }
+    .wallet-option:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    .wallet-option img {
+      width: 32px;
+      height: 32px;
+      margin-right: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container">
+    <canvas id="fractal-canvas"></canvas>
+  </div>
+
+  <div id="controls" class="controls-panel">
+    <button id="toggle-controls" class="controls-toggle">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <h1 class="text-xl font-bold mb-4">Enhanced NFT Fractal Generator</h1>
+
+    <!-- Presets Section -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Presets</h2>
+      <div id="preset-buttons" class="flex flex-wrap">
+        <button class="preset-btn" data-preset="cosmic">Cosmic Spiral</button>
+        <button class="preset-btn" data-preset="nebula">Nebula Dream</button>
+        <button class="preset-btn" data-preset="mandelbrot">Mandelbrot Deep</button>
+        <button class="preset-btn" data-preset="vortex">Rainbow Vortex</button>
+        <button class="preset-btn" data-preset="crystal">Crystal Formation</button>
+      </div>
+      <button id="save-preset" class="btn-primary">Save Current Preset</button>
+      <div id="saved-presets-list" class="mt-2"></div>
+    </div>
+
+    <!-- Fractal Settings Section -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Fractal Settings</h2>
+      <div class="mb-3">
+        <label for="fractalType" class="block text-sm font-medium">Fractal Type</label>
+        <select id="fractalType" class="w-full p-2 rounded-lg bg-gray-50 border">
+          <option value="julia">Julia Set</option>
+          <option value="mandelbrot">Mandelbrot</option>
+          <option value="burning">Burning Ship</option>
+          <option value="voronoi">Voronoi</option>
+          <option value="hybrid" selected>Hybrid</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="complexity" class="block text-sm font-medium">Complexity</label>
+        <input type="range" id="complexity" class="w-full slider" min="10" max="100" value="50" step="1">
+      </div>
+      <div class="mb-3">
+        <label for="detail" class="block text-sm font-medium">Detail Level</label>
+        <input type="range" id="detail" class="w-full slider" min="1" max="10" value="5" step="0.5">
+      </div>
+      <div class="mb-3">
+        <label for="colorScheme" class="block text-sm font-medium">Color Scheme</label>
+        <select id="colorScheme" class="w-full p-2 rounded-lg bg-gray-50 border">
+          <option value="rainbow" selected>Rainbow</option>
+          <option value="fire">Fire</option>
+          <option value="ocean">Ocean</option>
+          <option value="neon">Neon</option>
+          <option value="monochrome">Monochrome</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="colorIntensity" class="block text-sm font-medium">Color Intensity</label>
+        <input type="range" id="colorIntensity" class="w-full slider" min="0.5" max="2" value="1" step="0.1">
+      </div>
+      <div class="mb-3">
+        <label for="contrast" class="block text-sm font-medium">Contrast</label>
+        <input type="range" id="contrast" class="w-full slider" min="0.5" max="3" value="1.5" step="0.1">
+      </div>
+      <div class="mb-3">
+        <label for="animationSpeed" class="block text-sm font-medium">Animation Speed</label>
+        <input type="range" id="animationSpeed" class="w-full slider" min="0" max="1" value="0.05" step="0.01">
+      </div>
+      <div class="mb-3">
+        <label for="renderScale" class="block text-sm font-medium">Render Scale</label>
+        <input type="range" id="renderScale" class="w-full slider" min="0.5" max="1" step="0.1" value="1">
+      </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Export</h2>
+      <div class="mb-3">
+        <label for="exportQuality" class="block text-sm font-medium">Image Quality</label>
+        <select id="exportQuality" class="w-full p-2 rounded-lg bg-gray-50 border">
+          <option value="1">Standard (Current View)</option>
+          <option value="2">HD (2x Size)</option>
+          <option value="4" selected>4K (4x Size)</option>
+          <option value="8">Ultra HD (8x Size)</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="exportFormat" class="block text-sm font-medium">Format</label>
+        <select id="exportFormat" class="w-full p-2 rounded-lg bg-gray-50 border">
+          <option value="png" selected>PNG</option>
+          <option value="jpg">JPG</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <input type="checkbox" id="transparentBg" class="mr-2">
+        <label for="transparentBg" class="text-sm">Transparent Background (PNG)</label>
+      </div>
+      <button id="exportImage" class="btn-primary">Capture Fractal Image</button>
+      <button id="recordAnimation" class="btn-primary">Record 5s Animation</button>
+      <div id="exportInfo" class="text-xs italic text-center mt-2">
+        Right-click on generated image/video to save.
+      </div>
+    </div>
+
+    <!-- Wallet Integration Section -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Wallet Integration</h2>
+      <button id="connectWallet" class="btn-primary">Connect Wallet</button>
+      <button id="mintNFT" class="btn-primary mt-2" disabled>Mint NFT</button>
+      <div id="walletInfo" class="text-sm mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded"></div>
+    </div>
+
+    <!-- Dark/Light Mode Toggle -->
+    <div class="mb-6">
+      <button id="themeToggle" class="btn-secondary">Toggle Dark/Light Mode</button>
+    </div>
+  </div>
+
+  <!-- Wallet Modal -->
+  <div id="wallet-modal" class="hidden">
+    <div class="wallet-modal-content">
+      <h2 class="text-xl font-bold mb-4">Connect Wallet</h2>
+      <div class="wallet-options">
+        <div class="wallet-option" id="metamask-option">
+          <img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjM1NSIgdmlld0JveD0iMCAwIDM5NyAzNTUiIHdpZHRoPSIzOTciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMSAtMSkiPjxwYXRoIGQ9Im0xMTQuNjIyNjQ0IDMyNy4xOTU0NzIgNTIuMDA0NzE3IDEzLjgxMDE5OHYtMTguMDU5NDlsNC4yNDUyODMtNC4yNDkyOTJoMjkuNzE2OTgydjIxLjI0NjQ1OSAxNC44NzI1MjNoLTMxLjgzOTYyNGwtMzkuMjY4ODY4LTE2Ljk5NzE2OXoiIGZpbGw9IiNjZGJkYjIiLz48cGF0aCBkPSJtMTk5LjUyODMwNSAzMjcuMTk1NDcyIDUwLjk0MzM5NyAxMy44MTAxOTh2LTE4LjA1OTQ5bDQuMjQ1MjgzLTQuMjQ5MjkyaDI5LjcxNjk4MXYyMS4yNDY0NTkgMTQuODcyNTIzaC0zMS44Mzk2MjNsLTM5LjI2ODg2OC0xNi45OTcxNjl6IiBmaWxsPSIjY2RiZGIyIiB0cmFuc2Zvcm09Im1hdHJpeCgtMSAwIDAgMSA0ODMuOTYyMjcgMCkiLz48cGF0aCBkPSJtMTcwLjg3MjY0NCAyODcuODg5NTIzLTQuMjQ1MjgzIDM1LjA1NjY1NyA1LjMwNjYwNC00LjI0OTI5Mmg1NS4xODg2OGw2LjM2NzkyNSA0LjI0OTI5Mi00LjI0NTI4NC0zNS4wNTY2NTctOC40OTA1NjUtNS4zMTE2MTUtNDIuNDUyODMyIDEuMDYyMzIzeiIgZmlsbD0iIzM5MzkzOSIvPjxwYXRoIGQ9Im0zMC43NzgzMDIzIDE4MS42NTcyMjYtMjkuNzE2OTgxNTMgODYuMDQ4MTYxIDc0LjI5MjQ1MzkzLTQuMjQ5MjkzaDQ3Ljc1OTQzNDN2LTM3LjE4MTMwM2wtMi4xMjI2NDEtNzYuNDg3MjUzLTEwLjYxMzIwOCA4LjQ5ODU4M3oiIGZpbGw9IiNmODlkMzUiLz48cGF0aCBkPSJtODcuMDI4MzAzMiAxOTEuMjE4MTM0IDg3LjAyODMwMjggMi4xMjQ2NDYtOS41NTE4ODYgNDQuNjE3NTYzLTQxLjM5MTUxMS0xMC42MjMyMjl6IiBmaWxsPSIjZDg3YzMwIi8+PHBhdGggZD0ibTg3LjAyODMwMzIgMTkyLjI4MDQ1NyAzNi4wODQ5MDU4IDMzLjk5NDMzNHYzMy45OTQzMzR6IiBmaWxsPSIjZWE4ZDNhIi8+PHBhdGggZD0ibTEyMy4xMTMyMDkgMjI3LjMzNzExNCA0Mi40NTI4MzEgMTAuNjIzMjI5IDEzLjc5NzE3IDQ1LjY3OTg4Ny0yOS43MTY5ODEgMjEuMjQ2NDU5eiIgZmlsbD0iI2Y4OWQzNSIvPjxwYXRoIGQ9Im0xMjMuMTEzMjA5IDI2MS4zMzE0NDgtOC40OTA1NjUgNjUuODY0MDI0IDU2LjI1LTM5LjMwNTk0OXoiIGZpbGw9IiNlYjhmMzUiLz48cGF0aCBkPSJtMTc0LjA1NjYwNiAxOTMuMzQyNzggNS4zMDY2MDQgOTAuMjk3NDUxLTE1LjkxOTgxMi00Ni4yMTEwNDl6IiBmaWxsPSIjZWE4ZTNhIi8+PHBhdGggZD0ibTc0LjI5MjQ1MzkgMjYyLjM5Mzc3MSA0OC44MjA3NTUxLTEuMDYyMzIzLTguNDkwNTY1IDY1Ljg2NDAyNHoiIGZpbGw9IiNkODdjMzAiLz48cGF0aCBkPSJtMjQuNDEwMzc3NyAzNTUuODc4MTkzIDkwLjIxMjI2NjMtMjguNjgyNzIxLTQwLjMzMDE5MDEtNjQuODAxNzAxLTczLjIzMTEzMzEzIDUuMzExNjE2eiIgZmlsbD0iI2ViOGYzNSIvPjxwYXRoIGQ9Im0xNjcuNjg4NjggOTYuMjA4MDEzNi0xMS42NzQ1MjggNDIuNTg2ODcxNCA3NS4zNTM3NzMgMjAuMTg0MTQgMTUuOTE5OTEyLTgwLjQ5NzAwODv/+iIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xMTQuNjIyNjQ0IDU4LjQyNzI3NDggNTMuMDY2MDM2IDM3Ljc4MDczNzIgMTIuNzM1ODUgNTAuOTkyMTY08LTcxLjEwODQ5MiAyMTMuNDg3MzAxeiIgZmlsbD0iI2RmNzIyOCIvPjxwYXRoIGQ9Im03OC41MzYzMzEyIDE3Ny40MDgyMjcgNDIuNDUyODMwOCAxMTIuNDY9MTEyIDc0LjI5MjQ1NC02NS44NjQwMjQtNDIuNDUyODMxLTgwLjQ5NzAwOHoiIGZpbGw9IiNmODlkMzUiLz48cGF0aCBkPSJtMjExLjIwMjgzNyA5OS4zOTM5NzQgMjcuNTk0MzQxLTIzLjk2NzUyOTgtNzQuMjkyNDU0IDEyLjYzNjkzMTggMjkuNzE2OTgyIDMyLjE1NTMwMnoiIGZpbGw9IiNlYjhmMzUiLz48cGF0aCBkPSJtMTkwLjQzMzk2MyAxODAuNTkxODQyLTI5LjcxNjk4IDI0Ljk2MzA3MiA3NS4zNTM3NzQgNjUuODY0MDI0eiIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xNzQuMDU2NiAyNzEuODkyOTcxIDkxLjExMzIwOC03NS40MzI5NTItNzUuMzUzNzczLTIwLjE4NDE0MnoiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMTUxLjgxODcwMiAzMTcuNTcyNDg0IDIyLjIzNzktNDUuNjc5ODEzIDE4LjA0MjQ1MyA0OS45Mjk4MzJ6IiBmaWxsPSIjZTg4MjFlIi8+PHBhdGggZD0ibTEzNC43NzM1ODYgMTEwLjAyOTcxIDQyLjM5MjE3OS02Ni44OTgxMjc5LTcxLjk3Njk0NjYgNS4zMTE2NjE5eiIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xMjcuMzU4NDkxIDMxMS4xOTg0NSAyNC40MjAyMTEgMTUuOTI1MjctMjYuNTQyODUyIDE5LjEzNDAxeiIgZmlsbD0iI2RmNzIyOCIvPjxwYXRoIGQ9Im0xMzIuNjY1MDk0IDIwLjc0MTQ1NzYgOC40OTA1NjUgMjcuNDI3MTg2LTI3LjU5NDM0LTIwLjE4NDE0MjF6IiBmaWxsPSIjZTg4MjFlIi8+PHBhdGggZD0ibTE0MC4wOTQzNCAxLjU5OTMxNjQxIDU5LjIzNTgzIDc4LjQ3MDAyLTcyLjUzNTM0Mi01OS40MjUzOTAzeiIgZmlsbD0iI2U4OGYzNSIvPjxwYXRoIGQ9Im0xNDAuMDk0MzQgMS41OTkzMTY0MSA4OC45MTMyIDQzLjQxMzkwMTYtOC40OTA1NjYtMjYuMzY0ODYzMjJ6IiBmaWxsPSIjZjg5ZDM1Ii8+PHBhdGggZD0ibTExMy4wMjk0ODcgODMuMDI5NTU5NyAyMS43MzkwNTcgNTAuODM1NjkwMy01OC4xNzQ1MzQxLTQyLjMzNzEwN3oiIGZpbGw9IiNlODgyMWUiLz48cGF0aCBkPSJtMjI5LjI0NTc1NCAxMTAuMDI5NzEtNTguMTc0NTMgLjk1NjE2NCAyNy41OTQzNCAxNi44NzM3N3oiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMjM1LjU1MjM1OCAxNDMuMDYwODI5LTc2LjQxNTA5NCA1MS43OTE5MjMgMzUuMDI0NTI2LTQ1LjYxNzU2M3oiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMjYzLjE0NzI5MiA2MS4xMTgwODAxLTI0LjM2MDM1OSAyOS41NDk5MTA5IDI5LjcxNjk4MS0yMC4xODQxNDJ6IiBmaWxsPSIjZTg4MjFlIi8+PHBhdGggZD0ibTIyOS4yNDU3NTQgMTEwLjAyOTcxLTM2LjA4NDkwNi0zNy43ODA3NCAxNi45ODE0MTYgMzcuNzgwNzR6IiBmaWxsPSIjZWI4ZjM1Ii8+PHBhdGggZD0ibTI1OS40NzcwNDkgMTc0LjI1OTYzOS0yNS40MDYyOS0xNS45MjQ4MTMtNzUuMzUzNzcgMjMuMDM2ODQyeiIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xOTQuMDc5MTE4IDExMC45ODU4NzQtMzYuNjkxNDY3IDM2LjkzOTk3NC0zMi45MzQzMTgtMzYuOTM5OTc0eiIgZmlsbD0iI2U4OGYzNSIvPjxwYXRoIGQ9Im0xMTMuNTM5ODAzIDQxLjk2MTJMNDB+LjUwODM5NTggMTMxLjcxMDA5LTQuMjQ5MjkzM3oiIGZpbGw9IiNlODgyMWUiLz48cGF0aCBkPSJtMTM5LjA2MDMxMiAzMjcuMTIzNjc0IDEyLjc1ODIxOSAyMy41NTkzOS00NS4wNzI4MzcgMTMuNzg0N3oiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMTI3LjM1ODQ5MSAzMTEuMTk4NDUgMTEuNzAxODIxIDE1LjkyNTI3LTQ0LjAzMzQ1NjcgMTcuMDA5NzgzeiIgZmlsbD0iI2UxNzIyZSIvPjxwYXRoIGQ9Im0yMzguMDc5NjEgMzQzLjA0OTA2NC01OS4yMzU4MzEtMTkuMTM5MDFMMjguMTMwMTg5IDM1MS41NDd6IiBmaWxsPSIjZGY3MjI4Ii8+PC9nPjwvc3ZnPg==" alt="MetaMask">
+          <span>MetaMask</span>
+        </div>
+        <div class="wallet-option" id="coinbase-option">
+          <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2IDBDMjQuODM2NiAwIDMyIDcuMTYzNDQgMzIgMTZDMzIgMjQuODM2NiAyNC44MzY2IDMyIDE2IDMyQzcuMTYzNDQgMzIgMCAyNC44MzY2IDAgMTZDMCA3LjE2MzQ0IDcuMTYzNDQgMCAxNiAwWiIgZmlsbD0iIzAwNTJGRiIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExLjk5NDMgNy45MDkxQzkuNzYxOTIgNy45MDkxIDcuOTQ5MTUgOS43MjE4NyA3Ljk0OTE1IDExLjk1NDNWMjAuMDAwMUM3Ljk0OTE1IDIyLjIzMjUgOS43NjE5MiAyNC4wNDUzIDExLjk5NDMgMjQuMDQ1M0gyMC4wNDAyQzIyLjI3MjYgMjQuMDQ1MyAyNC4wODUzIDIyLjIzMjUgMjQuMDg1MyAyMC4wMDAxVjExLjk1NDNDMjQuMDg1MyA5LjcyMTg3IDIyLjI3MjYgNy45MDkxIDIwLjA0MDIgNy45MDkxSDExLjk5NDNaTTEyLjAxNzIgMTUuOTk5NEMxMi4wMTcyIDE0LjE0MzMgMTMuNjE4NiAxMi41NjkxIDE1LjUwMzUgMTIuNTY5MUgxNi41MzFDMTguNDE1OSAxMi41NjkxIDIwLjAxNzMgMTQuMTQzMyAyMC4wMTczIDE1Ljk5OTRDMjAuMDE3MyAxNy44NTU1IDE4LjQxNTkgMTkuNDI5NyAxNi41MzEgMTkuNDI5N0gxNS41MDM1QzEzLjYxODYgMTkuNDI5NyAxMi4wMTcyIDE3Ljg1NTUgMTIuMDE3MiAxNS45OTk0WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==" alt="Coinbase Wallet">
+          <span>Coinbase Wallet</span>
+        </div>
+        <div class="wallet-option" id="base-wallet-option">
+          <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMjRjMCAxMy4yNTUgMTAuNzQ1IDI0IDI0IDI0czI0LTEwLjc0NSAyNC0yNFMzNy4yNTUgMCAyNCAwIDAgMTAuNzQ1IDAgMjR6IiBmaWxsPSIjMDA1MkZGIi8+PHBhdGggZD0iTTE0LjA0MiAxNC45NjhjMC0uNTU3LjQ1LTEuMDA4IDEuMDA3LTEuMDA4aDE3LjkwNGMuNTU2IDAgMS4wMDcuNDUxIDEuMDA3IDEuMDA4djE4LjAyNmMwIC41NTctLjQ1IDEuMDA4LTEuMDA3IDEuMDA4aC0xNy45MDRhMS4wMDcgMS4wMDcgMCAwMS0xLjAwNy0xLjAwOFYxNC45Njh6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTMwLjg0OSAyNC4wNjRjLS40NTggMS44NC0xLjAwMyAzLjE5My0xLjY1IDQuMDY0YTYuNzAyIDYuNzAyIDAgMDEtMS44NiAyLjA2OGMtLjc0Ny41NS0xLjYzNS45MzctMi42NjYgMS4xNTYtMS4wNzIuMjE5LTIuMjg0LjMyOC0zLjYzNy4zMjgtMS4zMTMgMC0yLjUwNC0uMTEtMy41ODQtLjMyOGExMC42MSAxMC42MSAwIDAxLTIuNjY2LTEuMDYzIDYuNzM1IDYuNzM1IDAgMDEtMS45MTMtMi4wMjJjLS41MDItLjgzOC0uOTQ3LTIuMTg0LTEuMzM3LTQuMDM4LjE2NyAxLjM5OS40NzggMi41MjIuOTM0IDMuMzVhNi4yMjcgNi4yMjcgMCAwMDEuODcgMS44MTIgOC41OTIgOC41OTIgMCAwMDIuNjMyLjk4NmMxLjAwMy4xOTUgMi4wNjIuMjkyIDMuMTgxLjI5MiAxLjEyNiAwIDIuMTk2LS4wODggMy4yMS0uMjY2YTkuMjQgOS4yNCAwIDAwMi42NzUtLjkxOCA2LjQ0OCA2LjQ0OCAwIDAwMS45ODQtMS44MjVjLjUtLjc5MS44MS0xLjg2MyAxLjA3MS0zLjIzNWwuNzU2LTIuMjl6TTEzLjA0NCAxNi45MzdhLjk1NC45NTQgMCAwMTAtMS44OTloMTYuMDU0YS45NTQuOTU0IDAgMDEwIDEuODk5SDEzLjA0NHoiIGZpbGw9IiMwMDUyRkYiLz48L3N2Zz4=" alt="Base Wallet">
+          <span>Base Wallet</span>
+        </div>
+        <button id="close-wallet-modal" class="btn-secondary mt-4">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div id="preview-modal" class="hidden">
+    <div class="preview-content bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg"></div>
+    <button id="close-preview" class="absolute top-4 right-4 text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p id="loading-text">Generating high-quality fractal...</p>
+  </div>
+
+  <!-- External Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <!-- Use a reliable CDN for simplex-noise -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+  <!-- Ethers.js for wallet integration -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+  <script>
+    // Global Variables & Settings
+    const THREE = window.THREE;
+    const simplex = new window.SimplexNoise();
+    let settings = {
+      fractalType: 'hybrid',
+      complexity: 50,
+      detail: 5,
+      colorScheme: 'rainbow',
+      colorIntensity: 1.0,
+      contrast: 1.5,
+      animationSpeed: 0.05,
+      paused: false,
+      renderScale: 1.0,
+      zoom: 1.0,
+      offset: { x: 0.0, y: 0.0 }
+    };
+
+    // Default Presets
+    const defaultPresets = {
+      cosmic: { fractalType: 'julia', complexity: 60, detail: 6, colorScheme: 'rainbow', colorIntensity: 1.3, contrast: 2.0, animationSpeed: 0.03, zoom: 1.0, offset: { x: 0, y: 0 } },
+      nebula: { fractalType: 'hybrid', complexity: 45, detail: 7, colorScheme: 'neon', colorIntensity: 1.8, contrast: 1.7, animationSpeed: 0.04, zoom: 1.0, offset: { x: 0, y: 0 } },
+      mandelbrot: { fractalType: 'mandelbrot', complexity: 80, detail: 8, colorScheme: 'ocean', colorIntensity: 1.2, contrast: 2.2, animationSpeed: 0.02, zoom: 1.0, offset: { x: 0, y: 0 } },
+      vortex: { fractalType: 'burning', complexity: 40, detail: 4, colorScheme: 'rainbow', colorIntensity: 1.6, contrast: 1.8, animationSpeed: 0.06, zoom: 1.0, offset: { x: 0, y: 0 } },
+      crystal: { fractalType: 'voronoi', complexity: 70, detail: 5.5, colorScheme: 'monochrome', colorIntensity: 0.9, contrast: 2.5, animationSpeed: 0.03, zoom: 1.0, offset: { x: 0, y: 0 } }
+    };
+
+    // Preset Storage Functions
+    function loadSavedPresets() {
+      const stored = localStorage.getItem('fractalPresets');
+      return stored ? JSON.parse(stored) : {};
+    }
+    let savedPresets = loadSavedPresets();
+    function saveCurrentPreset(name) {
+      savedPresets[name] = { ...settings };
+      localStorage.setItem('fractalPresets', JSON.stringify(savedPresets));
+      renderSavedPresets();
+    }
+    function renderSavedPresets() {
+      const list = document.getElementById('saved-presets-list');
+      list.innerHTML = '';
+      Object.keys(savedPresets).forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'preset-btn';
+        btn.textContent = name;
+        btn.addEventListener('click', () => applyPreset(savedPresets[name]));
+        list.appendChild(btn);
+      });
+    }
+    renderSavedPresets();
+
+    function applyPreset(preset) {
+      settings = { ...settings, ...preset };
+      updateUIFromSettings();
+      updateUniforms();
+    }
+    function updateUIFromSettings() {
+      document.getElementById('fractalType').value = settings.fractalType;
+      document.getElementById('complexity').value = settings.complexity;
+      document.getElementById('detail').value = settings.detail;
+      document.getElementById('colorScheme').value = settings.colorScheme;
+      document.getElementById('colorIntensity').value = settings.colorIntensity;
+      document.getElementById('contrast').value = settings.contrast;
+      document.getElementById('animationSpeed').value = settings.animationSpeed;
+      document.getElementById('renderScale').value = settings.renderScale;
+    }
+
+    // Three.js Setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    let renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      preserveDrawingBuffer: true,
+      canvas: document.getElementById('fractal-canvas')
+    });
+    renderer.setPixelRatio(window.devicePixelRatio * settings.renderScale);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.position.z = 1;
+
+    // Shaders (with zoom and offset support)
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+    const fragmentShader = `
+      uniform float uTime;
+      uniform vec2 uResolution;
+      uniform int uFractalType;
+      uniform float uComplexity;
+      uniform float uDetail;
+      uniform int uColorScheme;
+      uniform float uColorIntensity;
+      uniform float uContrast;
+      uniform float uZoom;
+      uniform vec2 uOffset;
+      varying vec2 vUv;
+
+      // Color schemes
+      vec3 rainbow(float t) {
+          return 0.5 + 0.5 * cos(6.28318 * (vec3(t, t + 0.33, t + 0.67)) * uColorIntensity);
+      }
+      vec3 fire(float t) {
+          t = t * uColorIntensity;
+          return vec3(
+              smoothstep(0.0, 0.5, t) - smoothstep(0.5, 1.0, t),
+              smoothstep(0.0, 0.3, t) - smoothstep(0.7, 1.0, t),
+              smoothstep(0.05, 0.1, t) - smoothstep(0.3, 0.8, t)
+          );
+      }
+      vec3 ocean(float t) {
+          t = t * uColorIntensity;
+          return vec3(
+              0.1 + 0.2 * sin(t * 6.28318),
+              0.3 + 0.3 * sin((t + 0.2) * 6.28318),
+              0.6 + 0.4 * sin((t + 0.1) * 6.28318)
+          );
+      }
+      vec3 neon(float t) {
+          t = t * uColorIntensity;
+          return vec3(
+              0.5 + 0.5 * sin(t * 12.0),
+              0.5 + 0.5 * sin((t + 0.3) * 9.0),
+              0.5 + 0.5 * sin((t + 0.6) * 15.0)
+          );
+      }
+      vec3 monochrome(float t) {
+          return vec3(t * uColorIntensity);
+      }
+      vec3 applyColorScheme(float t) {
+          if(uColorScheme == 0) return rainbow(t);
+          else if(uColorScheme == 1) return fire(t);
+          else if(uColorScheme == 2) return ocean(t);
+          else if(uColorScheme == 3) return neon(t);
+          else if(uColorScheme == 4) return monochrome(t);
+          return rainbow(t);
+      }
+
+      // Julia Set
+      float julia(vec2 p, float time) {
+          vec2 c = 0.7 * vec2(cos(time * 0.1), sin(time * 0.15));
+          vec2 z = p;
+          float iterations = 0.0;
+          float maxIterations = 10.0 + uComplexity;
+          for (float i = 0.0; i < 100.0; i++) {
+              if(i >= maxIterations) break;
+              if(dot(z, z) > 4.0) break;
+              z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y) + c;
+              iterations = i;
+          }
+          float smoothValue = (iterations - log2(log2(dot(z,z))) + 4.0) / maxIterations;
+          return clamp(smoothValue, 0.0, 1.0);
+      }
+
+      // Mandelbrot Set (Modified: removed internal dynamic zoom)
+      float mandelbrot(vec2 p, float time) {
+          vec2 center = vec2(-0.5, 0.0);
+          vec2 c = center + p;
+          vec2 z = vec2(0.0);
+          float iterations = 0.0;
+          float maxIterations = 10.0 + uComplexity;
+          for (float i = 0.0; i < 100.0; i++) {
+              if(i >= maxIterations) break;
+              if(dot(z, z) > 4.0) break;
+              z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y) + c;
+              iterations = i;
+          }
+          float smoothValue = (iterations - log2(log2(dot(z,z))) + 4.0)/maxIterations;
+          return clamp(smoothValue, 0.0, 1.0);
+      }
+
+      // Burning Ship
+      float burningShip(vec2 p, float time) {
+          vec2 center = vec2(-0.6, 0.35);
+          vec2 c = center + p;
+          vec2 z = vec2(0.0);
+          float iterations = 0.0;
+          float maxIterations = 10.0 + uComplexity;
+          for(float i = 0.0; i < 100.0; i++){
+              if(i >= maxIterations) break;
+              if(dot(z,z) > 4.0) break;
+              z = vec2(z.x*z.x - z.y*z.y, 2.0*abs(z.x*z.y)) + c;
+              iterations = i;
+          }
+          float smoothValue = (iterations - log2(log2(dot(z,z))) + 4.0)/maxIterations;
+          return clamp(smoothValue, 0.0, 1.0);
+      }
+
+      // Voronoi
+      float voronoi(vec2 p, float time) {
+          vec2 scaledP = p*(5.0+uDetail);
+          vec2 i_st = floor(scaledP);
+          vec2 f_st = fract(scaledP);
+          float minDist = 1.0;
+          for(int i=-1; i<=1; i++){
+              for(int j=-1; j<=1; j++){
+                  vec2 neighbor = vec2(float(i), float(j));
+                  vec2 point = fract(sin(vec2(dot(i_st+neighbor, vec2(127.1,311.7)), dot(i_st+neighbor, vec2(269.5,183.3))))*43758.5453);
+                  point = 0.5 + 0.5*sin(time*0.3+6.28318*point);
+                  vec2 diff = neighbor + point - f_st;
+                  float dist = length(diff);
+                  minDist = min(minDist, dist);
+              }
+          }
+          return minDist;
+      }
+
+      // Hybrid fractal (mixing Julia and Voronoi)
+      float hybrid(vec2 p, float time) {
+          float jVal = julia(p*0.8, time);
+          float vVal = voronoi(p, time);
+          float spiral = sin(length(p)*10.0 - time*0.5) * cos(atan(p.y, p.x)*20.0+time*0.3);
+          float mixFactor = clamp(uDetail/10.0, 0.0, 1.0);
+          return mix(jVal*(1.0+0.3*spiral), vVal*(1.0+0.5*spiral), mixFactor);
+      }
+
+      void main(){
+          // Compute normalized coordinates and apply global zoom & offset
+          vec2 p = (vUv - 0.5) * 2.0;
+          p = (p - uOffset) / uZoom;
+          float fractalValue;
+          if(uFractalType == 0) fractalValue = julia(p, uTime);
+          else if(uFractalType == 1) fractalValue = mandelbrot(p, uTime);
+          else if(uFractalType == 2) fractalValue = burningShip(p, uTime);
+          else if(uFractalType == 3) fractalValue = voronoi(p, uTime);
+          else fractalValue = hybrid(p, uTime);
+          fractalValue = pow(fractalValue, uContrast);
+          float angle = atan(p.y, p.x);
+          float radius = length(p);
+          float colorInput = fractalValue * 0.7 + angle * 0.2 + radius * 0.1 + uTime * 0.05;
+          vec3 color = applyColorScheme(colorInput);
+          float intensity = smoothstep(0.0, 1.0, fractalValue);
+          gl_FragColor = vec4(color * intensity, 1.0);
+      }
+    `;
+
+    // Uniforms including zoom and offset
+    let uniforms = {
+      uTime: { value: 0 },
+      uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      uFractalType: { value: 4 },
+      uComplexity: { value: settings.complexity },
+      uDetail: { value: settings.detail },
+      uColorScheme: { value: 0 },
+      uColorIntensity: { value: settings.colorIntensity },
+      uContrast: { value: settings.contrast },
+      uZoom: { value: settings.zoom },
+      uOffset: { value: new THREE.Vector2(settings.offset.x, settings.offset.y) }
+    };
+
+    // Mapping for dropdown selections
+    const fractalTypeMap = { 'julia': 0, 'mandelbrot': 1, 'burning': 2, 'voronoi': 3, 'hybrid': 4 };
+    const colorSchemeMap = { 'rainbow': 0, 'fire': 1, 'ocean': 2, 'neon': 3, 'monochrome': 4 };
+
+    // Create shader material and mesh
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms
+    });
+    const plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
+
+    // Update uniforms based on settings
+    function updateUniforms() {
+      uniforms.uFractalType.value = fractalTypeMap[settings.fractalType] || 4;
+      uniforms.uComplexity.value = settings.complexity;
+      uniforms.uDetail.value = settings.detail;
+      uniforms.uColorScheme.value = colorSchemeMap[settings.colorScheme] || 0;
+      uniforms.uColorIntensity.value = settings.colorIntensity;
+      uniforms.uContrast.value = settings.contrast;
+      uniforms.uZoom.value = settings.zoom;
+      uniforms.uOffset.value.set(settings.offset.x, settings.offset.y);
+    }
+
+    // UI Event Listeners
+    document.getElementById('fractalType').addEventListener('change', e => {
+      settings.fractalType = e.target.value;
+      updateUniforms();
+    });
+    document.getElementById('complexity').addEventListener('input', e => {
+      settings.complexity = parseFloat(e.target.value);
+      updateUniforms();
+    });
+    document.getElementById('detail').addEventListener('input', e => {
+      settings.detail = parseFloat(e.target.value);
+      updateUniforms();
+    });
+    document.getElementById('colorScheme').addEventListener('change', e => {
+      settings.colorScheme = e.target.value;
+      updateUniforms();
+    });
+    document.getElementById('colorIntensity').addEventListener('input', e => {
+      settings.colorIntensity = parseFloat(e.target.value);
+      updateUniforms();
+    });
+    document.getElementById('contrast').addEventListener('input', e => {
+      settings.contrast = parseFloat(e.target.value);
+      updateUniforms();
+    });
+    document.getElementById('animationSpeed').addEventListener('input', e => {
+      settings.animationSpeed = parseFloat(e.target.value);
+    });
+    document.getElementById('renderScale').addEventListener('input', e => {
+      settings.renderScale = parseFloat(e.target.value);
+      renderer.setPixelRatio(window.devicePixelRatio * settings.renderScale);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Preset buttons (default presets)
+    document.querySelectorAll('#preset-buttons .preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const presetName = btn.dataset.preset;
+        if(defaultPresets[presetName]) {
+          applyPreset(defaultPresets[presetName]);
+        }
+      });
+    });
+
+    // Save preset button
+    document.getElementById('save-preset').addEventListener('click', () => {
+      const name = prompt("Enter a name for this preset:");
+      if(name) saveCurrentPreset(name);
+    });
+
+    // Toggle controls panel
+    const controls = document.getElementById('controls');
+    const toggleBtn = document.getElementById('toggle-controls');
+    toggleBtn.addEventListener('click', () => {
+      controls.classList.toggle('controls-collapsed');
+    });
+
+    // Dark/Light mode toggle
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+    });
+
+    // Interactive Zoom and Pan
+    let isDragging = false;
+    let lastMousePos = { x: 0, y: 0 };
+    const canvas = document.getElementById('fractal-canvas');
+    canvas.addEventListener('mousedown', e => {
+      isDragging = true;
+      lastMousePos = { x: e.clientX, y: e.clientY };
+    });
+    canvas.addEventListener('mousemove', e => {
+      if(isDragging) {
+        const dx = e.clientX - lastMousePos.x;
+        const dy = e.clientY - lastMousePos.y;
+        settings.offset.x += dx / (window.innerWidth * settings.zoom);
+        settings.offset.y -= dy / (window.innerHeight * settings.zoom);
+        lastMousePos = { x: e.clientX, y: e.clientY };
+        updateUniforms();
+      }
+    });
+    canvas.addEventListener('mouseup', () => { isDragging = false; });
+    canvas.addEventListener('mouseleave', () => { isDragging = false; });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const factor = 1.05;
+      settings.zoom *= (e.deltaY < 0 ? factor : 1/factor);
+      updateUniforms();
+    });
+
+    // Export Image Function (with transparent BG option)
+    async function captureHighQualityImage() {
+      const exportQuality = parseInt(document.getElementById('exportQuality').value);
+      const exportFormat = document.getElementById('exportFormat').value;
+      const transparent = document.getElementById('transparentBg').checked;
+      showLoading(`Rendering ${exportQuality}x quality image...`);
+      await new Promise(r => setTimeout(r, 100));
+      try {
+        const width = window.innerWidth * exportQuality;
+        const height = window.innerHeight * exportQuality;
+        const tempRenderer = new THREE.WebGLRenderer({
+          antialias: true,
+          preserveDrawingBuffer: true,
+          alpha: transparent
+        });
+        tempRenderer.setSize(width, height);
+        const tempCamera = camera.clone();
+        tempCamera.aspect = width/height;
+        tempCamera.updateProjectionMatrix();
+        const tempScene = new THREE.Scene();
+        const tempUniforms = {
+          uTime: { value: uniforms.uTime.value },
+          uResolution: { value: new THREE.Vector2(width, height) },
+          uFractalType: { value: uniforms.uFractalType.value },
+          uComplexity: { value: uniforms.uComplexity.value },
+          uDetail: { value: uniforms.uDetail.value },
+          uColorScheme: { value: uniforms.uColorScheme.value },
+          uColorIntensity: { value: uniforms.uColorIntensity.value },
+          uContrast: { value: uniforms.uContrast.value },
+          uZoom: { value: uniforms.uZoom.value },
+          uOffset: { value: uniforms.uOffset.value.clone() }
+        };
+        const tempMaterial = new THREE.ShaderMaterial({
+          vertexShader,
+          fragmentShader,
+          uniforms: tempUniforms
+        });
+        const tempPlane = new THREE.Mesh(new THREE.PlaneGeometry(2,2), tempMaterial);
+        tempScene.add(tempPlane);
+        tempRenderer.render(tempScene, tempCamera);
+        const mimeType = exportFormat === 'jpg' ? 'image/jpeg' : 'image/png';
+        const quality = exportFormat === 'jpg' ? 0.95 : undefined;
+        const imageData = tempRenderer.domElement.toDataURL(mimeType, quality);
+        showPreview(imageData);
+        tempRenderer.dispose();
+      } catch (error) {
+        alert('Error generating image.');
+      } finally {
+        hideLoading();
+      }
+    }
+    document.getElementById('exportImage').addEventListener('click', captureHighQualityImage);
+
+    // Record Animation using MediaRecorder API (records 5 seconds)
+    let mediaRecorder, recordedChunks = [];
+    document.getElementById('recordAnimation').addEventListener('click', () => {
+      startRecording();
+    });
+    function startRecording() {
+      const canvasStream = renderer.domElement.captureStream(30);
+      let options = { mimeType: 'video/webm;codecs=vp9' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = { mimeType: 'video/webm;codecs=vp8' };
+      }
+      try {
+        mediaRecorder = new MediaRecorder(canvasStream, options);
+      } catch (e) {
+        alert("MediaRecorder not supported: " + e);
+        return;
+      }
+      recordedChunks = [];
+      mediaRecorder.ondataavailable = e => { if(e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: options.mimeType });
+        const url = URL.createObjectURL(blob);
+        showPreview(url, true);
+      };
+      mediaRecorder.start();
+      showLoading("Recording animation...");
+      setTimeout(() => { 
+        mediaRecorder.stop(); 
+        hideLoading();
+      }, 5000);
+    }
+
+    // Wallet Integration
+    const networks = {
+      ethereum: { 
+        chainId: 1, 
+        chainName: "Ethereum Mainnet",
+        rpcUrls: ["https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"],
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        blockExplorerUrls: ["https://etherscan.io"]
+      },
+      base: { 
+        chainId: 8453, 
+        chainName: "Base Mainnet",
+        rpcUrls: ["https://mainnet.base.org"],
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        blockExplorerUrls: ["https://basescan.org"]
+      }
+    };
+
+    // Coinbase Wallet SDK setup validation
+    const CoinbaseWalletSDK = window.CoinbaseWalletSDK;
+    if (!CoinbaseWalletSDK) {
+      alert("Coinbase Wallet SDK failed to load. Please refresh the page or check your network.");
+    }
+
+    let provider, signer, userAddress, currentChainId;
+    
+    // Wallet modal controls
+    const walletModal = document.getElementById('wallet-modal');
+    const walletInfo = document.getElementById('walletInfo');
+    const mintNFTBtn = document.getElementById('mintNFT');
+    
+    document.getElementById('connectWallet').addEventListener('click', () => {
+      walletModal.classList.remove('hidden');
+    });
+    
+    document.getElementById('close-wallet-modal').addEventListener('click', () => {
+      walletModal.classList.add('hidden');
+    });
+    // Close modal when clicking outside content
+    walletModal.addEventListener('click', (e) => {
+      if (e.target === walletModal) walletModal.classList.add('hidden');
+    });
+
+    // Connect to different wallet types
+    document.getElementById('metamask-option').addEventListener('click', () => {
+      connectMetaMask();
+    });
+    
+    document.getElementById('coinbase-option').addEventListener('click', () => {
+      connectCoinbaseWallet();
+    });
+    
+    document.getElementById('base-wallet-option').addEventListener('click', () => {
+      connectBaseWallet();
+    });
+
+    // MetaMask wallet connection
+    async function connectMetaMask() {
+      walletModal.classList.add('hidden');
+      showLoading("Connecting to MetaMask...");
+      
+      try {
+        if (!window.ethereum) {
+          throw new Error("MetaMask not installed. Please install MetaMask to continue.");
+        }
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        const network = await provider.getNetwork();
+        currentChainId = network.chainId;
+        
+        updateWalletInfo();
+        mintNFTBtn.disabled = false;
+      } catch (error) {
+        walletInfo.innerHTML = `<p class="text-red-500">Connection failed: ${error.message}</p>`;
+        if (error.message.includes("MetaMask not installed")) {
+          walletInfo.innerHTML += `<p>Please <a href="https://metamask.io/" target="_blank" class="underline">install MetaMask</a>.</p>`;
+        }
+        console.error("MetaMask connection error:", error);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Coinbase Wallet connection
+    async function connectCoinbaseWallet() {
+      walletModal.classList.add('hidden');
+      showLoading("Connecting to Coinbase Wallet...");
+      
+      try {
+        if (!window.CoinbaseWalletSDK) {
+          throw new Error("Coinbase Wallet SDK failed to load. Please refresh the page.");
+        }
+        const coinbaseWallet = new window.CoinbaseWalletSDK({
+          appName: "NFT Fractal Generator",
+          darkMode: document.body.classList.contains('dark'),
+        });
+        const ethereumProvider = coinbaseWallet.makeWeb3Provider(networks.ethereum.rpcUrls[0], networks.ethereum.chainId);
+        await ethereumProvider.request({ method: 'eth_requestAccounts' });
+        provider = new ethers.providers.Web3Provider(ethereumProvider);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        const network = await provider.getNetwork();
+        currentChainId = network.chainId;
+        
+        updateWalletInfo();
+        mintNFTBtn.disabled = false;
+      } catch (error) {
+        walletInfo.innerHTML = `<p class="text-red-500">Connection failed: ${error.message}</p>`;
+        console.error("Coinbase Wallet connection error:", error);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Base Wallet connection
+    async function connectBaseWallet() {
+      walletModal.classList.add('hidden');
+      showLoading("Connecting to Base Wallet...");
+      
+      try {
+        if (!window.CoinbaseWalletSDK) {
+          throw new Error("Coinbase Wallet SDK failed to load. Please refresh the page.");
+        }
+        const coinbaseWallet = new window.CoinbaseWalletSDK({
+          appName: "NFT Fractal Generator",
+          darkMode: document.body.classList.contains('dark'),
+        });
+        const baseProvider = coinbaseWallet.makeWeb3Provider(networks.base.rpcUrls[0], networks.base.chainId);
+        await baseProvider.request({ method: 'eth_requestAccounts' });
+        provider = new ethers.providers.Web3Provider(baseProvider);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        const network = await provider.getNetwork();
+        currentChainId = network.chainId;
+        
+        // If not on Base network, try to switch
+        if (currentChainId !== networks.base.chainId) {
+          await switchToBaseNetwork();
+        }
+        
+        updateWalletInfo();
+        mintNFTBtn.disabled = false;
+      } catch (error) {
+        walletInfo.innerHTML = `<p class="text-red-500">Connection failed: ${error.message}</p>`;
+        console.error("Base Wallet connection error:", error);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Switch to Base network
+    async function switchToBaseNetwork() {
+      try {
+        await provider.send('wallet_switchEthereumChain', [{ chainId: ethers.utils.hexValue(networks.base.chainId) }]);
+        currentChainId = networks.base.chainId;
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          try {
+            await provider.send('wallet_addEthereumChain', [{
+              chainId: ethers.utils.hexValue(networks.base.chainId),
+              chainName: networks.base.chainName,
+              rpcUrls: networks.base.rpcUrls,
+              nativeCurrency: networks.base.nativeCurrency,
+              blockExplorerUrls: networks.base.blockExplorerUrls
+            }]);
+            currentChainId = networks.base.chainId;
+          } catch (addError) {
+            throw new Error("Failed to add Base network: " + addError.message);
+          }
+        } else {
+          throw new Error("Failed to switch to Base network: " + switchError.message);
+        }
+      }
+    }
+
+    // Update wallet information display
+    function updateWalletInfo() {
+      const networkName = currentChainId === 1 ? 'Ethereum Mainnet' : 
+                           currentChainId === 8453 ? 'Base Mainnet' : 
+                           `Chain ID: ${currentChainId}`;
+      
+      walletInfo.innerHTML = `
+        <p class="mb-1"><strong>Connected Wallet:</strong></p>
+        <p class="text-xs mb-2 break-all">${userAddress}</p>
+        <p><strong>Network:</strong> ${networkName}</p>
+      `;
+      
+      document.getElementById('connectWallet').textContent = "Wallet Connected";
+    }
+
+    // Mint NFT function (placeholder)
+    document.getElementById('mintNFT').addEventListener('click', async () => {
+      if (!userAddress) {
+        alert("Please connect your wallet first.");
+        return;
+      }
+      
+      showLoading("Preparing NFT mint...");
+      try {
+        // --- Developer TODO ---
+        // 1. Capture fractal image data (e.g., using captureHighQualityImage())
+        // 2. Upload image to IPFS or another storage provider to obtain a metadata URI
+        // 3. Call your deployed NFT smart contract method to mint the NFT (e.g., contract.safeMint(userAddress, metadataURI))
+        setTimeout(() => {
+          hideLoading();
+          alert(`NFT minting functionality is not yet implemented.\nWallet: ${userAddress}\nNetwork: ${currentChainId === 1 ? 'Ethereum' : currentChainId === 8453 ? 'Base' : 'Unknown'}`);
+        }, 2000);
+      } catch (error) {
+        console.error("Minting error:", error);
+        hideLoading();
+        alert("Minting failed: " + error.message);
+      }
+    });
+
+    // Preview Modal
+    function showPreview(src, isVideo = false) {
+      const previewModal = document.getElementById('preview-modal');
+      const previewContent = previewModal.querySelector('.preview-content');
+      previewContent.innerHTML = '';
+      if(isVideo) {
+        const video = document.createElement('video');
+        video.src = src;
+        video.controls = true;
+        video.autoplay = true;
+        previewContent.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = src;
+        previewContent.appendChild(img);
+      }
+      previewModal.classList.remove('hidden');
+    }
+    document.getElementById('close-preview').addEventListener('click', () => {
+      document.getElementById('preview-modal').classList.add('hidden');
+    });
+
+    // Loading Indicator functions
+    function showLoading(message) {
+      const loading = document.getElementById('loading');
+      document.getElementById('loading-text').textContent = message;
+      loading.style.visibility = 'visible';
+      loading.style.opacity = '1';
+    }
+    function hideLoading() {
+      const loading = document.getElementById('loading');
+      loading.style.opacity = '0';
+      setTimeout(() => { loading.style.visibility = 'hidden'; }, 400);
+    }
+
+    // Animation Loop
+    function animate() {
+      requestAnimationFrame(animate);
+      if(!settings.paused) uniforms.uTime.value += settings.animationSpeed;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Resize Handling
+    function handleResize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      renderer.setSize(width, height);
+      camera.aspect = width/height;
+      camera.updateProjectionMatrix();
+      uniforms.uResolution.value.set(width, height);
+    }
+    window.addEventListener('resize', handleResize);
+  </script>
+</body>
+</html>
