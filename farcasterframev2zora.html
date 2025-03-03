@@ -6,8 +6,8 @@
   <title>Enhanced NFT Fractal Generator</title>
   <!-- For development only. In production, install Tailwind CSS via npm/PostCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Coinbase Wallet SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@3/dist/coinbase-wallet-sdk.min.js"></script>
+  <!-- Coinbase Wallet SDK (UMD build) -->
+  <script src="https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@3/dist/wallet-sdk.umd.min.js"></script>
   <style>
     :root {
       --primary: #5D5CDE;
@@ -161,9 +161,8 @@
       color: var(--text-main);
       padding: 20px;
       border-radius: 10px;
-      max-width: 400px;
       width: 100%;
-      max-width: 90%;
+      max-width: 400px;
     }
     .wallet-option {
       display: flex;
@@ -312,19 +311,15 @@
       <h2 class="text-xl font-bold mb-4">Connect Wallet</h2>
       <div class="wallet-options">
         <div class="wallet-option" id="metamask-option">
-          <img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjM1NSIgdmlld0JveD0iMCAwIDM5NyAzNTUiIHdpZHRoPSIzOTciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMSAtMSkiPjxwYXRoIGQ9Im0xMTQuNjIyNjQ0IDMyNy4xOTU0NzIgNTIuMDA0NzE3IDEzLjgxMDE5OHYtMTguMDU5NDlsNC4yNDUyODMtNC4yNDkyOTJoMjkuNzE2OTgydjIxLjI0NjQ1OSAxNC44NzI1MjNoLTMxLjgzOTYyNGwtMzkuMjY4ODY4LTE2Ljk5NzE2OXoiIGZpbGw9IiNjZGJkYjIiLz48cGF0aCBkPSJtMTk5LjUyODMwNSAzMjcuMTk1NDcyIDUwLjk0MzM5NyAxMy44MTAxOTh2LTE4LjA1OTQ5bDQuMjQ1MjgzLTQuMjQ5MjkyaDI5LjcxNjk4MXYyMS4yNDY0NTkgMTQuODcyNTIzaC0zMS44Mzk2MjNsLTM5LjI2ODg2OC0xNi45OTcxNjl6IiBmaWxsPSIjY2RiZGIyIiB0cmFuc2Zvcm09Im1hdHJpeCgtMSAwIDAgMSA0ODMuOTYyMjcgMCkiLz48cGF0aCBkPSJtMTcwLjg3MjY0NCAyODcuODg5NTIzLTQuMjQ1MjgzIDM1LjA1NjY1NyA1LjMwNjYwNC00LjI0OTI5Mmg1NS4xODg2OGw2LjM2NzkyNSA0LjI0OTI5Mi00LjI0NTI4NC0zNS4wNTY2NTctOC40OTA1NjUtNS4zMTE2MTUtNDIuNDUyODMyIDEuMDYyMzIzeiIgZmlsbD0iIzM5MzkzOSIvPjxwYXRoIGQ9Im0zMC43NzgzMDIzIDE4MS42NTcyMjYtMjkuNzE2OTgxNTMgODYuMDQ4MTYxIDc0LjI5MjQ1MzkzLTQuMjQ5MjkzaDQ3Ljc1OTQzNDN2LTM3LjE4MTMwM2wtMi4xMjI2NDEtNzYuNDg3MjUzLTEwLjYxMzIwOCA4LjQ5ODU4M3oiIGZpbGw9IiNmODlkMzUiLz48cGF0aCBkPSJtODcuMDI4MzAzMiAxOTEuMjE4MTM0IDg3LjAyODMwMjggMi4xMjQ2NDYtOS41NTE4ODYgNDQuNjE3NTYzLTQxLjM5MTUxMS0xMC42MjMyMjl6IiBmaWxsPSIjZDg3YzMwIi8+PHBhdGggZD0ibTg3LjAyODMwMzIgMTkyLjI4MDQ1NyAzNi4wODQ5MDU4IDMzLjk5NDMzNHYzMy45OTQzMzR6IiBmaWxsPSIjZWE4ZDNhIi8+PHBhdGggZD0ibTEyMy4xMTMyMDkgMjI3LjMzNzExNCA0Mi40NTI4MzEgMTAuNjIzMjI5IDEzLjc5NzE3IDQ1LjY3OTg4Ny0yOS43MTY5ODEgMjEuMjQ2NDU5eiIgZmlsbD0iI2Y4OWQzNSIvPjxwYXRoIGQ9Im0xMjMuMTEzMjA5IDI2MS4zMzE0NDgtOC40OTA1NjUgNjUuODY0MDI0IDU2LjI1LTM5LjMwNTk0OXoiIGZpbGw9IiNlYjhmMzUiLz48cGF0aCBkPSJtMTc0LjA1NjYwNiAxOTMuMzQyNzggNS4zMDY2MDQgOTAuMjk3NDUxLTE1LjkxOTgxMi00Ni4yMTEwNDl6IiBmaWxsPSIjZWE4ZTNhIi8+PHBhdGggZD0ibTc0LjI5MjQ1MzkgMjYyLjM5Mzc3MSA0OC44MjA3NTUxLTEuMDYyMzIzLTguNDkwNTY1IDY1Ljg2NDAyNHoiIGZpbGw9IiNkODdjMzAiLz48cGF0aCBkPSJtMjQuNDEwMzc3NyAzNTUuODc4MTkzIDkwLjIxMjI2NjMtMjguNjgyNzIxLTQwLjMzMDE5MDEtNjQuODAxNzAxLTczLjIzMTEzMzEzIDUuMzExNjE2eiIgZmlsbD0iI2ViOGYzNSIvPjxwYXRoIGQ9Im0xNjcuNjg4NjggOTYuMjA4MDEzNi0xMS42NzQ1MjggNDIuNTg2ODcxNCA3NS4zNTM3NzMgMjAuMTg0MTQgMTUuOTE5OTEyLTgwLjQ5NzAwODv/+iIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xMTQuNjIyNjQ0IDU4LjQyNzI3NDggNTMuMDY2MDM2IDM3Ljc4MDczNzIgMTIuNzM1ODUgNTAuOTkyMTY08LTcxLjEwODQ5MiAyMTMuNDg3MzAxeiIgZmlsbD0iI2RmNzIyOCIvPjxwYXRoIGQ9Im03OC41MzYzMzEyIDE3Ny40MDgyMjcgNDIuNDUyODMwOCAxMTIuNDY9MTEyIDc0LjI5MjQ1NC02NS44NjQwMjQtNDIuNDUyODMxLTgwLjQ5NzAwOHoiIGZpbGw9IiNmODlkMzUiLz48cGF0aCBkPSJtMjExLjIwMjgzNyA5OS4zOTM5NzQgMjcuNTk0MzQxLTIzLjk2NzUyOTgtNzQuMjkyNDU0IDEyLjYzNjkzMTggMjkuNzE2OTgyIDMyLjE1NTMwMnoiIGZpbGw9IiNlYjhmMzUiLz48cGF0aCBkPSJtMTkwLjQzMzk2MyAxODAuNTkxODQyLTI5LjcxNjk4IDI0Ljk2MzA3MiA3NS4zNTM3NzQgNjUuODY0MDI0eiIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xNzQuMDU2NiAyNzEuODkyOTcxIDkxLjExMzIwOC03NS40MzI5NTItNzUuMzUzNzczLTIwLjE4NDE0MnoiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMTUxLjgxODcwMiAzMTcuNTcyNDg0IDIyLjIzNzktNDUuNjc5ODEzIDE4LjA0MjQ1MyA0OS45Mjk4MzJ6IiBmaWxsPSIjZTg4MjFlIi8+PHBhdGggZD0ibTEzNC43NzM1ODYgMTEwLjAyOTcxIDQyLjM5MjE3OS02Ni44OTgxMjc5LTcxLjk3Njk0NjYgNS4zMTE2NjE5eiIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xMjcuMzU4NDkxIDMxMS4xOTg0NSAyNC40MjAyMTEgMTUuOTI1MjctMjYuNTQyODUyIDE5LjEzNDAxeiIgZmlsbD0iI2RmNzIyOCIvPjxwYXRoIGQ9Im0xMzIuNjY1MDk0IDIwLjc0MTQ1NzYgOC40OTA1NjUgMjcuNDI3MTg2LTI3LjU5NDM0LTIwLjE4NDE0MjF6IiBmaWxsPSIjZTg4MjFlIi8+PHBhdGggZD0ibTE0MC4wOTQzNCAxLjU5OTMxNjQxIDU5LjIzNTgzIDc4LjQ3MDAyLTcyLjUzNTM0Mi01OS40MjUzOTAzeiIgZmlsbD0iI2U4OGYzNSIvPjxwYXRoIGQ9Im0xNDAuMDk0MzQgMS41OTkzMTY0MSA4OC45MTMyIDQzLjQxMzkwMTYtOC40OTA1NjYtMjYuMzY0ODYzMjJ6IiBmaWxsPSIjZjg5ZDM1Ii8+PHBhdGggZD0ibTExMy4wMjk0ODcgODMuMDI5NTU5NyAyMS43MzkwNTcgNTAuODM1NjkwMy01OC4xNzQ1MzQxLTQyLjMzNzEwN3oiIGZpbGw9IiNlODgyMWUiLz48cGF0aCBkPSJtMjI5LjI0NTc1NCAxMTAuMDI5NzEtNTguMTc0NTMgLjk1NjE2NCAyNy41OTQzNCAxNi44NzM3N3oiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMjM1LjU1MjM1OCAxNDMuMDYwODI5LTc2LjQxNTA5NCA1MS43OTE5MjMgMzUuMDI0NTI2LTQ1LjYxNzU2M3oiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMjYzLjE0NzI5MiA2MS4xMTgwODAxLTI0LjM2MDM1OSAyOS41NDk5MTA5IDI5LjcxNjk4MS0yMC4xODQxNDJ6IiBmaWxsPSIjZTg4MjFlIi8+PHBhdGggZD0ibTIyOS4yNDU3NTQgMTEwLjAyOTcxLTM2LjA4NDkwNi0zNy43ODA3NCAxNi45ODE0MTYgMzcuNzgwNzR6IiBmaWxsPSIjZWI4ZjM1Ii8+PHBhdGggZD0ibTI1OS40NzcwNDkgMTc0LjI1OTYzOS0yNS40MDYyOS0xNS45MjQ4MTMtNzUuMzUzNzcgMjMuMDM2ODQyeiIgZmlsbD0iI2U4ODIxZSIvPjxwYXRoIGQ9Im0xOTQuMDc5MTE4IDExMC45ODU4NzQtMzYuNjkxNDY3IDM2LjkzOTk3NC0zMi45MzQzMTgtMzYuOTM5OTc0eiIgZmlsbD0iI2U4OGYzNSIvPjxwYXRoIGQ9Im0xMTMuNTM5ODAzIDQxLjk2MTJMNDB+LjUwODM5NTggMTMxLjcxMDA5LTQuMjQ5MjkzM3oiIGZpbGw9IiNlODgyMWUiLz48cGF0aCBkPSJtMTM5LjA2MDMxMiAzMjcuMTIzNjc0IDEyLjc1ODIxOSAyMy41NTkzOS00NS4wNzI4MzcgMTMuNzg0N3oiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMTI3LjM1ODQ5MSAzMTEuMTk4NDUgMTEuNzAxODIxIDE1LjkyNTI3LTQ0LjAzMzQ1NjcgMTcuMDA5NzgzeiIgZmlsbD0iI2UxNzIyZSIvPjxwYXRoIGQ9Im0yMzguMDc5NjEgMzQzLjA0OTA2NC01OS4yMzU4MzEtMTkuMTM5MDFMMjguMTMwMTg5IDM1MS41NDd6IiBmaWxsPSIjZGY3MjI4Ii8+PC9nPjwvc3ZnPg==" alt="MetaMask">
+          <img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjM1NSIgdmlld0JveD0iMCAwIDM5NyAzNTUiIHdpZHRoPSIzOTciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMSAtMSkiPjxwYXRoIGQ9Im0xMTQuNjIyNjQ0IDMyNy4xOTU0NzIgNTIuMDA0NzE3IDEzLjgxMDE5OHYtMTguMDU5NDlsNC4yNDUyODMtNC4yNDkyOTJoMjkuNzE2OTgydjIxLjI0NjQ1OSAxNC44NzI1MjNoLTMxLjgzOTYyNGwtMzkuMjY4ODY4LTE2Ljk5NzE2OXoiIGZpbGw9IiNjZGJkYjIiLz48cGF0aCBkPSJtMTk5LjUyODMwNSAzMjcuMTk1NDcyIDUwLjk0MzM5NyAxMy44MTAxOTh2LTE4LjA1OTQ5bDQuMjQ1MjgzLTQuMjQ5MjkyaDI5LjcxNjk4MXYyMS4yNDY0NTkgMTQuODcyNTIzaC0zMS44Mzk2MjNsLTM5LjI2ODg2OC0xNi45OTcxNjl6IiBmaWxsPSIjY2RiZGIyIiB0cmFuc2Zvcm09Im1hdHJpeCgtMSAwIDAgMSA0ODMuOTYyMjcgMCkiLz48cGF0aCBkPSJtMTcwLjg3MjY0NCAyODcuODg5NTIzLTQuMjQ1MjgzIDM1LjA1NjY1NyA1LjMwNjYwNC00LjI0OTI5Mmg1NS4xODg2OGw2LjM2NzkyNSA0LjI0OTI5Mi00LjI0NTI4NC0zNS4wNTY2NTctOC40OTA1NjUtNC41MS4zMTE2MTUtNDIuNDUyODMyIDEuMDYyMzIzeiIgZmlsbD0iIzM5MzkzOSIvPjxwYXRoIGQ9Im0zMC43NzgzMDIzIDE4MS42NTcyMjYtMjkuNzE2OTgxNTMgODYuMDQ4MTYxIDc0LjI5MjQ1MzkzLTQuMjQ5MjkzaDQ3Ljc1OTQzNDN2LTM3LjE4MTMwM2wtMi4xMjI2NDEtNzYuNDg3MjUzLTEwLjYxMzIwOCA4LjQ5ODU4M3oiIGZpbGw9IiNmODlkMzUiLz48cGF0aCBkPSJtODcuMDI4MzAzMiAxOTEuMjE4MTM0IDg3LjAyODMwMjggMi4xMjQ2NDYtOS41NTE4ODYgNDQuNjE3NTYzLTQxLjM5MTUxMS0xMC42MjMyMjl6IiBmaWxsPSIjZDg3YzMwIi8+PHBhdGggZD0ibTEyMy4xMTMyMDkgMjI3LjMzNzExNCA0Mi40NTI4MzEgMTAuNjIzMjI5IDEzLjc5NzE3IDQ1LjY3OTg4Ny0yOS43MTY5ODEgMjEuMjQ2NDU5eiIgZmlsbD0iI2Y4OWQzNSIvPjxwYXRoIGQ9Im0xMjMuMTEzMjA5IDI2MS4zMzE0NDgtOC40OTA1NjUgNjUuODY0MDI0IDU2LjI1LTM5LjMwNTk0OXoiIGZpbGw9IiNlYjhmMzUiLz48cGF0aCBkPSJtMTc0LjA1NjYwNiAxOTMuMzQyNzggNS4zMDY2MDQgOTAuMjk3NDUxLTE1LjkxOTgxMi00Ni4yMTEwNDl6IiBmaWxsPSIjZWE4ZTNhIi8+PHBhdGggZD0ibTc0LjI5MjQ1MzkgMjYyLjM5Mzc3MSA0OC44MjA3NTUxLTEuMDYyMzIzLTguNDkwNTY1IDY1Ljg2NDAyNHoiIGZpbGw9IiNkODdjMzAiLz48cGF0aCBkPSJtMjQuNDEwMzc3NyAzNTUuODc4MTkzIDkwLjIxMjI2NjMtMjguNjgyNzIxLTQwLjMzMDE5MDEtNjQuODAxNzAxLTczLjIzMTEzMzEzIDUuMzExNjE2eiIgZmlsbD0iI2ViOGYzNSIvPjxwYXRoIGQ9Im0xNzQuMDU2NiAyNzEuODkyOTcxIDkxLjExMzIwOC03NS40MzI5NTItNzUuMzUzNzczLTIwLjE4NDE0MnoiIGZpbGw9IiNkZjcyMjgiLz48cGF0aCBkPSJtMTUxLjgxODcwMiAzMTcuNTcyNDg0IDIyLjIzNzktNDUuNjc5ODEzIDE4LjA0MjQ1MyA0OS45Mjk4MzJ6IiBmaWxsPSIjZTg4MjIxIi8+PC9zdmc+Cg==" alt="MetaMask">
           <span>MetaMask</span>
         </div>
         <div class="wallet-option" id="coinbase-option">
           <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2IDBDMjQuODM2NiAwIDMyIDcuMTYzNDQgMzIgMTZDMzIgMjQuODM2NiAyNC44MzY2IDMyIDE2IDMyQzcuMTYzNDQgMzIgMCAyNC44MzY2IDAgMTZDMCA3LjE2MzQ0IDcuMTYzNDQgMCAxNiAwWiIgZmlsbD0iIzAwNTJGRiIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExLjk5NDMgNy45MDkxQzkuNzYxOTIgNy45MDkxIDcuOTQ5MTUgOS43MjE4NyA3Ljk0OTE1IDExLjk1NDNWMjAuMDAwMUM3Ljk0OTE1IDIyLjIzMjUgOS43NjE5MiAyNC4wNDUzIDExLjk5NDMgMjQuMDQ1M0gyMC4wNDAyQzIyLjI3MjYgMjQuMDQ1MyAyNC4wODUzIDIyLjIzMjUgMjQuMDg1MyAyMC4wMDAxVjExLjk1NDNDMjQuMDg1MyA5LjcyMTg3IDIyLjI3MjYgNy45MDkxIDIwLjA0MDIgNy45MDkxSDExLjk5NDNaTTEyLjAxNzIgMTUuOTk5NEMxMi4wMTcyIDE0LjE0MzMgMTMuNjE4NiAxMi41NjkxIDE1LjUwMzUgMTIuNTY5MUgxNi41MzFDMTguNDE1OSAxMi41NjkxIDIwLjAxNzMgMTQuMTQzMyAyMC4wMTczIDE1Ljk5OTRDMjAuMDE3MyAxNy44NTU1IDE4LjQxNTkgMTkuNDI5NyAxNi41MzEgMTkuNDI5N0gxNS41MDM1QzEzLjYxODYgMTkuNDI5NyAxMi4wMTcyIDE3Ljg1NTUgMTIuMDE3MiAxNS45OTk0WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==" alt="Coinbase Wallet">
           <span>Coinbase Wallet</span>
         </div>
-        <div class="wallet-option" id="base-wallet-option">
-          <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMjRjMCAxMy4yNTUgMTAuNzQ1IDI0IDI0IDI0czI0LTEwLjc0NSAyNC0yNFMzNy4yNTUgMCAyNCAwIDAgMTAuNzQ1IDAgMjR6IiBmaWxsPSIjMDA1MkZGIi8+PHBhdGggZD0iTTE0LjA0MiAxNC45NjhjMC0uNTU3LjQ1LTEuMDA4IDEuMDA3LTEuMDA4aDE3LjkwNGMuNTU2IDAgMS4wMDcuNDUxIDEuMDA3IDEuMDA4djE4LjAyNmMwIC41NTctLjQ1IDEuMDA4LTEuMDA3IDEuMDA4aC0xNy45MDRhMS4wMDcgMS4wMDcgMCAwMS0xLjAwNy0xLjAwOFYxNC45Njh6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTMwLjg0OSAyNC4wNjRjLS40NTggMS44NC0xLjAwMyAzLjE5My0xLjY1IDQuMDY0YTYuNzAyIDYuNzAyIDAgMDEtMS44NiAyLjA2OGMtLjc0Ny41NS0xLjYzNS45MzctMi42NjYgMS4xNTYtMS4wNzIuMjE5LTIuMjg0LjMyOC0zLjYzNy4zMjgtMS4zMTMgMC0yLjUwNC0uMTEtMy41ODQtLjMyOGExMC42MSAxMC42MSAwIDAxLTIuNjY2LTEuMDYzIDYuNzM1IDYuNzM1IDAgMDEtMS45MTMtMi4wMjJjLS41MDItLjgzOC0uOTQ3LTIuMTg0LTEuMzM3LTQuMDM4LjE2NyAxLjM5OS40NzggMi41MjIuOTM0IDMuMzVhNi4yMjcgNi4yMjcgMCAwMDEuODcgMS44MTIgOC41OTIgOC41OTIgMCAwMDIuNjMyLjk4NmMxLjAwMy4xOTUgMi4wNjIuMjkyIDMuMTgxLjI5MiAxLjEyNiAwIDIuMTk2LS4wODggMy4yMS0uMjY2YTkuMjQgOS4yNCAwIDAwMi42NzUtLjkxOCA2LjQ0OCA2LjQ0OCAwIDAwMS45ODQtMS44MjVjLjUtLjc5MS44MS0xLjg2MyAxLjA3MS0zLjIzNWwuNzU2LTIuMjl6TTEzLjA0NCAxNi45MzdhLjk1NC45NTQgMCAwMTAtMS44OTloMTYuMDU0YS45NTQuOTU0IDAgMDEwIDEuODk5SDEzLjA0NHoiIGZpbGw9IiMwMDUyRkYiLz48L3N2Zz4=" alt="Base Wallet">
-          <span>Base Wallet</span>
-        </div>
-        <button id="close-wallet-modal" class="btn-secondary mt-4">Cancel</button>
       </div>
+      <button id="close-wallet-modal" class="btn-secondary mt-4">Cancel</button>
     </div>
   </div>
 
@@ -349,10 +344,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <!-- Use a reliable CDN for simplex-noise -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
-  <!-- Ethers.js for wallet integration -->
+  <!-- Ethers.js for wallet integration (UMD build) -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  
+  <!-- Our Main Script; NFT.Storage is imported as a module below -->
+  <script type="module">
+    // Import NFTStorage from NFT.Storage UMD module
+    import { NFTStorage, File } from "https://unpkg.com/nft.storage/dist/bundle.esm.min.js";
 
-  <script>
     // Global Variables & Settings
     const THREE = window.THREE;
     const simplex = new window.SimplexNoise();
@@ -508,7 +507,7 @@
           return clamp(smoothValue, 0.0, 1.0);
       }
 
-      // Mandelbrot Set (Modified: removed internal dynamic zoom)
+      // Mandelbrot Set
       float mandelbrot(vec2 p, float time) {
           vec2 center = vec2(-0.5, 0.0);
           vec2 c = center + p;
@@ -571,7 +570,6 @@
       }
 
       void main(){
-          // Compute normalized coordinates and apply global zoom & offset
           vec2 p = (vUv - 0.5) * 2.0;
           p = (p - uOffset) / uZoom;
           float fractalValue;
@@ -590,7 +588,6 @@
       }
     `;
 
-    // Uniforms including zoom and offset
     let uniforms = {
       uTime: { value: 0 },
       uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
@@ -604,11 +601,9 @@
       uOffset: { value: new THREE.Vector2(settings.offset.x, settings.offset.y) }
     };
 
-    // Mapping for dropdown selections
     const fractalTypeMap = { 'julia': 0, 'mandelbrot': 1, 'burning': 2, 'voronoi': 3, 'hybrid': 4 };
     const colorSchemeMap = { 'rainbow': 0, 'fire': 1, 'ocean': 2, 'neon': 3, 'monochrome': 4 };
 
-    // Create shader material and mesh
     const geometry = new THREE.PlaneGeometry(2, 2);
     const material = new THREE.ShaderMaterial({
       vertexShader,
@@ -618,7 +613,6 @@
     const plane = new THREE.Mesh(geometry, material);
     scene.add(plane);
 
-    // Update uniforms based on settings
     function updateUniforms() {
       uniforms.uFractalType.value = fractalTypeMap[settings.fractalType] || 4;
       uniforms.uComplexity.value = settings.complexity;
@@ -630,7 +624,6 @@
       uniforms.uOffset.value.set(settings.offset.x, settings.offset.y);
     }
 
-    // UI Event Listeners
     document.getElementById('fractalType').addEventListener('change', e => {
       settings.fractalType = e.target.value;
       updateUniforms();
@@ -664,7 +657,6 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Preset buttons (default presets)
     document.querySelectorAll('#preset-buttons .preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const presetName = btn.dataset.preset;
@@ -674,25 +666,21 @@
       });
     });
 
-    // Save preset button
     document.getElementById('save-preset').addEventListener('click', () => {
       const name = prompt("Enter a name for this preset:");
       if(name) saveCurrentPreset(name);
     });
 
-    // Toggle controls panel
     const controls = document.getElementById('controls');
     const toggleBtn = document.getElementById('toggle-controls');
     toggleBtn.addEventListener('click', () => {
       controls.classList.toggle('controls-collapsed');
     });
 
-    // Dark/Light mode toggle
     document.getElementById('themeToggle').addEventListener('click', () => {
       document.body.classList.toggle('dark');
     });
 
-    // Interactive Zoom and Pan
     let isDragging = false;
     let lastMousePos = { x: 0, y: 0 };
     const canvas = document.getElementById('fractal-canvas');
@@ -719,7 +707,6 @@
       updateUniforms();
     });
 
-    // Export Image Function (with transparent BG option)
     async function captureHighQualityImage() {
       const exportQuality = parseInt(document.getElementById('exportQuality').value);
       const exportFormat = document.getElementById('exportFormat').value;
@@ -772,7 +759,6 @@
     }
     document.getElementById('exportImage').addEventListener('click', captureHighQualityImage);
 
-    // Record Animation using MediaRecorder API (records 5 seconds)
     let mediaRecorder, recordedChunks = [];
     document.getElementById('recordAnimation').addEventListener('click', () => {
       startRecording();
@@ -804,33 +790,62 @@
       }, 5000);
     }
 
-    // Wallet Integration
-    const networks = {
-      ethereum: { 
-        chainId: 1, 
-        chainName: "Ethereum Mainnet",
-        rpcUrls: ["https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"],
-        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-        blockExplorerUrls: ["https://etherscan.io"]
-      },
-      base: { 
-        chainId: 8453, 
-        chainName: "Base Mainnet",
-        rpcUrls: ["https://mainnet.base.org"],
-        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-        blockExplorerUrls: ["https://basescan.org"]
+    // --- NFT.Storage & Zora Integration ---
+    // Convert a data URL to a Blob
+    function dataURLToBlob(dataURL) {
+      const parts = dataURL.split(',');
+      const byteString = atob(parts[1]);
+      const mimeString = parts[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
       }
-    };
-
-    // Coinbase Wallet SDK setup validation
-    const CoinbaseWalletSDK = window.CoinbaseWalletSDK;
-    if (!CoinbaseWalletSDK) {
-      alert("Coinbase Wallet SDK failed to load. Please refresh the page or check your network.");
+      return new Blob([ab], { type: mimeString });
     }
 
+    // Upload using NFT.Storage with your API key
+    async function uploadToNFTStorage(dataURL) {
+      const NFT_STORAGE_API_KEY = "270edbd6.7dc45579d8f84f999032ac8f9ac58f82";
+      const client = new NFTStorage({ token: NFT_STORAGE_API_KEY });
+      const blob = dataURLToBlob(dataURL);
+      const file = new File([blob], 'fractal.png', { type: 'image/png' });
+      const metadata = await client.store({
+        name: "Fractal Coin",
+        description: "A coin generated from a unique fractal created with the NFT Fractal Generator.",
+        image: file
+      });
+      return metadata.url; // e.g. ipfs://<CID>/metadata.json
+    }
+
+    // Revised mint function using NFT.Storage and redirecting to Zora’s mint interface
+    document.getElementById('mintNFT').addEventListener('click', async () => {
+      if (!userAddress) {
+        alert("Please connect your wallet first.");
+        return;
+      }
+      
+      showLoading("Uploading fractal image and launching Zora coin creation...");
+      try {
+        const canvas = document.getElementById('fractal-canvas');
+        const imageData = canvas.toDataURL('image/png');
+        const metadataURI = await uploadToNFTStorage(imageData);
+        
+        // Redirect the user to Zora's coin creation interface.
+        // This URL should point to Zora’s official minting page.
+        // Query parameters include the metadata URI and a fee (in basis points).
+        window.location.href = `https://zora.co/launch?metadataURI=${encodeURIComponent(metadataURI)}&feeBPS=500`;
+      } catch (error) {
+        console.error("Zora coin creation error:", error);
+        hideLoading();
+        alert("Zora coin creation failed: " + error.message);
+      }
+    });
+    // --- End NFT.Storage & Zora Integration ---
+
+    // --- Wallet Integration (MetaMask & Coinbase Wallet) ---
     let provider, signer, userAddress, currentChainId;
     
-    // Wallet modal controls
     const walletModal = document.getElementById('wallet-modal');
     const walletInfo = document.getElementById('walletInfo');
     const mintNFTBtn = document.getElementById('mintNFT');
@@ -842,12 +857,10 @@
     document.getElementById('close-wallet-modal').addEventListener('click', () => {
       walletModal.classList.add('hidden');
     });
-    // Close modal when clicking outside content
     walletModal.addEventListener('click', (e) => {
       if (e.target === walletModal) walletModal.classList.add('hidden');
     });
-
-    // Connect to different wallet types
+    
     document.getElementById('metamask-option').addEventListener('click', () => {
       connectMetaMask();
     });
@@ -856,15 +869,9 @@
       connectCoinbaseWallet();
     });
     
-    document.getElementById('base-wallet-option').addEventListener('click', () => {
-      connectBaseWallet();
-    });
-
-    // MetaMask wallet connection
     async function connectMetaMask() {
       walletModal.classList.add('hidden');
       showLoading("Connecting to MetaMask...");
-      
       try {
         if (!window.ethereum) {
           throw new Error("MetaMask not installed. Please install MetaMask to continue.");
@@ -875,25 +882,19 @@
         userAddress = await signer.getAddress();
         const network = await provider.getNetwork();
         currentChainId = network.chainId;
-        
         updateWalletInfo();
         mintNFTBtn.disabled = false;
       } catch (error) {
         walletInfo.innerHTML = `<p class="text-red-500">Connection failed: ${error.message}</p>`;
-        if (error.message.includes("MetaMask not installed")) {
-          walletInfo.innerHTML += `<p>Please <a href="https://metamask.io/" target="_blank" class="underline">install MetaMask</a>.</p>`;
-        }
         console.error("MetaMask connection error:", error);
       } finally {
         hideLoading();
       }
     }
-
-    // Coinbase Wallet connection
+    
     async function connectCoinbaseWallet() {
       walletModal.classList.add('hidden');
       showLoading("Connecting to Coinbase Wallet...");
-      
       try {
         if (!window.CoinbaseWalletSDK) {
           throw new Error("Coinbase Wallet SDK failed to load. Please refresh the page.");
@@ -902,6 +903,12 @@
           appName: "NFT Fractal Generator",
           darkMode: document.body.classList.contains('dark'),
         });
+        const networks = {
+          ethereum: { 
+            chainId: 1, 
+            rpcUrls: ["https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"]
+          }
+        };
         const ethereumProvider = coinbaseWallet.makeWeb3Provider(networks.ethereum.rpcUrls[0], networks.ethereum.chainId);
         await ethereumProvider.request({ method: 'eth_requestAccounts' });
         provider = new ethers.providers.Web3Provider(ethereumProvider);
@@ -909,7 +916,6 @@
         userAddress = await signer.getAddress();
         const network = await provider.getNetwork();
         currentChainId = network.chainId;
-        
         updateWalletInfo();
         mintNFTBtn.disabled = false;
       } catch (error) {
@@ -919,108 +925,18 @@
         hideLoading();
       }
     }
-
-    // Base Wallet connection
-    async function connectBaseWallet() {
-      walletModal.classList.add('hidden');
-      showLoading("Connecting to Base Wallet...");
-      
-      try {
-        if (!window.CoinbaseWalletSDK) {
-          throw new Error("Coinbase Wallet SDK failed to load. Please refresh the page.");
-        }
-        const coinbaseWallet = new window.CoinbaseWalletSDK({
-          appName: "NFT Fractal Generator",
-          darkMode: document.body.classList.contains('dark'),
-        });
-        const baseProvider = coinbaseWallet.makeWeb3Provider(networks.base.rpcUrls[0], networks.base.chainId);
-        await baseProvider.request({ method: 'eth_requestAccounts' });
-        provider = new ethers.providers.Web3Provider(baseProvider);
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        const network = await provider.getNetwork();
-        currentChainId = network.chainId;
-        
-        // If not on Base network, try to switch
-        if (currentChainId !== networks.base.chainId) {
-          await switchToBaseNetwork();
-        }
-        
-        updateWalletInfo();
-        mintNFTBtn.disabled = false;
-      } catch (error) {
-        walletInfo.innerHTML = `<p class="text-red-500">Connection failed: ${error.message}</p>`;
-        console.error("Base Wallet connection error:", error);
-      } finally {
-        hideLoading();
-      }
-    }
-
-    // Switch to Base network
-    async function switchToBaseNetwork() {
-      try {
-        await provider.send('wallet_switchEthereumChain', [{ chainId: ethers.utils.hexValue(networks.base.chainId) }]);
-        currentChainId = networks.base.chainId;
-      } catch (switchError) {
-        if (switchError.code === 4902) {
-          try {
-            await provider.send('wallet_addEthereumChain', [{
-              chainId: ethers.utils.hexValue(networks.base.chainId),
-              chainName: networks.base.chainName,
-              rpcUrls: networks.base.rpcUrls,
-              nativeCurrency: networks.base.nativeCurrency,
-              blockExplorerUrls: networks.base.blockExplorerUrls
-            }]);
-            currentChainId = networks.base.chainId;
-          } catch (addError) {
-            throw new Error("Failed to add Base network: " + addError.message);
-          }
-        } else {
-          throw new Error("Failed to switch to Base network: " + switchError.message);
-        }
-      }
-    }
-
-    // Update wallet information display
+    
     function updateWalletInfo() {
-      const networkName = currentChainId === 1 ? 'Ethereum Mainnet' : 
-                           currentChainId === 8453 ? 'Base Mainnet' : 
-                           `Chain ID: ${currentChainId}`;
-      
+      const networkName = currentChainId === 1 ? 'Ethereum Mainnet' : `Chain ID: ${currentChainId}`;
       walletInfo.innerHTML = `
         <p class="mb-1"><strong>Connected Wallet:</strong></p>
         <p class="text-xs mb-2 break-all">${userAddress}</p>
         <p><strong>Network:</strong> ${networkName}</p>
       `;
-      
       document.getElementById('connectWallet').textContent = "Wallet Connected";
     }
+    // --- End Wallet Integration ---
 
-    // Mint NFT function (placeholder)
-    document.getElementById('mintNFT').addEventListener('click', async () => {
-      if (!userAddress) {
-        alert("Please connect your wallet first.");
-        return;
-      }
-      
-      showLoading("Preparing NFT mint...");
-      try {
-        // --- Developer TODO ---
-        // 1. Capture fractal image data (e.g., using captureHighQualityImage())
-        // 2. Upload image to IPFS or another storage provider to obtain a metadata URI
-        // 3. Call your deployed NFT smart contract method to mint the NFT (e.g., contract.safeMint(userAddress, metadataURI))
-        setTimeout(() => {
-          hideLoading();
-          alert(`NFT minting functionality is not yet implemented.\nWallet: ${userAddress}\nNetwork: ${currentChainId === 1 ? 'Ethereum' : currentChainId === 8453 ? 'Base' : 'Unknown'}`);
-        }, 2000);
-      } catch (error) {
-        console.error("Minting error:", error);
-        hideLoading();
-        alert("Minting failed: " + error.message);
-      }
-    });
-
-    // Preview Modal
     function showPreview(src, isVideo = false) {
       const previewModal = document.getElementById('preview-modal');
       const previewContent = previewModal.querySelector('.preview-content');
@@ -1042,7 +958,6 @@
       document.getElementById('preview-modal').classList.add('hidden');
     });
 
-    // Loading Indicator functions
     function showLoading(message) {
       const loading = document.getElementById('loading');
       document.getElementById('loading-text').textContent = message;
@@ -1055,7 +970,6 @@
       setTimeout(() => { loading.style.visibility = 'hidden'; }, 400);
     }
 
-    // Animation Loop
     function animate() {
       requestAnimationFrame(animate);
       if(!settings.paused) uniforms.uTime.value += settings.animationSpeed;
@@ -1063,7 +977,6 @@
     }
     animate();
 
-    // Resize Handling
     function handleResize() {
       const width = window.innerWidth;
       const height = window.innerHeight;
