@@ -20,27 +20,34 @@
     }
   }' />
   <style>
-    /* This style is just for a basic fallback view if the frame isn’t rendered. */
+    /* Fallback styling for non-Farcaster clients */
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 2rem;
+      background-color: #f9f9f9;
     }
-    .info {
+    .fallback-container {
       max-width: 400px;
       margin: 0 auto;
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       padding: 1rem;
       border-radius: 8px;
+      background: #fff;
+    }
+    .fallback-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <div class="info">
-    <img src="https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/10d74ed0-58a6-45c7-207f-8534a50b5f00/rectcrop3" alt="Profile Picture" width="200">
+  <div class="fallback-container">
+    <img src="https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/10d74ed0-58a6-45c7-207f-8534a50b5f00/rectcrop3" alt="Profile Picture">
     <h1>$D741: 👁️🚪</h1>
     <p>@heydimitri</p>
-    <p>This page is set up as a Farcaster frame. Please open it in a Farcaster-supported environment.</p>
+    <p>This page is configured as a Farcaster Frame. Open it in a Farcaster-supported environment to see the interactive frame.</p>
     <a href="https://warpcast.com/heydimitri" target="_blank">View Profile</a>
   </div>
 </body>
