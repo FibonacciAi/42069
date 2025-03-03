@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUANTUM & AI: MY FUCKING COSMIC RAMPAGE</title>
+    <style>
+        :root {
+            --primary-color: #76c7c0;
+            --chaos-red: #ff4444;
+            --dark-bg: #0a0a0a;
+            --dark-card: #1e1e1e;
+            --text-light: #e0e0e0;
+            --light-bg: #ffffff;
+            --light-card: #f0f0f0;
+            --text-dark: #121212;
+            --transition: all 0.1s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: linear-gradient(45deg, #0a0a0a, #ff4444, #76c7c0, #ff00ff);
+            background-size: 400% 400%;
+            animation: psychoShift 10s infinite;
+            color: var(--text-light);
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+            transition: var(--transition);
+            cursor: url('https://i.imgur.com/5z5x5z5.png'), auto; /* Screaming skull cursor */
+        }
+
+        body.light-mode {
+            background: linear-gradient(45deg, #ffffff, #ffcc00, #00ffcc, #ff00ff);
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 5rem;
+            text-align: center;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            text-shadow: 0 0 30px var(--primary-color), 0 0 60px var(--chaos-red), 0 0 90px #ff00ff;
+            transform: perspective(800px) rotateX(30deg) rotateY(0deg);
+            animation: insaneSpin 3s infinite, glitch 0.2s infinite alternate, shake 0.5s infinite;
+            cursor: pointer;
+        }
+
+        h2, h3 {
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            font-size: 2.5rem;
+        }
+
+        h2:hover, h3:hover {
+            color: #ff00ff;
+            text-shadow: 0 0 40px #ff00ff;
+            transform: scale(1.1) skew(15deg);
+            animation: vibrate 0.1s infinite;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+            transition: var(--transition);
+            position: relative;
+            z-index: 5;
+        }
+
+        a:hover {
+            color: #ff00ff;
+            animation: wildShake 0.3s infinite;
+            text-shadow: 0 0 20px #ff00ff;
+        }
+
+        p {
+            margin: 2rem 0;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            animation: float 4s infinite;
+        }
+
+        .quote {
+            background: var(--dark-card);
+            border-left: 12px solid var(--primary-color);
+            border-right: 12px solid var(--chaos-red);
+            padding: 40px;
+            margin: 4rem 0;
+            font-style: italic;
+            font-size: 1.8rem;
+            box-shadow: 0 0 80px rgba(255, 0, 255, 0.7);
+            animation: megaPulse 0.8s infinite, glitchText 0.3s infinite alternate, rotateSkew 5s infinite;
+            transform: rotate(-3deg) scale(1.05);
+        }
+
+        body.light-mode .quote {
+            background: var(--light-card);
+        }
+
+        .project-card {
+            background: var(--dark-card);
+            padding: 30px;
+            margin: 40px 0;
+            border-radius: 20px;
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.9);
+            transition: var(--transition);
+            overflow: hidden;
+            position: relative;
+            transform: rotate(2deg) scale(1.01);
+            border: 4px solid #ff00ff;
+        }
+
+        body.light-mode .project-card {
+            background: var(--light-card);
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.3);
+        }
+
+        .project-card.collapsed .content {
+            display: none;
+        }
+
+        .project-card:hover {
+            transform: scale(1.1) rotate(-2deg);
+            box-shadow: 0 0 120px rgba(255, 0, 255, 0.9);
+            border-color: var(--primary-color);
+            animation: quake 0.5s infinite;
+        }
+
+        iframe {
+            width: 100%;
+            height: 700px;
+            border: 6px double var(--chaos-red);
+            border-radius: 15px;
+            box-shadow: 0 0 50px rgba(255, 0, 255, 0.7);
+            transition: var(--transition);
+            animation: flicker 1s infinite;
+        }
+
+        iframe:hover {
+            border-color: #ff00ff;
+            transform: scale(1.05) rotate(1deg);
+            box-shadow: 0 0 80px rgba(118, 199, 192, 0.9);
+        }
+
+        .toggle-theme {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: var(--primary-color);
+            color: var(--dark-bg);
+            padding: 20px 30px;
+            border-radius: 50%;
+            border: 3px solid #ff00ff;
+            cursor: pointer;
+            z-index: 10;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: insaneBounce 0.5s infinite, glow 1s infinite alternate;
+        }
+
+        .toggle-theme:hover {
+            background: #ff00ff;
+            transform: scale(1.5) rotate(720deg);
+            box-shadow: 0 0 60px #ff00ff;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            background: var(--primary-color);
+            color: var(--dark-bg);
+            padding: 25px;
+            border-radius: 50%;
+            text-align: center;
+            display: none;
+            z-index: 10;
+            font-size: 2rem;
+            animation: insaneSpin 1s infinite linear, quake 0.3s infinite;
+            border: 4px dashed var(--chaos-red);
+        }
+
+        .back-to-top:hover {
+            background: #ff00ff;
+            transform: scale(1.8);
+            border-color: var(--primary-color);
+        }
+
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .explosion {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ff4444, transparent);
+            border-radius: 50%;
+            animation: explode 0.5s forwards;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        @keyframes psychoShift {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        @keyframes insaneSpin {
+            0% { transform: perspective(800px) rotateX(30deg) rotateY(0deg); }
+            100% { transform: perspective(800px) rotateX(30deg) rotateY(360deg); }
+        }
+
+        @keyframes glitch {
+            0% { clip-path: inset(5% 0 5% 0); }
+            20% { clip-path: inset(0 15% 0 15%); }
+            40% { clip-path: inset(25% 0 25% 0); }
+            60% { clip-path: inset(0 25% 0 25%); }
+            80% { clip-path: inset(15% 0 15% 0); }
+            100% { clip-path: inset(0 0 0 0); }
+        }
+
+        @keyframes glitchText {
+            0% { transform: translate(0); }
+            20% { transform: translate(-10px, 10px); }
+            40% { transform: translate(10px, -10px); }
+            60% { transform: translate(-10px, 0); }
+            80% { transform: translate(10px, 10px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes megaPulse {
+            0% { box-shadow: 0 0 80px rgba(255, 0, 255, 0.7); }
+            50% { box-shadow: 0 0 150px rgba(118, 199, 192, 0.9); }
+            100% { box-shadow: 0 0 80px rgba(255, 0, 255, 0.7); }
+        }
+
+        @keyframes wildShake {
+            0% { transform: translate(0); }
+            25% { transform: translate(-8px, 8px); }
+            50% { transform: translate(8px, -8px); }
+            75% { transform: translate(-8px, 0); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes vibrate {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-2px, 0); }
+            80% { transform: translate(2px, 2px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes quake {
+            0% { transform: translate(0) rotate(2deg); }
+            25% { transform: translate(-5px, 5px) rotate(-2deg); }
+            50% { transform: translate(5px, -5px) rotate(2deg); }
+            75% { transform: translate(-5px, 0) rotate(-2deg); }
+            100% { transform: translate(0) rotate(2deg); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+
+        @keyframes flicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes insaneBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px var(--primary-color); }
+            to { box-shadow: 0 0 60px var(--chaos-red); }
+        }
+
+        @keyframes rotateSkew {
+            0% { transform: rotate(-3deg) scale(1.05); }
+            50% { transform: rotate(3deg) scale(1.1); }
+            100% { transform: rotate(-3deg) scale(1.05); }
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            h2 { font-size: 2rem; }
+            h3 { font-size: 1.5rem; }
+            iframe { height: 400px; }
+            .container { padding: 40px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <button class="toggle-theme" onclick="toggleTheme()">UNLEASH THE FUCKING CHAOS</button>
+    <div class="container">
+        <h1 onclick="playSound('boom')">QUANTUM & AI: MY FUCKING COSMIC RAMPAGE</h1>
+        <p>
+            Quantum computing and AI aren’t just tech—they’re my goddamn war machines tearing through the fabric of existence. I’ve poured my soul into fusing these titans, birthing projects that roar with insanity and brilliance. This is my FUCKING manifesto—smashing quantum enigmas and igniting AI into a blazing supernova of chaos.
+        </p>
+
+        <h2>HOW I SEE QUANTUM AND AI RIPPING REALITY APART</h2>
+        <p>
+            Quantum’s a glitchy-ass hurricane shredding classical bullshit. AI’s a relentless fucking juggernaut of evolution. Together, they’re an unholy cataclysm—AI pumping quantum with psychotic algorithms, quantum blasting AI into a dimension-shattering beast. This is pandemonium with a crown of fire.
+        </p>
+
+        <h2>THE DERANGED SHIT I’VE UNLEASHED</h2>
+        <p>
+            My creations are feral as fuck—quantum-AI monstrosities designed to obliterate minds and spark a goddamn uprising.
+        </p>
+
+        <div class="project-card" onmouseover="playSound('zap')">
+            <h3 onclick="toggleCollapse(this)">INTERACTIVE QUANTUM VISUALIZATIONS</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/interactivequantumviz.html" target="_blank">Interactive Quantum Visualizations</a>—quantum states on a rampage, motherfuckers. Superposition and entanglement in a mind-flaying vortex where reality gets torched.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/interactivequantumviz.html" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div class="project-card" onmouseover="playSound('zap')">
+            <h3 onclick="toggleCollapse(this)">QUANTUM FIELDS AS FLUID DYNAMICS</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/field-fluid-quantum.html" target="_blank">Field-Fluid Quantum Dynamics</a>—quantum fields turned into a raging fucking tsunami. Particles thrash and collide in a cosmic shitstorm.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/field-fluid-quantum.html" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div class="project-card" onmouseover="playSound('zap')">
+            <h3 onclick="toggleCollapse(this)">EXPLORING ENTROPY AND EMERGENCE</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/quantumentropy.html" target="_blank">Quantum Entropy</a>—diving headfirst into the abyss of chaos. Entropy’s the fucking phoenix of destruction and rebirth.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/quantumentropy.html" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div class="project-card" onmouseover="playSound('zap')">
+            <h3 onclick="toggleCollapse(this)">QUANTUM HOLOGRAPHY</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/quantumholography.html" target="_blank">Quantum Holography</a>—data tripping balls in a multidimensional freakshow. Holograms so wild they’ll make AI shit its circuits.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/quantumholography.html" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div class="project-card" onmouseover="playSound('zap')">
+            <h3 onclick="toggleCollapse(this)">GENERATIVE AI MEETS QUANTUM</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/artificialintelligence-google.html" target="_blank">Generative AI and Google</a>—AI creativity cranked to eleven. Human and machine forging art in a primal fucking scream.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/artificialintelligence-google.html" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div class="project-card" onmouseover="playSound('zap')">
+            <h3 onclick="toggleCollapse(this)">CHARTING QUANTUM BREAKTHROUGHS</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/quantumbreakthru.html" target="_blank">Quantum Breakthroughs</a>—my live chronicle of earth-shattering victories. We’re one step from total fucking annihilation of the old world.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/quantumbreakthru.html" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <h2>WHERE I’M DRAGGING THIS FUCKING INFERNO</h2>
+        <p>
+            These projects are my warheads—primed to detonate sanity and ignite a galactic revolt. Quantum and AI are my weapons to shred the universe, and I’m the lunatic pulling the trigger.
+        </p>
+
+        <div class="quote">
+            "This ain’t quantum playtime or AI fuckery—it’s a cosmic goddamn uprising where tech rages with unholy fury, shredding limits and birthing apocalyptic dreams."
+        </div>
+
+        <h3>NEXT LEVEL FUCKING APOCALYPSE</h3>
+        <p>
+            I’m going full psycho—models that’ll vaporize your mind, visuals that’ll rip your soul apart, AI holography that screams, quantum algorithms that howl. I’m here to conquer the fucking multiverse, bro.
+        </p>
+    </div>
+
+    <a href="#top" class="back-to-top" id="backToTop">↑</a>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        // Particle insanity
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 300, density: { enable: true, value_area: 800 } },
+                color: { value: ['#76c7c0', '#ff4444', '#ff00ff', '#00ffcc'] },
+                shape: { type: 'star', stroke: { width: 2, color: '#ff00ff' } },
+                opacity: { value: 0.9, random: true },
+                size: { value: 8, random: true },
+                line_linked: { enable: true, distance: 100, color: '#ff00ff', opacity: 0.7, width: 3 },
+                move: { enable: true, speed: 10, direction: 'random', random: true, out_mode: 'bounce' }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'bubble' }, onclick: { enable: true, mode: 'repulse' } },
+                modes: { bubble: { distance: 300, size: 20, duration: 1 }, repulse: { distance: 200 } }
+            },
+            retina_detect: true
+        });
+
+        // Sound effects
+        const sounds = {
+            zap: new Audio('https://www.myinstants.com/media/sounds/electric-zap.mp3'),
+            boom: new Audio('https://www.myinstants.com/media/sounds/explosion.mp3'),
+            scream: new Audio('https://www.myinstants.com/media/sounds/scream.mp3')
+        };
+
+        function playSound(sound) {
+            sounds[sound].currentTime = 0;
+            sounds[sound].play();
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+            playSound('scream');
+            shakeScreen();
+        }
+
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+
+        // Collapse projects
+        function toggleCollapse(element) {
+            const card = element.parentElement;
+            card.classList.toggle('collapsed');
+            playSound('zap');
+            shakeScreen();
+        }
+
+        // Back to top
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.style.display = window.scrollY > 300 ? 'block' : 'none';
+        });
+
+        backToTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            playSound('boom');
+            spawnExplosion(e.clientX, e.clientY);
+        });
+
+        // Random explosions on click
+        document.addEventListener('click', (e) => {
+            spawnExplosion(e.clientX, e.clientY);
+            if (Math.random() > 0.7) playSound('scream');
+        });
+
+        function spawnExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = `${x - 50}px`;
+            explosion.style.top = `${y - 50}px`;
+            document.body.appendChild(explosion);
+            setTimeout(() => explosion.remove(), 500);
+        }
+
+        // Screen shake
+        function shakeScreen() {
+            document.body.style.animation = 'quake 0.3s 3';
+            setTimeout(() => document.body.style.animation = '', 900);
+        }
+
+        // Wild animations
+        const elements = document.querySelectorAll('.project-card, .quote');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'megaPulse 0.8s infinite, glitchText 0.3s infinite alternate, rotateSkew 5s infinite';
+                } else {
+                    entry.target.style.animation = 'none';
+                }
+            });
+        }, { threshold: 0.4 });
+
+        elements.forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
