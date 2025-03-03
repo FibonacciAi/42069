@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Mint NFT</title>
   <style>
     body {
@@ -35,7 +35,7 @@
     <p id="status"></p>
   </div>
 
-  <!-- Use the UMD build of ethers.js to avoid module export errors -->
+  <!-- Use the UMD build of ethers.js to avoid 'export' errors -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script>
     let provider, signer, userAddress;
@@ -65,7 +65,7 @@
       // Replace these with your smart contract's deployed address and ABI.
       const contractAddress = "0xYourContractAddress";
       const contractABI = [
-         "function mint(address to) public returns (uint256)"
+        "function mint(address to) public returns (uint256)"
       ];
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
       try {
