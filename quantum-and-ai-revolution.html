@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Computing & AI: My Fucking Vision</title>
+    <title>Quantum & AI: My Cosmic Vision</title>
     <style>
         :root {
-            --primary-color: #76c7c0;
-            --dark-bg: #121212;
-            --dark-card: #1e1e1e;
+            --primary-color: #00d4ff;
+            --accent-color: #ff4081;
+            --dark-bg: #0d1b2a;
+            --dark-card: #1b263b;
             --text-light: #e0e0e0;
-            --light-bg: #ffffff;
-            --light-card: #f0f0f0;
-            --text-dark: #121212;
-            --transition: all 0.3s ease;
+            --light-bg: #f0f4f8;
+            --light-card: #ffffff;
+            --text-dark: #0d1b2a;
+            --transition: all 0.4s ease;
         }
 
         * {
@@ -22,96 +23,100 @@
         }
 
         body {
-            background-color: var(--dark-bg);
+            background: linear-gradient(135deg, var(--dark-bg), #1b263b);
             color: var(--text-light);
             font-family: "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.6;
+            line-height: 1.7;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
-            transition: var(--transition);
             position: relative;
+            transition: var(--transition);
         }
 
         body.light-mode {
-            background-color: var(--light-bg);
+            background: linear-gradient(135deg, var(--light-bg), #d9e4f5);
             color: var(--text-dark);
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 60px 20px;
             position: relative;
             z-index: 2;
         }
 
         h1 {
-            font-size: 3rem;
+            font-size: 3.5rem;
             text-align: center;
             color: var(--primary-color);
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px var(--primary-color);
+            animation: neonGlow 3s infinite alternate;
             margin-bottom: 40px;
-            text-shadow: 0 0 10px var(--primary-color);
-            animation: glow 2s infinite alternate;
         }
 
         h2, h3 {
             color: var(--primary-color);
-            cursor: pointer;
             transition: var(--transition);
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin: 40px 0 20px;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            cursor: pointer;
         }
 
         h2:hover, h3:hover {
-            text-shadow: 0 0 15px var(--primary-color);
-        }
-
-        a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: bold;
-            transition: var(--transition);
-        }
-
-        a:hover {
-            color: #ff4444;
-            text-decoration: underline;
+            color: var(--accent-color);
+            text-shadow: 0 0 15px var(--accent-color);
         }
 
         p {
-            margin: 1rem 0;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            opacity: 0;
+            animation: fadeInUp 1s forwards;
         }
 
         .quote {
-            background-color: var(--dark-card);
+            background: var(--dark-card);
             border-left: 6px solid var(--primary-color);
-            padding: 25px;
-            margin: 2rem 0;
+            padding: 30px;
+            margin: 40px 0;
             font-style: italic;
-            font-size: 1.2rem;
-            box-shadow: 0 0 20px rgba(118, 199, 192, 0.3);
-            animation: pulse 2s infinite;
+            font-size: 1.4rem;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            transform: translateY(20px);
+            animation: floatIn 1.5s forwards;
         }
 
         body.light-mode .quote {
-            background-color: var(--light-card);
+            background: var(--light-card);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
         .project-card {
-            background-color: var(--dark-card);
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 10px;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+            background: var(--dark-card);
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
             transition: var(--transition);
             overflow: hidden;
+            position: relative;
         }
 
         body.light-mode .project-card {
-            background-color: var(--light-card);
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+            background: var(--light-card);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
         }
 
         .project-card.collapsed .content {
@@ -119,42 +124,50 @@
         }
 
         .project-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 30px rgba(118, 199, 192, 0.5);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0, 212, 255, 0.4);
         }
 
         iframe {
             width: 100%;
             height: 600px;
             border: none;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+        }
+
+        iframe:hover {
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.3);
         }
 
         .toggle-theme {
             position: fixed;
             top: 20px;
             right: 20px;
-            background-color: var(--primary-color);
+            background: var(--primary-color);
             color: var(--dark-bg);
-            padding: 10px 20px;
-            border-radius: 25px;
+            padding: 12px 24px;
+            border-radius: 30px;
             border: none;
             cursor: pointer;
             z-index: 10;
+            font-size: 1rem;
+            text-transform: uppercase;
             transition: var(--transition);
         }
 
         .toggle-theme:hover {
-            background-color: #ff4444;
-            transform: rotate(360deg);
+            background: var(--accent-color);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--accent-color);
         }
 
         .back-to-top {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background-color: var(--primary-color);
+            background: var(--primary-color);
             color: var(--dark-bg);
             padding: 15px;
             border-radius: 50%;
@@ -165,7 +178,7 @@
         }
 
         .back-to-top:hover {
-            background-color: #ff4444;
+            background: var(--accent-color);
             transform: scale(1.2);
         }
 
@@ -176,53 +189,57 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            opacity: 0.3;
+            opacity: 0.5;
         }
 
-        @keyframes glow {
+        @keyframes neonGlow {
             from { text-shadow: 0 0 10px var(--primary-color); }
-            to { text-shadow: 0 0 20px var(--primary-color), 0 0 30px rgba(118, 199, 192, 0.5); }
+            to { text-shadow: 0 0 20px var(--primary-color), 0 0 30px rgba(0, 212, 255, 0.5); }
         }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 20px rgba(118, 199, 192, 0.3); }
-            50% { box-shadow: 0 0 30px rgba(118, 199, 192, 0.5); }
-            100% { box-shadow: 0 0 20px rgba(118, 199, 192, 0.3); }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes floatIn {
+            to { transform: translateY(0); }
         }
 
         @media (max-width: 768px) {
-            h1 { font-size: 2rem; }
-            h2 { font-size: 1.5rem; }
-            h3 { font-size: 1.2rem; }
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 1.8rem; }
+            h3 { font-size: 1.4rem; }
             iframe { height: 400px; }
-            .container { padding: 20px 10px; }
+            .container { padding: 40px 15px; }
+            p { font-size: 1rem; }
         }
     </style>
 </head>
 <body>
     <div id="particles-js"></div>
-    <button class="toggle-theme" onclick="toggleTheme()">Toggle Vibe</button>
+    <button class="toggle-theme" onclick="toggleTheme()">Switch Mode</button>
     <div class="container">
-        <h1>Quantum Computing & AI: My Fucking Vision</h1>
+        <h1>Quantum & AI: My Cosmic Vision</h1>
         <p>
-            Quantum computing and AI aren’t just some nerdy tech I fuck with—they’re the goddamn future I’m building. I’ve sunk endless hours into smashing these fields together, crafting projects that turn brain-melting concepts into shit you can touch and feel. This is my war cry in the tech revolution—unraveling quantum mysteries and turbocharging AI to blow minds.
+            Quantum computing and artificial intelligence are more than just fields I explore—they’re the heartbeat of the future I’m shaping. I’ve dedicated countless hours to blending these realms, crafting projects that bring abstract ideas into vivid reality. These creations are my way of sparking curiosity and pushing the boundaries of what’s possible.
         </p>
 
-        <h2>How I See Quantum and AI Kicking Ass Together</h2>
+        <h2>The Quantum-AI Connection</h2>
         <p>
-            Quantum’s probabilistic chaos smashes through classical bullshit limits. AI’s the king of learning and optimization. Put ‘em together? You get a fucking powerhouse—AI juicing quantum systems with smart-ass algorithms, and quantum supercharging AI’s brain. This ain’t teamwork, it’s a symbiotic beatdown.
+            Quantum computing’s unique ability to tackle complex probabilities pairs perfectly with AI’s talent for learning and optimization. Together, they create a synergy where AI refines quantum systems, and quantum power accelerates AI’s potential. It’s a collaboration that’s set to redefine innovation.
         </p>
 
-        <h2>The Badass Projects I’ve Built</h2>
+        <h2>My Project Universe</h2>
         <p>
-            My work’s where the rubber meets the road. Every project’s a deep dive into quantum-AI fuckery—learning tools and innovation bombs rolled into one.
+            Every project I’ve built is a window into the quantum-AI fusion—tools for discovery and platforms for creativity.
         </p>
 
         <div class="project-card">
             <h3 onclick="toggleCollapse(this)">Interactive Quantum Visualizations</h3>
             <div class="content">
                 <p>
-                    Check <a href="https://fibonacciai.github.io/42069/interactivequantumviz.html" target="_blank">Interactive Quantum Visualizations</a>—I’m bringing quantum states to life, bitches. Superposition, entanglement, all that jazz, served up in a mind-bending playground where probability and reality get freaky.
+                    Dive into <a href="https://fibonacciai.github.io/42069/interactivequantumviz.html" target="_blank">Interactive Quantum Visualizations</a>, where quantum states come alive. This project explores superposition and entanglement, offering an immersive look at the dance between probability and reality.
                 </p>
                 <iframe src="https://fibonacciai.github.io/42069/interactivequantumviz.html" loading="lazy"></iframe>
             </div>
@@ -232,7 +249,7 @@
             <h3 onclick="toggleCollapse(this)">Quantum Fields as Fluid Dynamics</h3>
             <div class="content">
                 <p>
-                    <a href="https://fibonacciai.github.io/42069/field-fluid-quantum.html" target="_blank">Field-Fluid Quantum Dynamics</a> flips quantum fields into fluid vibes. It’s a wild-ass take on how particles flow and fuck with each other in crazy systems.
+                    <a href="https://fibonacciai.github.io/42069/field-fluid-quantum.html" target="_blank">Field-Fluid Quantum Dynamics</a> reimagines quantum fields as flowing systems. It’s a fresh take on how particles move and interact, inspired by the elegance of fluid motion.
                 </p>
                 <iframe src="https://fibonacciai.github.io/42069/field-fluid-quantum.html" loading="lazy"></iframe>
             </div>
@@ -242,7 +259,7 @@
             <h3 onclick="toggleCollapse(this)">Exploring Entropy and Emergence</h3>
             <div class="content">
                 <p>
-                    <a href="https://fibonacciai.github.io/42069/quantumentropy.html" target="_blank">Quantum Entropy</a> is my dive into chaos and order. Entropy ain’t just decay—it’s the spark of badass emergence and creative explosions.
+                    <a href="https://fibonacciai.github.io/42069/quantumentropy.html" target="_blank">Quantum Entropy</a> dives into the balance of chaos and order. It reveals how entropy drives complexity and emergence in quantum systems—a beautiful cycle of creation.
                 </p>
                 <iframe src="https://fibonacciai.github.io/42069/quantumentropy.html" loading="lazy"></iframe>
             </div>
@@ -252,7 +269,7 @@
             <h3 onclick="toggleCollapse(this)">Quantum Holography</h3>
             <div class="content">
                 <p>
-                    <a href="https://fibonacciai.github.io/42069/quantumholography.html" target="_blank">Quantum Holography</a> is my multidimensional data fuckfest. Holographic vibes that could make AI see shit in ways that’d melt your face.
+                    <a href="https://fibonacciai.github.io/42069/quantumholography.html" target="_blank">Quantum Holography</a> explores data in multidimensional space. Using holographic concepts, it offers a new way to visualize quantum states, with potential to transform AI’s perspective.
                 </p>
                 <iframe src="https://fibonacciai.github.io/42069/quantumholography.html" loading="lazy"></iframe>
             </div>
@@ -262,7 +279,7 @@
             <h3 onclick="toggleCollapse(this)">Generative AI Meets Quantum</h3>
             <div class="content">
                 <p>
-                    <a href="https://fibonacciai.github.io/42069/artificialintelligence-google.html" target="_blank">Generative AI and Google</a> shows how AI’s rewriting the creative rulebook. Human genius and machine magic in a dope-ass dance.
+                    <a href="https://fibonacciai.github.io/42069/artificialintelligence-google.html" target="_blank">Generative AI and Google</a> showcases AI’s creative spark. It’s a glimpse into the harmony of human ingenuity and machine learning, shaping art and ideas together.
                 </p>
                 <iframe src="https://fibonacciai.github.io/42069/artificialintelligence-google.html" loading="lazy"></iframe>
             </div>
@@ -272,24 +289,24 @@
             <h3 onclick="toggleCollapse(this)">Charting Quantum Breakthroughs</h3>
             <div class="content">
                 <p>
-                    <a href="https://fibonacciai.github.io/42069/quantumbreakthru.html" target="_blank">Quantum Breakthroughs</a> is my living timeline of epic wins. It’s proof we’re on the cusp of some world-shaking shit.
+                    <a href="https://fibonacciai.github.io/42069/quantumbreakthru.html" target="_blank">Quantum Breakthroughs</a> is my evolving map of progress. It celebrates milestones and sets the stage for the next wave of discovery.
                 </p>
                 <iframe src="https://fibonacciai.github.io/42069/quantumbreakthru.html" loading="lazy"></iframe>
             </div>
         </div>
 
-        <h2>Where I’m Fucking Headed</h2>
+        <h2>The Horizon Ahead</h2>
         <p>
-            These projects? Just the opening salvo. They’re seeds for a balls-out vision—tools to school the masses and spark insane ideas. Quantum and AI are rewriting reality, and I’m here to steer that chaos.
+            These projects are just the launchpad. They’re stepping stones to a bigger vision—tools that inspire and ignite new ways of thinking. Quantum computing and AI are rewriting what’s possible, and I’m here to help chart that journey.
         </p>
 
         <div class="quote">
-            "This ain’t just quantum geekery or AI wizardry—it’s about forging a future where tech fucks with curiosity, creativity, and humanity’s wildest dreams."
+            "This isn’t just about understanding quantum or enhancing AI—it’s about crafting a future where technology fuels curiosity, creativity, and the boundless potential of humanity."
         </div>
 
-        <h3>Next Fucking Steps</h3>
+        <h3>Next Frontiers</h3>
         <p>
-            I’m cranking it up—more hardcore models, visuals that’ll rip your eyes out, AI-driven holography, quantum-fueled algorithms. I’m here to dominate the bleeding edge, bro.
+            I’m diving deeper—building advanced models, exploring unseen visualizations, and blending AI with quantum insights. My goal is to keep pushing the edge of what technology can achieve, one cool step at a time.
         </p>
     </div>
 
@@ -297,21 +314,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script>
-        // Particles.js setup
+        // Cosmic particles
         particlesJS('particles-js', {
             particles: {
-                number: { value: 80, density: { enable: true, value_area: 800 } },
-                color: { value: '#76c7c0' },
+                number: { value: 100, density: { enable: true, value_area: 800 } },
+                color: { value: '#00d4ff' },
                 shape: { type: 'circle' },
-                opacity: { value: 0.5, random: true },
-                size: { value: 3, random: true },
-                line_linked: { enable: true, distance: 150, color: '#76c7c0', opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 3, direction: 'none', random: true }
+                opacity: { value: 0.6, random: true },
+                size: { value: 4, random: true },
+                line_linked: { enable: true, distance: 150, color: '#00d4ff', opacity: 0.3, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: true }
             },
             interactivity: {
                 detect_on: 'canvas',
-                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
-                modes: { repulse: { distance: 100 }, push: { particles_nb: 4 } }
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' } },
+                modes: { grab: { distance: 200, line_linked: { opacity: 0.5 } }, push: { particles_nb: 4 } }
             },
             retina_detect: true
         });
@@ -322,7 +339,6 @@
             localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
         }
 
-        // Load saved theme
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-mode');
         }
@@ -344,17 +360,22 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // Intersection observer for animations
+        // Smooth animations on scroll
         const elements = document.querySelectorAll('.project-card, .quote');
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.style.animation = 'pulse 2s infinite';
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
                 }
             });
         }, { threshold: 0.2 });
 
-        elements.forEach(el => observer.observe(el));
+        elements.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            observer.observe(el);
+        });
     </script>
 </body>
 </html>
