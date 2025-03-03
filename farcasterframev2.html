@@ -2,53 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Farcaster Frame: heydimitri Profile</title>
-  <!-- Farcaster Frames V2 Meta Tag -->
-  <meta name="fc:frame" content='{
-    "version": "next",
-    "imageUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/10d74ed0-58a6-45c7-207f-8534a50b5f00/rectcrop3",
-    "title": "$D741: 👁️🚪",
-    "subtitle": "@heydimitri",
-    "button": {
-      "title": "View Profile",
-      "action": {
-        "type": "view_profile",
-        "fid": 691977,
-        "username": "heydimitri",
-        "url": "https://warpcast.com/heydimitri"
-      }
-    }
-  }' />
+  <title>Mint NFT</title>
   <style>
-    /* Fallback styling for non-Farcaster clients */
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
       text-align: center;
       padding: 2rem;
       background-color: #f9f9f9;
     }
-    .fallback-container {
-      max-width: 400px;
+    .container {
+      max-width: 600px;
       margin: 0 auto;
-      border: 1px solid #ddd;
       padding: 1rem;
-      border-radius: 8px;
       background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .fallback-container img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 4px;
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="fallback-container">
-    <img src="https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/10d74ed0-58a6-45c7-207f-8534a50b5f00/rectcrop3" alt="Profile Picture">
-    <h1>$D741: 👁️🚪</h1>
-    <p>@heydimitri</p>
-    <p>This page is configured as a Farcaster Frame. Open it in a Farcaster-supported environment to see the interactive frame.</p>
-    <a href="https://warpcast.com/heydimitri" target="_blank">View Profile</a>
+  <div class="container">
+    <h1>Mint Your NFT</h1>
+    <p>Connect your wallet and mint your NFT below.</p>
+    <button id="connectWallet">Connect Wallet</button>
+    <button id="mintNFT" disabled>Mint NFT</button>
+    <p id="status"></p>
   </div>
+
+  <!-- Include ethers.js from a CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+  <script>
+    let provider, signer, userAddress;
+    const statusEl = document.getElementById("status");
+
+    // Wallet connection logic
+    document.getElementById("connectWallet").addEventListener("click", async () => {
+      if (window.ethereum) {
+        try {
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          signer = provider.getSigner();
+          userAddress = await signer.getAddress();
+          statusEl.innerText = "Wallet connected: " + userAddress;
+          document.getElementById("mintNFT").disabled = false;
+        } catch (error) {
+          console.error("Wallet connection error:", error);
+          statusEl.innerText = "Failed to connect wallet.";
+        }
+      } else {
+        alert("Please install MetaMask or another compatible wallet.");
+      }
+    });
+
+    // Mint NFT functionality
+    document.getElementById("mintNFT").addEventListener("click", async () => {
+      // Replace these with your smart contract's address and ABI.
+      const contractAddress = "0xYourContractAddress";
+      const contractABI = [
+         "function mint(address to) public returns (uint256)"
+      ];
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      try {
+        statusEl.innerText = "Minting in progress...";
+        const tx = await contract.mint(userAddress);
+        await tx.wait();
+        statusEl.innerText = "Mint successful!";
+      } catch (error) {
+        console.error("Minting error:", error);
+        statusEl.innerText = "Minting failed: " + error.message;
+      }
+    });
+  </script>
 </body>
 </html>
