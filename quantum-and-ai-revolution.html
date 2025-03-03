@@ -3,113 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Computing and AI: My Vision</title>
+    <title>Quantum Computing & AI: My Fucking Vision</title>
     <style>
+        :root {
+            --primary-color: #76c7c0;
+            --dark-bg: #121212;
+            --dark-card: #1e1e1e;
+            --text-light: #e0e0e0;
+            --light-bg: #ffffff;
+            --light-card: #f0f0f0;
+            --text-dark: #121212;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
         body {
-            background-color: #121212;
-            color: #e0e0e0;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
             font-family: "Helvetica Neue", Arial, sans-serif;
             line-height: 1.6;
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
+            transition: var(--transition);
+            position: relative;
         }
-        h1, h2, h3 {
-            color: #76c7c0;
+
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
         }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-align: center;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px var(--primary-color);
+            animation: glow 2s infinite alternate;
+        }
+
+        h2, h3 {
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        h2:hover, h3:hover {
+            text-shadow: 0 0 15px var(--primary-color);
+        }
+
         a {
-            color: #76c7c0;
+            color: var(--primary-color);
             text-decoration: none;
+            font-weight: bold;
+            transition: var(--transition);
         }
+
         a:hover {
+            color: #ff4444;
             text-decoration: underline;
         }
+
+        p {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+
         .quote {
-            background-color: #1e1e1e;
-            border-left: 4px solid #76c7c0;
-            padding: 10px 15px;
-            margin: 20px 0;
+            background-color: var(--dark-card);
+            border-left: 6px solid var(--primary-color);
+            padding: 25px;
+            margin: 2rem 0;
             font-style: italic;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px rgba(118, 199, 192, 0.3);
+            animation: pulse 2s infinite;
         }
-        .container {
-            max-width: 960px;
-            margin: auto;
+
+        body.light-mode .quote {
+            background-color: var(--light-card);
+        }
+
+        .project-card {
+            background-color: var(--dark-card);
             padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+            transition: var(--transition);
+            overflow: hidden;
         }
+
+        body.light-mode .project-card {
+            background-color: var(--light-card);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-card.collapsed .content {
+            display: none;
+        }
+
+        .project-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(118, 199, 192, 0.5);
+        }
+
         iframe {
-            border: none;
             width: 100%;
             height: 600px;
-            margin: 20px 0;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-theme {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: var(--dark-bg);
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .toggle-theme:hover {
+            background-color: #ff4444;
+            transform: rotate(360deg);
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: var(--dark-bg);
+            padding: 15px;
+            border-radius: 50%;
+            text-align: center;
+            display: none;
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .back-to-top:hover {
+            background-color: #ff4444;
+            transform: scale(1.2);
+        }
+
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px var(--primary-color); }
+            to { text-shadow: 0 0 20px var(--primary-color), 0 0 30px rgba(118, 199, 192, 0.5); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(118, 199, 192, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(118, 199, 192, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(118, 199, 192, 0.3); }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.2rem; }
+            iframe { height: 400px; }
+            .container { padding: 20px 10px; }
         }
     </style>
 </head>
 <body>
+    <div id="particles-js"></div>
+    <button class="toggle-theme" onclick="toggleTheme()">Toggle Vibe</button>
     <div class="container">
-        <h1>Quantum Computing and AI: My Vision</h1>
+        <h1>Quantum Computing & AI: My Fucking Vision</h1>
         <p>
-            Quantum computing and artificial intelligence aren’t just technologies I study—they’re central to the way I see the future unfolding. I’ve spent countless hours exploring how these two fields intersect, creating projects that turn abstract concepts into something tangible and engaging. These tools are my way of contributing to a broader dialogue, decoding the mysteries of quantum mechanics while envisioning the next leap for AI.
+            Quantum computing and AI aren’t just some nerdy tech I fuck with—they’re the goddamn future I’m building. I’ve sunk endless hours into smashing these fields together, crafting projects that turn brain-melting concepts into shit you can touch and feel. This is my war cry in the tech revolution—unraveling quantum mysteries and turbocharging AI to blow minds.
         </p>
 
-        <h2>How I See Quantum and AI Working Together</h2>
+        <h2>How I See Quantum and AI Kicking Ass Together</h2>
         <p>
-            Quantum computing, with its probabilistic nature, breaks through barriers classical systems can’t. AI, on the other hand, excels at learning and optimizing. Together, they form a powerful duo: AI enhances quantum systems with intelligent algorithms, and quantum accelerates AI’s ability to process and learn. It’s not just a partnership—it’s symbiosis.
+            Quantum’s probabilistic chaos smashes through classical bullshit limits. AI’s the king of learning and optimization. Put ‘em together? You get a fucking powerhouse—AI juicing quantum systems with smart-ass algorithms, and quantum supercharging AI’s brain. This ain’t teamwork, it’s a symbiotic beatdown.
         </p>
 
-        <h2>The Projects I’ve Built</h2>
+        <h2>The Badass Projects I’ve Built</h2>
         <p>
-            My work reflects this intersection. Each project I’ve created explores different facets of quantum and AI, serving as both tools for learning and platforms for innovation.
+            My work’s where the rubber meets the road. Every project’s a deep dive into quantum-AI fuckery—learning tools and innovation bombs rolled into one.
         </p>
-        
-        <h3>Interactive Quantum Visualizations</h3>
-        <p>
-            In <a href="https://fibonacciai.github.io/42069/interactivequantumviz.html" target="_blank">Interactive Quantum Visualizations</a>, I bring quantum states to life. This project showcases the fluidity of quantum mechanics—superposition, entanglement, and more. It’s designed to immerse users in a world where the boundaries between probability and reality blur.
-        </p>
-        <iframe src="https://fibonacciai.github.io/42069/interactivequantumviz.html"></iframe>
 
-        <h3>Quantum Fields as Fluid Dynamics</h3>
-        <p>
-            With <a href="https://fibonacciai.github.io/42069/field-fluid-quantum.html" target="_blank">Field-Fluid Quantum Dynamics</a>, I reimagine quantum fields through the lens of fluid behavior. By drawing parallels between quantum states and the motion of fluids, I offer a fresh perspective on how particles behave and interact in complex systems.
-        </p>
-        <iframe src="https://fibonacciai.github.io/42069/field-fluid-quantum.html"></iframe>
+        <div class="project-card">
+            <h3 onclick="toggleCollapse(this)">Interactive Quantum Visualizations</h3>
+            <div class="content">
+                <p>
+                    Check <a href="https://fibonacciai.github.io/42069/interactivequantumviz.html" target="_blank">Interactive Quantum Visualizations</a>—I’m bringing quantum states to life, bitches. Superposition, entanglement, all that jazz, served up in a mind-bending playground where probability and reality get freaky.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/interactivequantumviz.html" loading="lazy"></iframe>
+            </div>
+        </div>
 
-        <h3>Exploring Entropy and Emergence</h3>
-        <p>
-            <a href="https://fibonacciai.github.io/42069/quantumentropy.html" target="_blank">Quantum Entropy</a> is my attempt to understand the role of disorder and complexity in quantum systems. This project dives into the interplay between chaos and structure, showing how entropy isn’t just about loss—it’s a driver of emergence and creativity.
-        </p>
-        <iframe src="https://fibonacciai.github.io/42069/quantumentropy.html"></iframe>
+        <div class="project-card">
+            <h3 onclick="toggleCollapse(this)">Quantum Fields as Fluid Dynamics</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/field-fluid-quantum.html" target="_blank">Field-Fluid Quantum Dynamics</a> flips quantum fields into fluid vibes. It’s a wild-ass take on how particles flow and fuck with each other in crazy systems.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/field-fluid-quantum.html" loading="lazy"></iframe>
+            </div>
+        </div>
 
-        <h3>Quantum Holography</h3>
-        <p>
-            My work on <a href="https://fibonacciai.github.io/42069/quantumholography.html" target="_blank">Quantum Holography</a> explores multidimensional representation of data. Using holographic principles, I’ve created a way to visualize quantum states that could reshape how AI handles and interprets high-dimensional information.
-        </p>
-        <iframe src="https://fibonacciai.github.io/42069/quantumholography.html"></iframe>
+        <div class="project-card">
+            <h3 onclick="toggleCollapse(this)">Exploring Entropy and Emergence</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/quantumentropy.html" target="_blank">Quantum Entropy</a> is my dive into chaos and order. Entropy ain’t just decay—it’s the spark of badass emergence and creative explosions.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/quantumentropy.html" loading="lazy"></iframe>
+            </div>
+        </div>
 
-        <h3>Generative AI Meets Quantum</h3>
-        <p>
-            In <a href="https://fibonacciai.github.io/42069/artificialintelligence-google.html" target="_blank">Generative AI and Google</a>, I showcase how generative AI is transforming creativity. It’s a glimpse into the co-creation process between human ingenuity and machine learning—a dynamic I find deeply inspiring.
-        </p>
-        <iframe src="https://fibonacciai.github.io/42069/artificialintelligence-google.html"></iframe>
+        <div class="project-card">
+            <h3 onclick="toggleCollapse(this)">Quantum Holography</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/quantumholography.html" target="_blank">Quantum Holography</a> is my multidimensional data fuckfest. Holographic vibes that could make AI see shit in ways that’d melt your face.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/quantumholography.html" loading="lazy"></iframe>
+            </div>
+        </div>
 
-        <h3>Charting Quantum Breakthroughs</h3>
-        <p>
-            Finally, <a href="https://fibonacciai.github.io/42069/quantumbreakthru.html" target="_blank">Quantum Breakthroughs</a> is my evolving roadmap of discoveries. It’s a timeline that celebrates how far we’ve come while setting the stage for what’s next. It reminds me that each small step brings us closer to transformative change.
-        </p>
-        <iframe src="https://fibonacciai.github.io/42069/quantumbreakthru.html"></iframe>
+        <div class="project-card">
+            <h3 onclick="toggleCollapse(this)">Generative AI Meets Quantum</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/artificialintelligence-google.html" target="_blank">Generative AI and Google</a> shows how AI’s rewriting the creative rulebook. Human genius and machine magic in a dope-ass dance.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/artificialintelligence-google.html" loading="lazy"></iframe>
+            </div>
+        </div>
 
-        <h2>Where I’m Headed</h2>
+        <div class="project-card">
+            <h3 onclick="toggleCollapse(this)">Charting Quantum Breakthroughs</h3>
+            <div class="content">
+                <p>
+                    <a href="https://fibonacciai.github.io/42069/quantumbreakthru.html" target="_blank">Quantum Breakthroughs</a> is my living timeline of epic wins. It’s proof we’re on the cusp of some world-shaking shit.
+                </p>
+                <iframe src="https://fibonacciai.github.io/42069/quantumbreakthru.html" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <h2>Where I’m Fucking Headed</h2>
         <p>
-            These projects are just the beginning. I see them as seeds for a larger vision—tools that not only educate but inspire new ways of thinking. Quantum computing and AI are re-writing the rules of innovation, and I want my work to be part of that story.
+            These projects? Just the opening salvo. They’re seeds for a balls-out vision—tools to school the masses and spark insane ideas. Quantum and AI are rewriting reality, and I’m here to steer that chaos.
         </p>
 
         <div class="quote">
-            "This isn’t just about understanding the quantum world or building smarter AI—it’s about creating a future where technology aligns with curiosity, creativity, and humanity’s highest aspirations."
+            "This ain’t just quantum geekery or AI wizardry—it’s about forging a future where tech fucks with curiosity, creativity, and humanity’s wildest dreams."
         </div>
 
-        <h3>Next Steps</h3>
+        <h3>Next Fucking Steps</h3>
         <p>
-            I plan to push these ideas further, integrating more advanced models and exploring new ways to visualize the unseeable. Whether it’s through AI-driven holography or quantum-inspired algorithms, my goal is to continue shaping the conversation at the cutting edge of technology.
+            I’m cranking it up—more hardcore models, visuals that’ll rip your eyes out, AI-driven holography, quantum-fueled algorithms. I’m here to dominate the bleeding edge, bro.
         </p>
-
     </div>
+
+    <a href="#top" class="back-to-top" id="backToTop">↑</a>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        // Particles.js setup
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#76c7c0' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.5, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#76c7c0', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 3, direction: 'none', random: true }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
+                modes: { repulse: { distance: 100 }, push: { particles_nb: 4 } }
+            },
+            retina_detect: true
+        });
+
+        // Theme toggle
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        }
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+
+        // Collapse projects
+        function toggleCollapse(element) {
+            const card = element.parentElement;
+            card.classList.toggle('collapsed');
+        }
+
+        // Back to top
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.style.display = window.scrollY > 300 ? 'block' : 'none';
+        });
+
+        backToTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Intersection observer for animations
+        const elements = document.querySelectorAll('.project-card, .quote');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'pulse 2s infinite';
+                }
+            });
+        }, { threshold: 0.2 });
+
+        elements.forEach(el => observer.observe(el));
+    </script>
 </body>
 </html>
