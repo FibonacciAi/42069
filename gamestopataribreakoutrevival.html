@@ -1,418 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>💥Follow @_D_741Stef🍻</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>Mint NFT - GameStop Breakout Revival</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Montserrat', sans-serif;
-      background: linear-gradient(135deg, #000, #1A1A1A);
-      color: #fff;
-      overflow: hidden;
-    }
-    #gameWrapper {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    h1 {
-      position: absolute;
-      top: 20px;
-      width: 100%;
+      font-family: sans-serif;
       text-align: center;
-      font-size: 2em;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 700;
-      color: #DA291C;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      z-index: 10;
+      padding: 2rem;
+      background-color: #f9f9f9;
     }
-    .game-container {
-      position: relative;
-      width: 480px;
-      height: 320px;
-      background: url('image-310.jpg') no-repeat center center;
-      background-size: cover;
-      border: 2px solid #555;
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    canvas {
-      display: block;
-      background-color: rgba(0, 0, 0, 0.75);
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
-    #power-accent {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      width: 80px;
-      height: auto;
-      opacity: 0.85;
-      image-rendering: pixelated;
-    }
-    @media (max-width: 480px) {
-      h1 { font-size: 1.5em; }
-      #power-accent { width: 60px; }
-    }
+    #status { margin-top: 12px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>💥Follow @_D_741Stef🍻</h1>
-  <div id="gameWrapper">
-    <div class="game-container" id="gameContainer">
-      <canvas id="gameCanvas"></canvas>
-      <img id="power-accent" src="https://fibonacciai.github.io/42069/image-306.jpg" alt="Hybrid Gamestop & Atari Logo" crossorigin="anonymous">
-    </div>
+  <div class="container">
+    <h1>Mint Your NFT</h1>
+    <p>Connect your wallet and mint your NFT.</p>
+    <button id="connectWallet">Connect Zora Wallet</button>
+    <button id="mintNFT" disabled>Mint NFT</button>
+    <p id="status"></p>
   </div>
 
-  <!-- Farcaster Frame SDK (Replace with actual URL when available) -->
-  <script src="https://cdn.farcaster.xyz/sdk.js"></script> <!-- Placeholder; check Farcaster for the real URL -->
-  <script>
-    const baseWidth = 480;
-    const baseHeight = 320;
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const ratio = window.devicePixelRatio || 1;
-    canvas.width = baseWidth * ratio;
-    canvas.height = baseHeight * ratio;
-    canvas.style.width = baseWidth + "px";
-    canvas.style.height = baseHeight + "px";
-    ctx.scale(ratio, ratio);
-    
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playTone(frequency, duration, type) {
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      oscillator.type = type || 'sine';
-      oscillator.frequency.value = frequency;
-      oscillator.start();
-      gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-      oscillator.stop(audioCtx.currentTime + duration);
+  <!-- Use the UMD build of ethers.js -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <!-- NFT.Storage will be loaded as a module below -->
+
+  <script type="module">
+    // Import NFTStorage from NFT.Storage's UMD module
+    import { NFTStorage, File } from "https://unpkg.com/nft.storage/dist/bundle.esm.min.js";
+
+    // ---------------------------
+    // Optical Illusion Generator
+    // ---------------------------
+    // For demonstration, we'll use a simple color-changing canvas.
+    // Replace the following with your full optical illusion generator code.
+    const illusionCanvas = document.createElement('canvas');
+    illusionCanvas.id = "illusion";
+    illusionCanvas.style.width = "100%";
+    illusionCanvas.style.height = "auto";
+    document.body.insertBefore(illusionCanvas, document.body.firstChild);
+    const ctx = illusionCanvas.getContext('2d');
+    function setupCanvas() {
+      const d = Math.min(window.innerWidth, window.innerHeight) * 0.95;
+      illusionCanvas.width = d;
+      illusionCanvas.height = d;
     }
-    function playBrickSound()    { playTone(400, 0.1, 'square'); }
-    function playPaddleSound()   { playTone(600, 0.08, 'sine'); }
-    function playWallSound()     { playTone(300, 0.08, 'sawtooth'); }
-    function playLifeLostSound() { playTone(200, 0.2, 'triangle'); }
-    function playGameoverSound() { playTone(150, 0.3, 'sine'); }
-    function playWinSound()      { playTone(800, 0.2, 'square'); }
-    
-    const backgroundMusic = new Audio("https://fibonacciai.github.io/42069/Fury.mp3");
-    backgroundMusic.loop = true;
-    
-    const ballImage = new Image();
-    ballImage.src = "https://fibonacciai.github.io/42069/power-512.png";
-    ballImage.crossOrigin = "anonymous";
-    let ballRadius = 16;
-    let ballX = baseWidth / 2;
-    let ballY = baseHeight - 30;
-    let dx = 2;
-    let dy = -2;
-    let ballAngle = 0;
-    
-    let paddleHeight = 10;
-    let paddleWidth = 75;
-    let paddleX = (baseWidth - paddleWidth) / 2;
-    
-    let rightPressed = false;
-    let leftPressed = false;
-    
-    let brickRowCount = 5;
-    let brickColumnCount = 7;
-    let brickWidth = 55;
-    let brickHeight = 20;
-    let brickPadding = 10;
-    let brickOffsetTop = 30;
-    let brickOffsetLeft = 35;
-    
-    const brickImageSources = [
-      "https://fibonacciai.github.io/42069/dougcifu.png",
-      "https://fibonacciai.github.io/42069/stevecohen.png",
-      "https://fibonacciai.github.io/42069/andrewleft.png",
-      "https://fibonacciai.github.io/42069/gabeplotkin.png",
-      "https://fibonacciai.github.io/42069/kennyg.png"
-    ];
-    const brickImages = brickImageSources.map(src => {
-      let img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = src;
-      return img;
+    function drawIllusion() {
+      const time = Date.now() / 1000;
+      ctx.fillStyle = `hsl(${(time * 40) % 360}, 80%, 50%)`;
+      ctx.fillRect(0, 0, illusionCanvas.width, illusionCanvas.height);
+    }
+    function animateIllusion() {
+      drawIllusion();
+      requestAnimationFrame(animateIllusion);
+    }
+    setupCanvas();
+    animateIllusion();
+    window.addEventListener('resize', setupCanvas);
+    // ---------------------------
+
+    // ---------------------------
+    // NFT.Storage & Zora Integration
+    // ---------------------------
+    function dataURLToBlob(dataURL) {
+      const parts = dataURL.split(',');
+      const byteString = atob(parts[1]);
+      const mimeString = parts[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      return new Blob([ab], { type: mimeString });
+    }
+
+    async function uploadToNFTStorage(dataURL) {
+      const NFT_STORAGE_API_KEY = "270edbd6.7dc45579d8f84f999032ac8f9ac58f82";
+      const client = new NFTStorage({ token: NFT_STORAGE_API_KEY });
+      const blob = dataURLToBlob(dataURL);
+      const file = new File([blob], 'illusion.png', { type: 'image/png' });
+      const metadata = await client.store({
+        name: "Fractal Coin",
+        description: "A coin generated from a unique optical illusion created with the GameStop Breakout Revival experience.",
+        image: file
+      });
+      return metadata.url;
+    }
+
+    // ---------------------------
+    // Minting & Redirect Functionality
+    // ---------------------------
+    document.getElementById('mintNFT').addEventListener('click', async () => {
+      if (!userAddress) {
+        alert("Please connect your Zora wallet first.");
+        return;
+      }
+      statusEl.textContent = "Uploading image and launching mint...";
+      showLoading("Uploading image and launching mint...");
+      try {
+        const imageData = illusionCanvas.toDataURL('image/png');
+        const metadataURI = await uploadToNFTStorage(imageData);
+        // Redirect to Zora's launch interface.
+        // Adjust the URL and parameters as needed per Zora’s current documentation.
+        window.location.href = `https://zora.co/launch?metadataURI=${encodeURIComponent(metadataURI)}&feeBPS=500`;
+      } catch (error) {
+        console.error("Minting error:", error);
+        statusEl.textContent = "Minting failed: " + error.message;
+        hideLoading();
+      }
     });
-    let bricks = [];
-    for (let c = 0; c < brickColumnCount; c++) {
-      bricks[c] = [];
-      for (let r = 0; r < brickRowCount; r++) {
-        bricks[c][r] = { x: 0, y: 0, status: 1, imgIndex: Math.floor(Math.random() * brickImages.length) };
-      }
-    }
-    
-    let lives = 9;
-    let score = 0;
-    const totalBricks = brickRowCount * brickColumnCount;
-    const scoreIncrement = 42069 / totalBricks;
-    
-    let particles = [];
-    function spawnParticles(x, y, color) {
-      for (let i = 0; i < 15; i++) {
-        particles.push({
-          x: x,
-          y: y,
-          vx: (Math.random() - 0.5) * 4,
-          vy: (Math.random() - 0.5) * 4,
-          radius: Math.random() * 2 + 1,
-          alpha: 1,
-          color: color
-        });
-      }
-    }
-    function updateAndDrawParticles() {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.alpha -= 0.02;
-        if (p.alpha <= 0) {
-          particles.splice(i, 1);
-        } else {
-          ctx.save();
-          ctx.globalAlpha = p.alpha;
-          ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-      }
-    }
-    
-    let gameState = 'start';
-    let currentScale = 1;
-    
-    function drawOverlay(message) {
-      ctx.save();
-      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-      ctx.fillRect(0, 0, baseWidth, baseHeight);
-      ctx.font = "22px 'Montserrat', sans-serif";
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "center";
-      let lineHeight = 26;
-      let lines = message.split("\n");
-      let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
-      for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], baseWidth / 2, startY + i * lineHeight);
-      }
-      ctx.restore();
-    }
-    
-    document.addEventListener("keydown", keyDownHandler, false);
-    document.addEventListener("keyup", keyUpHandler, false);
-    document.addEventListener("mousemove", mouseMoveHandler, false);
-    document.addEventListener("keypress", keyPressHandler, false);
-    canvas.addEventListener("touchstart", handleTouchStart, false);
-    canvas.addEventListener("touchmove", handleTouchMove, false);
-    
-    function keyDownHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
-      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
-    }
-    function keyUpHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
-      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
-    }
-    function mouseMoveHandler(e) {
-      const rect = canvas.getBoundingClientRect();
-      let relativeX = (e.clientX - rect.left) / currentScale;
-      if (relativeX > 0 && relativeX < baseWidth) paddleX = relativeX - paddleWidth / 2;
-    }
-    function handleTouchStart(e) {
-      e.preventDefault();
-      if (gameState === 'start') {
-        gameState = 'playing';
-        if (backgroundMusic.paused) backgroundMusic.play().catch(err => console.log("Music play error:", err));
-      } else if (gameState === 'gameover' || gameState === 'win') {
-        document.location.reload();
-      }
-    }
-    function handleTouchMove(e) {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      let touch = e.touches[0];
-      let relativeX = (touch.clientX - rect.left) / currentScale;
-      if (relativeX > 0 && relativeX < baseWidth) paddleX = relativeX - paddleWidth / 2;
-    }
-    function keyPressHandler(e) {
-      if (gameState === 'start' && e.key === 'Enter') {
-        gameState = 'playing';
-        if (backgroundMusic.paused) backgroundMusic.play().catch(err => console.log("Music play error:", err));
-      } else if ((gameState === 'gameover' || gameState === 'win') && e.key === 'Enter') {
-        document.location.reload();
-      }
-    }
-    
-    function collisionDetection() {
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          let b = bricks[c][r];
-          if (b.status === 1) {
-            if (ballX > b.x && ballX < b.x + brickWidth && ballY > b.y && ballY < b.y + brickHeight) {
-              dy = -dy;
-              b.status = 0;
-              score += scoreIncrement;
-              playBrickSound();
-              spawnParticles(ballX, ballY, "#FFFFFF");
-              dx *= 1.02;
-              dy *= 1.02;
-              if (score >= 42069) {
-                gameState = 'win';
-                playWinSound();
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    function drawBall() {
-      ctx.save();
-      ctx.translate(ballX, ballY);
-      ctx.rotate(ballAngle);
-      ctx.drawImage(ballImage, -ballRadius, -ballRadius, ballRadius * 2, ballRadius * 2);
-      ctx.restore();
-    }
-    function drawPaddle() {
-      ctx.save();
-      let paddleGradient = ctx.createLinearGradient(paddleX, baseHeight - paddleHeight, paddleX, baseHeight);
-      paddleGradient.addColorStop(0, "#00ADEF");
-      paddleGradient.addColorStop(1, "#DA291C");
-      ctx.fillStyle = paddleGradient;
-      ctx.shadowColor = "#000";
-      ctx.shadowBlur = 5;
-      ctx.fillRect(paddleX, baseHeight - paddleHeight, paddleWidth, paddleHeight);
-      ctx.restore();
-    }
-    function drawBricks() {
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          let b = bricks[c][r];
-          if (b.status === 1) {
-            let brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-            let brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-            b.x = brickX;
-            b.y = brickY;
-            ctx.save();
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high";
-            let img = brickImages[b.imgIndex];
-            let imgWidth = (img.complete && img.naturalWidth) ? img.naturalWidth : brickWidth;
-            let imgHeight = (img.complete && img.naturalHeight) ? img.naturalHeight : brickHeight;
-            let scale = Math.min(brickWidth / imgWidth, brickHeight / imgHeight);
-            let drawWidth = imgWidth * scale;
-            let drawHeight = imgHeight * scale;
-            let offsetX = brickX + (brickWidth - drawWidth) / 2;
-            let offsetY = brickY + (brickHeight - drawHeight) / 2;
-            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-            ctx.restore();
-          }
-        }
-      }
-    }
-    function drawScore() {
-      ctx.font = "16px 'Montserrat', sans-serif";
-      ctx.fillStyle = "#fff";
-      ctx.fillText("Score: " + Math.round(score), 8, 20);
-    }
-    function drawLives() {
-      ctx.font = "16px 'Montserrat', sans-serif";
-      ctx.fillStyle = "#fff";
-      ctx.fillText("Lives: " + lives, baseWidth - 65, 20);
-    }
-    
-    function draw() {
-      ctx.clearRect(0, 0, baseWidth, baseHeight);
-      drawBricks();
-      drawBall();
-      drawPaddle();
-      drawScore();
-      drawLives();
-      updateAndDrawParticles();
-    
-      if (gameState === 'playing') {
-        collisionDetection();
-        if (rightPressed && paddleX < baseWidth - paddleWidth) paddleX += 7;
-        if (leftPressed && paddleX > 0) paddleX -= 7;
-        if (ballX + dx > baseWidth - ballRadius || ballX + dx < ballRadius) {
-          dx = -dx;
-          playWallSound();
-        }
-        if (ballY + dy < ballRadius) {
-          dy = -dy;
-          playWallSound();
-        } else if (ballY + dy > baseHeight - ballRadius) {
-          if (ballX > paddleX && ballX < paddleX + paddleWidth) {
-            playPaddleSound();
-            let hitPoint = (ballX - (paddleX + paddleWidth / 2)) / (paddleWidth / 2);
-            dx = 2 * hitPoint;
-            dy = -dy;
-          } else {
-            lives--;
-            if (lives <= 0) {
-              gameState = 'gameover';
-              playGameoverSound();
-            } else {
-              playLifeLostSound();
-              ballX = baseWidth / 2;
-              ballY = baseHeight - 30;
-              dx = 2;
-              dy = -2;
-              paddleX = (baseWidth - paddleWidth) / 2;
-            }
-          }
-        }
-        ballX += dx;
-        ballY += dy;
-        ballAngle += 0.05;
-      }
-    
-      if (gameState === 'start') {
-        drawOverlay("Ready Player 741?\nYour Quest Begins Now.\nTap or Press Enter to Play.");
-      } else if (gameState === 'gameover') {
-        drawOverlay("Alas, Player 741, your journey ends here.\nTap or Press Enter to try again.");
-      } else if (gameState === 'win') {
-        drawOverlay("Victory, Player 741! You've revived the spirit of classic gaming!\nFollow @_D_741Stef on X");
-      }
-    
-      requestAnimationFrame(draw);
-    }
-    
-    function adjustGameScale() {
-      const scale = Math.min(window.innerWidth / baseWidth, window.innerHeight / baseHeight);
-      currentScale = scale;
-      const gameContainer = document.getElementById("gameContainer");
-      gameContainer.style.transform = "scale(" + scale + ")";
-      gameContainer.style.width = baseWidth + "px";
-      gameContainer.style.height = baseHeight + "px";
-    }
-    window.addEventListener("resize", adjustGameScale);
-    adjustGameScale();
 
-    // Farcaster Frame SDK Integration
-    const sdk = window.FarcasterSDK;
-    if (sdk) {
-      sdk.actions.ready();
-      if (sdk.context && sdk.context.user) {
-        console.log("Player FID:", sdk.context.user.fid);
+    // ---------------------------
+    // Zora Connect Wallet Integration using Zora Auth Kit
+    // ---------------------------
+    let provider, signer, userAddress;
+    const statusEl = document.getElementById('status');
+    const walletModal = document.getElementById('wallet-modal');
+    const walletInfo = document.getElementById('walletInfo');
+    const mintNFTBtn = document.getElementById('mintNFT');
+
+    async function connectZora() {
+      walletModal.classList.remove('active');
+      showLoading("Connecting to Zora...");
+      try {
+        const authKit = new window.ZoraAuthKit(); // Loaded via UMD
+        const user = await authKit.connect();
+        userAddress = user.address;
+        updateWalletInfo();
+        mintNFTBtn.disabled = false;
+        statusEl.textContent = "Wallet connected: " + userAddress;
+      } catch (error) {
+        walletInfo.innerHTML = `<p style="color:#ff5555;">Zora connection failed: ${error.message}</p>`;
+        console.error("Zora connection error:", error);
+      } finally {
+        hideLoading();
       }
     }
 
-    draw();
+    function updateWalletInfo() {
+      walletInfo.innerHTML = `<p><strong>Connected Wallet:</strong> ${userAddress}</p>`;
+      document.getElementById('connectWallet').textContent = "Wallet Connected";
+    }
+
+    document.getElementById('zoraConnectButton').addEventListener('click', () => {
+      connectZora();
+    });
+    document.getElementById('connectWallet').addEventListener('click', () => {
+      walletModal.classList.add('active');
+    });
+    document.getElementById('close-wallet-modal').addEventListener('click', () => {
+      walletModal.classList.remove('active');
+    });
+    walletModal.addEventListener('click', (e) => {
+      if (e.target === walletModal) walletModal.classList.remove('active');
+    });
+
+    // ---------------------------
+    // Loading Indicator Helpers
+    // ---------------------------
+    function showLoading(message) {
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      loadingIndicator.querySelector('.loading-text').textContent = message;
+      loadingIndicator.style.display = 'flex';
+    }
+    function hideLoading() {
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      loadingIndicator.style.display = 'none';
+    }
   </script>
 </body>
 </html>
