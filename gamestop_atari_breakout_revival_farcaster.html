@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>GameStop Breakout Revival Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Farcaster SDK (as of March 2025; check https://docs.farcaster.com/sdk for updates) -->
-  <script src="https://cdn.farcaster.com/farcaster-sdk.js"></script>
+  <!-- Updated Farcaster SDK URL (as of March 2025; verify at https://docs.farcaster.com/sdk) -->
+  <script src="https://cdn.farcaster.xyz/sdk/v2/farcaster-sdk.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
   <link rel="icon" href="https://fibonacciai.github.io/42069/favicon.ico" type="image/x-icon">
   <style>
@@ -216,8 +216,443 @@
     bossImage.src = "https://fibonacciai.github.io/42069/kennyg.png";
     bossImage.crossOrigin = "anonymous";
     
+    function spawnParticles(x, y, color) {
+      for (let i = 0; i < 10; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          radius: Math.random() * 2 + 1,
+          alpha: 1,
+          color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`,
+          life: Math.random() * 20 + 10
+        });
+      }
+    }
+    
+    function spawnPowerUp(x, y) {
+      if (Math.random() < 0.25 && powerUpTimer <= 0) {
+        powerUps.push({
+          x: x,
+          y: y,
+          type: ['shortSqueeze', 'retailArmy', 'memeMagic'][Math.floor(Math.random() * 3)],
+          width: 24,
+          height: 12,
+          vy: 2,
+          alpha: 1,
+          animTime: 0
+        });
+        powerUpTimer = 2000;
+      }
+    }
+    
+    function updateAndDrawParticles(delta) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.alpha -= 0.03 * delta;
+        p.life -= 1 * delta;
+        if (p.alpha <= 0 || p.life <= 0) {
+          particles.splice(i, 1);
+        } else {
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+    
+    function updatePowerUps(delta) {
+      powerUpTimer -= delta * 1000;
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        let p = powerUps[i];
+        p.animTime += delta;
+        p.y += p.vy * delta * 60;
+        p.alpha = Math.sin(p.animTime * 5) * 0.3 + 0.7;
+        if (p.y > baseHeight) {
+          powerUps.splice(i, 1);
+        } else if (
+          p.y + p.height > baseHeight - paddleHeight &&
+          p.x > paddleX && p.x < paddleX + paddleWidth
+        ) {
+          activatePowerUp(p.type);
+          powerUps.splice(i, 1);
+        }
+      }
+    }
+    
+    function activatePowerUp(type) {
+      playPowerUpSound();
+      const duration = 500;
+      let overlayText;
+      if (type === 'shortSqueeze') {
+        paddleWidth = 120;
+        setTimeout(() => paddleWidth = 75, 10000);
+        overlayText = "Short Squeeze Activated!\nCrush the shorts!";
+      } else if (type === 'retailArmy') {
+        balls.push({ x: ballX, y: ballY, dx: dx, dy: dy, angle: 0 });
+        overlayText = "Retail Army Joins the Fight!\nMore balls, more power!";
+      } else if (type === 'memeMagic') {
+        balls.forEach(ball => {
+          ball.dx *= 1.5; ball.dy *= 1.5;
+        });
+        setTimeout(() => {
+          balls.forEach(ball => {
+            ball.dx /= 1.5; ball.dy /= 1.5;
+          });
+        }, 5000);
+        overlayText = "Meme Magic Unleashed!\nSpeed boost activated!";
+      }
+      showOverlayWithFade(overlayText, duration);
+    }
+    
+    function showOverlayWithFade(message, duration) {
+      const startTime = performance.now();
+      function animateOverlay(timestamp) {
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        const alpha = easeInOutQuad(progress);
+        ctx.save();
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.85 * (1 - alpha)})`;
+        ctx.fillRect(0, 0, baseWidth, baseHeight);
+        ctx.font = "22px 'Montserrat', sans-serif";
+        ctx.fillStyle = `rgba(255, 255, 255, ${1 - alpha})`;
+        ctx.textAlign = "center";
+        let lineHeight = 26;
+        let lines = message.split("\n");
+        let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
+        for (let i = 0; i < lines.length; i++) {
+          ctx.fillText(lines[i], baseWidth / 2, startY + i * lineHeight);
+        }
+        ctx.restore();
+        if (progress < 1) requestAnimationFrame(animateOverlay);
+      }
+      requestAnimationFrame(animateOverlay);
+    }
+    
+    function easeInOutQuad(t) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+    
+    function drawOverlay(message) {
+      ctx.save();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(0, 0, baseWidth, baseHeight);
+      ctx.font = "22px 'Montserrat', sans-serif";
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      let lineHeight = 26;
+      let lines = message.split("\n");
+      let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], baseWidth / 2, startY + i * lineHeight);
+      }
+      ctx.restore();
+    }
+    
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+    document.addEventListener("mousemove", mouseMoveHandler, false);
+    document.addEventListener("keypress", keyPressHandler, false);
+    canvas.addEventListener("touchstart", handleTouchStart, false);
+    canvas.addEventListener("touchmove", handleTouchMove, false);
+    
+    function keyDownHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
+      else if (e.key === 'p' && gameState === 'playing') paused = !paused;
+    }
+    function keyUpHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
+    }
+    function mouseMoveHandler(e) {
+      const rect = canvas.getBoundingClientRect();
+      let relativeX = (e.clientX - rect.left) / currentScale;
+      if (relativeX > 0 && relativeX < baseWidth) paddleX = relativeX - paddleWidth / 2;
+    }
+    function handleTouchStart(e) {
+      e.preventDefault();
+      if (gameState === 'start') {
+        gameState = 'playing';
+        if (backgroundMusic.paused) backgroundMusic.play().catch(err => console.log("Music play error:", err));
+      } else if (gameState === 'gameover' || gameState === 'win' || paused) {
+        document.location.reload();
+      }
+    }
+    function handleTouchMove(e) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      let touch = e.touches[0];
+      let relativeX = Math.max(0, Math.min(baseWidth - paddleWidth, (touch.clientX - rect.left) / currentScale));
+      paddleX = relativeX;
+    }
+    function keyPressHandler(e) {
+      if (gameState === 'start' && e.key === 'Enter') {
+        gameState = 'playing';
+        if (backgroundMusic.paused) backgroundMusic.play().catch(err => console.log("Music play error:", err));
+      } else if ((gameState === 'gameover' || gameState === 'win') && e.key === 'Enter') {
+        document.location.reload();
+      }
+    }
+    
+    function collisionDetection(delta) {
+      balls.forEach((ball, ballIndex) => {
+        for (let c = 0; c < brickColumnCount; c++) {
+          for (let r = 0; r < brickRowCount; r++) {
+            let b = bricks[c][r];
+            if (b.status > 0 && !bossActive) {
+              if (ball.x > b.x && ball.x < b.x + brickWidth && ball.y > b.y && ball.y < b.y + brickHeight) {
+                ball.dy = -ball.dy * 1.1;
+                b.status--;
+                b.shake = 10;
+                if (b.status === 0) {
+                  score += scoreIncrement;
+                  playBrickSound();
+                  spawnParticles(ball.x, ball.y, "#FFFFFF");
+                  spawnPowerUp(b.x + brickWidth / 2, b.y + brickHeight);
+                  if (score >= 42069 * level) {
+                    if (level < 3) {
+                      level++;
+                      resetLevel();
+                    } else {
+                      bossActive = true;
+                    }
+                  }
+                }
+                if (score > 0 && score % (scoreIncrement * 5) === 0) {
+                  balls.forEach(b => { b.dx *= 1.05; b.dy *= 1.05; });
+                }
+              }
+            }
+          }
+        }
+        if (bossActive && bossImage.complete) {
+          if (ball.x > bossX && ball.x < bossX + bossWidth && ball.y > bossY && ball.y < bossY + bossHeight) {
+            ball.dy = -ball.dy * 1.1;
+            bossHealth--;
+            playBossHitSound();
+            spawnParticles(ball.x, ball.y, "#FF0000");
+            if (bossHealth <= 0) {
+              gameState = 'win';
+              backgroundMusic.src = "https://fibonacciai.github.io/42069/FuryTriumph.mp3";
+              backgroundMusic.play();
+              playWinSound();
+              bossActive = false;
+            }
+          }
+        }
+      });
+    }
+    
+    function resetLevel() {
+      bricks = [];
+      for (let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (let r = 0; r < brickRowCount; r++) {
+          bricks[c][r] = { x: 0, y: 0, status: Math.random() > 0.6 ? 2 : 1, imgIndex: Math.floor(Math.random() * brickImages.length), alpha: 1, cracks: 0, shake: 0 };
+        }
+      }
+      balls.forEach(ball => { ball.dx = 2 * level; ball.dy = -2 * level; });
+    }
+    
+    function drawBall() {
+      balls.forEach(ball => {
+        ctx.save();
+        ctx.translate(ball.x, ball.y);
+        ctx.rotate(ball.angle);
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "rgba(255, 255, 255, 0.7)";
+        ctx.globalAlpha = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+        ctx.drawImage(ballImage, -ballRadius, -ballRadius, ballRadius * 2, ballRadius * 2);
+        ctx.restore();
+        ball.angle += 0.08;
+      });
+    }
+    
+    function drawPaddle() {
+      ctx.save();
+      let paddleGradient = ctx.createLinearGradient(paddleX, baseHeight - paddleHeight, paddleX, baseHeight);
+      paddleGradient.addColorStop(0, "#00ADEF");
+      paddleGradient.addColorStop(1, "#DA291C");
+      ctx.fillStyle = paddleGradient;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.globalAlpha = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+      ctx.fillRect(paddleX, baseHeight - paddleHeight, paddleWidth, paddleHeight);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = "12px 'Montserrat', sans-serif";
+      ctx.fillText("RETAIL", paddleX + 5, baseHeight - paddleHeight + 9);
+      ctx.restore();
+    }
+    
+    function drawBricks(delta) {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          let b = bricks[c][r];
+          if (b.status > 0 && !bossActive) {
+            let brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+            let brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+            b.x = brickX;
+            b.y = brickY;
+            ctx.save();
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            let img = brickImages[b.imgIndex];
+            let imgWidth = (img.complete && img.naturalWidth) ? img.naturalWidth : brickWidth;
+            let imgHeight = (img.complete && img.naturalHeight) ? img.naturalHeight : brickHeight;
+            let scale = Math.min(brickWidth / imgWidth, brickHeight / imgHeight);
+            let drawWidth = imgWidth * scale;
+            let drawHeight = imgHeight * scale;
+            let offsetX = brickX + (brickWidth - drawWidth) / 2;
+            let offsetY = brickY + (brickHeight - drawHeight) / 2;
+            if (b.shake > 0) {
+              const shakeOffset = Math.sin(b.shake * 10) * 2;
+              offsetX += shakeOffset;
+              offsetY += shakeOffset;
+              b.shake -= delta * 10;
+            }
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+            ctx.globalAlpha = b.alpha;
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            ctx.restore();
+          }
+        }
+      }
+    }
+    
+    function drawBoss() {
+      if (bossActive && bossImage.complete) {
+        ctx.save();
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(bossImage, bossX, bossY, bossWidth, bossHeight);
+        ctx.font = "16px 'Montserrat', sans-serif";
+        ctx.fillStyle = "#fff";
+        ctx.fillText(`Boss HP: ${bossHealth}`, bossX + bossWidth / 2 - 40, bossY - 10);
+        ctx.restore();
+      }
+    }
+    
+    function drawScore() {
+      ctx.font = "16px 'Montserrat', sans-serif";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(`Score: ${Math.floor(score)}`, 8, 20);
+    }
+    
+    function drawLives() {
+      ctx.font = "16px 'Montserrat', sans-serif";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(`Lives: ${lives}`, baseWidth - 80, 20);
+    }
+    
+    function drawPowerUps(delta) {
+      powerUps.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.type === 'shortSqueeze' ? '#00FF00' : p.type === 'retailArmy' ? '#FF0000' : '#FFFF00';
+        ctx.fillRect(p.x - p.width / 2, p.y, p.width, p.height);
+        ctx.restore();
+      });
+    }
+    
+    function draw() {
+      if (gameState === 'start') {
+        drawOverlay("Press Enter or Tap to Start\n💥 Wall Street Wrecker 💥");
+      } else if (gameState === 'playing' && !paused) {
+        ctx.clearRect(0, 0, baseWidth, baseHeight);
+        drawBricks(1 / 60);
+        drawBall();
+        drawPaddle();
+        drawScore();
+        drawLives();
+        drawPowerUps(1 / 60);
+        drawBoss();
+        updateAndDrawParticles(1 / 60);
+        updatePowerUps(1 / 60);
+      } else if (gameState === 'gameover') {
+        drawOverlay("Game Over!\nPress Enter or Tap to Restart");
+      } else if (gameState === 'win') {
+        drawOverlay("Victory!\nPress Enter or Tap to Restart");
+      } else if (paused) {
+        drawOverlay("Paused\nPress 'p' to Resume");
+      }
+      requestAnimationFrame(draw);
+    }
+    
+    function update(delta) {
+      if (gameState !== 'playing' || paused) return;
+      
+      if (rightPressed && paddleX < baseWidth - paddleWidth) {
+        paddleX += 7 * delta * 60;
+      } else if (leftPressed && paddleX > 0) {
+        paddleX -= 7 * delta * 60;
+      }
+      
+      balls.forEach(ball => {
+        ball.x += ball.dx * delta * 60;
+        ball.y += ball.dy * delta * 60;
+        
+        if (ball.x + ballRadius > baseWidth) {
+          ball.x = baseWidth - ballRadius;
+          ball.dx = -ball.dx * 0.9;
+          playWallSound();
+        } else if (ball.x - ballRadius < 0) {
+          ball.x = ballRadius;
+          ball.dx = -ball.dx * 0.9;
+          playWallSound();
+        }
+        
+        if (ball.y - ballRadius < 0) {
+          ball.y = ballRadius;
+          ball.dy = -ball.dy * 0.9;
+          playWallSound();
+        } else if (ball.y + ballRadius > baseHeight - paddleHeight) {
+          if (ball.x > paddleX && ball.x < paddleX + paddleWidth) {
+            ball.dy = -ball.dy * 1.1;
+            ball.dx += (ball.x - (paddleX + paddleWidth / 2)) / (paddleWidth / 2) * 2;
+            playPaddleSound();
+          } else {
+            balls.splice(balls.indexOf(ball), 1);
+            if (balls.length === 0) {
+              lives--;
+              if (lives > 0) {
+                balls.push({ x: baseWidth / 2, y: baseHeight - 30, dx: 2, dy: -2, angle: 0 });
+              } else {
+                gameState = 'gameover';
+                playGameoverSound();
+              }
+              playLifeLostSound();
+            }
+          }
+        }
+        
+        let speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+        if (speed > maxSpeed) {
+          let ratio = maxSpeed / speed;
+          ball.dx *= ratio;
+          ball.dy *= ratio;
+        }
+      });
+      
+      collisionDetection(delta);
+    }
+    
     async function connectAndMint() {
       try {
+        // Check if Farcaster SDK is loaded
+        if (typeof window.farcaster === 'undefined') {
+          console.error("Farcaster SDK not loaded. Please ensure the SDK script is correctly included.");
+          alert("Farcaster SDK failed to load. Please check your internet connection or try again later.");
+          return;
+        }
         const wallet = await window.farcaster.connect();
         if (wallet) {
           console.log("Connected to wallet:", wallet.address);
@@ -231,7 +666,20 @@
         alert("Error: " + error.message);
       }
     }
+    
     document.getElementById("mint-nft-button").addEventListener("click", connectAndMint);
+    
+    function gameLoop(timestamp) {
+      let delta = Math.min((timestamp - lastTime) / 1000, 0.1);
+      lastTime = timestamp;
+      
+      update(delta);
+      draw();
+      
+      requestAnimationFrame(gameLoop);
+    }
+    
+    requestAnimationFrame(gameLoop);
   </script>
 </body>
 </html>
