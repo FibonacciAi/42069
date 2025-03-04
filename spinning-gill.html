@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LEGENDARY BASED SIGMA HOLO Spinning 3D UNO Card</title>
+    <link rel="icon" href="data:,"> <!-- Dummy favicon to prevent error -->
+    <style>
+        body { margin: 0; overflow: hidden; background: black; }
+        canvas { width: 100%; height: 100%; }
+        audio { display: none; } /* Hide audio element but keep it functional */
+    </style>
+</head>
+<body>
+    <!-- Load Three.js and all required post-processing scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+    <!-- Audio element for auto-playing the soundtrack -->
+    <audio id="backgroundMusic" autoplay loop>
+        <source src="https://fibonacciai.github.io/42069/Fury.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Enable alpha for cleaner rendering
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 1);
+        document.body.appendChild(renderer.domElement);
+
+        // OrbitControls for slick interaction
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 20;
+
+        // Card geometry (epic UNO card with higher resolution)
+        const cardGeometry = new THREE.BoxGeometry(2.5, 3.5, 0.1);
+
+        // Load textures with raw GitHub URLs for reliability, with higher quality settings
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.setCrossOrigin('anonymous'); // Ensure CORS compatibility
+        const laughingTexture = textureLoader.load('https://raw.githubusercontent.com/FibonacciAi/42069/main/rklaughing.png', 
+            () => {}, // On load
+            undefined, // On progress
+            (error) => console.error('Error loading laughingTexture:', error) // On error
+        ); // Front
+        const cheeringTexture = textureLoader.load('https://raw.githubusercontent.com/FibonacciAi/42069/main/rkcheersing.png', 
+            () => {}, // On load
+            undefined, // On progress
+            (error) => console.error('Error loading cheeringTexture:', error) // On error
+        ); // Back
+
+        // Custom edge texture (ultra-holographic, shiny sigma look with higher detail)
+        const edgeCanvas = document.createElement('canvas');
+        edgeCanvas.width = 1024; // Doubled resolution for sharper graphics
+        edgeCanvas.height = 1024;
+        const ctx = edgeCanvas.getContext('2d', { alpha: true });
+
+        // Draw ultra-shiny, holographic edge texture with higher detail
+        const shinyGradient = ctx.createLinearGradient(0, 0, 1024, 1024);
+        shinyGradient.addColorStop(0, '#0a0a0a'); // Dark base for shine
+        shinyGradient.addColorStop(0.3, '#3a3a3a'); // Mid-tone
+        shinyGradient.addColorStop(0.7, '#ffffff'); // Bright highlight for shine
+        shinyGradient.addColorStop(1, '#3a3a3a');
+        ctx.fillStyle = shinyGradient;
+        ctx.fillRect(0, 0, 1024, 1024);
+
+        // Add ultra-holographic UNO logo with dynamic rainbow effect and gradient
+        const holoGradient = ctx.createLinearGradient(0, 0, 1024, 1024);
+        holoGradient.addColorStop(0, '#ff0000');
+        holoGradient.addColorStop(0.2, '#ff8000');
+        holoGradient.addColorStop(0.4, '#ffff00');
+        holoGradient.addColorStop(0.6, '#00ff00');
+        holoGradient.addColorStop(0.8, '#00ffff');
+        holoGradient.addColorStop(1, '#0000ff');
+        ctx.fillStyle = `rgba(255, 255, 255, 0.95)`; // Slightly brighter for clarity
+        ctx.font = '260px Arial Bold'; // Larger for higher resolution
+        ctx.textAlign = 'center';
+        ctx.fillText('UNO', 512, 512);
+
+        // Add dynamic, holographic border with subtle pulse and higher detail
+        const borderGradient = ctx.createLinearGradient(0, 0, 1024, 0);
+        borderGradient.addColorStop(0, '#ff0000');
+        borderGradient.addColorStop(0.2, '#ff8000');
+        borderGradient.addColorStop(0.4, '#ffff00');
+        borderGradient.addColorStop(0.6, '#00ff00');
+        borderGradient.addColorStop(0.8, '#00ffff');
+        borderGradient.addColorStop(1, '#0000ff');
+        ctx.strokeStyle = borderGradient;
+        ctx.lineWidth = 30; // Thicker for higher resolution
+        ctx.strokeRect(10, 10, 1004, 1004);
+
+        // Add ultra-subtle holographic noise and sparkles with higher density
+        for (let i = 0; i < 3000; i++) { // Doubled for more detail
+            const r = Math.random() * 255;
+            const g = Math.random() * 255;
+            const b = Math.random() * 255;
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.2)`; // Softer, more vibrant sparkles
+            ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 1, 1);
+        }
+
+        const edgeTexture = new THREE.Texture(edgeCanvas);
+        edgeTexture.needsUpdate = true;
+        edgeTexture.minFilter = THREE.LinearFilter; // Higher quality filtering
+        edgeTexture.magFilter = THREE.LinearFilter;
+
+        // Use MeshStandardMaterial for ultra-shiny, holographic look with advanced environment reflection
+        const cardMaterials = [
+            new THREE.MeshStandardMaterial({ 
+                map: edgeTexture, 
+                emissive: 0x444444, // Subtle gray glow for shine
+                emissiveIntensity: 0.4, // Brighter for holo pop
+                metalness: 0.95, // Ultra-shiny for mirror-like holo
+                roughness: 0.02, // Smoother for razor-sharp shine
+                envMapIntensity: 2.0, // Stronger reflection for ultra-holo
+                side: THREE.DoubleSide // Ensure visibility from all angles
+            }), // Left edge
+            new THREE.MeshStandardMaterial({ 
+                map: edgeTexture, 
+                emissive: 0x444444,
+                emissiveIntensity: 0.4,
+                metalness: 0.95,
+                roughness: 0.02,
+                envMapIntensity: 2.0,
+                side: THREE.DoubleSide
+            }), // Right edge
+            new THREE.MeshStandardMaterial({ 
+                map: edgeTexture, 
+                emissive: 0x444444,
+                emissiveIntensity: 0.4,
+                metalness: 0.95,
+                roughness: 0.02,
+                envMapIntensity: 2.0,
+                side: THREE.DoubleSide
+            }), // Top edge
+            new THREE.MeshStandardMaterial({ 
+                map: edgeTexture, 
+                emissive: 0x444444,
+                emissiveIntensity: 0.4,
+                metalness: 0.95,
+                roughness: 0.02,
+                envMapIntensity: 2.0,
+                side: THREE.DoubleSide
+            }), // Bottom edge
+            new THREE.MeshStandardMaterial({ 
+                map: laughingTexture, 
+                emissive: 0x000000, 
+                emissiveIntensity: 0.0, 
+                metalness: 0.4, // Slightly shinier for holo on images
+                roughness: 0.3,
+                envMapIntensity: 1.0, // Stronger reflection for holo on images
+                side: THREE.DoubleSide
+            }), // Front (rklaughing.png)
+            new THREE.MeshStandardMaterial({ 
+                map: cheeringTexture, 
+                emissive: 0x000000, 
+                emissiveIntensity: 0.0, 
+                metalness: 0.4,
+                roughness: 0.3,
+                envMapIntensity: 1.0,
+                side: THREE.DoubleSide
+            })  // Back (rkcheersing.png)
+        ];
+
+        const card = new THREE.Mesh(cardGeometry, cardMaterials);
+        scene.add(card);
+
+        // Create an advanced holographic environment map for reflectivity
+        const envMap = new THREE.CubeTextureLoader()
+            .setPath('https://threejs.org/examples/textures/cube/pisa/')
+            .load(['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg']);
+        for (let material of cardMaterials) {
+            material.envMap = envMap;
+            material.needsUpdate = true; // Ensure materials update with envMap
+        }
+
+        // Camera position
+        camera.position.set(0, 0, 9); // Slightly further for better view of details
+
+        // Star field (ultra-enhanced for sigma vibes)
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 7000; // Even denser for epic galaxy
+        const positions = new Float32Array(starCount * 3);
+        const colors = new Float32Array(starCount * 3);
+        const sizes = new Float32Array(starCount);
+
+        for (let i = 0; i < starCount; i++) {
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * 400; // Wider spread for massive galaxy
+            positions[i3 + 1] = (Math.random() - 0.5) * 400;
+            positions[i3 + 2] = (Math.random() - 0.5) * 400;
+            colors[i3] = Math.random() * 0.6 + 0.4; // Brighter, vibrant stars
+            colors[i3 + 1] = Math.random() * 0.4;
+            colors[i3 + 2] = Math.random() * 0.6 + 0.4;
+            sizes[i] = Math.random() * 0.5 + 0.15; // Larger, more detailed stars
+        }
+
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        starGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        const starMaterial = new THREE.PointsMaterial({
+            size: 0.3, // Larger for clarity and epicness
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.98,
+            sizeAttenuation: true,
+            depthWrite: false // Prevent z-fighting with other effects
+        });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // Advanced aura/glow effect (ultra-polished, sigma trail synced to card, holographic)
+        const auraTexture = new THREE.TextureLoader().load('https://i.imgur.com/8Odgf0m.png', 
+            () => {}, // On load
+            undefined, // On progress
+            (error) => console.error('Error loading auraTexture:', error) // On error
+        ); // High-quality, smooth particle sprite (circle with soft glow)
+        auraTexture.minFilter = THREE.LinearFilter; // Higher quality filtering
+        auraTexture.magFilter = THREE.LinearFilter;
+        const auraGeometry = new THREE.BufferGeometry();
+        const auraCount = 3000; // Even denser for ultra-epic aura
+        const auraPositions = new Float32Array(auraCount * 3);
+        const auraColors = new Float32Array(auraCount * 3);
+        const auraSizes = new Float32Array(auraCount);
+        const auraLifetimes = new Float32Array(auraCount); // For smooth fade-out
+        const auraVelocities = new Float32Array(auraCount * 3); // For smooth movement
+
+        for (let i = 0; i < auraCount; i++) {
+            const i3 = i * 3;
+            auraPositions[i3] = 0;
+            auraPositions[i3 + 1] = 0;
+            auraPositions[i3 + 2] = 0;
+            auraColors[i3] = Math.random() * 0.7 + 0.3; // Ultra-bright, holo colors
+            auraColors[i3 + 1] = Math.random() * 0.4;
+            auraColors[i3 + 2] = Math.random() * 0.7 + 0.3;
+            auraSizes[i] = Math.random() * 0.3 + 0.15; // Larger for ultra-holo glow
+            auraLifetimes[i] = Math.random() * 3 + 1.5; // Longer lifetime for smoother flow
+            auraVelocities[i3] = (Math.random() - 0.5) * 0.07; // Slightly faster for dynamism
+            auraVelocities[i3 + 1] = (Math.random() - 0.5) * 0.07;
+            auraVelocities[i3 + 2] = (Math.random() - 0.5) * 0.07;
+        }
+
+        auraGeometry.setAttribute('position', new THREE.BufferAttribute(auraPositions, 3));
+        auraGeometry.setAttribute('color', new THREE.BufferAttribute(auraColors, 3));
+        auraGeometry.setAttribute('size', new THREE.BufferAttribute(auraSizes, 1));
+        auraGeometry.setAttribute('lifetime', new THREE.BufferAttribute(auraLifetimes, 1));
+        auraGeometry.setAttribute('velocity', new THREE.BufferAttribute(auraVelocities, 3));
+
+        const auraMaterial = new THREE.PointsMaterial({
+            map: auraTexture,
+            size: 0.4, // Larger for ultra-epic holo effect
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.95,
+            sizeAttenuation: true,
+            depthWrite: false, // Prevent z-fighting
+            blending: THREE.AdditiveBlending, // Clean, glowing effect
+            alphaTest: 0.01 // Improve transparency rendering for sharpness
+        });
+        const auraSystem = new THREE.Points(auraGeometry, auraMaterial);
+        scene.add(auraSystem);
+
+        // Lighting (enhanced for ultra-holo shine)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); // Brighter for holo clarity
+        scene.add(ambientLight);
+        const pointLight1 = new THREE.PointLight(0xff0000, 2.0); // Brighter for dynamism
+        pointLight1.position.set(15, 15, 15);
+        scene.add(pointLight1);
+        const pointLight2 = new THREE.PointLight(0x00ff00, 2.0);
+        pointLight2.position.set(-15, -15, 15);
+        scene.add(pointLight2);
+        const pointLight3 = new THREE.PointLight(0x0000ff, 2.0);
+        pointLight3.position.set(0, 15, -15);
+        scene.add(pointLight3);
+
+        // Post-processing with ultra-holographic bloom for sigma vibes
+        const composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.4, 0.6); // Stronger, ultra-holo bloom
+        bloomPass.threshold = 0.3; // Lower for more holo edges, but still clear
+        bloomPass.strength = 1.2; // Stronger glow for ultra-holo
+        bloomPass.radius = 0.6; // Wider for epic holo spread
+        const copyPass = new THREE.ShaderPass(THREE.CopyShader);
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+        composer.addPass(copyPass);
+
+        // Animation loop
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Ultra-wild card rotation (even faster for epicness)
+            card.rotation.y += 0.08;
+            card.rotation.x += 0.06;
+            card.rotation.z += 0.04;
+
+            // Update stars with dynamic pulsing
+            stars.rotation.x += 0.003;
+            stars.rotation.y += 0.004;
+            stars.rotation.z += 0.002;
+            starMaterial.opacity = 0.98 + Math.sin(time * 0.6) * 0.08; // Stronger pulse for sigma vibes
+
+            // Advanced aura system (synced to card, ultra-smooth movement, holo glow)
+            time += 0.016; // Delta time (approx. 60 FPS)
+            for (let i = 0; i < auraCount; i++) {
+                const i3 = i * 3;
+                const lifetime = auraGeometry.attributes.lifetime.array[i];
+                let age = (time % lifetime) / lifetime; // Loop lifetime for continuous effect
+                if (age > 1) age = 0; // Reset if past lifetime
+
+                // Position aura around the card, synced to its rotation with pulsing
+                const angle = Math.atan2(card.rotation.y, card.rotation.x) + Math.random() * Math.PI * 2;
+                const distance = 2.0 + Math.sin(time + i * 0.1) * 0.3; // Wider, pulsing orbit for ultra-epic holo
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+                const z = (Math.random() - 0.5) * 0.6;
+
+                // Apply velocity for ultra-smooth movement
+                auraPositions[i3] += auraGeometry.attributes.velocity.array[i3] * 0.12; // Slightly faster for dynamism
+                auraPositions[i3 + 1] += auraGeometry.attributes.velocity.array[i3 + 1] * 0.12;
+                auraPositions[i3 + 2] += auraGeometry.attributes.velocity.array[i3 + 2] * 0.12;
+
+                // Apply position offset based on card rotation
+                auraPositions[i3] = card.position.x + x;
+                auraPositions[i3 + 1] = card.position.y + y;
+                auraPositions[i3 + 2] = card.position.z + z;
+
+                // Fade opacity and size based on age for ultra-smooth, holo fade-out
+                const opacity = 0.95 * (1 - age) * (1 + Math.sin(time + i * 0.25) * 0.15); // Stronger pulsing for holo
+                auraMaterial.opacity = Math.max(0.6, opacity); // Minimum opacity for consistent glow
+                auraSizes[i] = Math.max(0.15, auraSizes[i] * (1 - age) * (1 + Math.sin(time + i * 0.25) * 0.15)); // Pulsing size for ultra-holo
+            }
+            auraGeometry.attributes.position.needsUpdate = true;
+            auraGeometry.attributes.size.needsUpdate = true;
+
+            composer.render();
+        }
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
