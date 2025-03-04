@@ -41,7 +41,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 0;
+      width: 100%;
       max-width: 100%;
     }
     .game-container {
@@ -93,13 +94,14 @@
       border-radius: 5px;
       cursor: pointer;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      z-index: 10;
     }
     #mint-nft-button:hover {
       background: #FF4D3F;
     }
     @media (max-width: 480px) {
       header { font-size: 1.2em; padding: 15px 0; }
-      .game-container { padding-bottom: 56.25%; /* Adjust for mobile, 320/480 = 66.67%, but use 9:16 for better mobile fit */ }
+      .game-container { padding-bottom: 56.25%; /* 9:16 aspect ratio for mobile */ }
       #power-accent { width: 70px; }
       #mint-nft-button { top: 5px; right: 5px; padding: 8px 15px; font-size: 0.9em; }
     }
@@ -141,22 +143,22 @@
         oscillator.type = type || 'sine';
         oscillator.frequency.value = frequency;
         oscillator.start();
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); // Reduced volume for performance
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
         oscillator.stop(audioCtx.currentTime + duration);
       }, delay);
     }
-    function playBrickSound()    { playTone(400, 0.05, 'square'); }
-    function playPaddleSound()   { playTone(600, 0.04, 'sine'); }
-    function playWallSound()     { playTone(300, 0.04, 'sawtooth'); }
-    function playLifeLostSound() { playTone(200, 0.1, 'triangle'); }
-    function playGameoverSound() { playTone(150, 0.15, 'sine', 200); }
-    function playWinSound()      { playTone(800, 0.1, 'square', 100); }
-    function playBossHitSound()  { playTone(500, 0.06, 'triangle'); }
+    function playBrickSound()    { playTone(400, 0.03, 'square'); } // Reduced duration
+    function playPaddleSound()   { playTone(600, 0.02, 'sine'); }   // Reduced duration
+    function playWallSound()     { playTone(300, 0.02, 'sawtooth'); } // Reduced duration
+    function playLifeLostSound() { playTone(200, 0.05, 'triangle'); } // Reduced duration
+    function playGameoverSound() { playTone(150, 0.1, 'sine', 100); } // Reduced duration
+    function playWinSound()      { playTone(800, 0.05, 'square', 50); } // Reduced duration
+    function playBossHitSound()  { playTone(500, 0.03, 'triangle'); }  // Reduced duration
     
     const backgroundMusic = new Audio("https://fibonacciai.github.io/42069/Fury.mp3");
     backgroundMusic.loop = true;
-    backgroundMusic.volume = 0.5;
+    backgroundMusic.volume = 0.3; // Reduced volume for performance
     backgroundMusic.onerror = () => backgroundMusic.src = "data:audio/mpeg;base64,SGVsbG8gV29ybGQh"; // Fallback silent audio
     
     const ballImage = new Image();
@@ -223,22 +225,22 @@
     bossImage.crossOrigin = "anonymous";
     
     function spawnParticles(x, y, color) {
-      for (let i = 0; i < 5; i++) { // Reduced particle count for performance
+      for (let i = 0; i < 3; i++) { // Further reduced particle count for performance
         particles.push({
           x: x,
           y: y,
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2,
-          radius: Math.random() * 1 + 0.5,
+          vx: (Math.random() - 0.5) * 1,
+          vy: (Math.random() - 0.5) * 1,
+          radius: Math.random() * 0.5 + 0.2,
           alpha: 1,
-          color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`,
-          life: Math.random() * 10 + 5
+          color: `rgba(255, 255, 255, ${Math.random() * 0.3 + 0.2})`,
+          life: Math.random() * 5 + 2
         });
       }
     }
     
     function spawnPowerUp(x, y) {
-      if (Math.random() < 0.15 && powerUpTimer <= 0) { // Reduced spawn chance for performance
+      if (Math.random() < 0.1 && powerUpTimer <= 0) { // Reduced spawn chance further
         powerUps.push({
           x: x,
           y: y,
@@ -249,7 +251,7 @@
           alpha: 1,
           animTime: 0
         });
-        powerUpTimer = 2000;
+        powerUpTimer = 1500; // Reduced timer for performance
       }
     }
     
@@ -258,7 +260,7 @@
         let p = particles[i];
         p.x += p.vx * delta;
         p.y += p.vy * delta;
-        p.alpha -= 0.05 * delta; // Faster fade for performance
+        p.alpha -= 0.1 * delta; // Faster fade for performance
         p.life -= 1 * delta;
         if (p.alpha <= 0 || p.life <= 0) {
           particles.splice(i, 1);
@@ -280,7 +282,7 @@
         let p = powerUps[i];
         p.animTime += delta;
         p.y += p.vy * delta * 60;
-        p.alpha = Math.sin(p.animTime * 5) * 0.3 + 0.7;
+        p.alpha = Math.sin(p.animTime * 5) * 0.2 + 0.7; // Reduced alpha variation
         if (p.y > baseHeight) {
           powerUps.splice(i, 1);
         } else if (
@@ -295,25 +297,25 @@
     
     function activatePowerUp(type) {
       playPowerUpSound();
-      const duration = 500;
+      const duration = 300; // Reduced duration for performance
       let overlayText;
       if (type === 'shortSqueeze') {
         paddleWidth = 120;
-        setTimeout(() => paddleWidth = 75, 10000);
+        setTimeout(() => paddleWidth = 75, 8000); // Reduced duration
         overlayText = "Short Squeeze Activated!\nCrush the shorts!";
       } else if (type === 'retailArmy') {
         balls.push({ x: ballX, y: ballY, dx: dx, dy: dy, angle: 0 });
-        overlayText = "Retail Army Joins the Fight!\nMore balls, more power!";
+        overlayText = "Retail Army Joins!\nMore power!";
       } else if (type === 'memeMagic') {
         balls.forEach(ball => {
-          ball.dx *= 1.5; ball.dy *= 1.5;
+          ball.dx *= 1.3; ball.dy *= 1.3; // Reduced boost for performance
         });
         setTimeout(() => {
           balls.forEach(ball => {
-            ball.dx /= 1.5; ball.dy /= 1.5;
+            ball.dx /= 1.3; ball.dy /= 1.3;
           });
-        }, 5000);
-        overlayText = "Meme Magic Unleashed!\nSpeed boost activated!";
+        }, 4000); // Reduced duration
+        overlayText = "Meme Magic!\nSpeed boost!";
       }
       showOverlayWithFade(overlayText, duration);
     }
@@ -324,12 +326,12 @@
         const progress = Math.min((timestamp - startTime) / duration, 1);
         const alpha = easeInOutQuad(progress);
         ctx.save();
-        ctx.fillStyle = `rgba(0, 0, 0, ${0.85 * (1 - alpha)})`;
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.7 * (1 - alpha)})`; // Reduced opacity
         ctx.fillRect(0, 0, baseWidth, baseHeight);
-        ctx.font = "22px 'Montserrat', sans-serif";
-        ctx.fillStyle = `rgba(255, 255, 255, ${1 - alpha})`;
+        ctx.font = "20px 'Montserrat', sans-serif"; // Slightly smaller font
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.9 - alpha})`;
         ctx.textAlign = "center";
-        let lineHeight = 26;
+        let lineHeight = 24; // Slightly smaller line height
         let lines = message.split("\n");
         let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
         for (let i = 0; i < lines.length; i++) {
@@ -347,12 +349,12 @@
     
     function drawOverlay(message) {
       ctx.save();
-      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
       ctx.fillRect(0, 0, baseWidth, baseHeight);
-      ctx.font = "22px 'Montserrat', sans-serif";
+      ctx.font = "20px 'Montserrat', sans-serif";
       ctx.fillStyle = "#fff";
       ctx.textAlign = "center";
-      let lineHeight = 26;
+      let lineHeight = 24;
       let lines = message.split("\n");
       let startY = baseHeight / 2 - ((lines.length - 1) * lineHeight) / 2;
       for (let i = 0; i < lines.length; i++) {
@@ -416,7 +418,7 @@
               if (ball.x > b.x && ball.x < b.x + brickWidth && ball.y > b.y && ball.y < b.y + brickHeight) {
                 ball.dy = -ball.dy * 1.1;
                 b.status--;
-                b.shake = 10;
+                b.shake = 5; // Reduced shake for performance
                 if (b.status === 0) {
                   score += scoreIncrement;
                   playBrickSound();
@@ -430,9 +432,6 @@
                       bossActive = true;
                     }
                   }
-                }
-                if (score > 0 && score % (scoreIncrement * 5) === 0) {
-                  balls.forEach(b => { b.dx *= 1.05; b.dy *= 1.05; });
                 }
               }
             }
@@ -472,12 +471,12 @@
         ctx.save();
         ctx.translate(ball.x, ball.y);
         ctx.rotate(ball.angle);
-        ctx.shadowBlur = 10; // Reduced for performance
-        ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
-        ctx.globalAlpha = 0.9; // Simplified alpha for performance
+        ctx.shadowBlur = 5; // Further reduced for performance
+        ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+        ctx.globalAlpha = 0.8; // Simplified alpha
         ctx.drawImage(ballImage, -ballRadius, -ballRadius, ballRadius * 2, ballRadius * 2);
         ctx.restore();
-        ball.angle += 0.05; // Reduced rotation speed for performance
+        ball.angle += 0.03; // Further reduced rotation speed
       });
     }
     
@@ -487,9 +486,9 @@
       paddleGradient.addColorStop(0, "#00ADEF");
       paddleGradient.addColorStop(1, "#DA291C");
       ctx.fillStyle = paddleGradient;
-      ctx.shadowBlur = 10; // Reduced for performance
-      ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-      ctx.globalAlpha = 0.9; // Simplified alpha for performance
+      ctx.shadowBlur = 5; // Further reduced
+      ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+      ctx.globalAlpha = 0.8;
       ctx.fillRect(paddleX, baseHeight - paddleHeight, paddleWidth, paddleHeight);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = "12px 'Montserrat', sans-serif";
@@ -507,7 +506,6 @@
             b.x = brickX;
             b.y = brickY;
             ctx.save();
-            ctx.imageSmoothingEnabled = true;
             let img = brickImages[b.imgIndex];
             let imgWidth = img.complete ? img.naturalWidth : brickWidth;
             let imgHeight = img.complete ? img.naturalHeight : brickHeight;
@@ -517,14 +515,14 @@
             let offsetX = brickX + (brickWidth - drawWidth) / 2;
             let offsetY = brickY + (brickHeight - drawHeight) / 2;
             if (b.shake > 0) {
-              const shakeOffset = Math.sin(b.shake * 5) * 1; // Reduced shake for performance
+              const shakeOffset = Math.sin(b.shake * 3) * 0.5; // Minimal shake
               offsetX += shakeOffset;
               offsetY += shakeOffset;
-              b.shake -= delta * 5; // Faster shake decay
+              b.shake -= delta * 3;
             }
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-            ctx.globalAlpha = 0.9;
+            ctx.shadowBlur = 3; // Further reduced
+            ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+            ctx.globalAlpha = 0.8;
             ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
             ctx.restore();
           }
@@ -535,9 +533,9 @@
     function drawBoss() {
       if (bossActive && bossImage.complete) {
         ctx.save();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-        ctx.globalAlpha = 0.9;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+        ctx.globalAlpha = 0.8;
         ctx.drawImage(bossImage, bossX, bossY, bossWidth, bossHeight);
         ctx.font = "16px 'Montserrat', sans-serif";
         ctx.fillStyle = "#fff";
@@ -652,10 +650,9 @@
     
     async function connectAndMint() {
       try {
-        // Check if Farcaster SDK is loaded
         if (typeof window.farcaster === 'undefined') {
-          console.error("Farcaster SDK not loaded. Please ensure the SDK script is correctly included.");
-          alert("Farcaster SDK failed to load. Please check your internet connection, ensure you're in a Farcaster-supported environment (like Warpcast), or try again later.");
+          console.error("Farcaster SDK not loaded. Please ensure you're in Warpcast or a Farcaster-supported environment.");
+          alert("Farcaster SDK failed to load. Please ensure you're in Warpcast, check your internet connection, or try again later.");
           return;
         }
         const wallet = await window.farcaster.connect();
@@ -676,11 +673,11 @@
     
     function handleSdkError() {
       console.error("Failed to load Farcaster SDK. Please verify the URL or check your network.");
-      alert("Farcaster SDK could not load. Please ensure you're online and try again.");
+      alert("Farcaster SDK could not load. Please ensure you're in Warpcast, check your internet connection, or try again.");
     }
     
     function gameLoop(timestamp) {
-      let delta = Math.min((timestamp - lastTime) / 1000, 0.1);
+      let delta = Math.min((timestamp - lastTime) / 1000, 0.05); // Cap delta for smoother performance
       lastTime = timestamp;
       
       update(delta);
