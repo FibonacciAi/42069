@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>GameStop Breakout Revival Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <!-- Updated Farcaster SDK URL (as of March 2025; verify at https://docs.farcaster.com/sdk) -->
-  <script src="https://cdn.farcaster.xyz/sdk/v2/farcaster-sdk.js"></script>
+  <script src="https://cdn.farcaster.xyz/sdk/v2/farcaster-sdk.min.js" onerror="handleSdkError()"></script>
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
   <link rel="icon" href="https://fibonacciai.github.io/42069/favicon.ico" type="image/x-icon">
   <style>
@@ -19,6 +19,7 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      margin: 0;
     }
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -41,19 +42,27 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      max-width: 100%;
     }
     .game-container {
       position: relative;
-      width: 480px;
-      height: 320px;
+      width: 100%;
+      max-width: 480px;
+      height: 0;
+      padding-bottom: 66.67%; /* 320/480 = 66.67% for 3:2 aspect ratio */
       background: url('https://fibonacciai.github.io/42069/image-310.jpg') no-repeat center center;
       background-size: cover;
       border: 4px solid #555;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
       border-radius: 8px;
+      overflow: hidden;
     }
     canvas {
-      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background-color: rgba(0, 0, 0, 0.75);
       border-radius: 4px;
     }
@@ -90,7 +99,7 @@
     }
     @media (max-width: 480px) {
       header { font-size: 1.2em; padding: 15px 0; }
-      .game-container { width: 100%; height: 200px; border-width: 2px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
+      .game-container { padding-bottom: 56.25%; /* Adjust for mobile, 320/480 = 66.67%, but use 9:16 for better mobile fit */ }
       #power-accent { width: 70px; }
       #mint-nft-button { top: 5px; right: 5px; padding: 8px 15px; font-size: 0.9em; }
     }
@@ -116,9 +125,6 @@
     const ratio = window.devicePixelRatio || 1;
     canvas.width = baseWidth * ratio;
     canvas.height = baseHeight * ratio;
-    canvas.style.width = baseWidth + "px";
-    canvas.style.height = baseHeight + "px";
-    ctx.scale(ratio, ratio);
     
     let lastTime = performance.now();
     const targetFPS = 60;
@@ -217,22 +223,22 @@
     bossImage.crossOrigin = "anonymous";
     
     function spawnParticles(x, y, color) {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 5; i++) { // Reduced particle count for performance
         particles.push({
           x: x,
           y: y,
-          vx: (Math.random() - 0.5) * 4,
-          vy: (Math.random() - 0.5) * 4,
-          radius: Math.random() * 2 + 1,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          radius: Math.random() * 1 + 0.5,
           alpha: 1,
           color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`,
-          life: Math.random() * 20 + 10
+          life: Math.random() * 10 + 5
         });
       }
     }
     
     function spawnPowerUp(x, y) {
-      if (Math.random() < 0.25 && powerUpTimer <= 0) {
+      if (Math.random() < 0.15 && powerUpTimer <= 0) { // Reduced spawn chance for performance
         powerUps.push({
           x: x,
           y: y,
@@ -252,7 +258,7 @@
         let p = particles[i];
         p.x += p.vx * delta;
         p.y += p.vy * delta;
-        p.alpha -= 0.03 * delta;
+        p.alpha -= 0.05 * delta; // Faster fade for performance
         p.life -= 1 * delta;
         if (p.alpha <= 0 || p.life <= 0) {
           particles.splice(i, 1);
@@ -373,7 +379,7 @@
     }
     function mouseMoveHandler(e) {
       const rect = canvas.getBoundingClientRect();
-      let relativeX = (e.clientX - rect.left) / currentScale;
+      let relativeX = (e.clientX - rect.left) / (rect.width / baseWidth);
       if (relativeX > 0 && relativeX < baseWidth) paddleX = relativeX - paddleWidth / 2;
     }
     function handleTouchStart(e) {
@@ -389,8 +395,8 @@
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       let touch = e.touches[0];
-      let relativeX = Math.max(0, Math.min(baseWidth - paddleWidth, (touch.clientX - rect.left) / currentScale));
-      paddleX = relativeX;
+      let relativeX = Math.max(0, Math.min(baseWidth, (touch.clientX - rect.left) / (rect.width / baseWidth)));
+      paddleX = relativeX - paddleWidth / 2;
     }
     function keyPressHandler(e) {
       if (gameState === 'start' && e.key === 'Enter') {
@@ -466,12 +472,12 @@
         ctx.save();
         ctx.translate(ball.x, ball.y);
         ctx.rotate(ball.angle);
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = "rgba(255, 255, 255, 0.7)";
-        ctx.globalAlpha = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+        ctx.shadowBlur = 10; // Reduced for performance
+        ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+        ctx.globalAlpha = 0.9; // Simplified alpha for performance
         ctx.drawImage(ballImage, -ballRadius, -ballRadius, ballRadius * 2, ballRadius * 2);
         ctx.restore();
-        ball.angle += 0.08;
+        ball.angle += 0.05; // Reduced rotation speed for performance
       });
     }
     
@@ -481,9 +487,9 @@
       paddleGradient.addColorStop(0, "#00ADEF");
       paddleGradient.addColorStop(1, "#DA291C");
       ctx.fillStyle = paddleGradient;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-      ctx.globalAlpha = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+      ctx.shadowBlur = 10; // Reduced for performance
+      ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+      ctx.globalAlpha = 0.9; // Simplified alpha for performance
       ctx.fillRect(paddleX, baseHeight - paddleHeight, paddleWidth, paddleHeight);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = "12px 'Montserrat', sans-serif";
@@ -502,24 +508,23 @@
             b.y = brickY;
             ctx.save();
             ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high";
             let img = brickImages[b.imgIndex];
-            let imgWidth = (img.complete && img.naturalWidth) ? img.naturalWidth : brickWidth;
-            let imgHeight = (img.complete && img.naturalHeight) ? img.naturalHeight : brickHeight;
+            let imgWidth = img.complete ? img.naturalWidth : brickWidth;
+            let imgHeight = img.complete ? img.naturalHeight : brickHeight;
             let scale = Math.min(brickWidth / imgWidth, brickHeight / imgHeight);
             let drawWidth = imgWidth * scale;
             let drawHeight = imgHeight * scale;
             let offsetX = brickX + (brickWidth - drawWidth) / 2;
             let offsetY = brickY + (brickHeight - drawHeight) / 2;
             if (b.shake > 0) {
-              const shakeOffset = Math.sin(b.shake * 10) * 2;
+              const shakeOffset = Math.sin(b.shake * 5) * 1; // Reduced shake for performance
               offsetX += shakeOffset;
               offsetY += shakeOffset;
-              b.shake -= delta * 10;
+              b.shake -= delta * 5; // Faster shake decay
             }
             ctx.shadowBlur = 5;
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-            ctx.globalAlpha = b.alpha;
+            ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+            ctx.globalAlpha = 0.9;
             ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
             ctx.restore();
           }
@@ -531,7 +536,7 @@
       if (bossActive && bossImage.complete) {
         ctx.save();
         ctx.shadowBlur = 10;
-        ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
         ctx.globalAlpha = 0.9;
         ctx.drawImage(bossImage, bossX, bossY, bossWidth, bossHeight);
         ctx.font = "16px 'Montserrat', sans-serif";
@@ -650,7 +655,7 @@
         // Check if Farcaster SDK is loaded
         if (typeof window.farcaster === 'undefined') {
           console.error("Farcaster SDK not loaded. Please ensure the SDK script is correctly included.");
-          alert("Farcaster SDK failed to load. Please check your internet connection or try again later.");
+          alert("Farcaster SDK failed to load. Please check your internet connection, ensure you're in a Farcaster-supported environment (like Warpcast), or try again later.");
           return;
         }
         const wallet = await window.farcaster.connect();
@@ -659,7 +664,7 @@
           alert("NFT Minted!");
         } else {
           console.error("Failed to connect to wallet");
-          alert("Wallet connection failed. Please try again.");
+          alert("Wallet connection failed. Please ensure you're logged into Warpcast and try again.");
         }
       } catch (error) {
         console.error("Error connecting to wallet:", error);
@@ -668,6 +673,11 @@
     }
     
     document.getElementById("mint-nft-button").addEventListener("click", connectAndMint);
+    
+    function handleSdkError() {
+      console.error("Failed to load Farcaster SDK. Please verify the URL or check your network.");
+      alert("Farcaster SDK could not load. Please ensure you're online and try again.");
+    }
     
     function gameLoop(timestamp) {
       let delta = Math.min((timestamp - lastTime) / 1000, 0.1);
