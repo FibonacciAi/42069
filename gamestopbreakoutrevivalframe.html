@@ -5,33 +5,50 @@
   <title>Farcaster Frame: GameStop Breakout Revival</title>
   <!-- Farcaster Frames v2 Meta Tag -->
   <meta name="fc:frame" content='{
-    "version": "next",
+    "version": "v2",
     "imageUrl": "https://fibonacciai.github.io/42069/gamestopbreakoutpreview.png",
     "title": "GameStop Breakout Revival",
     "subtitle": "@heydimitri",
-    "button": {
-      "title": "Mint NFT",
-      "action": {
-        "type": "launch_frame",
-        "name": "GameStopBreakoutRevival",
-        "url": "https://fibonacciai.github.io/42069/gamestopataribreakoutrevival.html",
-        "splashImageUrl": "https://fibonacciai.github.io/42069/gamestopbreakoutsplash.png",
-        "splashBackgroundColor": "#000000"
+    "buttons": [
+      {
+        "title": "Mint NFT",
+        "action": {
+          "type": "launch_frame",
+          "name": "GameStopBreakoutRevival",
+          "url": "https://fibonacciai.github.io/42069/gamestop_atari_breakout_revival_farcaster.html",
+          "splashImageUrl": "https://fibonacciai.github.io/42069/gamestopbreakoutsplash.png",
+          "splashBackgroundColor": "#000000"
+        }
+      },
+      {
+        "title": "Learn More",
+        "action": "post_redirect",
+        "target": "https://fibonacciai.github.io/42069/readme.html"
       }
-    }
+    ]
   }' />
   <style>
     /* Basic fallback styling for non-Farcaster environments */
     body {
-      font-family: sans-serif;
+      font-family: 'Montserrat', sans-serif;
       text-align: center;
       padding: 2rem;
       background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 1rem;
+      color: #DA291C;
+    }
+    p {
+      font-size: 1.1em;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>Mint Your NFT</h1>
-  <p>This page is configured as a Farcaster Frame. Open it in a Farcaster-supported client (like Warpcast) to launch the minting experience.</p>
+  <h1>GameStop Breakout Revival</h1>
+  <p>This is a Farcaster Frame. Open it in Warpcast to play or mint your NFT!</p>
 </body>
 </html>
