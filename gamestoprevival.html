@@ -321,7 +321,7 @@
             showOverlayWithFade("Authentication failed. Please try again via the frame.", 2000);
             // Delay redirect to allow user interaction
             setTimeout(() => {
-              window.location.href = 'https://warpcast.com/~/login?redirect=' + encodeURIComponent(window.location.href);
+              window.location.href = 'https://warpcast.com/~/compose?text=Login%20to%20Wall%20Street%20Wrecker&embeds[]=' + encodeURIComponent(window.location.href) + '&frame=v2';
             }, 2000); // Delay redirect by 2 seconds to show the error message
           }
         } else {
@@ -332,9 +332,9 @@
       } catch (error) {
         console.error('Farcaster auth error:', error);
         showOverlayWithFade("Error connecting to Farcaster. Please try again or use the frame to login.", 2000);
-        // Delay redirect to prevent immediate jump
+        // Delay redirect to prevent immediate jump and allow user interaction
         setTimeout(() => {
-          window.location.href = 'https://warpcast.com/~/login?redirect=' + encodeURIComponent(window.location.href);
+          window.location.href = 'https://warpcast.com/~/compose?text=Login%20to%20Wall%20Street%20Wrecker&embeds[]=' + encodeURIComponent(window.location.href) + '&frame=v2';
         }, 2000); // Delay redirect by 2 seconds
       }
     }
