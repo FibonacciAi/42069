@@ -7,6 +7,18 @@
         body { margin: 0; overflow: hidden; background: black; }
         canvas { width: 100%; height: 100%; }
         audio { display: none; } /* Hide audio element but keep it functional */
+        #playButton { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            background: #fff; 
+            border: none; 
+            cursor: pointer; 
+            z-index: 1000; 
+        }
+        #playButton:hover { background: #ddd; }
     </style>
 </head>
 <body>
@@ -20,11 +32,12 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
-    <!-- Audio element for auto-playing the soundtrack -->
-    <audio id="backgroundMusic" autoplay loop>
+    <!-- Audio element with fallback and play button -->
+    <audio id="backgroundMusic" loop>
         <source src="https://fibonacciai.github.io/42069/Fury.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
+    <button id="playButton">Play Music</button>
 
     <script>
         // Scene setup
@@ -293,6 +306,35 @@
         composer.addPass(renderPass);
         composer.addPass(bloomPass);
         composer.addPass(copyPass);
+
+        // Audio handling with play button
+        const audio = document.getElementById('backgroundMusic');
+        const playButton = document.getElementById('playButton');
+
+        playButton.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play().catch(error => console.error('Audio play failed:', error));
+                playButton.textContent = 'Pause Music';
+            } else {
+                audio.pause();
+                playButton.textContent = 'Play Music';
+            }
+        });
+
+        // Check if audio can play automatically (fallback if blocked)
+        audio.addEventListener('canplaythrough', () => {
+            if (audio.paused) {
+                audio.play().catch(error => {
+                    console.warn('Auto-play blocked by browser, use play button:', error);
+                    playButton.style.display = 'block'; // Show button if auto-play fails
+                });
+            }
+        });
+
+        audio.addEventListener('error', (error) => {
+            console.error('Audio loading error:', error);
+            alert('Audio failed to load. Check the URL or host it locally.');
+        });
 
         // Animation loop
         let time = 0;
