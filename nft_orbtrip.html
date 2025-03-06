@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Cycle: Beyond the Void</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script>
+        // Scene Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        camera.position.z = 10;
+
+        // Orb of Creation
+        const orbGeo = new THREE.SphereGeometry(2, 32, 32);
+        const orbMat = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0 } },
+            vertexShader: `
+                varying vec2 vUv;
+                uniform float time;
+                void main() {
+                    vUv = uv;
+                    vec3 pos = position;
+                    float scale = 2.0 + sin(time) * 0.2;
+                    pos *= scale;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float time;
+                float noise(vec2 p) {
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
+                void main() {
+                    vec2 uv = vUv + time * 0.1;
+                    float n = noise(uv * 10.0);
+                    float fresnel = pow(1.0 - dot(normalize(vUv - 0.5), vec2(0.0, 1.0)), 2.0);
+                    vec3 color = mix(vec3(0.0, 0.5, 1.0), vec3(1.0, 0.0, 1.0), n * fresnel);
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `,
+            side: THREE.DoubleSide
+        });
+        const orb = new THREE.Mesh(orbGeo, orbMat);
+        scene.add(orb);
+
+        // Cosmic Echo (Orb Ghost)
+        const echoOrbMat = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0 } },
+            vertexShader: orbMat.vertexShader,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float time;
+                float noise(vec2 p) {
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
+                void main() {
+                    vec2 uv = vUv + time * 0.15;
+                    float n = noise(uv * 10.0);
+                    float fresnel = pow(1.0 - dot(normalize(vUv - 0.5), vec2(0.0, 1.0)), 2.0);
+                    vec3 color = mix(vec3(0.0, 0.5, 1.0), vec3(1.0, 0.0, 1.0), n * fresnel);
+                    gl_FragColor = vec4(color, 0.3 * (sin(time * 0.5) + 1.0)); // Pulsing opacity
+                }
+            `,
+            side: THREE.DoubleSide,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const echoOrb = new THREE.Mesh(orbGeo, echoOrbMat);
+        scene.add(echoOrb);
+
+        // Tendrils
+        const tendrilCount = 1000;
+        const tendrils = [];
+        for (let i = 0; i < tendrilCount; i++) {
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(6);
+            pos[0] = (Math.random() - 0.5) * 2;
+            pos[1] = (Math.random() - 0.5) * 2;
+            pos[2] = (Math.random() - 0.5) * 2;
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const mat = new THREE.LineBasicMaterial({ color: new THREE.Color().setHSL(i / tendrilCount, 1, 0.5) });
+            const line = new THREE.Line(geo, mat);
+            tendrils.push({ mesh: line, vel: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.05) });
+            scene.add(line);
+        }
+
+        // Fractal Burst
+        const fractalGeo = new THREE.BufferGeometry();
+        const fractalPos = new Float32Array(1000 * 3);
+        for (let i = 0; i < 1000; i++) {
+            fractalPos[i * 3] = (Math.random() - 0.5) * 10;
+            fractalPos[i * 3 + 1] = (Math.random() - 0.5) * 10;
+            fractalPos[i * 3 + 2] = (Math.random() - 0.5) * 10;
+        }
+        fractalGeo.setAttribute('position', new THREE.BufferAttribute(fractalPos, 3));
+        const fractalMat = new THREE.PointsMaterial({ size: 0.1, color: 0xff0000, transparent: true, opacity: 0 });
+        const fractal = new THREE.Points(fractalGeo, fractalMat);
+        scene.add(fractal);
+
+        // Polyhedral Entities
+        const entities = [];
+        for (let i = 0; i < 5; i++) {
+            const geo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true });
+            const entity = new THREE.Mesh(geo, mat);
+            entity.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+            entities.push({ mesh: entity, vel: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.1) });
+            scene.add(entity);
+        }
+
+        // Enhanced Singularity with Warp Field
+        const singularityGeo = new THREE.SphereGeometry(1, 64, 64);
+        const singularityMat = new THREE.ShaderMaterial({
+            uniforms: { 
+                time: { value: 0 },
+                intensity: { value: 1.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                uniform float time;
+                uniform float intensity;
+                void main() {
+                    vUv = uv;
+                    vec3 pos = position;
+                    float distort = sin(time * 2.0 + pos.x + pos.y + pos.z) * 0.5 * intensity;
+                    float swirl = atan(pos.z, pos.x) + time * 0.5;
+                    pos += normal * distort;
+                    pos.xy *= vec2(cos(swirl), sin(swirl));
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float time;
+                float noise(vec2 p) {
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
+                void main() {
+                    vec2 uv = vUv + sin(time * 0.5) * 0.1;
+                    float n = noise(uv * 5.0 + time);
+                    float dist = length(vUv - 0.5);
+                    vec3 color = mix(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.5, 0.0), smoothstep(0.0, 0.5, n * (1.0 - dist)));
+                    gl_FragColor = vec4(color, 1.0 - dist * 2.0);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const singularity = new THREE.Mesh(singularityGeo, singularityMat);
+        singularity.visible = false;
+        scene.add(singularity);
+
+        // Cosmic Echo (Singularity Ghost)
+        const echoSingularityMat = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0 }, intensity: { value: 1.0 } },
+            vertexShader: singularityMat.vertexShader,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float time;
+                float noise(vec2 p) {
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                }
+                void main() {
+                    vec2 uv = vUv + sin(time * 0.7) * 0.1;
+                    float n = noise(uv * 5.0 + time);
+                    float dist = length(vUv - 0.5);
+                    vec3 color = mix(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.5, 0.0), smoothstep(0.0, 0.5, n * (1.0 - dist)));
+                    gl_FragColor = vec4(color, 0.2 * (cos(time * 0.3) + 1.0)); // Pulsing opacity
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const echoSingularity = new THREE.Mesh(singularityGeo, echoSingularityMat);
+        echoSingularity.visible = false;
+        scene.add(echoSingularity);
+
+        // Warp Field (Background Distortion)
+        const warpGeo = new THREE.PlaneGeometry(50, 50);
+        const warpMat = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0 }, singularityPos: { value: new THREE.Vector3() } },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float time;
+                uniform vec3 singularityPos;
+                void main() {
+                    vec2 uv = vUv - 0.5;
+                    float dist = length(uv - singularityPos.xy * 0.1);
+                    vec2 warp = uv + normalize(uv) * sin(dist * 10.0 - time * 2.0) * 0.05;
+                    vec3 color = vec3(0.1, 0.0, 0.2) * (1.0 - smoothstep(0.0, 0.5, dist));
+                    gl_FragColor = vec4(color, 0.5);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const warp = new THREE.Mesh(warpGeo, warpMat);
+        warp.position.z = -10;
+        scene.add(warp);
+
+        // Dimensional Shards (Replaces Reality Shatter)
+        const shardCount = 50;
+        const shards = [];
+        for (let i = 0; i < shardCount; i++) {
+            const geo = new THREE.TetrahedronGeometry(0.5 + Math.random() * 0.5, 0);
+            const mat = new THREE.MeshBasicMaterial({ 
+                color: new THREE.Color().setHSL(Math.random(), 1, 0.5), 
+                wireframe: true, 
+                transparent: true, 
+                opacity: 0 
+            });
+            const shard = new THREE.Mesh(geo, mat);
+            shard.position.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
+            shards.push({ 
+                mesh: shard, 
+                vel: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.1), 
+                rot: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.05) 
+            });
+            scene.add(shard);
+        }
+
+        // Audio
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        osc1.frequency.value = 200;
+        osc2.frequency.value = 240;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.1;
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc1.start();
+        osc2.start();
+
+        // Subharmonic Collapse (Low Freq)
+        const subOsc = audioCtx.createOscillator();
+        subOsc.frequency.value = 30; // Deep rumble
+        const subGain = audioCtx.createGain();
+        subGain.gain.value = 0;
+        subOsc.connect(subGain);
+        subGain.connect(audioCtx.destination);
+        subOsc.start();
+
+        // Animation Loop with Cyclical Reset
+        let time = 0;
+        let phase = 0;
+        const cycleDuration = 70;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.02;
+
+            // Orb Pulse
+            orbMat.uniforms.time.value = time;
+            echoOrbMat.uniforms.time.value = time + 2; // Out of phase echo
+            echoOrb.scale.setScalar(2 + Math.sin(time * 0.5) * 0.5); // Echo pulses larger
+
+            // Tendrils
+            tendrils.forEach(t => {
+                const pos = t.mesh.geometry.attributes.position.array;
+                pos[3] = pos[0] + Math.sin(time + pos[0]) * 0.5;
+                pos[4] = pos[1] + Math.cos(time + pos[1]) * 0.5;
+                pos[5] = pos[2] + Math.sin(time + pos[2]) * 0.5;
+                t.mesh.geometry.attributes.position.needsUpdate = true;
+            });
+
+            // Warp Field
+            warpMat.uniforms.time.value = time;
+            warpMat.uniforms.singularityPos.value.copy(singularity.position);
+
+            // Trip Phases
+            if (phase === 0 && time > 10) {
+                orb.visible = false;
+                echoOrb.visible = false;
+                tendrils.forEach(t => t.mesh.visible = false);
+                fractal.material.opacity = 1;
+                phase = 1;
+            }
+            if (phase === 1) {
+                entities.forEach(e => {
+                    e.mesh.position.add(e.vel);
+                    e.mesh.rotation.x += 0.05;
+                    e.mesh.rotation.y += 0.05;
+                    if (time > 25) {
+                        const dir = singularity.position.clone().sub(e.mesh.position).normalize().multiplyScalar(0.05);
+                        e.mesh.position.add(dir);
+                    }
+                });
+                if (time > 30) {
+                    fractal.material.opacity = 0;
+                    entities.forEach(e => e.mesh.visible = false);
+                    singularity.visible = true;
+                    echoSingularity.visible = true;
+                    phase = 2;
+                }
+            }
+            if (phase === 2) {
+                singularityMat.uniforms.time.value = time;
+                singularityMat.uniforms.intensity.value = 1.0 + Math.sin(time) * 0.5;
+                singularity.scale.setScalar(1 + Math.sin(time * 0.3) * 0.7);
+                echoSingularityMat.uniforms.time.value = time + 1.5; // Out of phase
+                echoSingularity.scale.setScalar(1.5 + Math.cos(time * 0.4) * 0.8);
+                camera.position.z = Math.max(5, camera.position.z - 0.1);
+                tendrils.forEach(t => {
+                    const pos = t.mesh.geometry.attributes.position.array;
+                    const dir = singularity.position.clone().sub(new THREE.Vector3(pos[0], pos[1], pos[2])).normalize().multiplyScalar(0.02);
+                    pos[0] += dir.x; pos[1] += dir.y; pos[2] += dir.z;
+                    t.mesh.geometry.attributes.position.needsUpdate = true;
+                });
+                subGain.gain.value = 0.2 * (1 + Math.sin(time * 0.3)); // Subharmonic rumble
+                if (time > 50) {
+                    singularity.visible = false;
+                    echoSingularity.visible = false;
+                    subGain.gain.value = 0;
+                    shards.forEach(s => s.mesh.material.opacity = 1);
+                    phase = 3;
+                }
+            }
+            if (phase === 3) {
+                shards.forEach(s => {
+                    s.mesh.position.add(s.vel);
+                    s.mesh.rotation.x += s.rot.x;
+                    s.mesh.rotation.y += s.rot.y;
+                    s.mesh.rotation.z += s.rot.z;
+                    s.mesh.material.opacity -= 0.01;
+                });
+                if (time > 60) phase = 4;
+            }
+            if (phase === 4) {
+                if (time > cycleDuration) {
+                    time = 0;
+                    phase = 0;
+                    orb.visible = true;
+                    echoOrb.visible = true;
+                    tendrils.forEach(t => {
+                        t.mesh.visible = true;
+                        const pos = t.mesh.geometry.attributes.position.array;
+                        pos[0] = (Math.random() - 0.5) * 2;
+                        pos[1] = (Math.random() - 0.5) * 2;
+                        pos[2] = (Math.random() - 0.5) * 2;
+                        t.mesh.geometry.attributes.position.needsUpdate = true;
+                    });
+                    fractal.material.opacity = 0;
+                    entities.forEach(e => {
+                        e.mesh.visible = true;
+                        e.mesh.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+                    });
+                    shards.forEach(s => {
+                        s.mesh.material.opacity = 0;
+                        s.mesh.position.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
+                    });
+                    camera.position.z = 10;
+                }
+            }
+
+            // Audio Pitch
+            osc1.frequency.value = 200 + Math.sin(time) * 20;
+            osc2.frequency.value = 240 + Math.sin(time) * 20;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Start on Spacebar
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') animate();
+        });
+
+        // Resize Handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
