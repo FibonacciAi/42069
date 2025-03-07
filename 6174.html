@@ -1,266 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Psychedelic 3D Kaprekar 6174 + GME Tinfoil Madness</title>
-  <style>
-    body {
-      margin: 0; 
-      overflow: hidden; 
-      background-color: #000; 
-      font-family: sans-serif;
-      color: #fff;
-    }
-    #overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      padding: 10px;
-      background-color: rgba(0, 0, 0, 0.4);
-      z-index: 999;
-    }
-    #overlay h1 {
-      margin: 0;
-      font-size: 1.2em;
-      color: lime;
-    }
-    #overlay p {
-      margin: 4px 0;
-      font-size: 0.9em;
-      color: #ddd;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Dope Calm Viz Tool</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            touch-action: manipulation;
+            background: linear-gradient(135deg, #1a252e, #3a4d5a);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            filter: brightness(1.2) contrast(1.1);
+        }
+
+        .message {
+            position: absolute;
+            font-size: 3vw;
+            color: rgba(255, 255, 255, 0.95);
+            text-align: center;
+            padding: 15px 30px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.8s ease, transform 0.5s ease;
+            transform: translateY(20px);
+            z-index: 2;
+        }
+
+        .message.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 25vw;
+            height: 25vw;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: pulse 10s ease-in-out infinite;
+            z-index: 0;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.3); opacity: 0.6; }
+            50% { transform: scale(1.4); opacity: 0.1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <canvas id="vizCanvas"></canvas>
+        <div class="pulse-ring"></div>
+        <div class="message" id="messageDisplay"></div>
+    </div>
 
-<div id="overlay">
-  <h1>Kaprekar’s Constant & GME Tinfoil Theory</h1>
-  <p>Diamond hands swirling in 3D cosmic neon!</p>
-</div>
+    <script>
+        const canvas = document.getElementById('vizCanvas');
+        const ctx = canvas.getContext('2d');
+        const messageElement = document.getElementById('messageDisplay');
 
-<!-- THREE.js and its submodules loaded via ES Modules -->
-<script type="module">
-/* 
-  We’ll import from a CDN:
-  - THREE core
-  - OrbitControls for navigation
-  - FontLoader & TextGeometry for text
-  - Postprocessing modules (EffectComposer, RenderPass, UnrealBloomPass)
-*/
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.151.3/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/controls/OrbitControls.js';
-import { FontLoader } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/loaders/FontLoader.js';
-import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/geometries/TextGeometry.js';
-import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/jsm/postprocessing/UnrealBloomPass.js';
+        // Resize canvas with pixel density for mobile
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            ctx.scale(dpr, dpr);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-let scene, camera, renderer, composer;
-let clock;
-let rotatingGroup;
-let textMesh6174, textMeshGME;
-let font;
+        // Audio: Wind-like sound with binaural beats
+        let audioContext;
+        let windNoise;
+        function initializeAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-let colorPalette = [
-  0xff00ff, 0xffff00, 0x00ff00, 0x00ffff, 0xff9900, 0xff0066, 0xccff00, 0xff0000, 0xAA00FF
-];
+                // Wind sound with filtered white noise
+                windNoise = audioContext.createBufferSource();
+                const bufferSize = audioContext.sampleRate * 5;
+                const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.sin(i / audioContext.sampleRate * Math.PI * 0.05) * 0.3;
+                }
+                windNoise.buffer = buffer;
+                windNoise.loop = true;
 
-init();
-animate();
+                const windFilter = audioContext.createBiquadFilter();
+                windFilter.type = 'lowpass';
+                windFilter.frequency.setValueAtTime(400, audioContext.currentTime);
+                const windGain = audioContext.createGain();
+                windGain.gain.setValueAtTime(0.04, audioContext.currentTime);
 
-function init() {
-  scene = new THREE.Scene();
-  clock = new THREE.Clock();
+                windNoise.connect(windFilter);
+                windFilter.connect(windGain);
+                windGain.connect(audioContext.destination);
+                windNoise.start();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
 
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
-  camera.position.set(0, 20, 45);
+        function playBinauralBeat() {
+            if (!audioContext) return;
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+            // Binaural beat: 432 Hz left, 436 Hz right (4 Hz difference for theta waves)
+            const oscLeft = audioContext.createOscillator();
+            const oscRight = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const pannerLeft = audioContext.createStereoPanner();
+            const pannerRight = audioContext.createStereoPanner();
 
-  // Basic lights
-  const pointLight = new THREE.PointLight(0xffffff, 1.5);
-  pointLight.position.set(30, 30, 30);
-  scene.add(pointLight);
+            oscLeft.type = 'sine';
+            oscRight.type = 'sine';
+            oscLeft.frequency.setValueAtTime(432, audioContext.currentTime);
+            oscRight.frequency.setValueAtTime(436, audioContext.currentTime);
 
-  // Another pointLight for “disco-ball” effect
-  const pointLight2 = new THREE.PointLight(0xffffff, 1.2);
-  pointLight2.position.set(-30, -10, -30);
-  scene.add(pointLight2);
+            pannerLeft.pan.setValueAtTime(-1, audioContext.currentTime);
+            pannerRight.pan.setValueAtTime(1, audioContext.currentTime);
 
-  // Ambient to soften shadows
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-  scene.add(ambientLight);
+            oscLeft.connect(pannerLeft);
+            oscRight.connect(pannerRight);
+            pannerLeft.connect(gainNode);
+            pannerRight.connect(gainNode);
+            gainNode.connect(audioContext.destination);
 
-  // Postprocessing composer
-  composer = new EffectComposer(renderer);
-  const renderPass = new RenderPass(scene, camera);
-  composer.addPass(renderPass);
+            gainNode.gain.setValueAtTime(0.06, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 5);
 
-  // UnrealBloomPass for that intense glow
-  const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.2,  // strength
-    0.4,  // radius
-    0.85  // threshold
-  );
-  composer.addPass(bloomPass);
+            oscLeft.start();
+            oscRight.start();
+            oscLeft.stop(audioContext.currentTime + 5);
+            oscRight.stop(audioContext.currentTime + 5);
+        }
 
-  // OrbitControls so we can fly around
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.minDistance = 10;
-  controls.maxDistance = 150;
+        // Haptic feedback
+        function triggerHaptic() {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(30);
+            }
+        }
 
-  // A group that rotates altogether
-  rotatingGroup = new THREE.Group();
-  scene.add(rotatingGroup);
+        // Messages
+        const messages = [
+            'Just chill, my dude',
+            'Vibe in the stillness, bro',
+            'Let that stress go, fam',
+            'You’re solid as hell, man',
+            'Find your chill zone, homie',
+            'Kick back and zen out, bruh'
+        ];
+        let messageIndex = 0;
 
-  // Add a big TorusKnot
-  const torusGeo = new THREE.TorusKnotGeometry(10, 1.8, 200, 32, 2, 3);
-  const torusMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    metalness: 0.5,
-    roughness: 0.3
-  });
-  const torusMesh = new THREE.Mesh(torusGeo, torusMat);
-  rotatingGroup.add(torusMesh);
+        // Particle class for subtle sparkle effect
+        class Particle {
+            constructor(x, y, hue) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = (Math.random() - 0.5) * 2;
+                this.life = Math.random() * 60 + 30;
+                this.hue = hue;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life--;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 70%, 70%, ${this.life / 60})`;
+                ctx.fill();
+            }
+        }
 
-  // Load a font to create text geometries
-  const fontLoader = new FontLoader();
-  fontLoader.load(
-    'https://cdn.jsdelivr.net/npm/three@0.151.3/examples/fonts/helvetiker_regular.typeface.json',
-    (loadedFont) => {
-      font = loadedFont;
-      createText();
-    }
-  );
+        // Enhanced Blob with particles
+        class Blob {
+            constructor() {
+                this.x = canvas.width / 2 / window.devicePixelRatio + (Math.random() - 0.5) * canvas.width * 0.3 / window.devicePixelRatio;
+                this.y = canvas.height / 2 / window.devicePixelRatio + (Math.random() - 0.5) * canvas.height * 0.3 / window.devicePixelRatio;
+                this.radius = Math.random() * 120 + 60;
+                this.points = [];
+                this.speed = 0.015 + Math.random() * 0.005;
+                this.hue = Math.random() * 20 + 180;
+                this.rotation = 0;
+                for (let i = 0; i < 12; i++) {
+                    const angle = (Math.PI * 2 / 12) * i;
+                    this.points.push({
+                        x: Math.cos(angle) * this.radius,
+                        y: Math.sin(angle) * this.radius,
+                        offset: Math.random() * 0.15,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+                this.particles = [];
+            }
+            update(time) {
+                this.rotation += this.speed * 0.1;
+                this.points.forEach(point => {
+                    point.phase += this.speed;
+                    const noise = Math.sin(time + point.phase) * 30;
+                    point.x = Math.cos(point.phase + this.rotation) * (this.radius + noise * point.offset);
+                    point.y = Math.sin(point.phase + this.rotation) * (this.radius + noise * point.offset);
+                });
 
-  // Create random swirling shapes
-  createRandomShapes();
+                // Add particles randomly
+                if (Math.random() < 0.1) {
+                    this.particles.push(new Particle(this.x, this.y, this.hue));
+                }
+                this.particles = this.particles.filter(p => p.life > 0);
+                this.particles.forEach(p => p.update());
+            }
+            draw() {
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, this.radius * 0.2,
+                    this.x, this.y, this.radius * 1.5
+                );
+                gradient.addColorStop(0, `hsla(${this.hue}, 70%, 75%, 0.9)`);
+                gradient.addColorStop(0.5, `hsla(${this.hue}, 60%, 55%, 0.7)`);
+                gradient.addColorStop(1, `hsla(${this.hue}, 50%, 35%, 0.2)`);
 
-  window.addEventListener('resize', onWindowResize, false);
-}
+                ctx.beginPath();
+                ctx.fillStyle = gradient;
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = `hsla(${this.hue}, 60%, 60%, 0.7)`;
+                for (let i = 0; i < this.points.length; i++) {
+                    const p1 = this.points[i];
+                    const p2 = this.points[(i + 1) % this.points.length];
+                    const xc = (p1.x + p2.x) / 2 + this.x;
+                    const yc = (p1.y + p2.y) / 2 + this.y;
+                    i === 0 ? ctx.moveTo(this.x + p1.x, this.y + p1.y) : ctx.quadraticCurveTo(this.x + p1.x, this.y + p1.y, xc, yc);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
 
-function createText() {
-  // 6174 text
-  const textGeo6174 = new TextGeometry("6174", {
-    font: font,
-    size: 4,
-    height: 1,
-    curveSegments: 10
-  });
-  const textMat6174 = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  textMesh6174 = new THREE.Mesh(textGeo6174, textMat6174);
-  textMesh6174.position.set(-7, 5, 0);
-  rotatingGroup.add(textMesh6174);
+                // Draw particles
+                this.particles.forEach(p => p.draw());
+            }
+        }
 
-  // “GME TINFOIL THEORY”
-  const textGeoGME = new TextGeometry("GME TINFOIL THEORY", {
-    font: font,
-    size: 2,
-    height: 0.8,
-    curveSegments: 10
-  });
-  const textMatGME = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  textMeshGME = new THREE.Mesh(textGeoGME, textMatGME);
-  textMeshGME.position.set(-15, -5, 0);
-  rotatingGroup.add(textMeshGME);
-}
+        const blobs = [new Blob(), new Blob(), new Blob()];
+        let time = 0;
 
-function createRandomShapes() {
-  // We'll add a few random shapes (spheres, cubes) in the scene
-  // that will pulse in color and slightly scale with time.
-  const shapesGroup = new THREE.Group();
-  scene.add(shapesGroup);
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const shapeCount = 20; 
-  for(let i=0; i<shapeCount; i++) {
-    let geometry;
-    if (Math.random() > 0.5) {
-      geometry = new THREE.SphereGeometry(1 + Math.random()*2, 12, 12);
-    } else {
-      geometry = new THREE.BoxGeometry(1 + Math.random()*2, 1 + Math.random()*2, 1 + Math.random()*2);
-    }
-    const material = new THREE.MeshStandardMaterial({
-      color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
-      metalness: 0.4,
-      roughness: 0.4
-    });
-    const mesh = new THREE.Mesh(geometry, material);
+            blobs.forEach(blob => {
+                blob.update(time);
+                blob.draw();
+            });
 
-    // Position randomly in a sphere region around the origin
-    const radius = 25 + Math.random() * 15;
-    const theta = Math.random() * 2 * Math.PI;
-    const phi = Math.random() * Math.PI;
+            time += 0.015;
+            if (Math.sin(time) > 0.95 && Math.random() < 0.03) {
+                blobs.push(new Blob());
+                if (blobs.length > 4) blobs.shift();
+            }
 
-    mesh.position.set(
-      radius * Math.sin(phi) * Math.cos(theta),
-      radius * Math.sin(phi) * Math.sin(theta),
-      radius * Math.cos(phi)
-    );
+            requestAnimationFrame(animate);
+        }
+        animate();
 
-    // Let’s store a custom speed for pulsing
-    mesh.userData.pulseSpeed = 0.2 + Math.random();
+        function updateScene() {
+            playBinauralBeat();
+            triggerHaptic();
 
-    shapesGroup.add(mesh);
-  }
-}
+            messageElement.textContent = messages[messageIndex];
+            messageElement.classList.add('visible');
+            messageElement.style.left = `${(window.innerWidth - messageElement.offsetWidth) / 2}px`;
+            messageElement.style.top = `${window.innerHeight * 0.75}px`;
+            setTimeout(() => messageElement.classList.remove('visible'), 3500);
+            messageIndex = (messageIndex + 1) % messages.length;
+        }
 
-// Window resizing
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
-}
+        let intervalSpeed = 5000;
+        setInterval(updateScene, intervalSpeed);
 
-function animate() {
-  requestAnimationFrame(animate);
-  const elapsed = clock.getElapsedTime();
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '+') intervalSpeed = Math.max(2000, intervalSpeed - 1000);
+            if (e.key === '-') intervalSpeed += 1000;
+            clearInterval(updateScene);
+            setInterval(updateScene, intervalSpeed);
+        });
 
-  // Rotate the main group for that cosmic swirl
-  rotatingGroup.rotation.y += 0.002;
-
-  // Animate text color shift: use a hue shift based on time
-  if (textMesh6174) {
-    const hue = (Math.sin(elapsed * 1.5) * 0.5 + 0.5);
-    textMesh6174.material.color.setHSL(hue, 1.0, 0.5);
-  }
-  if (textMeshGME) {
-    const hue2 = (Math.sin(elapsed * 0.9 + 2) * 0.5 + 0.5);
-    textMeshGME.material.color.setHSL(hue2, 1.0, 0.5);
-  }
-
-  // Pulse the torus color
-  rotatingGroup.children.forEach(obj => {
-    if (obj.isMesh) {
-      const wave = 0.5 + 0.5 * Math.sin(elapsed * 3);
-      obj.material.color.setHSL(wave, 1.0, 0.5);
-    }
-  });
-
-  // Optionally, we could find the shapesGroup we added and animate them
-  // The shapes are directly in scene.children, so let's do a quick search
-  scene.children.forEach(child => {
-    // If it has many children, likely our shapesGroup
-    if (child.children && child.children.length === 20) {
-      child.children.forEach((mesh) => {
-        // Scale pulsation
-        let scaleOffset = Math.sin(elapsed * mesh.userData.pulseSpeed) * 0.2;
-        mesh.scale.set(1 + scaleOffset, 1 + scaleOffset, 1 + scaleOffset);
-
-        // Optionally rotate them randomly
-        mesh.rotation.x += 0.01 * mesh.userData.pulseSpeed;
-        mesh.rotation.y += 0.02 * mesh.userData.pulseSpeed;
-      });
-    }
-  });
-
-  // Render with postprocessing
-  composer.render();
-}
-</script>
-
+        // Ensure audio plays on user interaction
+        document.body.addEventListener('touchstart', initializeAudioContext, { once: true });
+        document.body.addEventListener('click', initializeAudioContext, { once: true });
+    </script>
 </body>
 </html>
