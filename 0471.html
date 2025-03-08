@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ultimate Calm Visualization Engine v2</title>
+  <title>Ultimate Calm Visualization Engine</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       height: 100vh;
       overflow: hidden;
-      background: linear-gradient(135deg, #0a0e14, #1a2633);
+      background: #0a0e14;
       font-family: 'Segoe UI', sans-serif;
       color: #fff;
-      transition: background 2s ease;
+      transition: background 1s ease;
+      padding-bottom: 50px;
     }
     .container {
       position: relative;
@@ -32,17 +33,17 @@
     }
     .message-box {
       position: absolute;
-      font-size: clamp(1.5rem, 3.5vw, 4rem);
+      font-size: clamp(1.5rem, 3vw, 3rem);
       color: rgba(255, 255, 255, 0.95);
       text-align: center;
-      padding: 25px 50px;
-      border-radius: 40px;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(15px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      padding: 20px 40px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
       opacity: 0;
-      transform: translateY(50px) scale(0.9);
-      transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform: translateY(30px) scale(0.95);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 10;
     }
     .message-box.active {
@@ -52,7 +53,7 @@
     .ui-overlay {
       position: absolute;
       z-index: 11;
-      padding: 25px;
+      padding: 20px;
       top: 20px;
       left: 20px;
       opacity: 1;
@@ -63,58 +64,31 @@
       pointer-events: none;
     }
     .control-panel {
-      background: rgba(255, 255, 255, 0.08);
-      padding: 20px;
-      border-radius: 20px;
-      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      gap: 10px;
     }
     button, select {
-      padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.12);
-      border: none;
-      border-radius: 10px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #ccc;
+      border-radius: 8px;
       color: #fff;
       cursor: pointer;
       transition: all 0.3s ease;
       font-size: 1rem;
     }
     button:hover, select:hover {
-      background: rgba(255, 255, 255, 0.25);
-      transform: scale(1.05);
-    }
-    #speedSlider {
-      width: 100%;
-      -webkit-appearance: none;
-      height: 8px;
       background: rgba(255, 255, 255, 0.2);
-      border-radius: 5px;
-      outline: none;
-      transition: background 0.3s;
-    }
-    #speedSlider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    }
-    #speedSlider:hover {
-      background: rgba(255, 255, 255, 0.4);
-    }
-    #speedDisplay {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.85);
-      text-align: center;
+      transform: translateY(-2px);
     }
     @media (max-width: 600px) {
-      .control-panel { padding: 15px; }
-      .message-box { font-size: 1.3rem; padding: 20px 40px; bottom: 70px; }
+      .control-panel { padding: 10px; }
+      .message-box { font-size: 1.2rem; padding: 15px 30px; bottom: 60px; }
     }
   </style>
 </head>
@@ -125,8 +99,8 @@
     <div class="ui-overlay" id="uiOverlay">
       <div class="control-panel">
         <button id="toggleAudio">Toggle Audio</button>
-        <input type="range" id="speedSlider" min="1000" max="12000" value="6000" step="100">
-        <div id="speedDisplay">Speed: 6.0s</div>
+        <button id="slower">Slower</button>
+        <button id="faster">Faster</button>
         <button id="fullscreen">Fullscreen</button>
         <button id="hideControls">Hide Controls</button>
         <select id="themeSelect">
@@ -151,50 +125,64 @@
     }
     window.addEventListener('resize', resizeCanvas);
 
-    // ––– Particles Class –––
+    // ––– Particles Class with Improved Physics –––
     class Particles {
       constructor(count) {
         this.count = count;
         this.particles = [];
+        this.globalRepulsion = 0.05; // Repulsion force to prevent clumping
         for (let i = 0; i < count; i++) {
           this.particles.push({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 1,
-            vy: (Math.random() - 0.5) * 1,
-            size: Math.random() * 4 + 3,
-            angle: Math.random() * Math.PI * 2, // For cosmic orbits
-            orbitRadius: Math.random() * 50 + 20, // For cosmic theme
-            trail: Array(8).fill({ x: 0, y: 0 })
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            size: Math.random() * 3 + 2, // Vary size for visual interest
+            trail: Array(6).fill().map(() => ({ x: 0, y: 0 })),
+            themeData: { hue: Math.random() * 360, life: 1 } // For dynamic effects
           });
         }
       }
 
-      update(mouseX, mouseY, theme) {
-        this.particles.forEach(p => {
+      update(mouseX, mouseY) {
+        this.particles.forEach((p, i) => {
+          // Attract to mouse with damped force
           const dx = mouseX - p.x;
           const dy = mouseY - p.y;
-          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+          const force = Math.min(0.1, 50 / dist); // Cap attraction force
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
 
-          // Theme-specific behavior
-          if (theme === 'cosmic') {
-            p.angle += 0.02; // Orbiting motion
-            p.vx = Math.cos(p.angle) * 0.5 + dx / dist * 0.04;
-            p.vy = Math.sin(p.angle) * 0.5 + dy / dist * 0.04;
-          } else if (theme === 'ocean') {
-            p.vy += Math.sin(Date.now() * 0.002 + p.x * 0.02) * 0.03; // Wave flow
-            p.vx += dx / dist * 0.02;
-            p.vy += dy / dist * 0.02;
-          } else if (theme === 'forest') {
-            p.vx += Math.sin(p.y * 0.01 + Date.now() * 0.001) * 0.1; // Leaf sway
-            p.vy += (Math.random() - 0.5) * 0.05 + dy / dist * 0.03;
-          }
+          // Repulsion between particles
+          this.particles.forEach((p2, j) => {
+            if (i !== j) {
+              const dx2 = p2.x - p.x;
+              const dy2 = p2.y - p.y;
+              const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+              if (dist2 < 100) { // Repel if too close
+                const repel = this.globalRepulsion * (100 - dist2) / 100;
+                p.vx -= (dx2 / dist2) * repel;
+                p.vy -= (dy2 / dist2) * repel;
+              }
+            }
+          });
 
+          // Brownian motion with theme-specific tweaks
+          p.vx += (Math.random() - 0.5) * (currentTheme === 'ocean' ? 0.05 : 0.1);
+          p.vy += (Math.random() - 0.5) * (currentTheme === 'ocean' ? 0.05 : 0.1);
+
+          // Update position with friction
+          p.vx *= 0.95; // Friction to prevent runaway speed
+          p.vy *= 0.95;
           p.x += p.vx;
           p.y += p.vy;
 
-          if (p.x < 0 || p.x > width) p.vx *= -0.8;
-          if (p.y < 0 || p.y > height) p.vy *= -0.8;
+          // Bounce off edges with slight randomization
+          if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx) * 0.9 + Math.random() * 0.1; }
+          if (p.x > width) { p.x = width; p.vx = -Math.abs(p.vx) * 0.9 - Math.random() * 0.1; }
+          if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy) * 0.9 + Math.random() * 0.1; }
+          if (p.y > height) { p.y = height; p.vy = -Math.abs(p.vy) * 0.9 - Math.random() * 0.1; }
 
           // Update trail
           for (let i = p.trail.length - 1; i > 0; i--) {
@@ -202,97 +190,55 @@
           }
           p.trail[0] = { x: p.x, y: p.y };
 
-          // Dampen velocity
-          p.vx *= 0.98;
-          p.vy *= 0.98;
-        });
-
-        // Connect nearby particles
-        if (theme === 'cosmic') {
-          for (let i = 0; i < this.particles.length; i++) {
-            for (let j = i + 1; j < this.particles.length; j++) {
-              const p1 = this.particles[i];
-              const p2 = this.particles[j];
-              const dx = p1.x - p2.x;
-              const dy = p1.y - p2.y;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < 100) {
-                ctx.beginPath();
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${1 - dist / 100})`;
-                ctx.lineWidth = 0.5;
-                ctx.stroke();
-              }
-            }
+          // Theme-specific life decay (e.g., fading in ocean)
+          if (currentTheme === 'ocean') p.themeData.life -= 0.005;
+          if (p.themeData.life <= 0) {
+            p.x = Math.random() * width;
+            p.y = Math.random() * height;
+            p.vx = (Math.random() - 0.5) * 2;
+            p.vy = (Math.random() - 0.5) * 2;
+            p.themeData.life = 1;
           }
-        }
+        });
       }
 
       render(theme) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Soft fade
-        ctx.fillRect(0, 0, width, height);
-
+        ctx.clearRect(0, 0, width, height);
         this.particles.forEach(p => {
-          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
-          let r, g, b, pulse = Math.sin(Date.now() * 0.003) * 0.1 + 0.9;
-
+          // Theme-specific rendering
+          ctx.beginPath();
           if (theme === 'cosmic') {
-            r = 120 + Math.random() * 135;
-            g = 160 + Math.random() * 95;
-            b = 220 + Math.random() * 35;
-            gradient.addColorStop(0, `rgba(${r * pulse}, ${g * pulse}, ${b * pulse}, 1)`);
-            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-            ctx.beginPath();
-            ctx.arc(p.x + Math.cos(p.angle) * p.orbitRadius, p.y + Math.sin(p.angle) * p.orbitRadius, p.size / 2, 0, Math.PI * 2);
-            ctx.fillStyle = gradient;
+            ctx.fillStyle = `hsl(${p.themeData.hue}, 80%, 70%)`;
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
           } else if (theme === 'ocean') {
-            r = 30 + Math.random() * 60;
-            g = 90 + Math.random() * 90;
-            b = 180 + Math.random() * 75;
-            gradient.addColorStop(0, `rgba(${r * pulse}, ${g * pulse}, ${b * pulse}, 0.9)`);
-            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fillStyle = gradient;
+            ctx.fillStyle = `rgba(50, 150, 200, ${p.themeData.life * 0.8})`;
+            ctx.arc(p.x, p.y, p.size * (1 + Math.sin(Date.now() * 0.001)), 0, Math.PI * 2);
             ctx.fill();
-            // Ripple effect
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * 2 + Math.sin(Date.now() * 0.005) * 5, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.2)`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
           } else if (theme === 'forest') {
-            r = 60 + Math.random() * 90;
-            g = 150 + Math.random() * 105;
-            b = 30 + Math.random() * 60;
-            gradient.addColorStop(0, `rgba(${r * pulse}, ${g * pulse}, ${b * pulse}, 0.8)`);
-            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(Math.sin(Date.now() * 0.002 + p.x * 0.01) * 0.2);
-            ctx.fillStyle = gradient;
-            ctx.fillRect(-p.size, -p.size / 2, p.size * 2, p.size);
-            ctx.restore();
+            ctx.fillStyle = `hsl(${120 + Math.sin(p.x * 0.01) * 30}, 60%, 50%)`;
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
           }
 
-          // Enhanced trails
+          // Enhanced trail rendering
           ctx.beginPath();
           ctx.moveTo(p.trail[0].x, p.trail[0].y);
           for (let i = 1; i < p.trail.length; i++) {
             ctx.lineTo(p.trail[i].x, p.trail[i].y);
           }
-          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${theme === 'ocean' ? 0.4 : 0.2})`;
-          ctx.lineWidth = theme === 'ocean' ? 3 : 1.5;
+          ctx.strokeStyle = theme === 'cosmic' ? 'rgba(255, 255, 255, 0.2)' :
+                           theme === 'ocean' ? 'rgba(100, 200, 255, 0.3)' :
+                           'rgba(150, 255, 150, 0.25)';
+          ctx.lineWidth = p.size * 0.5;
           ctx.stroke();
         });
       }
     }
 
-    const particles = new Particles(120);
+    const particles = new Particles(150);
 
-    // ––– Audio Engine (Enhanced) –––
+    // ––– Audio Engine (unchanged for brevity) –––
     let audioContext, noiseSource, gainNode;
     function initAudio(theme) {
       try {
@@ -306,19 +252,16 @@
             const white = Math.random() * 2 - 1;
             noiseData[i] = (lastOut + (0.02 * white)) / 1.02;
             lastOut = noiseData[i];
-            noiseData[i] *= 0.15;
+            noiseData[i] *= 0.1;
           }
-
           noiseSource = audioContext.createBufferSource();
           noiseSource.buffer = noiseBuffer;
           noiseSource.loop = true;
           gainNode = audioContext.createGain();
-          gainNode.gain.value = 0.12;
-
+          gainNode.gain.value = 0.1;
           noiseSource.connect(gainNode).connect(audioContext.destination);
           noiseSource.start();
         }
-
         if (theme === 'ocean') {
           fetch('https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-61905/zapsplat_nature_ocean_waves_gentle_lapping_001_61905.mp3')
             .then(response => response.arrayBuffer())
@@ -341,17 +284,7 @@
               windSource.connect(gainNode).connect(audioContext.destination);
               windSource.start();
             });
-        } else if (theme === 'cosmic') {
-          const osc = audioContext.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = 60 + Math.random() * 20;
-          const oscGain = audioContext.createGain();
-          oscGain.gain.value = 0.05;
-          osc.connect(oscGain).connect(audioContext.destination);
-          osc.start();
-          setTimeout(() => osc.stop(), 30000); // Subtle hum
         }
-
         if (audioContext.state === 'suspended') audioContext.resume();
       } catch (err) {
         console.error('Audio initialization failed:', err);
@@ -371,62 +304,64 @@
 
     // ––– Messages & UI –––
     const messages = [
-      'Drift into the cosmic abyss, bro',
-      'Feel the universe’s heartbeat, fam',
-      'Waves of calm crash over you, dude',
-      'Leaves whisper peace in your soul',
-      'Orbit the zen void, my friend',
-      'Infinite chill awaits—dive in',
-      'The calm flows through you, homie',
-      'Serenity’s calling—answer it',
-      'Vibe with the eternal now',
-      'You’re the calm in the storm, bro'
+      'Embrace the cosmic chill, dude',
+      'Float in the void, my friend',
+      'Release the chaos, vibe eternal',
+      'You’re a star in the calm, bro',
+      'Drift into serenity, homie',
+      'Zen is your orbit, fam',
+      'Infinite calm, infinite wonder',
+      'Let the universe guide your soul',
+      'Find harmony in the cosmic dance',
+      'Calm is the new wild – ride the vibe!'
     ];
     let messageIndex = 0;
     const messageBox = document.getElementById('messageBox');
     let intervalSpeed = 6000;
     let currentTheme = 'cosmic';
-
     function showMessage() {
       messageBox.textContent = messages[messageIndex];
       messageBox.classList.add('active');
       messageBox.style.left = `${(width - messageBox.offsetWidth) / 2}px`;
-      messageBox.style.top = `${height * 0.75}px`;
-      setTimeout(() => messageBox.classList.remove('active'), 5000);
+      messageBox.style.top = `${height * 0.7}px`;
+      setTimeout(() => messageBox.classList.remove('active'), 4000);
       messageIndex = (messageIndex + 1) % messages.length;
     }
-
-    function adjustSpeed(speed) {
-      intervalSpeed = speed;
+    function adjustSpeed(delta) {
+      intervalSpeed = Math.max(2000, Math.min(10000, intervalSpeed + delta));
       clearInterval(messageInterval);
       messageInterval = setInterval(showMessage, intervalSpeed);
-      document.getElementById('speedDisplay').textContent = `Speed: ${(intervalSpeed / 1000).toFixed(1)}s`;
       localStorage.setItem('calmSettings', JSON.stringify({ speed: intervalSpeed, theme: currentTheme }));
     }
-
     let messageInterval = setInterval(showMessage, intervalSpeed);
-
     function changeTheme(theme) {
       currentTheme = theme;
       if (theme === 'ocean') {
-        document.body.style.background = 'linear-gradient(135deg, #0a1e2d, #2e4a5b)';
-        particles.render('ocean');
+        document.body.style.background = '#0a1e2d';
         initAudio('ocean');
       } else if (theme === 'forest') {
-        document.body.style.background = 'linear-gradient(135deg, #1a2e1a, #3a4e3a)';
-        particles.render('forest');
+        document.body.style.background = '#1a2e1a';
         initAudio('forest');
       } else {
-        document.body.style.background = 'linear-gradient(135deg, #0a0e14, #1a2633)';
-        particles.render('cosmic');
+        document.body.style.background = '#0a0e14';
         initAudio('cosmic');
       }
     }
 
+    // ––– Double-Tap to Toggle Controls –––
+    let lastTap = 0;
     function toggleControls() {
       const uiOverlay = document.getElementById('uiOverlay');
       uiOverlay.classList.toggle('hidden');
     }
+    document.addEventListener('touchstart', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300) { // Double-tap within 300ms
+        toggleControls();
+      }
+      lastTap = now;
+    });
+    document.addEventListener('dblclick', toggleControls); // For desktop
 
     // ––– Mouse & Touch Interaction –––
     let mouseX = width / 2, mouseY = height / 2;
@@ -443,7 +378,7 @@
 
     // ––– Animation Loop –––
     function animate() {
-      particles.update(mouseX, mouseY, currentTheme);
+      particles.update(mouseX, mouseY);
       particles.render(currentTheme);
       requestAnimationFrame(animate);
     }
@@ -451,19 +386,16 @@
 
     // ––– Load Saved Settings –––
     const savedSettings = JSON.parse(localStorage.getItem('calmSettings') || '{}');
-    if (savedSettings.speed) {
-      intervalSpeed = savedSettings.speed;
-      adjustSpeed(intervalSpeed);
-      document.getElementById('speedSlider').value = intervalSpeed;
-    }
+    if (savedSettings.speed) adjustSpeed(savedSettings.speed - 6000);
     if (savedSettings.theme) {
       changeTheme(savedSettings.theme);
       document.getElementById('themeSelect').value = savedSettings.theme;
     }
 
-    // ––– Event Listeners –––
+    // ––– Button Event Listeners –––
     document.getElementById('toggleAudio').addEventListener('click', toggleAudio);
-    document.getElementById('speedSlider').addEventListener('input', (e) => adjustSpeed(parseInt(e.target.value)));
+    document.getElementById('slower').addEventListener('click', () => adjustSpeed(1000));
+    document.getElementById('faster').addEventListener('click', () => adjustSpeed(-1000));
     document.getElementById('fullscreen').addEventListener('click', () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(err => console.error('Fullscreen failed:', err));
@@ -474,6 +406,7 @@
     document.getElementById('hideControls').addEventListener('click', toggleControls);
     document.getElementById('themeSelect').addEventListener('change', (e) => changeTheme(e.target.value));
 
+    // ––– Initialize Audio on First Interaction –––
     document.body.addEventListener('click', () => initAudio(currentTheme), { once: true });
     document.body.addEventListener('touchstart', () => initAudio(currentTheme), { once: true });
   </script>
