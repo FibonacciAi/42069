@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultimate Calm Visualization Engine</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      height: 100vh;
+      overflow: hidden;
+      background: #0a0e14;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+      transition: background 1.5s ease;
+      padding-bottom: 50px;
+    }
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .message-box {
+      position: absolute;
+      font-size: clamp(1.5rem, 3vw, 3rem);
+      color: rgba(255, 255, 255, 0.95);
+      text-align: center;
+      padding: 20px 40px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+      animation: bounce 0.5s ease-out forwards;
+    }
+    @keyframes bounce {
+      0% { transform: translateY(30px) scale(0.95); }
+      50% { transform: translateY(-10px) scale(1.02); }
+      100% { transform: translateY(0) scale(1); }
+    }
+    .message-box.active { opacity: 1; }
+    .message-cosmic {
+      background: linear-gradient(135deg, rgba(0, 0, 50, 0.3), rgba(50, 0, 100, 0.2));
+      border: 1px solid #aaf;
+      text-shadow: 0 0 10px #aaf;
+    }
+    .message-ocean {
+      background: linear-gradient(135deg, rgba(0, 50, 100, 0.3), rgba(0, 100, 150, 0.2));
+      border: 1px solid #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+    .message-forest {
+      background: linear-gradient(135deg, rgba(50, 100, 0, 0.3), rgba(0, 80, 50, 0.2));
+      border: 1px solid #0f0;
+      text-shadow: 0 0 10px #0f0;
+    }
+    .ui-overlay {
+      position: absolute;
+      z-index: 11;
+      padding: 20px;
+      top: 20px;
+      left: 20px;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    .ui-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .control-panel {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: background 1s ease;
+    }
+    button, select, input[type="range"] {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    button:hover, select:hover, input[type="range"]:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    input[type="range"] {
+      width: 100%;
+      padding: 0;
+    }
+    @media (max-width: 600px) {
+      .control-panel { padding: 10px; }
+      .message-box { font-size: 1.2rem; padding: 15px 30px; bottom: 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="canvas"></canvas>
+    <div class="message-box" id="messageBox"></div>
+    <div class="ui-overlay" id="uiOverlay">
+      <div class="control-panel">
+        <button id="toggleAudio">Toggle Audio</button>
+        <button id="slower">Slower</button>
+        <button id="faster">Faster</button>
+        <button id="fullscreen">Fullscreen</button>
+        <button id="hideControls">Hide Controls</button>
+        <select id="themeSelect">
+          <option value="cosmic">Cosmic</option>
+          <option value="ocean">Ocean</option>
+          <option value="forest">Forest</option>
+        </select>
+        <input type="range" id="particleDensity" min="50" max="300" value="150" step="10">
+        <input type="range" id="volumeControl" min="0" max="1" value="0.1" step="0.01">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ––– Canvas Setup –––
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      bgCanvas.width = width;
+      bgCanvas.height = height;
+      drawBackground(currentTheme);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // ––– Off-Screen Canvas for Static Background –––
+    const bgCanvas = document.createElement('canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    bgCanvas.width = width;
+    bgCanvas.height = height;
+
+    // ––– Static Background Elements –––
+    const stars = [];
+    for (let i = 0; i < 200; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 2 + 1,
+        alpha: Math.random() * 0.5 + 0.5
+      });
+    }
+
+    function drawBackground(theme) {
+      bgCtx.clearRect(0, 0, width, height);
+      if (theme === 'cosmic') {
+        const gradient = bgCtx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width);
+        gradient.addColorStop(0, 'rgba(20, 0, 50, 0.3)');
+        gradient.addColorStop(1, 'rgba(0, 0, 20, 0)');
+        bgCtx.fillStyle = gradient;
+        bgCtx.fillRect(0, 0, width, height);
+        bgCtx.fillStyle = 'white';
+        stars.forEach(star => {
+          bgCtx.globalAlpha = star.alpha;
+          bgCtx.beginPath();
+          bgCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+          bgCtx.fill();
+        });
+        bgCtx.globalAlpha = 1;
+      } else if (theme === 'ocean') {
+        const gradient = bgCtx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, 'rgba(0, 50, 100, 0.5)');
+        gradient.addColorStop(1, 'rgba(0, 100, 150, 0.2)');
+        bgCtx.fillStyle = gradient;
+        bgCtx.fillRect(0, 0, width, height);
+      } else if (theme === 'forest') {
+        const gradient = bgCtx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, 'rgba(0, 50, 30, 0.4)');
+        gradient.addColorStop(1, 'rgba(50, 100, 0, 0.2)');
+        bgCtx.fillStyle = gradient;
+        bgCtx.fillRect(0, 0, width, height);
+        bgCtx.fillStyle = 'rgba(0, 80, 50, 0.1)';
+        for (let i = 0; i < 5; i++) {
+          bgCtx.fillRect(0, i * height / 5, width, height / 5);
+        }
+      }
+    }
+
+    // ––– Particles Class with Enhanced Dynamics –––
+    class Particles {
+      constructor(count) {
+        this.count = count;
+        this.particles = [];
+        this.globalRepulsion = 0.08;
+        this.initParticles();
+      }
+
+      initParticles() {
+        this.particles = [];
+        for (let i = 0; i < this.count; i++) {
+          this.particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            size: Math.random() * 3 + 2,
+            trail: Array(6).fill().map(() => ({ x: 0, y: 0 })),
+            themeData: { hue: Math.random() * 360, life: 1, noiseOffset: Math.random() * 1000 }
+          });
+        }
+        this.setTheme(currentTheme);
+      }
+
+      setTheme(theme) {
+        this.particles.forEach(p => {
+          if (theme === 'forest') {
+            p.themeData.hue = 120 + Math.random() * 30 - 15;
+          } else if (theme === 'cosmic') {
+            p.themeData.hue = Math.random() * 360;
+          } else if (theme === 'ocean') {
+            p.themeData.hue = 200 + Math.random() * 20 - 10;
+          }
+          p.themeData.life = 1;
+        });
+      }
+
+      update(mouseX, mouseY) {
+        this.particles.forEach((p, i) => {
+          const dx = mouseX - p.x;
+          const dy = mouseY - p.y;
+          const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+          const force = Math.min(0.12, 60 / dist);
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
+
+          this.particles.forEach((p2, j) => {
+            if (i !== j) {
+              const dx2 = p2.x - p.x;
+              const dy2 = p2.y - p.y;
+              const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+              if (dist2 < 120) {
+                const repel = this.globalRepulsion * (120 - dist2) / 120;
+                p.vx -= (dx2 / dist2) * repel;
+                p.vy -= (dy2 / dist2) * repel;
+              }
+            }
+          });
+
+          // Perlin-like noise for natural motion
+          const noise = Math.sin(p.themeData.noiseOffset + Date.now() * 0.001);
+          p.vx += noise * (currentTheme === 'forest' ? 0.15 : 0.05);
+          p.vy += noise * (currentTheme === 'ocean' ? 0.05 : 0.1);
+
+          // Theme-specific dynamics
+          if (currentTheme === 'ocean') {
+            p.y += Math.sin(p.x * 0.015 + Date.now() * 0.001) * 0.8;
+            p.themeData.life -= 0.008;
+          } else if (currentTheme === 'forest') {
+            p.vy += 0.05; // Gravity-like drift
+            p.vx += Math.sin(Date.now() * 0.002 + p.themeData.noiseOffset) * 0.1;
+            p.themeData.life -= 0.003;
+          } else if (currentTheme === 'cosmic') {
+            p.themeData.life -= 0.002;
+          }
+
+          p.vx *= 0.94;
+          p.vy *= 0.94;
+          p.x += p.vx;
+          p.y += p.vy;
+
+          // Boundary checks
+          if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx) * 0.9 + Math.random() * 0.1; }
+          if (p.x > width) { p.x = width; p.vx = -Math.abs(p.vx) * 0.9 - Math.random() * 0.1; }
+          if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy) * 0.9 + Math.random() * 0.1; }
+          if (p.y > height) { p.y = height; p.vy = -Math.abs(p.vy) * 0.9 - Math.random() * 0.1; }
+
+          // Update trail
+          for (let i = p.trail.length - 1; i > 0; i--) {
+            p.trail[i] = { ...p.trail[i - 1] };
+          }
+          p.trail[0] = { x: p.x, y: p.y };
+
+          // Respawn particles when life runs out
+          if (p.themeData.life <= 0) {
+            p.x = Math.random() * width;
+            p.y = currentTheme === 'forest' ? -p.size : Math.random() * height;
+            p.vx = (Math.random() - 0.5) * 2;
+            p.vy = (Math.random() - 0.5) * 2;
+            p.themeData.life = 1;
+          }
+        });
+      }
+
+      render(theme) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(bgCanvas, 0, 0);
+
+        this.particles.forEach(p => {
+          ctx.beginPath();
+          if (theme === 'cosmic') {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = `hsl(${p.themeData.hue}, 80%, 70%)`;
+            ctx.fillStyle = `hsl(${p.themeData.hue}, 80%, 70%)`;
+            ctx.arc(p.x, p.y, p.size * p.themeData.life, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          } else if (theme === 'ocean') {
+            const alpha = p.themeData.life * 0.8;
+            const pulse = 1 + Math.sin(Date.now() * 0.003 + p.x * 0.01) * 0.3;
+            ctx.fillStyle = `rgba(50, 150, 200, ${alpha})`;
+            ctx.arc(p.x, p.y, p.size * pulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = alpha * 0.3;
+            ctx.arc(p.x, p.y, p.size * pulse * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          } else if (theme === 'forest') {
+            ctx.fillStyle = `hsl(${p.themeData.hue}, 60%, 50%)`;
+            ctx.arc(p.x + Math.sin(Date.now() * 0.005 + p.themeData.noiseOffset) * 2, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(p.trail[0].x, p.trail[0].y);
+          for (let i = 1; i < p.trail.length; i++) {
+            ctx.lineTo(p.trail[i].x, p.trail[i].y);
+          }
+          ctx.strokeStyle = theme === 'cosmic' ? 'rgba(255, 255, 255, 0.15)' :
+                           theme === 'ocean' ? 'rgba(100, 200, 255, 0.25)' :
+                           'rgba(150, 255, 150, 0.2)';
+          ctx.lineWidth = p.size * 0.4;
+          ctx.stroke();
+        });
+      }
+    }
+
+    let particles = new Particles(150);
+
+    // ––– Audio Engine with Further Enhancements –––
+    let audioContext, noiseSource, gainNode, themeSource, modSource, rustleSource, rustleMod, shoreSource, birdSource;
+    let isCosmic = false;
+
+    function twinkle() {
+      if (!isCosmic) return;
+      const osc = audioContext.createOscillator();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1000 + Math.random() * 1000, audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(osc.frequency.value * 0.8, audioContext.currentTime + 0.1);
+      const gain = audioContext.createGain();
+      gain.gain.value = 0.05;
+      osc.connect(gain).connect(audioContext.destination);
+      osc.start();
+      setTimeout(() => osc.stop(), 100);
+      setTimeout(twinkle, 2000 + Math.random() * 3000);
+    }
+
+    function initAudio(theme) {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (noiseSource) noiseSource.stop();
+        if (themeSource) themeSource.stop();
+        if (modSource) modSource.stop();
+        if (rustleSource) rustleSource.stop();
+        if (rustleMod) rustleMod.stop();
+        if (shoreSource) shoreSource.stop();
+        if (birdSource) birdSource.stop();
+
+        const bufferSize = audioContext.sampleRate * 10;
+        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const noiseData = noiseBuffer.getChannelData(0);
+        let lastOut = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          noiseData[i] = (lastOut + (0.02 * white)) / 1.02;
+          lastOut = noiseData[i];
+          noiseData[i] *= 0.05;
+        }
+        noiseSource = audioContext.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+        noiseSource.loop = true;
+
+        gainNode = audioContext.createGain();
+        gainNode.gain.value = parseFloat(document.getElementById('volumeControl').value);
+        noiseSource.connect(gainNode).connect(audioContext.destination);
+
+        if (theme === 'cosmic') {
+          isCosmic = true;
+          const oscillator = audioContext.createOscillator();
+          oscillator.type = 'sawtooth';
+          oscillator.frequency.value = 80;
+          const filter = audioContext.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 300;
+          const modOsc = audioContext.createOscillator();
+          modOsc.type = 'sine';
+          modOsc.frequency.value = 0.2;
+          const modGain = audioContext.createGain();
+          modGain.gain.value = 40;
+          modOsc.connect(modGain).connect(oscillator.frequency);
+          const drone = audioContext.createOscillator();
+          drone.type = 'sine';
+          drone.frequency.value = 50;
+          drone.connect(filter).connect(gainNode);
+          oscillator.connect(filter).connect(gainNode);
+          themeSource = oscillator;
+          modSource = modOsc;
+          drone.start();
+          twinkle();
+        } else if (theme === 'ocean') {
+          isCosmic = false;
+          const waveNoise = audioContext.createBufferSource();
+          waveNoise.buffer = noiseBuffer;
+          waveNoise.loop = true;
+          const filter = audioContext.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 400;
+          const swellGain = audioContext.createGain();
+          swellGain.gain.value = 0.15;
+          waveNoise.connect(filter).connect(swellGain).connect(gainNode);
+          const lfo = audioContext.createOscillator();
+          lfo.type = 'sine';
+          lfo.frequency.value = 0.1;
+          const lfoGain = audioContext.createGain();
+          lfoGain.gain.value = 0.05;
+          lfo.connect(lfoGain).connect(swellGain.gain);
+          const shoreNoise = audioContext.createBufferSource();
+          shoreNoise.buffer = noiseBuffer;
+          shoreNoise.loop = true;
+          const shoreFilter = audioContext.createBiquadFilter();
+          shoreFilter.type = 'lowpass';
+          shoreFilter.frequency.value = 200;
+          const shoreGain = audioContext.createGain();
+          shoreGain.gain.setValueAtTime(0, audioContext.currentTime);
+          shoreGain.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + 5);
+          shoreGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 10);
+          shoreNoise.connect(shoreFilter).connect(shoreGain).connect(gainNode);
+          themeSource = waveNoise;
+          modSource = lfo;
+          shoreSource = shoreNoise;
+          shoreSource.start();
+        } else if (theme === 'forest') {
+          isCosmic = false;
+          const windNoise = audioContext.createBufferSource();
+          windNoise.buffer = noiseBuffer;
+          windNoise.loop = true;
+          const filter = audioContext.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 1500;
+          filter.Q.value = 2;
+          const gustOsc = audioContext.createOscillator();
+          gustOsc.type = 'triangle';
+          gustOsc.frequency.value = 0.1;
+          const gustGain = audioContext.createGain();
+          gustGain.gain.value = 500;
+          gustOsc.connect(gustGain).connect(filter.frequency);
+          const windGain = audioContext.createGain();
+          windGain.gain.value = 0.15;
+          windNoise.connect(filter).connect(windGain).connect(gainNode);
+          rustleSource = audioContext.createBufferSource();
+          rustleSource.buffer = noiseBuffer;
+          rustleSource.loop = true;
+          const rustleFilter = audioContext.createBiquadFilter();
+          rustleFilter.type = 'bandpass';
+          rustleFilter.frequency.value = 3000;
+          rustleFilter.Q.value = 1;
+          const rustleGain = audioContext.createGain();
+          rustleGain.gain.value = 0;
+          rustleSource.connect(rustleFilter).connect(rustleGain).connect(gainNode);
+          rustleMod = audioContext.createOscillator();
+          rustleMod.type = 'triangle';
+          rustleMod.frequency.value = 0.5;
+          const rustleLfoGain = audioContext.createGain();
+          rustleLfoGain.gain.value = 0.1;
+          rustleMod.connect(rustleLfoGain).connect(rustleGain.gain);
+          const birdOsc = audioContext.createOscillator();
+          birdOsc.type = 'sine';
+          birdOsc.frequency.value = 800 + Math.random() * 400;
+          const birdGain = audioContext.createGain();
+          birdGain.gain.setValueAtTime(0, audioContext.currentTime);
+          birdOsc.connect(birdGain).connect(gainNode);
+          function chirp() {
+            birdGain.gain.setValueAtTime(0.03, audioContext.currentTime);
+            birdGain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.2);
+            birdOsc.frequency.setValueAtTime(800 + Math.random() * 400, audioContext.currentTime);
+            setTimeout(chirp, 5000 + Math.random() * 10000);
+          }
+          chirp();
+          themeSource = windNoise;
+          modSource = gustOsc;
+          rustleSource.start();
+          rustleMod.start();
+          birdSource = birdOsc;
+          birdSource.start();
+        }
+
+        noiseSource.start();
+        if (themeSource) themeSource.start();
+        if (modSource) modSource.start();
+        if (audioContext.state === 'suspended') audioContext.resume();
+      } catch (err) {
+        console.error('Audio initialization failed:', err);
+      }
+    }
+
+    function toggleAudio() {
+      try {
+        if (audioContext?.state === 'running') {
+          audioContext.suspend();
+        } else if (audioContext?.state === 'suspended') {
+          audioContext.resume();
+        } else {
+          initAudio(currentTheme);
+        }
+      } catch (err) {
+        console.error('Toggle audio failed:', err);
+      }
+    }
+
+    // ––– Messages & UI –––
+    const messages = [
+      'Embrace the cosmic chill, dude',
+      'Float in the void, my friend',
+      'Release the chaos, vibe eternal',
+      'You’re a star in the calm, bro',
+      'Drift into serenity, homie',
+      'Zen is your orbit, fam',
+      'Infinite calm, infinite wonder',
+      'Let the universe guide your soul',
+      'Find harmony in the cosmic dance',
+      'Calm is the new wild – ride the vibe!'
+    ];
+    let messageIndex = 0;
+    const messageBox = document.getElementById('messageBox');
+    let intervalSpeed = 6000;
+    let currentTheme = 'cosmic';
+    function showMessage() {
+      messageBox.textContent = messages[messageIndex];
+      messageBox.classList.remove('message-cosmic', 'message-ocean', 'message-forest');
+      messageBox.classList.add(`message-${currentTheme}`);
+      messageBox.classList.add('active');
+      messageBox.style.left = `${(width - messageBox.offsetWidth) / 2}px`;
+      messageBox.style.top = `${height * 0.7}px`;
+      setTimeout(() => messageBox.classList.remove('active'), 4000);
+      messageIndex = (messageIndex + 1) % messages.length;
+    }
+    function adjustSpeed(delta) {
+      intervalSpeed = Math.max(2000, Math.min(10000, intervalSpeed + delta));
+      clearInterval(messageInterval);
+      messageInterval = setInterval(showMessage, intervalSpeed);
+      saveSettings();
+    }
+    let messageInterval = setInterval(showMessage, intervalSpeed);
+    function changeTheme(theme) {
+      currentTheme = theme;
+      particles.setTheme(theme);
+      drawBackground(theme);
+      if (theme === 'ocean') {
+        document.body.style.background = '#0a1e2d';
+        document.querySelector('.control-panel').style.background = 'rgba(0, 50, 100, 0.05)';
+      } else if (theme === 'forest') {
+        document.body.style.background = '#1a2e1a';
+        document.querySelector('.control-panel').style.background = 'rgba(50, 100, 0, 0.05)';
+      } else {
+        document.body.style.background = '#0a0e14';
+        document.querySelector('.control-panel').style.background = 'rgba(0, 0, 50, 0.05)';
+      }
+      initAudio(theme);
+      saveSettings();
+    }
+
+    function saveSettings() {
+      localStorage.setItem('calmSettings', JSON.stringify({
+        speed: intervalSpeed,
+        theme: currentTheme,
+        particleCount: particles.count,
+        volume: gainNode?.gain.value || 0.1
+      }));
+    }
+
+    // ––– Double-Tap to Toggle Controls –––
+    let lastTap = 0;
+    function toggleControls() {
+      const uiOverlay = document.getElementById('uiOverlay');
+      uiOverlay.classList.toggle('hidden');
+    }
+    document.addEventListener('touchstart', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300) toggleControls();
+      lastTap = now;
+    });
+    document.addEventListener('dblclick', toggleControls);
+
+    // ––– Mouse & Touch Interaction –––
+    let mouseX = width / 2, mouseY = height / 2;
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+    document.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      mouseX = touch.clientX;
+      mouseY = touch.clientY;
+    }, { passive: false });
+
+    // ––– Animation Loop –––
+    function animate() {
+      particles.update(mouseX, mouseY);
+      particles.render(currentTheme);
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // ––– Load Saved Settings –––
+    const savedSettings = JSON.parse(localStorage.getItem('calmSettings') || '{}');
+    if (savedSettings.speed) adjustSpeed(savedSettings.speed - 6000);
+    if (savedSettings.theme) {
+      changeTheme(savedSettings.theme);
+      document.getElementById('themeSelect').value = savedSettings.theme;
+    }
+    if (savedSettings.particleCount) {
+      particles = new Particles(savedSettings.particleCount);
+      document.getElementById('particleDensity').value = savedSettings.particleCount;
+    }
+    if (savedSettings.volume) {
+      document.getElementById('volumeControl').value = savedSettings.volume;
+    }
+
+    // ––– Button & Control Event Listeners –––
+    document.getElementById('toggleAudio').addEventListener('click', toggleAudio);
+    document.getElementById('slower').addEventListener('click', () => adjustSpeed(1000));
+    document.getElementById('faster').addEventListener('click', () => adjustSpeed(-1000));
+    document.getElementById('fullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.error('Fullscreen failed:', err));
+      } else {
+        document.exitFullscreen().catch(err => console.error('Exit fullscreen failed:', err));
+      }
+    });
+    document.getElementById('hideControls').addEventListener('click', toggleControls);
+    document.getElementById('themeSelect').addEventListener('change', (e) => changeTheme(e.target.value));
+    document.getElementById('particleDensity').addEventListener('input', (e) => {
+      particles = new Particles(parseInt(e.target.value));
+      saveSettings();
+    });
+    document.getElementById('volumeControl').addEventListener('input', (e) => {
+      if (gainNode) gainNode.gain.value = parseFloat(e.target.value);
+      saveSettings();
+    });
+
+    // ––– Initialize Audio on First Interaction –––
+    document.body.addEventListener('click', () => initAudio(currentTheme), { once: true });
+    document.body.addEventListener('touchstart', () => initAudio(currentTheme), { once: true });
+
+    // ––– Initial Background Draw –––
+    drawBackground(currentTheme);
+  </script>
+</body>
+</html>
