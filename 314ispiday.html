@@ -34,17 +34,19 @@
         }
         #info {
             position: absolute;
-            bottom: 2vh;
+            bottom: clamp(8vh, 10vw, 10vh);
             left: 50%;
             transform: translateX(-50%);
             color: #fff;
-            font-size: clamp(1rem, 2vw, 1.4rem); /* Responsive font size */
+            font-size: clamp(1rem, 2vw, 1.4rem);
             text-align: center;
             padding: clamp(0.5rem, 1vw, 1rem) clamp(1rem, 2vw, 2rem);
             background: rgba(0, 0, 0, 0.7);
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
             transition: all 0.3s ease;
+            word-wrap: break-word; /* Word wrap for long π value */
+            max-width: 90vw; /* Prevent overflow on small screens */
         }
         #piDayBlurb {
             position: absolute;
@@ -59,58 +61,45 @@
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
             transition: all 0.3s ease;
+            max-width: 90vw;
         }
         #controls {
             position: absolute;
-            top: 2vh;
-            right: 2vw;
+            bottom: clamp(2vh, 4vw, 4vh); /* Positioned below #info */
+            left: 50%;
+            transform: translateX(-50%);
             color: #fff;
             font-size: clamp(0.7rem, 1.5vw, 0.9rem);
             padding: clamp(0.5rem, 1vw, 1rem);
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7); /* Match #info background */
             border-radius: 6px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); /* Match #info shadow */
             pointer-events: auto;
             transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-        #controls:hover {
-            background: rgba(0, 0, 0, 0.7);
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            max-width: 90vw;
         }
         #controls.hidden {
             opacity: 0;
             pointer-events: none;
-            transform: translateY(-20px);
+            transform: translateX(-50%) translateY(20px); /* Slide down when hidden */
         }
         #controls label {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin: clamp(0.3rem, 0.8vw, 0.8rem) 0;
+            color: #00ffff; /* Match text color with #piDayBlurb */
         }
         #controls input[type="range"] {
             width: clamp(60px, 20vw, 80px);
-            vertical-align: middle;
             margin-left: clamp(0.5rem, 1vw, 1rem);
             padding: 0;
-        }
-        @media (max-width: 768px) {
-            #controls {
-                top: auto;
-                bottom: 2vh;
-                right: 2vw;
-                width: clamp(150px, 80vw, 200px);
-            }
-            #info {
-                bottom: 10vh;
-                font-size: clamp(0.8rem, 2vw, 1.2rem);
-            }
-            #piDayBlurb {
-                top: 5vh;
-                font-size: clamp(1rem, 2.5vw, 1.4rem);
-            }
+            accent-color: #00ffff; /* Match slider color with theme */
         }
         #toggleControls {
             position: absolute;
-            top: 0.5vh;
-            right: 0.5vw;
+            bottom: clamp(6vh, 8vw, 8vh); /* Positioned between #info and #controls */
+            right: clamp(1vw, 2vw, 2vw);
             color: #00ffff;
             background: rgba(0, 0, 0, 0.7);
             border: none;
@@ -123,6 +112,24 @@
         }
         #toggleControls:hover {
             background: rgba(0, 255, 255, 0.2);
+        }
+        @media (max-width: 768px) {
+            #info {
+                bottom: clamp(12vh, 15vw, 15vh); /* Higher on mobile to make space */
+                font-size: clamp(0.8rem, 2vw, 1.2rem);
+            }
+            #controls {
+                bottom: clamp(2vh, 4vw, 4vh);
+                width: clamp(150px, 80vw, 200px);
+            }
+            #piDayBlurb {
+                top: 5vh;
+                font-size: clamp(1rem, 2.5vw, 1.4rem);
+            }
+            #toggleControls {
+                bottom: clamp(9vh, 12vw, 12vh);
+                right: clamp(2vw, 3vw, 3vw);
+            }
         }
     </style>
 </head>
@@ -167,11 +174,11 @@
             controls.autoRotateSpeed = 0.5;
             controls.minDistance = 20;
             controls.maxDistance = 200;
-            controls.enablePan = true; // Enable pan for touch
+            controls.enablePan = true;
             controls.touches = {
                 ONE: THREE.TOUCH.ROTATE,
                 TWO: THREE.TOUCH.DOLLY_PAN
-            }; // Enable touch gestures
+            };
 
             let sum = 0;
             for (let i = 0; i < 3500; i++) {
