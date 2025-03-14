@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hyper-Advanced Visualization Tool v4.8</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+            touch-action: manipulation;
+        }
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        .panel {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid #00ffcc;
+            border-radius: 15px;
+            padding: 10px;
+            margin: 5px;
+            width: clamp(250px, 90vw, 300px);
+            box-sizing: border-box;
+            touch-action: auto;
+            overflow: hidden;
+        }
+        .panel:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ffcc;
+        }
+        .visualization {
+            flex: 1;
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .canvas-wrapper {
+            width: 100%;
+            max-width: 80vh; /* Constrain to a square aspect ratio */
+            aspect-ratio: 1 / 1; /* Force 1:1 aspect ratio */
+            position: relative;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .controls {
+            display: flex;
+            gap: 5px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        button, input, select {
+            padding: 6px;
+            background: #00ffcc;
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            cursor: pointer;
+            font-size: 12px;
+            touch-action: manipulation;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        button:hover {
+            background: #ff00cc;
+            color: #fff;
+        }
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            margin: 0;
+            border-radius: 0 0 15px 15px;
+            z-index: 10;
+        }
+        #vrButton {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 80px;
+            margin: 0;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            #ui {
+                position: static;
+                width: clamp(250px, 25vw, 300px);
+                margin-left: 10px;
+                border-radius: 15px;
+            }
+            #vrButton {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                margin: 0;
+            }
+            .visualization {
+                width: calc(100% - 310px);
+            }
+            .canvas-wrapper {
+                max-width: 70vw; /* Allow larger viz on desktop */
+            }
+        }
+        @media (max-width: 767px) {
+            .visualization {
+                height: calc(100vh - 80px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="ui" class="panel">
+            <h1>Hyper-Advanced Viz v4.8</h1>
+            <div class="controls">
+                <select id="mode">
+                    <option value="cube">Quantum Cube</option>
+                    <option value="metatron">Metatron Vortex</option>
+                    <option value="patterns">Fractal Patterns</option>
+                    <option value="pi">Pi Simulation</option>
+                </select>
+                <button id="vrBtn">Enter VR</button>
+            </div>
+            <div id="modeControls"></div>
+        </div>
+        <div id="mainScene" class="visualization">
+            <div class="canvas-wrapper"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global state variables
+        let cubeSpeed = 1;
+        let cubeScale = 1;
+        let metatronRotation = 1;
+        let metatronDensity = 1;
+        let patternsZoom = 1;
+        let patternsSpeed = 1;
+        let piTerms = 10000;
+
+        // Global function for updating controls
+        function updateMode(mode, opt) {
+            const value = parseFloat(document.getElementById(`${mode}_${opt}`).value) || 1;
+            const group = document.getElementById('mainScene').group;
+            if (group) {
+                if (mode === 'cube') {
+                    if (opt === 'speed') cubeSpeed = value;
+                    else if (opt === 'scale') cubeScale = value;
+                } else if (mode === 'metatron') {
+                    if (opt === 'rotation') metatronRotation = value;
+                    else if (opt === 'density' && group.children[0] && group.children[0].material) {
+                        metatronDensity = value;
+                        group.children[0].material.opacity = value;
+                    }
+                } else if (mode === 'patterns') {
+                    if (opt === 'zoom') patternsZoom = value;
+                    else if (opt === 'speed') patternsSpeed = value;
+                } else if (mode === 'pi') {
+                    if (opt === 'terms') piTerms = parseInt(value);
+                }
+                console.log(`Updated ${mode} ${opt} to ${value}`);
+            }
+        }
+
+        // Initialize scene when page is fully loaded
+        window.addEventListener('load', () => {
+            const container = document.getElementById('mainScene');
+            const canvasWrapper = container.querySelector('.canvas-wrapper');
+            if (!container) throw new Error('Main scene container not found');
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000); // Initial aspect ratio 1:1
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            canvasWrapper.appendChild(renderer.domElement);
+            container.group = null;
+
+            // Resize renderer to match canvas wrapper
+            function resizeRenderer() {
+                const rect = canvasWrapper.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+            }
+            window.addEventListener('resize', resizeRenderer);
+            resizeRenderer();
+
+            let controls;
+            try {
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.minDistance = 2;
+                controls.maxDistance = 10;
+                controls.enablePan = true;
+                controls.touches = {
+                    ONE: THREE.TOUCH.ROTATE,
+                    TWO: THREE.TOUCH.DOLLY_PAN
+                };
+                controls.domElement.addEventListener('mousedown', (event) => {
+                    const uiRect = document.getElementById('ui').getBoundingClientRect();
+                    const x = event.clientX;
+                    const y = event.clientY;
+                    if (x >= uiRect.left && x <= uiRect.right && y >= uiRect.top && y <= uiRect.bottom) {
+                        event.stopPropagation();
+                        return;
+                    }
+                });
+                controls.domElement.addEventListener('touchstart', (event) => {
+                    const uiRect = document.getElementById('ui').getBoundingClientRect();
+                    const touch = event.touches[0];
+                    const x = touch.clientX;
+                    const y = touch.clientY;
+                    if (x >= uiRect.left && x <= uiRect.right && y >= uiRect.top && y <= uiRect.bottom) {
+                        event.stopPropagation();
+                        return;
+                    }
+                });
+                console.log('OrbitControls initialized');
+            } catch (e) {
+                console.error('OrbitControls failed:', e);
+                controls = { update: () => {} };
+            }
+
+            let currentMode = 'cube';
+            let shaderMaterial, worker;
+
+            camera.position.z = 5;
+
+            // Quantum Cube
+            function setupQuantumCube() {
+                if (container.group) scene.remove(container.group);
+                container.group = new THREE.Group();
+                const geometry = new THREE.BoxGeometry(3, 3, 3);
+                shaderMaterial = new THREE.ShaderMaterial({
+                    uniforms: { time: { value: 0 } },
+                    vertexShader: `
+                        varying vec3 vPos;
+                        void main() {
+                            vPos = position;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform float time;
+                        varying vec3 vPos;
+                        float hash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+                        void main() {
+                            vec3 p = vPos + time * 0.1;
+                            float n = hash(p);
+                            vec3 color = vec3(sin(n * 6.28 + time), cos(n * 6.28 + time), sin(n * 3.14 + time));
+                            gl_FragColor = vec4(color * 0.7 + 0.3, 1.0);
+                        }
+                    `,
+                    side: THREE.DoubleSide
+                });
+                const cube = new THREE.Mesh(geometry, shaderMaterial);
+                container.group.add(cube);
+
+                const edges = new THREE.EdgesGeometry(geometry);
+                const edgesMaterial = new THREE.LineBasicMaterial({ color: 0x00ffcc, linewidth: 2 });
+                const edgesLines = new THREE.LineSegments(edges, edgesMaterial);
+                container.group.add(edgesLines);
+
+                scene.add(container.group);
+                addControls('cube', ['speed', 'scale']);
+            }
+
+            // Metatron Vortex
+            function setupMetatronVortex() {
+                if (container.group) scene.remove(container.group);
+                container.group = new THREE.Group();
+                const particleCount = 500;
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const t = i / particleCount * Math.PI * 2;
+                    positions[i * 3] = Math.cos(t * 13) * 2;
+                    positions[i * 3 + 1] = Math.sin(t * 13) * 2;
+                    positions[i * 3 + 2] = Math.sin(t * 5) * 2;
+                    colors[i * 3] = Math.sin(t) * 0.5 + 0.5;
+                    colors[i * 3 + 1] = Math.cos(t) * 0.5 + 0.5;
+                    colors[i * 3 + 2] = 1.0;
+                }
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                shaderMaterial = new THREE.ShaderMaterial({
+                    uniforms: { time: { value: 0 } },
+                    vertexShader: `
+                        attribute vec3 color;
+                        varying vec3 vColor;
+                        uniform float time;
+                        void main() {
+                            vColor = color;
+                            vec3 p = position;
+                            p.z += sin(time + length(p.xy)) * 0.5;
+                            gl_PointSize = 6.0;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec3 vColor;
+                        void main() {
+                            gl_FragColor = vec4(vColor, 0.8);
+                        }
+                    `,
+                    transparent: true
+                });
+                const particles = new THREE.Points(geometry, shaderMaterial);
+                container.group.add(particles);
+                scene.add(container.group);
+                addControls('metatron', ['rotation', 'density']);
+            }
+
+            // Fractal Patterns
+            function setupFractalPatterns() {
+                if (container.group) scene.remove(container.group);
+                container.group = new THREE.Group();
+                const geometry = new THREE.PlaneGeometry(10, 10, 256, 256);
+                shaderMaterial = new THREE.ShaderMaterial({
+                    uniforms: { time: { value: 0 } },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform float time;
+                        varying vec2 vUv;
+                        float mandelbrot(vec2 c) {
+                            vec2 z = vec2(0.0);
+                            for (int i = 0; i < 100; i++) {
+                                z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
+                                if (length(z) > 2.0) return float(i) / 100.0;
+                            }
+                            return 0.0;
+                        }
+                        void main() {
+                            vec2 uv = (vUv - 0.5) * 4.0;
+                            uv.x += sin(time * 0.1);
+                            float m = mandelbrot(uv);
+                            vec3 color = vec3(m, sin(m * 6.28 + time), cos(m * 3.14 + time));
+                            gl_FragColor = vec4(color, 1.0);
+                        }
+                    `
+                });
+                const plane = new THREE.Mesh(geometry, shaderMaterial);
+                container.group.add(plane);
+                scene.add(container.group);
+                addControls('patterns', ['zoom', 'speed']);
+            }
+
+            // Pi Simulation
+            function setupPiSimulation() {
+                if (container.group) scene.remove(container.group);
+                container.group = new THREE.Group();
+                if (worker) worker.terminate();
+                worker = new Worker(URL.createObjectURL(new Blob([`
+                    self.onmessage = function(e) {
+                        const terms = e.data.terms;
+                        let pi = 0n;
+                        const C = 426880n * 10005n;
+                        let L = 13591409n;
+                        let X = 1n;
+                        let M = 1n;
+                        let K = 6n;
+                        let S = L;
+                        for (let k = 1n; k <= BigInt(terms); k++) {
+                            M = (K * K * K - 16n * K) * M / (k * k * k);
+                            L += 545140134n;
+                            X *= -262537412640768000n;
+                            S += M * L / X;
+                            K += 12n;
+                            if (k % 1000n === 0n) {
+                                self.postMessage({ progress: Number(k) / terms, pi: Number(C) / Number(S) });
+                            }
+                        }
+                        self.postMessage({ pi: Number(C) / Number(S) });
+                    };
+                `], { type: 'application/javascript' })));
+                worker.onmessage = (e) => {
+                    if (e.data.progress) {
+                        console.log(`Pi Progress: ${e.data.pi.toFixed(15)}`);
+                    } else {
+                        const pi = e.data.pi;
+                        console.log(`Pi Calculated: ${pi.toFixed(15)}`);
+                    }
+                };
+                worker.onerror = (err) => console.error('Worker Error:', err);
+
+                const geometry = new THREE.SphereGeometry(2, 32, 32);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true });
+                const sphere = new THREE.Mesh(geometry, material);
+                container.group.add(sphere);
+                scene.add(container.group);
+                addControls('pi', ['terms']);
+            }
+
+            // Add controls dynamically
+            function addControls(mode, options) {
+                const controlsDiv = document.getElementById('modeControls');
+                controlsDiv.innerHTML = '';
+                options.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <label>${opt.charAt(0).toUpperCase() + opt.slice(1)}:</label>
+                        <input type="${opt === 'terms' ? 'number' : 'range'}" 
+                               id="${mode}_${opt}" 
+                               min="${opt === 'terms' ? 1000 : 0}" 
+                               max="${opt === 'terms' ? 100000 : 2}" 
+                               step="${opt === 'terms' ? 1000 : 0.01}" 
+                               value="${opt === 'terms' ? piTerms : 1}">
+                    `;
+                    controlsDiv.appendChild(div);
+
+                    const input = document.getElementById(`${mode}_${opt}`);
+                    input.addEventListener('input', (e) => {
+                        e.stopPropagation();
+                        updateMode(mode, opt);
+                    });
+                    input.addEventListener('touchmove', (e) => e.preventDefault());
+                });
+                if (mode === 'pi') {
+                    const startBtn = document.createElement('button');
+                    startBtn.textContent = 'Calculate';
+                    startBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        startTime = performance.now();
+                        console.log('Calculating Pi with terms:', piTerms);
+                        worker.postMessage({ terms: piTerms });
+                    });
+                    startBtn.addEventListener('touchend', (e) => {
+                        e.stopPropagation();
+                        startTime = performance.now();
+                        console.log('Calculating Pi with terms:', piTerms);
+                        worker.postMessage({ terms: piTerms });
+                    });
+                    controlsDiv.appendChild(startBtn);
+                }
+            }
+
+            // Mode switching
+            document.getElementById('mode').addEventListener('change', (e) => {
+                e.stopPropagation();
+                currentMode = e.target.value;
+                console.log('Switching to mode:', currentMode);
+                if (currentMode === 'cube') setupQuantumCube();
+                else if (currentMode === 'metatron') setupMetatronVortex();
+                else if (currentMode === 'patterns') setupFractalPatterns();
+                else if (currentMode === 'pi') setupPiSimulation();
+            });
+
+            // VR Support
+            document.getElementById('vrBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (navigator.xr) {
+                    renderer.xr.enabled = true;
+                    renderer.xr.setReferenceSpaceType('local');
+                    navigator.xr.requestSession('immersive-vr').then(session => {
+                        renderer.xr.setSession(session);
+                        console.log('VR Session Started');
+                    }).catch(err => console.error('VR Error:', err));
+                } else {
+                    alert('WebXR not supported in this browser');
+                }
+            });
+            document.getElementById('vrBtn').addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                if (navigator.xr) {
+                    renderer.xr.enabled = true;
+                    renderer.xr.setReferenceSpaceType('local');
+                    navigator.xr.requestSession('immersive-vr').then(session => {
+                        renderer.xr.setSession(session);
+                        console.log('VR Session Started');
+                    }).catch(err => console.error('VR Error:', err));
+                } else {
+                    alert('WebXR not supported in this browser');
+                }
+            });
+
+            // Animation loop
+            let startTime;
+            function animate(time) {
+                requestAnimationFrame(animate);
+                controls.update();
+                if (shaderMaterial) shaderMaterial.uniforms.time.value = time * 0.001;
+
+                if (container.group) {
+                    if (currentMode === 'cube') {
+                        container.group.rotation.x += cubeSpeed * 0.01;
+                        container.group.rotation.y += cubeSpeed * 0.01;
+                        container.group.scale.setScalar(cubeScale);
+                    } else if (currentMode === 'metatron') {
+                        container.group.rotation.z += metatronRotation * 0.01;
+                        if (container.group.children[0] && container.group.children[0].material) {
+                            container.group.children[0].material.opacity = metatronDensity;
+                        }
+                    } else if (currentMode === 'patterns') {
+                        container.group.scale.setScalar(patternsZoom);
+                        if (shaderMaterial) shaderMaterial.uniforms.time.value += patternsSpeed * 0.01;
+                    } else if (currentMode === 'pi') {
+                        container.group.rotation.y += 0.01;
+                    }
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            // Initialization
+            console.log('Initializing...');
+            setupQuantumCube();
+            animate(0);
+        });
+    </script>
+</body>
+</html>
