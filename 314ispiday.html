@@ -31,22 +31,29 @@
             height: 100%;
             pointer-events: none;
             z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* Stack elements at the bottom */
+        }
+        #bottom-ui {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: clamp(1vh, 2vw, 2vh); /* Space from bottom edge */
         }
         #info {
-            position: absolute;
-            bottom: clamp(8vh, 10vw, 10vh);
-            left: 50%;
-            transform: translateX(-50%);
             color: #fff;
-            font-size: clamp(1rem, 2vw, 1.4rem);
+            font-size: clamp(0.8rem, 2vw, 1.4rem);
             text-align: center;
             padding: clamp(0.5rem, 1vw, 1rem) clamp(1rem, 2vw, 2rem);
             background: rgba(0, 0, 0, 0.7);
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
             transition: all 0.3s ease;
-            word-wrap: break-word; /* Word wrap for long π value */
-            max-width: 90vw; /* Prevent overflow on small screens */
+            word-wrap: break-word;
+            max-width: 90vw;
+            margin-bottom: clamp(0.5rem, 1vw, 1rem); /* Space between #info and #controls */
         }
         #piDayBlurb {
             position: absolute;
@@ -54,7 +61,7 @@
             left: 50%;
             transform: translateX(-50%);
             color: #00ffff;
-            font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+            font-size: clamp(1rem, 2.5vw, 1.6rem);
             text-align: center;
             padding: clamp(0.5rem, 1vw, 1.5rem) clamp(1rem, 2vw, 2.5rem);
             background: rgba(0, 0, 0, 0.7);
@@ -64,16 +71,12 @@
             max-width: 90vw;
         }
         #controls {
-            position: absolute;
-            bottom: clamp(2vh, 4vw, 4vh); /* Positioned below #info */
-            left: 50%;
-            transform: translateX(-50%);
             color: #fff;
             font-size: clamp(0.7rem, 1.5vw, 0.9rem);
             padding: clamp(0.5rem, 1vw, 1rem);
-            background: rgba(0, 0, 0, 0.7); /* Match #info background */
+            background: rgba(0, 0, 0, 0.7);
             border-radius: 6px;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); /* Match #info shadow */
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
             pointer-events: auto;
             transition: opacity 0.5s ease, transform 0.5s ease;
             max-width: 90vw;
@@ -81,24 +84,24 @@
         #controls.hidden {
             opacity: 0;
             pointer-events: none;
-            transform: translateX(-50%) translateY(20px); /* Slide down when hidden */
+            transform: translateY(20px);
         }
         #controls label {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin: clamp(0.3rem, 0.8vw, 0.8rem) 0;
-            color: #00ffff; /* Match text color with #piDayBlurb */
+            color: #00ffff;
         }
         #controls input[type="range"] {
             width: clamp(60px, 20vw, 80px);
             margin-left: clamp(0.5rem, 1vw, 1rem);
             padding: 0;
-            accent-color: #00ffff; /* Match slider color with theme */
+            accent-color: #00ffff;
         }
         #toggleControls {
             position: absolute;
-            bottom: clamp(6vh, 8vw, 8vh); /* Positioned between #info and #controls */
+            top: clamp(1vh, 2vw, 2vh); /* Moved to top-right corner */
             right: clamp(1vw, 2vw, 2vw);
             color: #00ffff;
             background: rgba(0, 0, 0, 0.7);
@@ -115,19 +118,19 @@
         }
         @media (max-width: 768px) {
             #info {
-                bottom: clamp(12vh, 15vw, 15vh); /* Higher on mobile to make space */
-                font-size: clamp(0.8rem, 2vw, 1.2rem);
-            }
-            #controls {
-                bottom: clamp(2vh, 4vw, 4vh);
-                width: clamp(150px, 80vw, 200px);
+                font-size: clamp(0.7rem, 2vw, 1rem);
+                max-width: 80vw;
             }
             #piDayBlurb {
                 top: 5vh;
-                font-size: clamp(1rem, 2.5vw, 1.4rem);
+                font-size: clamp(0.8rem, 2.5vw, 1.2rem);
+                max-width: 80vw;
+            }
+            #controls {
+                width: clamp(150px, 80vw, 200px);
             }
             #toggleControls {
-                bottom: clamp(9vh, 12vw, 12vh);
+                top: clamp(2vh, 3vw, 3vh);
                 right: clamp(2vw, 3vw, 3vw);
             }
         }
@@ -135,12 +138,14 @@
 </head>
 <body>
     <div id="ui-container">
-        <div id="info">π ≈ <span id="piValue">3.14159...</span></div>
         <div id="piDayBlurb">Tomorrow, 3/14, is Pi Day! Explore this interactive π visualization.</div>
-        <div id="controls">
-            <label>Particle Size: <input type="range" id="sizeSlider" min="1" max="10" value="4"></label>
-            <label>Rotation Speed: <input type="range" id="rotationSlider" min="0" max="2" step="0.1" value="0.5"></label>
-            <label>Spiral Opacity: <input type="range" id="spiralSlider" min="0" max="1" step="0.1" value="0.7"></label>
+        <div id="bottom-ui">
+            <div id="info">π ≈ <span id="piValue">3.14159...</span></div>
+            <div id="controls">
+                <label>Particle Size: <input type="range" id="sizeSlider" min="1" max="10" value="4"></label>
+                <label>Rotation Speed: <input type="range" id="rotationSlider" min="0" max="2" step="0.1" value="0.5"></label>
+                <label>Spiral Opacity: <input type="range" id="spiralSlider" min="0" max="1" step="0.1" value="0.7"></label>
+            </div>
         </div>
         <button id="toggleControls">Hide</button>
     </div>
@@ -376,7 +381,7 @@
             const glow = Math.sin(frame * 0.05) * 8 + 8;
             const scale = 1 + Math.sin(frame * 0.05) * 0.05;
             document.getElementById('info').style.textShadow = `0 0 ${glow}px #00f`;
-            document.getElementById('info').style.transform = `translateX(-50%) scale(${scale})`;
+            document.getElementById('info').style.transform = `scale(${scale})`;
             document.getElementById('piDayBlurb').style.textShadow = `0 0 ${glow}px #00ffff`;
             document.getElementById('piDayBlurb').style.transform = `translateX(-50%) scale(${scale})`;
 
