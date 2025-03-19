@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cosmic Pulse - Interactive 3D Experience</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+        canvas { display: block; width: 100vw !important; height: 100vh !important; }
+        #ui { position: absolute; top: 10px; left: 10px; color: #fff; font-family: Arial, sans-serif; z-index: 10; }
+        button { padding: 5px 10px; background: rgba(255, 255, 255, 0.2); border: none; color: #fff; cursor: pointer; }
+        button:hover { background: rgba(255, 255, 255, 0.4); }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <button id="spawn">Spawn Orb</button>
+        <button id="pulse">Pulse Wave</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script> <!-- For animations -->
+    <script>
+        // Error logging
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'color: red; position: absolute; top: 50px; left: 10px;';
+        document.body.appendChild(errorDiv);
+        function logError(msg) { errorDiv.textContent = msg; console.error(msg); }
+
+        // WebGL check
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) { logError('WebGL not supported.'); return; }
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap for performance
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Audio setup
+        const audioListener = new THREE.AudioListener();
+        camera.add(audioListener);
+        const audio = new THREE.Audio(audioListener);
+        const audioLoader = new THREE.AudioLoader();
+        const audioContext = THREE.AudioContext.getContext();
+        audioLoader.load('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', (buffer) => {
+            audio.setBuffer(buffer);
+            audio.setLoop(true);
+            audio.setVolume(0.5);
+            audio.play();
+        });
+        const analyser = new THREE.AudioAnalyser(audio, 128);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(0, 0, 0);
+        scene.add(pointLight);
+
+        // Cosmic orb class
+        class CosmicOrb {
+            constructor(x, y, z) {
+                this.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.1,
+                    (Math.random() - 0.5) * 0.1,
+                    (Math.random() - 0.5) * 0.1
+                );
+                this.mesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(1, 16, 16),
+                    new THREE.ShaderMaterial({
+                        uniforms: {
+                            time: { value: 0 },
+                            audioLevel: { value: 0 }
+                        },
+                        vertexShader: `
+                            varying vec2 vUv;
+                            uniform float time;
+                            uniform float audioLevel;
+                            void main() {
+                                vUv = uv;
+                                vec3 pos = position;
+                                pos += normal * sin(time + pos.x * 10.0) * 0.1 * audioLevel;
+                                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                            }
+                        `,
+                        fragmentShader: `
+                            varying vec2 vUv;
+                            uniform float time;
+                            uniform float audioLevel;
+                            void main() {
+                                vec3 color = vec3(
+                                    0.5 + 0.5 * sin(time + vUv.x * 10.0),
+                                    0.5 + 0.5 * cos(time + vUv.y * 10.0),
+                                    audioLevel
+                                );
+                                gl_FragColor = vec4(color, 1.0);
+                            }
+                        `
+                    })
+                );
+                this.mesh.position.set(x, y, z);
+                scene.add(this.mesh);
+            }
+
+            update(audioLevel, time) {
+                this.mesh.material.uniforms.audioLevel.value = audioLevel;
+                this.mesh.material.uniforms.time.value = time;
+                this.mesh.position.add(this.velocity);
+                if (this.mesh.position.length() > 50) this.velocity.negate(); // Keep orbs in bounds
+            }
+        }
+
+        // Initial orbs
+        const orbs = [];
+        for (let i = 0; i < 5; i++) {
+            orbs.push(new CosmicOrb(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 20
+            ));
+        }
+
+        // Particle system for pulse effect
+        const particleCount = 500;
+        const particlesGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = 0;
+            positions[i + 1] = 0;
+            positions[i + 2] = 0;
+            velocities[i] = (Math.random() - 0.5) * 0.5;
+            velocities[i + 1] = (Math.random() - 0.5) * 0.5;
+            velocities[i + 2] = (Math.random() - 0.5) * 0.5;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            color: 0x00ffff,
+            size: 0.2,
+            transparent: true,
+            opacity: 0
+        });
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
+
+        // Camera position
+        camera.position.z = 30;
+
+        // Touch interaction
+        const raycaster = new THREE.Raycaster();
+        const touchPoint = new THREE.Vector2();
+        let selectedOrb = null;
+        let lastTouch = null;
+
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchPoint.x = (touch.clientX / window.innerWidth) * 2 - 1;
+            touchPoint.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(touchPoint, camera);
+            const intersects = raycaster.intersectObjects(orbs.map(o => o.mesh));
+            if (intersects.length > 0) {
+                selectedOrb = orbs.find(o => o.mesh === intersects[0].object);
+                lastTouch = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+            }
+        }, { passive: false });
+
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (selectedOrb) {
+                const touch = e.touches[0];
+                touchPoint.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                touchPoint.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(touchPoint, camera);
+                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -selectedOrb.mesh.position.z);
+                const intersect = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+                if (intersect) {
+                    selectedOrb.mesh.position.x = intersect.x;
+                    selectedOrb.mesh.position.y = intersect.y;
+                }
+                lastTouch = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+            }
+        }, { passive: false });
+
+        renderer.domElement.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (selectedOrb && lastTouch) {
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - lastTouch.x;
+                const dy = touch.clientY - lastTouch.y;
+                const dt = (Date.now() - lastTouch.time) / 1000;
+                if (dt > 0) {
+                    selectedOrb.velocity.x += dx / 20;
+                    selectedOrb.velocity.y -= dy / 20;
+                }
+            }
+            selectedOrb = null;
+            lastTouch = null;
+        }, { passive: false });
+
+        // UI controls
+        document.getElementById('spawn').addEventListener('click', () => {
+            orbs.push(new CosmicOrb(0, 0, 0));
+        });
+
+        document.getElementById('pulse').addEventListener('click', () => {
+            gsap.to(particlesMaterial, { opacity: 1, duration: 0.5, yoyo: true, repeat: 1 });
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = 0;
+                positions[i + 1] = 0;
+                positions[i + 2] = 0;
+            }
+            particlesGeometry.attributes.position.needsUpdate = true;
+        });
+
+        // Animation loop
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.05;
+
+            // Audio reactivity
+            const audioData = analyser.getAverageFrequency() / 255;
+            const scale = 1 + audioData * 0.5;
+
+            // Update orbs
+            orbs.forEach(orb => {
+                orb.update(audioData, time);
+                orb.mesh.scale.setScalar(scale);
+            });
+
+            // Update particles
+            const posArray = particlesGeometry.attributes.position.array;
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                posArray[i] += velocities[i];
+                posArray[i + 1] += velocities[i + 1];
+                posArray[i + 2] += velocities[i + 2];
+            }
+            particlesGeometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
