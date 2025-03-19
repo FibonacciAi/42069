@@ -1,0 +1,1584 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Fractal Explorer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #5D5CDE;
+      --primary-hover: #4b4ab8;
+      --canvas-bg: #000000;
+      --bg-main: #1a1a1a;
+      --text-main: #E5E7EB;
+      --panel-bg: #262626;
+      --slider-bg: #3d3d3d;
+      --accent: #FF5733;
+      --glow: rgba(93, 92, 222, 0.5);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Montserrat', sans-serif;
+      height: 100vh;
+    }
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background-color: var(--canvas-bg);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .controls-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: rgba(38, 38, 38, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 0 0 0 15px;
+      padding: 20px;
+      z-index: 10;
+      width: 360px;
+      max-height: 100vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .controls-collapsed {
+      transform: translateX(calc(100% - 40px));
+    }
+    .controls-toggle {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .controls-toggle:hover {
+      background-color: var(--primary-hover);
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+      width: 100%;
+      font-weight: 500;
+      transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    .slider-container {
+      margin-bottom: 16px;
+    }
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--slider-bg);
+      outline: none;
+      margin: 8px 0;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s;
+    }
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+    .select-container {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .select-container label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .select-container select {
+      appearance: none;
+      width: 100%;
+      padding: 10px 12px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Montserrat', sans-serif;
+      transition: all 0.2s;
+    }
+    .select-container select:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    .select-container select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--glow);
+    }
+    .select-container::after {
+      content: "▼";
+      position: absolute;
+      right: 12px;
+      top: 60%;
+      transform: translateY(-50%);
+      color: var(--primary);
+      pointer-events: none;
+      font-size: 12px;
+    }
+    #loading {
+      position: fixed;
+      z-index: 999;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: white;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s;
+      backdrop-filter: blur(5px);
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .color-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-block;
+      cursor: pointer;
+      margin-right: 8px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .color-preview.active {
+      border-color: white;
+      transform: scale(1.1);
+      box-shadow: 0 0 10px var(--glow);
+    }
+    .collapsible {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .collapsible-header {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .collapsible-header:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .collapsible-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .collapsible-content {
+      padding: 0 16px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+    }
+    .expanded .collapsible-content {
+      max-height: 1000px;
+      padding: 0 16px 16px 16px;
+      transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
+    }
+    .coordinates {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 10;
+      font-family: monospace;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .action-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .action-button {
+      width: 48px;
+      height: 48px;
+      background-color: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .action-button:hover {
+      background-color: rgba(93, 92, 222, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    .action-button:active {
+      transform: translateY(0);
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+      margin-right: 10px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--primary);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(26px);
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .range-value {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .axis-indicator {
+      position: absolute;
+      bottom: 20px;
+      left: 130px;
+      width: 80px;
+      height: 80px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container">
+    <canvas id="fractal-canvas"></canvas>
+  </div>
+
+  <div class="coordinates" id="coordinates">X: 0.000, Y: 0.000, Z: 0.000 | Rot: 0°, 0°, 0°</div>
+  
+  <svg class="axis-indicator" id="axis-indicator" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <line x1="50" y1="50" x2="80" y2="50" stroke="red" stroke-width="2"></line>
+    <line x1="50" y1="50" x2="50" y2="20" stroke="green" stroke-width="2"></line>
+    <line x1="50" y1="50" x2="65" y2="65" stroke="blue" stroke-width="2"></line>
+    <text x="85" y="50" fill="red" font-size="12">X</text>
+    <text x="50" y="15" fill="green" font-size="12">Y</text>
+    <text x="70" y="70" fill="blue" font-size="12">Z</text>
+  </svg>
+  
+  <div class="action-bar">
+    <div class="action-button" id="fullscreen-btn" title="Fullscreen">⛶</div>
+    <div class="action-button" id="animate-btn" title="Play/Pause">▶</div>
+    <div class="action-button" id="reset-view-btn" title="Reset View">↺</div>
+    <div class="action-button" id="screenshot-btn" title="Take Screenshot">📷</div>
+  </div>
+
+  <div id="controls" class="controls-panel">
+    <button id="toggle-controls" class="controls-toggle">◄</button>
+    <h1 style="font-size: 22px; font-weight: 600; margin-bottom: 16px;">3D Fractal Explorer</h1>
+
+    <div class="collapsible expanded">
+      <div class="collapsible-header">
+        <h2>Fractal Type</h2>
+        <span>▼</span>
+      </div>
+      <div class="collapsible-content">
+        <div class="select-container">
+          <label for="fractalType">Select Fractal Type</label>
+          <select id="fractalType">
+            <option value="0" selected="">Mandelbulb</option>
+            <option value="1">Juliabulb</option>
+            <option value="2">Mandelbox</option>
+            <option value="3">Menger Sponge</option>
+            <option value="4">Sierpinski</option>
+            <option value="5">Hybrid Fractal</option>
+          </select>
+        </div>
+        
+        <div class="slider-container">
+          <label for="complexity">Complexity</label>
+          <input type="range" id="complexity" class="slider" min="1" max="10" value="2.9" step="0.1">
+          <div class="range-value">
+            <span>Low</span>
+            <span id="complexity-value">2.9</span>
+            <span>High</span>
+          </div>
+        </div>
+        
+        <div class="slider-container">
+          <label for="iterations">Iterations</label>
+          <input type="range" id="iterations" class="slider" min="1" max="16" value="10" step="1">
+          <div class="range-value">
+            <span>Few</span>
+            <span id="iterations-value">10</span>
+            <span>Many</span>
+          </div>
+        </div>
+        
+        <div class="slider-container">
+          <label for="power">Power Parameter</label>
+          <input type="range" id="power" class="slider" min="2" max="16" value="14.3" step="0.1">
+          <div class="range-value">
+            <span>2</span>
+            <span id="power-value">14.3</span>
+            <span>16</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapsible expanded">
+      <div class="collapsible-header">
+        <h2>3D Controls</h2>
+        <span>▼</span>
+      </div>
+      <div class="collapsible-content">
+        <div class="slider-container">
+          <label for="rotationX">Rotation X</label>
+          <input type="range" id="rotationX" class="slider" min="-180" max="180" value="30" step="1">
+          <div class="range-value">
+            <span>-180°</span>
+            <span id="rotationX-value">30°</span>
+            <span>180°</span>
+          </div>
+        </div>
+        
+        <div class="slider-container">
+          <label for="rotationY">Rotation Y</label>
+          <input type="range" id="rotationY" class="slider" min="-180" max="180" value="47" step="1">
+          <div class="range-value">
+            <span>-180°</span>
+            <span id="rotationY-value">47°</span>
+            <span>180°</span>
+          </div>
+        </div>
+        
+        <div class="slider-container">
+          <label for="rotationZ">Rotation Z</label>
+          <input type="range" id="rotationZ" class="slider" min="-180" max="180" value="0" step="1">
+          <div class="range-value">
+            <span>-180°</span>
+            <span id="rotationZ-value">0°</span>
+            <span>180°</span>
+          </div>
+        </div>
+        
+        <div class="slider-container">
+          <label for="cameraDistance">Camera Distance</label>
+          <input type="range" id="cameraDistance" class="slider" min="1" max="5" value="2.4" step="0.1">
+          <div class="range-value">
+            <span>Near</span>
+            <span id="cameraDistance-value">2.4</span>
+            <span>Far</span>
+          </div>
+        </div>
+        
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoRotate">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="autoRotate">Auto Rotate</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapsible expanded">
+      <div class="collapsible-header">
+        <h2>Visual Effects</h2>
+        <span>▼</span>
+      </div>
+      <div class="collapsible-content">
+        <div class="select-container">
+          <label for="colorScheme">Color Scheme</label>
+          <select id="colorScheme">
+            <option value="0" selected="">Spectrum</option>
+            <option value="1">Heat Map</option>
+            <option value="2">Electric</option>
+            <option value="3">Deep Ocean</option>
+            <option value="4">Cosmos</option>
+            <option value="5">Grayscale</option>
+            <option value="6">Custom</option>
+          </select>
+        </div>
+        
+        <div class="slider-container">
+          <label for="colorIntensity">Color Intensity</label>
+          <input type="range" id="colorIntensity" class="slider" min="0.5" max="3.5" value="1.5" step="0.1">
+          <div class="range-value">
+            <span>Low</span>
+            <span id="colorIntensity-value">1.5</span>
+            <span>High</span>
+          </div>
+        </div>
+        
+        <div class="slider-container">
+          <label for="brightness">Brightness</label>
+          <input type="range" id="brightness" class="slider" min="0.5" max="2" value="1" step="0.1">
+          <div class="range-value">
+            <span>Dark</span>
+            <span id="brightness-value">1.0</span>
+            <span>Bright</span>
+          </div>
+        </div>
+        
+        <div class="slider-container">
+          <label for="animationSpeed">Animation Speed</label>
+          <input type="range" id="animationSpeed" class="slider" min="0" max="1" value="0.5" step="0.01">
+          <div class="range-value">
+            <span>Slow</span>
+            <span id="animationSpeed-value">0.5</span>
+            <span>Fast</span>
+          </div>
+        </div>
+        
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableGlow" checked="">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="enableGlow">Glow Effect</label>
+        </div>
+        
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableShadows" checked="">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="enableShadows">Shadows</label>
+        </div>
+        
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableFog">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="enableFog">Atmospheric Fog</label>
+        </div>
+        
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableAO" checked="">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="enableAO">Ambient Occlusion</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p id="loading-text" style="margin-top: 20px; font-size: 16px;">Initializing 3D Fractal Engine...</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script>
+    // Show loading screen at start
+    document.getElementById('loading').style.visibility = 'visible';
+    document.getElementById('loading').style.opacity = '1';
+
+    // Core Three.js Setup
+    const canvas = document.getElementById('fractal-canvas');
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas, 
+      antialias: true, 
+      preserveDrawingBuffer: true,
+      alpha: true
+    });
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 2.4;
+
+    // Settings object
+    const settings = {
+      fractalType: 0, // Mandelbulb
+      complexity: 2.9,
+      iterations: 10,
+      power: 14.3,
+      rotation: {x: 30, y: 47, z: 0},
+      cameraDistance: 2.4,
+      autoRotate: false,
+      position: {x: 0, y: 0, z: 0},
+      colorScheme: 0, // Spectrum
+      customColors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'],
+      colorIntensity: 1.5,
+      brightness: 1.0,
+      animationSpeed: 0.5,
+      enableGlow: true,
+      enableShadows: true,
+      enableFog: false,
+      enableAO: true,
+      lighting: {
+        intensity: 1.0,
+        position: {x: 1, y: 1, z: 1},
+        ambient: 0.3,
+        specularPower: 20
+      },
+      animationPaused: false
+    };
+
+    // Update UI display values
+    function updateDisplayValues() {
+      document.getElementById('complexity-value').textContent = settings.complexity.toFixed(1);
+      document.getElementById('iterations-value').textContent = settings.iterations;
+      document.getElementById('power-value').textContent = settings.power.toFixed(1);
+      document.getElementById('rotationX-value').textContent = Math.round(settings.rotation.x) + '°';
+      document.getElementById('rotationY-value').textContent = Math.round(settings.rotation.y) + '°';
+      document.getElementById('rotationZ-value').textContent = Math.round(settings.rotation.z) + '°';
+      document.getElementById('cameraDistance-value').textContent = settings.cameraDistance.toFixed(1);
+      document.getElementById('colorIntensity-value').textContent = settings.colorIntensity.toFixed(1);
+      document.getElementById('brightness-value').textContent = settings.brightness.toFixed(1);
+      document.getElementById('animationSpeed-value').textContent = settings.animationSpeed.toFixed(2);
+      
+      // Update coordinates display
+      document.getElementById('coordinates').textContent = 
+        `X: ${settings.position.x.toFixed(3)}, Y: ${settings.position.y.toFixed(3)}, Z: ${settings.position.z.toFixed(3)} | Rot: ${Math.round(settings.rotation.x)}°, ${Math.round(settings.rotation.y)}°, ${Math.round(settings.rotation.z)}°`;
+      
+      // Update axis indicator
+      updateAxisIndicator();
+    }
+    
+    // Update axis indicator
+    function updateAxisIndicator() {
+      const svg = document.getElementById('axis-indicator');
+      svg.style.transform = `rotateX(${-settings.rotation.x}deg) rotateY(${settings.rotation.y}deg) rotateZ(${settings.rotation.z}deg)`;
+    }
+
+    // Shaders for 3D fractals
+    const vertexShader = `
+      varying vec3 vPosition;
+      varying vec2 vUv;
+      
+      void main() {
+        vPosition = position;
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      precision highp float;
+      
+      varying vec3 vPosition;
+      varying vec2 vUv;
+      
+      uniform float uTime;
+      uniform vec2 uResolution;
+      uniform int uFractalType;
+      uniform float uComplexity;
+      uniform int uIterations;
+      uniform float uPower;
+      uniform vec3 uRotation;
+      uniform float uColorIntensity;
+      uniform float uBrightness;
+      uniform float uAnimationSpeed;
+      uniform bool uEnableGlow;
+      uniform bool uEnableShadows;
+      uniform bool uEnableFog;
+      uniform bool uEnableAO;
+      uniform int uColorScheme;
+      uniform vec3 uCustomColors[4];
+      uniform vec3 uCameraPosition;
+      uniform vec3 uLightPosition;
+      uniform float uLightIntensity;
+      uniform float uAmbientLight;
+      uniform float uSpecularPower;
+      
+      const int MAX_STEPS = 200;
+      const float MIN_DIST = 0.001;
+      const float MAX_DIST = 20.0;
+      const float EPSILON = 0.0001;
+      
+      // Rotation matrices
+      mat3 rotateX(float angle) {
+        float c = cos(angle);
+        float s = sin(angle);
+        return mat3(
+          1.0, 0.0, 0.0,
+          0.0, c, -s,
+          0.0, s, c
+        );
+      }
+      
+      mat3 rotateY(float angle) {
+        float c = cos(angle);
+        float s = sin(angle);
+        return mat3(
+          c, 0.0, s,
+          0.0, 1.0, 0.0,
+          -s, 0.0, c
+        );
+      }
+      
+      mat3 rotateZ(float angle) {
+        float c = cos(angle);
+        float s = sin(angle);
+        return mat3(
+          c, -s, 0.0,
+          s, c, 0.0,
+          0.0, 0.0, 1.0
+        );
+      }
+      
+      // Color schemes
+      vec3 spectrum(float t) {
+        return 0.5 + 0.5 * cos(6.28318 * (vec3(t, t + 0.33, t + 0.67)) * uColorIntensity);
+      }
+      
+      vec3 heatmap(float t) {
+        t = clamp(t, 0.0, 1.0);
+        return vec3(
+          smoothstep(0.0, 0.33, t) - smoothstep(0.67, 1.0, t),
+          smoothstep(0.33, 0.67, t) - smoothstep(0.85, 1.0, t),
+          max(0.0, min(1.0, t * 3.0 - 2.0))
+        ) * uBrightness;
+      }
+      
+      vec3 electric(float t) {
+        t = fract(t);
+        float r = 0.5 + 0.5 * sin(t * 6.28318 * 2.0);
+        float g = 0.5 + 0.5 * sin((t + 0.33) * 6.28318 * 2.0);
+        float b = 0.5 + 0.5 * sin((t + 0.66) * 6.28318 * 2.0);
+        return vec3(r, g * 0.6, b * 1.5) * 1.2 * uBrightness;
+      }
+      
+      vec3 ocean(float t) {
+        t = fract(t);
+        return vec3(
+          0.0 + 0.2 * sin(t * 6.28318),
+          0.3 + 0.3 * sin(t * 6.28318 + 1.5),
+          0.6 + 0.4 * sin(t * 6.28318 + 3.0)
+        ) * uBrightness;
+      }
+      
+      vec3 cosmos(float t) {
+        t = fract(t);
+        return vec3(
+          0.1 + 0.3 * sin(t * 6.28318),
+          0.05 + 0.15 * sin(t * 6.28318 + 2.0),
+          0.2 + 0.4 * sin(t * 6.28318 + 4.0)
+        ) * uBrightness;
+      }
+      
+      vec3 grayscale(float t) {
+        t = fract(t);
+        return vec3(t) * uBrightness;
+      }
+      
+      vec3 custom(float t) {
+        t = fract(t) * 3.0;
+        int segment = int(t);
+        float segmentT = fract(t);
+        
+        if (segment == 0) return mix(uCustomColors[0], uCustomColors[1], segmentT) * uBrightness;
+        else if (segment == 1) return mix(uCustomColors[1], uCustomColors[2], segmentT) * uBrightness;
+        else return mix(uCustomColors[2], uCustomColors[3], segmentT) * uBrightness;
+      }
+      
+      vec3 getColor(float t) {
+        t = fract(t);
+        
+        if (uColorScheme == 0) return spectrum(t);
+        else if (uColorScheme == 1) return heatmap(t);
+        else if (uColorScheme == 2) return electric(t);
+        else if (uColorScheme == 3) return ocean(t);
+        else if (uColorScheme == 4) return cosmos(t);
+        else if (uColorScheme == 5) return grayscale(t);
+        else return custom(t);
+      }
+      
+      // Mandelbulb distance estimation
+      float mandelbulbDE(vec3 pos) {
+        vec3 z = pos;
+        float dr = 1.0;
+        float r = 0.0;
+        float power = uPower;
+        
+        for (int i = 0; i < 16; i++) {
+          if (i >= uIterations) break;
+          
+          r = length(z);
+          if (r > 2.0) break;
+          
+          // Convert to polar coordinates
+          float theta = acos(z.z / r);
+          float phi = atan(z.y, z.x);
+          dr = pow(r, power - 1.0) * power * dr + 1.0;
+          
+          // Scale and rotate the point
+          float zr = pow(r, power);
+          theta = theta * power;
+          phi = phi * power;
+          
+          // Convert back to cartesian coordinates
+          z = zr * vec3(
+            sin(theta) * cos(phi),
+            sin(theta) * sin(phi),
+            cos(theta)
+          );
+          
+          // Add time variation for animation
+          float time = uTime * uAnimationSpeed;
+          z += vec3(
+            sin(time * 0.5) * 0.1,
+            cos(time * 0.3) * 0.1,
+            sin(time * 0.7) * 0.1
+          );
+          
+          z += pos; // Add the initial position back
+        }
+        
+        return 0.5 * log(r) * r / dr;
+      }
+      
+      // Juliabulb distance estimation
+      float juliabulbDE(vec3 pos) {
+        // Julia constant that varies with time
+        float time = uTime * uAnimationSpeed;
+        vec3 c = vec3(
+          0.3 * sin(time * 0.4),
+          0.2 * cos(time * 0.3),
+          0.1 * sin(time * 0.5)
+        );
+        
+        vec3 z = pos;
+        float dr = 1.0;
+        float r = 0.0;
+        float power = uPower;
+        
+        for (int i = 0; i < 16; i++) {
+          if (i >= uIterations) break;
+          
+          r = length(z);
+          if (r > 2.0) break;
+          
+          // Convert to polar coordinates
+          float theta = acos(z.z / r);
+          float phi = atan(z.y, z.x);
+          dr = pow(r, power - 1.0) * power * dr + 1.0;
+          
+          // Scale and rotate the point
+          float zr = pow(r, power);
+          theta = theta * power;
+          phi = phi * power;
+          
+          // Convert back to cartesian coordinates
+          z = zr * vec3(
+            sin(theta) * cos(phi),
+            sin(theta) * sin(phi),
+            cos(theta)
+          );
+          
+          z += c; // Add the julia constant
+        }
+        
+        return 0.5 * log(r) * r / dr;
+      }
+      
+      // Mandelbox distance estimation
+      float mandelboxDE(vec3 pos) {
+        vec3 z = pos;
+        vec3 c = pos;
+        float scale = 3.0;
+        float offset = 1.0;
+        float dr = 1.0;
+        
+        for (int i = 0; i < 16; i++) {
+          if (i >= uIterations) break;
+          
+          // Box fold
+          z = clamp(z, -1.0, 1.0) * 2.0 - z;
+          
+          // Sphere fold
+          float r2 = dot(z, z);
+          if (r2 < 0.25) {
+            z *= 4.0;
+            dr *= 4.0;
+          } else if (r2 < 1.0) {
+            z *= 1.0 / r2;
+            dr *= 1.0 / r2;
+          }
+          
+          // Scale and translate
+          z = scale * z + c;
+          dr = dr * abs(scale) + 1.0;
+        }
+        
+        return length(z) / abs(dr);
+      }
+      
+      // Menger sponge distance estimation
+      float mengerDE(vec3 pos) {
+        float time = uTime * uAnimationSpeed * 0.1;
+        pos += vec3(sin(time), cos(time), sin(time * 0.7)) * 0.1;
+        
+        float d = max(
+          max(abs(pos.x), abs(pos.y)),
+          abs(pos.z)
+        ) - 1.0;
+        
+        float s = 1.0;
+        for (int i = 0; i < 8; i++) {
+          if (i >= uIterations / 2) break;
+          
+          vec3 a = mod(pos * s, 2.0) - 1.0;
+          s *= 3.0;
+          
+          vec3 r = abs(1.0 - 3.0 * abs(a));
+          
+          float da = max(r.x, r.y);
+          float db = max(r.y, r.z);
+          float dc = max(r.z, r.x);
+          
+          float c = (min(da, min(db, dc)) - 1.0) / s;
+          
+          d = max(d, c);
+        }
+        
+        return d;
+      }
+      
+      // Sierpinski tetrahedron distance estimation
+      float sierpinskiDE(vec3 pos) {
+        pos = pos * 2.0;
+        float scale = 2.0;
+        
+        for (int i = 0; i < 12; i++) {
+          if (i >= uIterations) break;
+          
+          // Fold the space
+          pos = abs(pos);
+          
+          // Rotation and scaling
+          if (pos.x < pos.y) pos.xy = pos.yx;
+          if (pos.x < pos.z) pos.xz = pos.zx;
+          if (pos.y < pos.z) pos.yz = pos.zy;
+          
+          // Shift
+          pos.z -= 0.5 * (scale - 1.0);
+          pos.xy -= 0.5 * (scale - 1.0);
+          
+          // Scale
+          pos *= scale;
+          
+          // Animation
+          float time = uTime * uAnimationSpeed * 0.1;
+          pos += vec3(
+            sin(time) * 0.05,
+            cos(time * 1.3) * 0.05,
+            sin(time * 0.7) * 0.05
+          );
+        }
+        
+        return length(pos) * pow(scale, -float(uIterations));
+      }
+      
+      // Hybrid fractal that blends multiple types
+      float hybridDE(vec3 pos) {
+        float time = uTime * uAnimationSpeed * 0.2;
+        float blend = sin(time) * 0.5 + 0.5;
+        
+        float d1 = mandelbulbDE(pos);
+        float d2 = juliabulbDE(pos);
+        float d3 = mengerDE(pos);
+        
+        // Blend between different fractals
+        return mix(mix(d1, d2, blend), d3, sin(time * 0.5) * 0.5 + 0.5);
+      }
+      
+      // Scene distance function - selects the fractal type
+      float sceneSDF(vec3 pos) {
+        // Apply rotation to the position
+        pos = rotateX(uRotation.x * 0.01745) * pos;  // Convert degrees to radians (π/180)
+        pos = rotateY(uRotation.y * 0.01745) * pos;
+        pos = rotateZ(uRotation.z * 0.01745) * pos;
+        
+        // Scale based on complexity
+        pos = pos * uComplexity / 5.0;
+        
+        if (uFractalType == 0) return mandelbulbDE(pos);
+        else if (uFractalType == 1) return juliabulbDE(pos);
+        else if (uFractalType == 2) return mandelboxDE(pos);
+        else if (uFractalType == 3) return mengerDE(pos);
+        else if (uFractalType == 4) return sierpinskiDE(pos);
+        else return hybridDE(pos);
+      }
+      
+      // Calculate the normal at a point
+      vec3 calcNormal(vec3 p) {
+        float e = EPSILON;
+        return normalize(vec3(
+          sceneSDF(vec3(p.x + e, p.y, p.z)) - sceneSDF(vec3(p.x - e, p.y, p.z)),
+          sceneSDF(vec3(p.x, p.y + e, p.z)) - sceneSDF(vec3(p.x, p.y - e, p.z)),
+          sceneSDF(vec3(p.x, p.y, p.z + e)) - sceneSDF(vec3(p.x, p.y, p.z - e))
+        ));
+      }
+      
+      // Ambient occlusion approximation
+      float calcAO(vec3 pos, vec3 normal) {
+        if (!uEnableAO) return 1.0;
+        
+        float ao = 0.0;
+        float weight = 1.0;
+        
+        for (float i = 1.0; i <= 5.0; i += 1.0) {
+          float dist = i * 0.2;
+          vec3 aoPos = pos + normal * dist;
+          float sceneDist = sceneSDF(aoPos);
+          ao += weight * (dist - sceneDist);
+          weight *= 0.5;
+        }
+        
+        return 1.0 - clamp(ao, 0.0, 1.0);
+      }
+      
+      // Ray marching function with closest distance output
+      float rayMarch(vec3 ro, vec3 rd, out float iterations, out float closest) {
+        float t = 0.0;
+        closest = 1000.0;
+        iterations = 0.0;
+        
+        for (int i = 0; i < MAX_STEPS; i++) {
+          vec3 p = ro + rd * t;
+          float d = sceneSDF(p);
+          closest = min(closest, d);
+          
+          if (d < MIN_DIST) {
+            iterations = float(i) / float(MAX_STEPS);
+            return t;
+          }
+          
+          if (t > MAX_DIST) break;
+          
+          t += d * 0.5;  // Use smaller step size for better precision
+        }
+        
+        iterations = 0.0;
+        return -1.0;
+      }
+      
+      void main() {
+        // Calculate ray direction
+        vec2 uv = vUv * 2.0 - 1.0;
+        uv.x *= uResolution.x / uResolution.y;
+        
+        vec3 ro = uCameraPosition;
+        vec3 rd = normalize(vec3(uv, -1.0));
+        
+        // Apply camera rotation
+        rd = rotateX(uRotation.x * 0.01745) * rd;
+        rd = rotateY(uRotation.y * 0.01745) * rd;
+        rd = rotateZ(uRotation.z * 0.01745) * rd;
+        
+        float iterations = 0.0;
+        float closest = 1000.0;
+        float t = rayMarch(ro, rd, iterations, closest);
+        
+        if (t > 0.0) {
+          // We hit something
+          vec3 p = ro + rd * t;
+          vec3 normal = calcNormal(p);
+          
+          // Lighting
+          vec3 lightDir = normalize(uLightPosition - p);
+          float diff = max(dot(normal, lightDir), 0.0) * uLightIntensity;
+          
+          // Shadows
+          float shadow = 1.0;
+          if (uEnableShadows) {
+            float shadowDist;
+            float shadowClosest;
+            float shadowMarch = rayMarch(p + normal * 0.01, lightDir, shadowDist, shadowClosest);
+            if (shadowMarch > 0.0) {
+              shadow = 0.3;  // Hard shadow
+            }
+          }
+          
+          // Ambient occlusion
+          float ao = calcAO(p, normal);
+          
+          // Ambient light
+          float ambient = uAmbientLight;
+          
+          // Specular
+          vec3 viewDir = -rd;
+          vec3 reflectDir = reflect(-lightDir, normal);
+          float spec = pow(max(dot(viewDir, reflectDir), 0.0), uSpecularPower) * uLightIntensity;
+          
+          // Final lighting
+          float lighting = (diff * shadow + ambient) * ao + spec;
+          
+          // Base color from iterations
+          vec3 color = getColor(iterations + uTime * uAnimationSpeed * 0.1);
+          
+          // Apply lighting
+          color *= lighting;
+          
+          // Add glow effect
+          if (uEnableGlow) {
+            color += getColor(iterations * 1.5 + uTime * uAnimationSpeed * 0.2) * 0.15;
+          }
+          
+          // Apply fog
+          if (uEnableFog) {
+            float fogFactor = 1.0 - exp(-t * 0.15);
+            vec3 fogColor = vec3(0.05, 0.05, 0.1);
+            color = mix(color, fogColor, fogFactor);
+          }
+          
+          gl_FragColor = vec4(color, 1.0);
+        } else {
+          // We hit nothing - background
+          vec3 bgColor = vec3(0.0);
+          
+          // Optional background gradient
+          float vy = (vUv.y - 0.5) * 2.0;
+          float vignette = 1.0 - dot(vUv - 0.5, vUv - 0.5) * 0.7;
+          
+          if (uEnableGlow) {
+            // Add a subtle glow from closest approach - now closest is available
+            float glow = pow(0.03 / max(closest, 0.001), 1.5) * 0.5;
+            bgColor += getColor(uTime * uAnimationSpeed * 0.05) * glow * vignette;
+          }
+          
+          gl_FragColor = vec4(bgColor, 1.0);
+        }
+      }
+    `;
+
+    // Create material
+    const uniforms = {
+      uTime: { value: 0.0 },
+      uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      uFractalType: { value: settings.fractalType },
+      uComplexity: { value: settings.complexity },
+      uIterations: { value: settings.iterations },
+      uPower: { value: settings.power },
+      uRotation: { value: new THREE.Vector3(settings.rotation.x, settings.rotation.y, settings.rotation.z) },
+      uColorIntensity: { value: settings.colorIntensity },
+      uBrightness: { value: settings.brightness },
+      uAnimationSpeed: { value: settings.animationSpeed },
+      uEnableGlow: { value: settings.enableGlow },
+      uEnableShadows: { value: settings.enableShadows },
+      uEnableFog: { value: settings.enableFog },
+      uEnableAO: { value: settings.enableAO },
+      uColorScheme: { value: settings.colorScheme },
+      uCustomColors: { value: [
+        new THREE.Vector3(1.0, 0.0, 0.0),
+        new THREE.Vector3(0.0, 1.0, 0.0),
+        new THREE.Vector3(0.0, 0.0, 1.0),
+        new THREE.Vector3(1.0, 1.0, 0.0)
+      ]},
+      uCameraPosition: { value: camera.position },
+      uLightPosition: { value: new THREE.Vector3(
+        settings.lighting.position.x,
+        settings.lighting.position.y,
+        settings.lighting.position.z
+      )},
+      uLightIntensity: { value: settings.lighting.intensity },
+      uAmbientLight: { value: settings.lighting.ambient },
+      uSpecularPower: { value: settings.lighting.specularPower }
+    };
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms
+    });
+
+    // Create a simple plane geometry that covers the entire screen
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
+
+    // Update Uniforms
+    function updateUniforms() {
+      uniforms.uFractalType.value = settings.fractalType;
+      uniforms.uComplexity.value = settings.complexity;
+      uniforms.uIterations.value = settings.iterations;
+      uniforms.uPower.value = settings.power;
+      uniforms.uRotation.value.set(settings.rotation.x, settings.rotation.y, settings.rotation.z);
+      uniforms.uColorIntensity.value = settings.colorIntensity;
+      uniforms.uBrightness.value = settings.brightness;
+      uniforms.uAnimationSpeed.value = settings.animationSpeed;
+      uniforms.uEnableGlow.value = settings.enableGlow;
+      uniforms.uEnableShadows.value = settings.enableShadows;
+      uniforms.uEnableFog.value = settings.enableFog;
+      uniforms.uEnableAO.value = settings.enableAO;
+      uniforms.uColorScheme.value = settings.colorScheme;
+      
+      uniforms.uCameraPosition.value.copy(camera.position);
+      uniforms.uLightPosition.value.set(
+        settings.lighting.position.x,
+        settings.lighting.position.y,
+        settings.lighting.position.z
+      );
+      uniforms.uLightIntensity.value = settings.lighting.intensity;
+      uniforms.uAmbientLight.value = settings.lighting.ambient;
+      uniforms.uSpecularPower.value = settings.lighting.specularPower;
+      
+      updateDisplayValues();
+    }
+
+    // Mouse controls for 3D rotation
+    let isMouseDown = false;
+    let previousMousePosition = {
+      x: 0,
+      y: 0
+    };
+
+    function onMouseDown(e) {
+      isMouseDown = true;
+      previousMousePosition = {
+        x: e.clientX,
+        y: e.clientY
+      };
+    }
+
+    function onMouseMove(e) {
+      if (!isMouseDown) return;
+      
+      const deltaMove = {
+        x: e.clientX - previousMousePosition.x,
+        y: e.clientY - previousMousePosition.y
+      };
+      
+      if (e.buttons === 1) { // Left mouse button - rotate
+        settings.rotation.y += deltaMove.x * 0.5;
+        settings.rotation.x += deltaMove.y * 0.5;
+        
+        // Keep within -180 to 180 range
+        settings.rotation.x = Math.max(-180, Math.min(180, settings.rotation.x));
+        settings.rotation.y = ((settings.rotation.y + 180) % 360) - 180;
+      } else if (e.buttons === 2) { // Right mouse button - pan
+        settings.position.x += deltaMove.x * 0.01;
+        settings.position.y -= deltaMove.y * 0.01;
+      }
+      
+      previousMousePosition = {
+        x: e.clientX,
+        y: e.clientY
+      };
+      
+      updateUniforms();
+    }
+
+    function onMouseUp() {
+      isMouseDown = false;
+    }
+
+    function onWheel(e) {
+      e.preventDefault();
+      settings.cameraDistance += e.deltaY * 0.001;
+      settings.cameraDistance = Math.max(1, Math.min(5, settings.cameraDistance));
+      camera.position.z = settings.cameraDistance;
+      updateUniforms();
+    }
+
+    canvas.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('wheel', onWheel);
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    
+    // Middle click reset
+    canvas.addEventListener('auxclick', e => {
+      if (e.button === 1) { // Middle button
+        resetView();
+      }
+    });
+
+    // Event Listeners for UI controls
+    document.getElementById('fractalType').addEventListener('change', e => {
+      settings.fractalType = parseInt(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('complexity').addEventListener('input', e => {
+      settings.complexity = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('iterations').addEventListener('input', e => {
+      settings.iterations = parseInt(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('power').addEventListener('input', e => {
+      settings.power = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('rotationX').addEventListener('input', e => {
+      settings.rotation.x = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('rotationY').addEventListener('input', e => {
+      settings.rotation.y = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('rotationZ').addEventListener('input', e => {
+      settings.rotation.z = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('cameraDistance').addEventListener('input', e => {
+      settings.cameraDistance = parseFloat(e.target.value);
+      camera.position.z = settings.cameraDistance;
+      updateUniforms();
+    });
+
+    document.getElementById('autoRotate').addEventListener('change', e => {
+      settings.autoRotate = e.target.checked;
+    });
+
+    document.getElementById('colorScheme').addEventListener('change', e => {
+      settings.colorScheme = parseInt(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('colorIntensity').addEventListener('input', e => {
+      settings.colorIntensity = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('brightness').addEventListener('input', e => {
+      settings.brightness = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('animationSpeed').addEventListener('input', e => {
+      settings.animationSpeed = parseFloat(e.target.value);
+      updateUniforms();
+    });
+
+    document.getElementById('enableGlow').addEventListener('change', e => {
+      settings.enableGlow = e.target.checked;
+      updateUniforms();
+    });
+
+    document.getElementById('enableShadows').addEventListener('change', e => {
+      settings.enableShadows = e.target.checked;
+      updateUniforms();
+    });
+
+    document.getElementById('enableFog').addEventListener('change', e => {
+      settings.enableFog = e.target.checked;
+      updateUniforms();
+    });
+
+    document.getElementById('enableAO').addEventListener('change', e => {
+      settings.enableAO = e.target.checked;
+      updateUniforms();
+    });
+
+    // Collapsible sections
+    document.querySelectorAll('.collapsible-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const parent = header.parentElement;
+        parent.classList.toggle('expanded');
+        header.querySelector('span').textContent = parent.classList.contains('expanded') ? '▼' : '►';
+      });
+    });
+
+    // Action buttons
+    document.getElementById('fullscreen-btn').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    document.getElementById('animate-btn').addEventListener('click', () => {
+      settings.animationPaused = !settings.animationPaused;
+      document.getElementById('animate-btn').textContent = settings.animationPaused ? '▶' : '⏸';
+    });
+
+    document.getElementById('reset-view-btn').addEventListener('click', resetView);
+
+    function resetView() {
+      settings.rotation = {x: 0, y: 0, z: 0};
+      settings.position = {x: 0, y: 0, z: 0};
+      settings.cameraDistance = 2.5;
+      camera.position.z = settings.cameraDistance;
+      
+      // Update UI sliders
+      document.getElementById('rotationX').value = 0;
+      document.getElementById('rotationY').value = 0;
+      document.getElementById('rotationZ').value = 0;
+      document.getElementById('cameraDistance').value = 2.5;
+      
+      updateUniforms();
+    }
+
+    document.getElementById('screenshot-btn').addEventListener('click', takeScreenshot);
+
+    function takeScreenshot() {
+      // Wait a frame for rendering before capturing
+      setTimeout(() => {
+        const dataUrl = renderer.domElement.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `fractal-3d-${Date.now()}.png`;
+        link.click();
+      }, 100);
+    }
+
+    // Controls Toggle
+    document.getElementById('toggle-controls').addEventListener('click', () => {
+      document.getElementById('controls').classList.toggle('controls-collapsed');
+      document.getElementById('toggle-controls').textContent = 
+        document.getElementById('controls').classList.contains('controls-collapsed') ? '►' : '◄';
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', e => {
+      switch (e.key) {
+        case 'w':
+        case 'W':
+          settings.cameraDistance -= 0.1;
+          settings.cameraDistance = Math.max(1, settings.cameraDistance);
+          camera.position.z = settings.cameraDistance;
+          document.getElementById('cameraDistance').value = settings.cameraDistance;
+          break;
+        case 's':
+        case 'S':
+          settings.cameraDistance += 0.1;
+          settings.cameraDistance = Math.min(5, settings.cameraDistance);
+          camera.position.z = settings.cameraDistance;
+          document.getElementById('cameraDistance').value = settings.cameraDistance;
+          break;
+        case 'a':
+        case 'A':
+          settings.rotation.y -= 5;
+          document.getElementById('rotationY').value = settings.rotation.y;
+          break;
+        case 'd':
+        case 'D':
+          settings.rotation.y += 5;
+          document.getElementById('rotationY').value = settings.rotation.y;
+          break;
+        case 'q':
+        case 'Q':
+          settings.rotation.x -= 5;
+          settings.rotation.x = Math.max(-180, Math.min(180, settings.rotation.x));
+          document.getElementById('rotationX').value = settings.rotation.x;
+          break;
+        case 'e':
+        case 'E':
+          settings.rotation.x += 5;
+          settings.rotation.x = Math.max(-180, Math.min(180, settings.rotation.x));
+          document.getElementById('rotationX').value = settings.rotation.x;
+          break;
+        case 'r':
+        case 'R':
+          resetView();
+          break;
+        case 'p':
+        case 'P':
+          takeScreenshot();
+          break;
+        case ' ':
+          settings.animationPaused = !settings.animationPaused;
+          document.getElementById('animate-btn').textContent = settings.animationPaused ? '▶' : '⏸';
+          break;
+      }
+      updateUniforms();
+    });
+
+    // Show notification
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.textContent = message;
+      notification.style.position = 'fixed';
+      notification.style.bottom = '20px';
+      notification.style.left = '50%';
+      notification.style.transform = 'translateX(-50%)';
+      notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      notification.style.color = 'white';
+      notification.style.padding = '10px 20px';
+      notification.style.borderRadius = '6px';
+      notification.style.zIndex = '9999';
+      notification.style.opacity = '0';
+      notification.style.transition = 'opacity 0.3s';
+      
+      document.body.appendChild(notification);
+      
+      // Fade in
+      setTimeout(() => {
+        notification.style.opacity = '1';
+      }, 10);
+      
+      // Fade out and remove after 3 seconds
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            document.body.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
+    }
+
+    // Animation
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      if (!settings.animationPaused) {
+        uniforms.uTime.value += 0.02;
+      }
+      
+      // Auto-rotation if enabled
+      if (settings.autoRotate) {
+        settings.rotation.y += 0.2;
+        if (settings.rotation.y > 180) settings.rotation.y -= 360;
+        document.getElementById('rotationY').value = settings.rotation.y;
+        updateUniforms();
+      }
+      
+      renderer.render(scene, camera);
+    }
+
+    // Resize Handler
+    function onResize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      
+      uniforms.uResolution.value.set(width, height);
+    }
+
+    window.addEventListener('resize', onResize);
+    updateUniforms();
+
+    // Loading Functions
+    function showLoading(message) {
+      const loading = document.getElementById('loading');
+      document.getElementById('loading-text').textContent = message;
+      loading.style.visibility = 'visible';
+      loading.style.opacity = '1';
+    }
+
+    function hideLoading() {
+      const loading = document.getElementById('loading');
+      loading.style.opacity = '0';
+      setTimeout(() => loading.style.visibility = 'hidden', 300);
+    }
+
+    // Initialize
+    animate();
+    
+    // Hide loading screen after initialization
+    setTimeout(() => {
+      hideLoading();
+    }, 1000);
+  </script>
+
+
+</body></html>
