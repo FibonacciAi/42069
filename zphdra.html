@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Film Prop Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            color: #ddd;
+            font-family: "Courier New", monospace;
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #444;
+            max-width: 300px;
+            z-index: 100;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #444;
+            z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 600px;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: "Courier New", monospace;
+        }
+        button:hover {
+            background: #444;
+        }
+        button.active {
+            background: #662;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #fff;
+        }
+        #detailPanel {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            padding: 15px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #555;
+            width: 300px;
+            max-height: 80%;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            font-size: 14px;
+        }
+        #detailPanel h3 {
+            margin-top: 0;
+            color: #ffaa33;
+        }
+        .view-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #444;
+            z-index: 100;
+        }
+        .interaction-mode {
+            position: absolute;
+            top: 80px;
+            right: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #444;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+    <div class="loading">Loading advanced visualization...</div>
+    <div id="info">
+        <h2>Advanced Film Prop Visualization</h2>
+        <p>Use mouse to rotate. Scroll to zoom.</p>
+        <p>Click on elements to see details.</p>
+        <p>Hold shift to enter selection mode.</p>
+    </div>
+    <div id="controls">
+        <button id="toggleSpiral">Spiral Pattern</button>
+        <button id="toggleStars">Star Symbols</button>
+        <button id="togglePolyhedron">Zion Polyhedra</button>
+        <button id="toggleTimeline">Timeline</button>
+        <button id="toggleGrid">Frequency Grid</button>
+        <button id="toggleLabels">Labels</button>
+        <button id="toggleExplode">Explode View</button>
+        <button id="resetView">Reset View</button>
+    </div>
+    <div class="view-buttons">
+        <button id="view3D" class="active">3D View</button>
+        <button id="viewTop">Top View</button>
+        <button id="viewFront">Front View</button>
+    </div>
+    <div class="interaction-mode">
+        <button id="orbitMode" class="active">Orbit Mode</button>
+        <button id="selectMode">Select Mode</button>
+    </div>
+    <div id="detailPanel"></div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load Three.js from CDN
+            const threeScript = document.createElement('script');
+            threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            document.head.appendChild(threeScript);
+
+            threeScript.onload = function() {
+                // Now load OrbitControls
+                const orbitScript = document.createElement('script');
+                orbitScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js';
+                document.head.appendChild(orbitScript);
+
+                orbitScript.onload = initVisualization;
+            };
+        });
+
+        function initVisualization() {
+            // Scene setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x111111);
+            document.getElementById('canvas').appendChild(renderer.domElement);
+
+            // Raycaster for interaction
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            let intersectedObject = null;
+            let selectedObject = null;
+
+            // Interaction mode
+            let interactionMode = 'orbit'; // 'orbit' or 'select'
+
+            // Hide loading message
+            document.querySelector('.loading').style.display = 'none';
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x555555);
+            scene.add(ambientLight);
+            
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            const pointLight2 = new THREE.PointLight(0xffffaa, 0.6);
+            pointLight2.position.set(-5, -5, 5);
+            scene.add(pointLight2);
+
+            // Camera position
+            camera.position.z = 15;
+
+            // Controls
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 50;
+            controls.minDistance = 5;
+
+            // Objects container
+            const objectsData = {
+                spiral: { object: null, name: "Fibonacci Spiral", description: "A spiral pattern following the golden ratio (φ ≈ 1.618). Represents cosmic frequencies and wave patterns in the document." },
+                pentagram: { object: null, name: "Pentagram Symbol", description: "Five-pointed star marked with the years 1996 and 2012. Related to 'Thought Forms' in the document." },
+                hexagram: { object: null, name: "Hexagram Symbol", description: "Six-pointed star (Star of David) with phi (φ) ratio markings. Represents the golden ratio in sacred geometry." },
+                polyhedron: { object: null, name: "Zion Polyhedra", description: "Complex geometric structure representing 'interlocking dimensions and musical resonance'. The central symbol of the document." },
+                timeline: { object: null, name: "Timeline 1996-2012", description: "Chronological markers spanning from 1996 to 2012, with special emphasis on certain years." },
+                grid: { object: null, name: "Frequency Grid", description: "Mathematical grid showing relationships between frequencies, with markers for √2, √3, φ, and other constants." },
+                labels: { objects: [], name: "Document Labels", description: "Text elements from the original document." }
+            };
+
+            // Main 3D group to control overall position
+            const mainGroup = new THREE.Group();
+            scene.add(mainGroup);
+
+            // Colors
+            const colors = {
+                highlight: 0xffaa33,
+                pentagram: 0xff6644,
+                hexagram: 0x66ff77,
+                polyhedron: 0x44ddff,
+                timeline: 0xffff66,
+                grid: 0xaaddff,
+                golden: 0xf5d742,
+                selected: 0xffffff
+            };
+
+            // Default positions for exploded view
+            const defaultPositions = {
+                spiral: new THREE.Vector3(-5, 0, 0),
+                pentagram: new THREE.Vector3(5, 2, 0),
+                hexagram: new THREE.Vector3(5, -2, 0),
+                polyhedron: new THREE.Vector3(0, 0.5, 0),
+                timeline: new THREE.Vector3(0, -5, 0),
+                grid: new THREE.Vector3(0, -3, 0)
+            };
+
+            // Exploded view positions
+            const explodedPositions = {
+                spiral: new THREE.Vector3(-10, 0, 0),
+                pentagram: new THREE.Vector3(10, 5, 0),
+                hexagram: new THREE.Vector3(10, -5, 0),
+                polyhedron: new THREE.Vector3(0, 2, 5),
+                timeline: new THREE.Vector3(0, -10, 0),
+                grid: new THREE.Vector3(0, -7, 0)
+            };
+
+            // Create advanced spiral
+            function createSpiral() {
+                const spiralGroup = new THREE.Group();
+                
+                // Golden ratio spiral
+                const goldenRatio = 1.618033988749895;
+                const points = [];
+                const spiralGeometry = new THREE.BufferGeometry();
+                const spiralMaterial = new THREE.LineBasicMaterial({ 
+                    color: colors.highlight,
+                    linewidth: 2
+                });
+                
+                for(let i = 0; i <= 1000; i++) {
+                    const t = i / 30;
+                    const radius = Math.pow(goldenRatio, t/10) / 10;
+                    const x = Math.sin(t) * radius;
+                    const y = Math.cos(t) * radius;
+                    points.push(new THREE.Vector3(x, y, 0));
+                }
+                
+                spiralGeometry.setFromPoints(points);
+                const spiralLine = new THREE.Line(spiralGeometry, spiralMaterial);
+                spiralGroup.add(spiralLine);
+                
+                // Add phi symbol
+                const phiGeometry = new THREE.TorusGeometry(0.3, 0.05, 16, 100, Math.PI);
+                const phiMaterial = new THREE.MeshBasicMaterial({ color: colors.golden });
+                const phiTorus = new THREE.Mesh(phiGeometry, phiMaterial);
+                phiTorus.position.set(2, 2, 0);
+                
+                const phiLineGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, -0.3, 0),
+                    new THREE.Vector3(0, 0.3, 0)
+                ]);
+                const phiLine = new THREE.Line(phiLineGeometry, phiMaterial);
+                phiLine.position.set(2, 2, 0);
+                
+                spiralGroup.add(phiTorus);
+                spiralGroup.add(phiLine);
+                
+                // Add circular markers at key points of the spiral
+                const markerGeometry = new THREE.CircleGeometry(0.05, 16);
+                const markerMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffff,
+                    side: THREE.DoubleSide
+                });
+                
+                // Add markers at phi intervals
+                for(let i = 0; i <= 5; i++) {
+                    const t = i * Math.PI * 2;
+                    const radius = Math.pow(goldenRatio, t/10) / 10;
+                    const x = Math.sin(t) * radius;
+                    const y = Math.cos(t) * radius;
+                    
+                    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                    marker.position.set(x, y, 0.01);
+                    spiralGroup.add(marker);
+                }
+                
+                // Add grid lines for the spiral
+                const gridMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0x444444,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                
+                // Create concentric circles
+                for(let i = 1; i <= 3; i++) {
+                    const radius = i * 0.5;
+                    const circleGeometry = new THREE.BufferGeometry();
+                    const circlePoints = [];
+                    
+                    for(let j = 0; j <= 64; j++) {
+                        const angle = (j / 64) * Math.PI * 2;
+                        circlePoints.push(
+                            new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0)
+                        );
+                    }
+                    
+                    circleGeometry.setFromPoints(circlePoints);
+                    const circleLine = new THREE.Line(circleGeometry, gridMaterial);
+                    spiralGroup.add(circleLine);
+                }
+                
+                spiralGroup.position.copy(defaultPositions.spiral);
+                spiralGroup.scale.set(1.5, 1.5, 1.5);
+                
+                // Add to object data and scene
+                objectsData.spiral.object = spiralGroup;
+                spiralGroup.userData = { type: 'spiral' };
+                mainGroup.add(spiralGroup);
+                
+                // Create text labels for the spiral
+                createTextMesh("COSMIC", new THREE.Vector3(-5.5, -1.5, 0), 0.2);
+                createTextMesh("SUPRALIMINAL FREQUENCY", new THREE.Vector3(-7, -2.5, 0), 0.15);
+            }
+
+            // Create advanced pentagram
+            function createPentagram() {
+                const pentagramGroup = new THREE.Group();
+                
+                // Pentagram points
+                const points = [];
+                for(let i = 0; i < 5; i++) {
+                    // Start from top point (270 degrees in unit circle)
+                    const angle = (i * 2 * Math.PI / 5) - Math.PI/2;
+                    const x = Math.cos(angle);
+                    const y = Math.sin(angle);
+                    points.push(new THREE.Vector3(x, y, 0));
+                }
+                
+                // Connect points to create pentagram
+                const pentagramPoints = [];
+                for(let i = 0; i < 5; i++) {
+                    const current = points[i];
+                    // Connect to point 2 steps ahead (modulo 5)
+                    const next = points[(i + 2) % 5];
+                    pentagramPoints.push(current, next);
+                }
+                
+                const pentagramGeometry = new THREE.BufferGeometry().setFromPoints(pentagramPoints);
+                const pentagramMaterial = new THREE.LineBasicMaterial({ 
+                    color: colors.pentagram,
+                    linewidth: 2
+                });
+                const pentagramLines = new THREE.LineSegments(pentagramGeometry, pentagramMaterial);
+                
+                // Add circle around pentagram
+                const circleGeometry = new THREE.CircleGeometry(1.05, 32);
+                const circleMaterial = new THREE.MeshBasicMaterial({ 
+                    color: colors.pentagram,
+                    transparent: true,
+                    opacity: 0.1,
+                    side: THREE.DoubleSide
+                });
+                const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+                circle.position.z = -0.01;
+                
+                // Add circle outline
+                const circleOutlineGeometry = new THREE.RingGeometry(1.03, 1.05, 32);
+                const circleOutline = new THREE.Mesh(circleOutlineGeometry, new THREE.MeshBasicMaterial({ 
+                    color: colors.pentagram,
+                    side: THREE.DoubleSide
+                }));
+                
+                pentagramGroup.add(pentagramLines);
+                pentagramGroup.add(circle);
+                pentagramGroup.add(circleOutline);
+                
+                // Add small circles at each point
+                const pointGeometry = new THREE.CircleGeometry(0.05, 16);
+                const pointMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffff,
+                    side: THREE.DoubleSide
+                });
+                
+                points.forEach((point, i) => {
+                    const pointCircle = new THREE.Mesh(pointGeometry, pointMaterial);
+                    pointCircle.position.set(point.x, point.y, 0.01);
+                    pentagramGroup.add(pointCircle);
+                    
+                    // Add numbers 1.6, 1.8, etc. at each point as in the document
+                    if (i > 0) { // Skip the top point
+                        createTextMesh((1.6 + (i-1)*0.2).toFixed(1), 
+                            new THREE.Vector3(point.x * 0.7, point.y * 0.7, 0.01), 0.1, pentagramGroup);
+                    }
+                });
+                
+                // Add 1996 and 2012 markers
+                createTextMesh("1996", new THREE.Vector3(-0.3, -0.3, 0.01), 0.12, pentagramGroup);
+                createTextMesh("2012", new THREE.Vector3(0.3, -0.3, 0.01), 0.12, pentagramGroup);
+                
+                pentagramGroup.position.copy(defaultPositions.pentagram);
+                pentagramGroup.scale.set(1.5, 1.5, 1);
+                
+                // Add to object data and scene
+                objectsData.pentagram.object = pentagramGroup;
+                pentagramGroup.userData = { type: 'pentagram' };
+                mainGroup.add(pentagramGroup);
+                
+                // Create title for the pentagram
+                createTextMesh("THOUGHT FORMS", new THREE.Vector3(5, 3.5, 0), 0.2);
+            }
+
+            // Create advanced hexagram (Star of David)
+            function createHexagram() {
+                const hexagramGroup = new THREE.Group();
+                
+                // First triangle (pointing up)
+                const triangle1Points = [];
+                for(let i = 0; i < 3; i++) {
+                    // Start from top point
+                    const angle = (i * 2 * Math.PI / 3) - Math.PI/2;
+                    const x = Math.cos(angle);
+                    const y = Math.sin(angle);
+                    triangle1Points.push(new THREE.Vector3(x, y, 0));
+                }
+                
+                // Second triangle (pointing down)
+                const triangle2Points = [];
+                for(let i = 0; i < 3; i++) {
+                    // Start from bottom point
+                    const angle = (i * 2 * Math.PI / 3) + Math.PI/2;
+                    const x = Math.cos(angle);
+                    const y = Math.sin(angle);
+                    triangle2Points.push(new THREE.Vector3(x, y, 0));
+                }
+                
+                // Create first triangle
+                const tri1Geometry = new THREE.BufferGeometry();
+                tri1Geometry.setFromPoints([
+                    triangle1Points[0], triangle1Points[1],
+                    triangle1Points[1], triangle1Points[2],
+                    triangle1Points[2], triangle1Points[0]
+                ]);
+                
+                // Create second triangle
+                const tri2Geometry = new THREE.BufferGeometry();
+                tri2Geometry.setFromPoints([
+                    triangle2Points[0], triangle2Points[1],
+                    triangle2Points[1], triangle2Points[2],
+                    triangle2Points[2], triangle2Points[0]
+                ]);
+                
+                const triMaterial = new THREE.LineBasicMaterial({ 
+                    color: colors.hexagram,
+                    linewidth: 2
+                });
+                
+                const tri1Lines = new THREE.LineSegments(tri1Geometry, triMaterial);
+                const tri2Lines = new THREE.LineSegments(tri2Geometry, triMaterial);
+                
+                hexagramGroup.add(tri1Lines);
+                hexagramGroup.add(tri2Lines);
+                
+                // Add circle around hexagram
+                const circleGeometry = new THREE.CircleGeometry(1.05, 32);
+                const circleMaterial = new THREE.MeshBasicMaterial({ 
+                    color: colors.hexagram,
+                    transparent: true,
+                    opacity: 0.1,
+                    side: THREE.DoubleSide
+                });
+                const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+                circle.position.z = -0.01;
+                
+                // Add circle outline
+                const circleOutlineGeometry = new THREE.RingGeometry(1.03, 1.05, 32);
+                const circleOutline = new THREE.Mesh(circleOutlineGeometry, new THREE.MeshBasicMaterial({ 
+                    color: colors.hexagram,
+                    side: THREE.DoubleSide
+                }));
+                
+                hexagramGroup.add(circle);
+                hexagramGroup.add(circleOutline);
+                
+                // Add points at the intersections
+                const allPoints = [...triangle1Points, ...triangle2Points];
+                // Add the intersection points
+                for(let i = 0; i < 6; i++) {
+                    const angle = i * Math.PI / 3;
+                    const x = 0.6 * Math.cos(angle);
+                    const y = 0.6 * Math.sin(angle);
+                    allPoints.push(new THREE.Vector3(x, y, 0));
+                }
+                
+                const pointGeometry = new THREE.CircleGeometry(0.04, 16);
+                const pointMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    side: THREE.DoubleSide
+                });
+                
+                allPoints.forEach((point, i) => {
+                    const pointMesh = new THREE.Mesh(pointGeometry, pointMaterial);
+                    pointMesh.position.copy(point);
+                    pointMesh.position.z = 0.01;
+                    hexagramGroup.add(pointMesh);
+                    
+                    // Add phi value to the right point
+                    if (i === 8) { // One of the intersection points
+                        createTextMesh("1.618", 
+                            new THREE.Vector3(point.x + 0.15, point.y, 0.01), 0.08, hexagramGroup);
+                    }
+                });
+                
+                // Add connecting lines
+                const connectingGeometry = new THREE.BufferGeometry();
+                const connectingPoints = [];
+                
+                // Connect center with vertices
+                const center = new THREE.Vector3(0, 0, 0);
+                allPoints.forEach(point => {
+                    connectingPoints.push(center.clone(), point.clone());
+                });
+                
+                connectingGeometry.setFromPoints(connectingPoints);
+                const connectingMaterial = new THREE.LineBasicMaterial({ 
+                    color: colors.hexagram,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const connectingLines = new THREE.LineSegments(connectingGeometry, connectingMaterial);
+                hexagramGroup.add(connectingLines);
+                
+                hexagramGroup.position.copy(defaultPositions.hexagram);
+                hexagramGroup.scale.set(1.5, 1.5, 1);
+                
+                // Add to object data and scene
+                objectsData.hexagram.object = hexagramGroup;
+                hexagramGroup.userData = { type: 'hexagram' };
+                mainGroup.add(hexagramGroup);
+            }
+
+            // Create advanced polyhedron
+            function createPolyhedron() {
+                const polyGroup = new THREE.Group();
+                
+                // Create stellated octahedron (star tetrahedron/merkaba)
+                const tetraGeometry = new THREE.TetrahedronGeometry(1, 0);
+                const wireframeMaterial = new THREE.MeshPhongMaterial({ 
+                    color: colors.polyhedron,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.7,
+                    shininess: 30
+                });
+                
+                // Create two tetrahedra
+                const tetra1 = new THREE.Mesh(tetraGeometry, wireframeMaterial);
+                const tetra2 = new THREE.Mesh(tetraGeometry, wireframeMaterial);
+                tetra2.rotation.y = Math.PI;
+                tetra2.rotation.z = Math.PI/2;
+                
+                polyGroup.add(tetra1);
+                polyGroup.add(tetra2);
+                
+                // Add octahedron in the center
+                const octaGeometry = new THREE.OctahedronGeometry(0.7, 0);
+                const octaMaterial = new THREE.MeshPhongMaterial({
+                    color: colors.polyhedron,
+                    transparent: true,
+                    opacity: 0.3,
+                    wireframe: true,
+                    shininess: 50
+                });
+                const octahedron = new THREE.Mesh(octaGeometry, octaMaterial);
+                polyGroup.add(octahedron);
+                
+                // Create the more complex connecting geometry
+                const vertexCount = 8;
+                const vertices = [];
+                
+                // Cube vertices
+                for(let i = 0; i < vertexCount; i++) {
+                    const x = (i & 1) ? 1 : -1;
+                    const y = (i & 2) ? 1 : -1;
+                    const z = (i & 4) ? 1 : -1;
+                    vertices.push(new THREE.Vector3(x, y, z).multiplyScalar(0.7));
+                }
+                
+                // Connect all vertices to create the complex structure
+                const edgeGeometry = new THREE.BufferGeometry();
+                const edges = [];
+                
+                // Connect each vertex to every other vertex
+                for(let i = 0; i < vertexCount; i++) {
+                    for(let j = i+1; j < vertexCount; j++) {
+                        edges.push(vertices[i].clone());
+                        edges.push(vertices[j].clone());
+                    }
+                }
+                
+                edgeGeometry.setFromPoints(edges);
+                const edgeMaterial = new THREE.LineBasicMaterial({ 
+                    color: colors.golden,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+                polyGroup.add(edgeLines);
+                
+                // Add small spheres at each vertex
+                const sphereGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+                const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+                
+                vertices.forEach(vertex => {
+                    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                    sphere.position.copy(vertex);
+                    polyGroup.add(sphere);
+                });
+                
+                // Add central axis line
+                const axisGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, -2),
+                    new THREE.Vector3(0, 0, 2)
+                ]);
+                const axisMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+                const axisLine = new THREE.Line(axisGeometry, axisMaterial);
+                polyGroup.add(axisLine);
+                
+                // Add ring around the equator
+                const ringGeometry = new THREE.RingGeometry(1.4, 1.45, 64);
+                const ringMaterial = new THREE.MeshBasicMaterial({ 
+                    color: colors.golden,
+                    side: THREE.DoubleSide
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.rotation.x = Math.PI/2;
+                polyGroup.add(ring);
+                
+                // Add year markers around the ring
+                const yearPositions = [
+                    { year: 1996, angle: 0 },
+                    { year: 2000, angle: Math.PI/3 },
+                    { year: 2004, angle: 2*Math.PI/3 },
+                    { year: 2008, angle: Math.PI },
+                    { year: 2012, angle: 4*Math.PI/3 }
+                ];
+                
+                yearPositions.forEach(pos => {
+                    const x = Math.cos(pos.angle) * 1.5;
+                    const y = Math.sin(pos.angle) * 1.5;
+                    
+                    const markerGeometry = new THREE.SphereGeometry(0.07, 8, 8);
+                    const marker = new THREE.Mesh(markerGeometry, sphereMaterial);
+                    marker.position.set(x, 0, y);
+                    polyGroup.add(marker);
+                    
+                    // Add year text
+                    const yearGroup = new THREE.Group();
+                    createTextMesh(pos.year.toString(), 
+                        new THREE.Vector3(0, 0, 0), 0.1, yearGroup);
+                    yearGroup.position.set(x * 1.1, 0, y * 1.1);
+                    yearGroup.lookAt(0, 0, 0);
+                    yearGroup.rotateY(Math.PI);
+                    polyGroup.add(yearGroup);
+                });
+                
+                polyGroup.position.copy(defaultPositions.polyhedron);
+                polyGroup.scale.set(2.5, 2.5, 2.5);
+                
+                // Add to object data and scene
+                objectsData.polyhedron.object = polyGroup;
+                polyGroup.userData = { type: 'polyhedron' };
+                mainGroup.add(polyGroup);
+                
+                // Create text for the polyhedron
+                createTextMesh("ZION POLYHEDRA", new THREE.Vector3(0, 3.5, 0), 0.3);
+                createTextMesh("INTERLOCKING DIMENSIONS", new THREE.Vector3(0, 3, 0), 0.2);
+                createTextMesh("AND MUSICAL RESONANCE", new THREE.Vector3(0, 2.5, 0), 0.2);
+            }
+
+            // Create advanced timeline
+            function createTimeline() {
+                const timelineGroup = new THREE.Group();
+                
+                // Timeline base
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(-7, 0, 0),
+                    new THREE.Vector3(7, 0, 0)
+                ]);
+                const lineMaterial = new THREE.LineBasicMaterial({ 
+                    color: colors.timeline,
+                    linewidth: 2
+                });
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+                timelineGroup.add(line);
+                
+                // Timeline points and years
+                const years = [1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 
+                              2007, 2008, 2009, 2010, 2011, 2012];
+                const markerMaterial = new THREE.MeshPhongMaterial({ color: colors.timeline });
+                
+                // Calculate position for each year
+                const startPos = -7;
+                const endPos = 7;
+                const range = endPos - startPos;
+                const totalYears = years.length;
+                
+                years.forEach((year, index) => {
+                    const position = startPos + (index * range / (totalYears - 1));
+                    
+                    // Major point for important years (1996, 2000, 2004, 2008, 2012)
+                    let isMajor = (year % 4 === 0) || year === 1996;
+                    
+                    // Point
+                    const pointGeometry = new THREE.SphereGeometry(isMajor ? 0.1 : 0.05, 8, 8);
+                    const point = new THREE.Mesh(pointGeometry, markerMaterial);
+                    point.position.set(position, 0, 0);
+                    timelineGroup.add(point);
+                    
+                    // Vertical line for major years
+                    if (isMajor) {
+                        const vertLineGeometry = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(position, 0, 0),
+                            new THREE.Vector3(position, -0.5, 0)
+                        ]);
+                        const vertLine = new THREE.Line(vertLineGeometry, lineMaterial);
+                        timelineGroup.add(vertLine);
+                        
+                        // Year text for major points
+                        createTextMesh(year.toString(), 
+                            new THREE.Vector3(position - 0.3, -0.8, 0), 0.2, timelineGroup);
+                        
+                        // Add F marker for specific years
+                        if (year === 2000 || year === 2008) {
+                            createTextMesh("F", 
+                                new THREE.Vector3(position, -1.2, 0), 0.2, timelineGroup);
+                        }
+                    }
+                });
+                
+                // Add lambda symbol at the left
+                createTextMesh("λ", 
+                    new THREE.Vector3(-6.5, 0.5, 0), 0.4, timelineGroup);
+                
+                // Add phi symbol at the right
+                createTextMesh("Φ", 
+                    new THREE.Vector3(6.5, 0.5, 0), 0.4, timelineGroup);
+                createTextMesh("1.618", 
+                    new THREE.Vector3(6.5, 0, 0), 0.2, timelineGroup);
+                
+                timelineGroup.position.copy(defaultPositions.timeline);
+                
+                // Add to object data and scene
+                objectsData.timeline.object = timelineGroup;
+                timelineGroup.userData = { type: 'timeline' };
+                mainGroup.add(timelineGroup);
+            }
+
+            // Create frequency grid
+            function createGrid() {
+                const gridGroup = new THREE.Group();
+                
+                // Create the grid lines
+                const gridWidth = 6;
+                const gridHeight = 3;
+                const cellSize = 0.5;
+                
+                const gridGeometry = new THREE.BufferGeometry();
+                const gridPoints = [];
+                
+                // Horizontal lines
+                for(let y = 0; y <= gridHeight; y++) {
+                    gridPoints.push(
+                        new THREE.Vector3(-gridWidth/2 * cellSize, (y - gridHeight/2) * cellSize, 0),
+                        new THREE.Vector3(gridWidth/2 * cellSize, (y - gridHeight/2) * cellSize, 0)
+                    );
+                }
+                
+                // Vertical lines
+                for(let x = 0; x <= gridWidth; x++) {
+                    gridPoints.push(
+                        new THREE.Vector3((x - gridWidth/2) * cellSize, -gridHeight/2 * cellSize, 0),
+                        new THREE.Vector3((x - gridWidth/2) * cellSize, gridHeight/2 * cellSize, 0)
+                    );
+                }
+                
+                gridGeometry.setFromPoints(gridPoints);
+                const gridMaterial = new THREE.LineBasicMaterial({ 
+                    color: colors.grid,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const gridLines = new THREE.LineSegments(gridGeometry, gridMaterial);
+                gridGroup.add(gridLines);
+                
+                // Add frequency markers
+                const markers = [
+                    {symbol: "-√2", x: -2.5, y: 0},
+                    {symbol: "-√3", x: -1.5, y: 0},
+                    {symbol: "1", x: -0.5, y: 0},
+                    {symbol: "Φ", x: 0.5, y: 0},
+                    {symbol: "Φ", x: 1.5, y: 0},
+                    {symbol: "√5", x: 2.5, y: 0}
+                ];
+                
+                markers.forEach(marker => {
+                    createTextMesh(marker.symbol, 
+                        new THREE.Vector3(marker.x * cellSize, marker.y * cellSize, 0), 
+                        0.15, gridGroup);
+                });
+                
+                // Add labels for the grid
+                createTextMesh("TRANSISTING", 
+                    new THREE.Vector3(-gridWidth/2 * cellSize - 0.7, -0.8, 0), 0.15, gridGroup);
+                createTextMesh("NEUROLOGICAL", 
+                    new THREE.Vector3(-gridWidth/2 * cellSize - 0.7, -1.1, 0), 0.15, gridGroup);
+                createTextMesh("MATRIX", 
+                    new THREE.Vector3(-gridWidth/2 * cellSize - 0.7, -1.4, 0), 0.15, gridGroup);
+                
+                createTextMesh("INDUCTION OF", 
+                    new THREE.Vector3(gridWidth/2 * cellSize - 0.2, -0.8, 0), 0.15, gridGroup);
+                createTextMesh("TELEKINETIC", 
+                    new THREE.Vector3(gridWidth/2 * cellSize - 0.2, -1.1, 0), 0.15, gridGroup);
+                createTextMesh("LEVITATION", 
+                    new THREE.Vector3(gridWidth/2 * cellSize - 0.2, -1.4, 0), 0.15, gridGroup);
+                
+                // Add years timeline under the grid
+                const yearPoints = [];
+                for(let year = 1996; year <= 2012; year++) {
+                    if (year % 2 === 0 || year === 1997) { // Only show even years and 1997
+                        const position = ((year - 1996) / 16) * gridWidth - gridWidth/2;
+                        
+                        // Add tick mark
+                        yearPoints.push(
+                            new THREE.Vector3(position * cellSize, -gridHeight/2 * cellSize - 0.1, 0),
+                            new THREE.Vector3(position * cellSize, -gridHeight/2 * cellSize - 0.2, 0)
+                        );
+                        
+                        // Add year label for selected years
+                        if (year % 4 === 0 || year === 1997) {
+                            createTextMesh(year.toString().slice(-2), // Just show last 2 digits
+                                new THREE.Vector3(position * cellSize, -gridHeight/2 * cellSize - 0.35, 0), 
+                                0.1, gridGroup);
+                        }
+                    }
+                }
+                
+                const yearGeometry = new THREE.BufferGeometry().setFromPoints(yearPoints);
+                const yearLines = new THREE.LineSegments(yearGeometry, gridMaterial);
+                gridGroup.add(yearLines);
+                
+                gridGroup.position.copy(defaultPositions.grid);
+                
+                // Add to object data and scene
+                objectsData.grid.object = gridGroup;
+                gridGroup.userData = { type: 'grid' };
+                mainGroup.add(gridGroup);
+            }
+
+            // Helper function to create text meshes
+            function createTextMesh(text, position, size, targetGroup = null) {
+                // Create a canvas for the text
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const scale = 20; // Scale for better resolution
+                
+                // Estimate text width
+                const textWidth = text.length * 0.6 * size * scale;
+                const textHeight = size * scale;
+                
+                canvas.width = textWidth;
+                canvas.height = textHeight * 2;
+                
+                // Clear canvas
+                context.fillStyle = 'rgba(0,0,0,0)';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw text
+                context.font = `bold ${textHeight}px "Courier New", monospace`;
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillStyle = '#ffffff';
+                context.fillText(text, canvas.width / 2, canvas.height / 2);
+                
+                // Create texture
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                
+                // Create material and geometry
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                });
+                
+                const geometry = new THREE.PlaneGeometry(size * text.length * 0.6, size);
+                const textMesh = new THREE.Mesh(geometry, material);
+                textMesh.position.copy(position);
+                
+                // Add to target group or main group
+                if (targetGroup) {
+                    targetGroup.add(textMesh);
+                } else {
+                    const labelGroup = new THREE.Group();
+                    labelGroup.add(textMesh);
+                    labelGroup.position.copy(position);
+                    labelGroup.userData = { type: 'label' };
+                    objectsData.labels.objects.push(labelGroup);
+                    mainGroup.add(labelGroup);
+                }
+                
+                return textMesh;
+            }
+
+            // Initialize all objects
+            createSpiral();
+            createPentagram();
+            createHexagram();
+            createPolyhedron();
+            createTimeline();
+            createGrid();
+
+            // Add paper background
+            function createPaper() {
+                const paperGeometry = new THREE.PlaneGeometry(25, 18);
+                const paperMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xf5f2e8,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.DoubleSide
+                });
+                
+                const paper = new THREE.Mesh(paperGeometry, paperMaterial);
+                paper.position.z = -1;
+                scene.add(paper);
+            }
+            
+            createPaper();
+
+            // Function to toggle exploded view
+            let isExploded = false;
+            function toggleExplodedView() {
+                isExploded = !isExploded;
+                
+                const targetPositions = isExploded ? explodedPositions : defaultPositions;
+                
+                // Animate all objects to their target positions
+                Object.keys(targetPositions).forEach(key => {
+                    if (objectsData[key] && objectsData[key].object) {
+                        animatePosition(objectsData[key].object, targetPositions[key]);
+                    }
+                });
+            }
+            
+            // Helper function to animate position changes
+            function animatePosition(object, targetPosition, duration = 1000) {
+                const startPosition = object.position.clone();
+                const startTime = Date.now();
+                
+                function update() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Easing function (ease-out cubic)
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    
+                    object.position.lerpVectors(startPosition, targetPosition, eased);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(update);
+                    }
+                }
+                
+                update();
+            }
+
+            // Function to show detail panel for an object
+            function showDetailPanel(object) {
+                if (!object || !object.userData || !object.userData.type) return;
+                
+                const type = object.userData.type;
+                let data;
+                
+                // Find the matching data
+                if (type === 'label') {
+                    data = { name: "Document Text", description: "Text element from the original document." };
+                } else {
+                    // Find the matching data from objectsData
+                    for (const key in objectsData) {
+                        if (key === type) {
+                            data = objectsData[key];
+                            break;
+                        }
+                    }
+                }
+                
+                if (!data) return;
+                
+                // Populate and show the detail panel
+                const panel = document.getElementById('detailPanel');
+                panel.innerHTML = `
+                    <h3>${data.name}</h3>
+                    <p>${data.description}</p>
+                    <p><em>Click elsewhere to close</em></p>
+                `;
+                panel.style.display = 'block';
+                
+                // Highlight the selected object
+                if (selectedObject) {
+                    resetObjectMaterial(selectedObject);
+                }
+                
+                selectedObject = object;
+                highlightObject(object);
+            }
+            
+            // Function to hide detail panel
+            function hideDetailPanel() {
+                document.getElementById('detailPanel').style.display = 'none';
+                
+                if (selectedObject) {
+                    resetObjectMaterial(selectedObject);
+                    selectedObject = null;
+                }
+            }
+            
+            // Helper function to highlight an object
+            function highlightObject(object) {
+                // Apply highlight to the object and its children
+                object.traverse(child => {
+                    if (child.isMesh) {
+                        child.userData.originalMaterial = child.material;
+                        child.material = child.material.clone();
+                        child.material.emissive = new THREE.Color(0x333333);
+                        child.material.emissiveIntensity = 1;
+                    } else if (child.isLine || child.isLineSegments) {
+                        child.userData.originalMaterial = child.material;
+                        child.material = child.material.clone();
+                        child.material.color.set(colors.selected);
+                    }
+                });
+            }
+            
+            // Helper function to reset object material
+            function resetObjectMaterial(object) {
+                object.traverse(child => {
+                    if ((child.isMesh || child.isLine || child.isLineSegments) && 
+                        child.userData.originalMaterial) {
+                        child.material.dispose();
+                        child.material = child.userData.originalMaterial;
+                        delete child.userData.originalMaterial;
+                    }
+                });
+            }
+
+            // Mouse move event for hover effects
+            function onMouseMove(event) {
+                // Calculate mouse position in normalized device coordinates
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+                
+                // Only do hover effects in select mode
+                if (interactionMode === 'select') {
+                    // Update the picking ray with the camera and mouse position
+                    raycaster.setFromCamera(mouse, camera);
+                    
+                    // Calculate objects intersecting the picking ray
+                    const intersects = raycaster.intersectObjects(mainGroup.children, true);
+                    
+                    if (intersects.length > 0) {
+                        // Find the root object (parent)
+                        let rootObject = intersects[0].object;
+                        while (rootObject.parent && rootObject.parent !== mainGroup) {
+                            rootObject = rootObject.parent;
+                        }
+                        
+                        if (rootObject !== intersectedObject) {
+                            // Reset previous hovering effect
+                            if (intersectedObject && intersectedObject !== selectedObject) {
+                                resetObjectMaterial(intersectedObject);
+                            }
+                            
+                            // Set new hovering object
+                            intersectedObject = rootObject;
+                            
+                            // Don't apply hover effect to selected object
+                            if (intersectedObject !== selectedObject) {
+                                // Simple hover effect
+                                intersectedObject.traverse(child => {
+                                    if (child.isMesh) {
+                                        child.userData.originalMaterial = child.material;
+                                        child.material = child.material.clone();
+                                        child.material.emissive = new THREE.Color(0x222222);
+                                        child.material.emissiveIntensity = 0.5;
+                                    } else if (child.isLine || child.isLineSegments) {
+                                        child.userData.originalMaterial = child.material;
+                                        child.material = child.material.clone();
+                                        // Slightly brighten the color
+                                        const color = child.material.color.clone();
+                                        color.lerp(new THREE.Color(0xffffff), 0.3);
+                                        child.material.color = color;
+                                    }
+                                });
+                            }
+                            
+                            document.body.style.cursor = 'pointer';
+                        }
+                    } else if (intersectedObject && intersectedObject !== selectedObject) {
+                        // Reset hovering effect when not hovering anything
+                        resetObjectMaterial(intersectedObject);
+                        intersectedObject = null;
+                        document.body.style.cursor = 'auto';
+                    }
+                }
+            }
+
+            // Mouse click event for selection
+            function onClick(event) {
+                // In select mode, handle object selection
+                if (interactionMode === 'select') {
+                    // Update the picking ray with the camera and mouse position
+                    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+                    
+                    raycaster.setFromCamera(mouse, camera);
+                    
+                    // Calculate objects intersecting the picking ray
+                    const intersects = raycaster.intersectObjects(mainGroup.children, true);
+                    
+                    if (intersects.length > 0) {
+                        // Find the root object (parent)
+                        let rootObject = intersects[0].object;
+                        while (rootObject.parent && rootObject.parent !== mainGroup) {
+                            rootObject = rootObject.parent;
+                        }
+                        
+                        showDetailPanel(rootObject);
+                    } else {
+                        hideDetailPanel();
+                    }
+                } else {
+                    // In orbit mode, just hide the detail panel if it's open
+                    hideDetailPanel();
+                }
+            }
+
+            // Toggle visibility functions
+            document.getElementById('toggleSpiral').addEventListener('click', function() {
+                if(objectsData.spiral.object) {
+                    objectsData.spiral.object.visible = !objectsData.spiral.object.visible;
+                    this.classList.toggle('active');
+                }
+            });
+            
+            document.getElementById('toggleStars').addEventListener('click', function() {
+                if(objectsData.pentagram.object) objectsData.pentagram.object.visible = !objectsData.pentagram.object.visible;
+                if(objectsData.hexagram.object) objectsData.hexagram.object.visible = !objectsData.hexagram.object.visible;
+                this.classList.toggle('active');
+            });
+            
+            document.getElementById('togglePolyhedron').addEventListener('click', function() {
+                if(objectsData.polyhedron.object) objectsData.polyhedron.object.visible = !objectsData.polyhedron.object.visible;
+                this.classList.toggle('active');
+            });
+            
+            document.getElementById('toggleTimeline').addEventListener('click', function() {
+                if(objectsData.timeline.object) objectsData.timeline.object.visible = !objectsData.timeline.object.visible;
+                this.classList.toggle('active');
+            });
+            
+            document.getElementById('toggleGrid').addEventListener('click', function() {
+                if(objectsData.grid.object) objectsData.grid.object.visible = !objectsData.grid.object.visible;
+                this.classList.toggle('active');
+            });
+            
+            document.getElementById('toggleLabels').addEventListener('click', function() {
+                objectsData.labels.objects.forEach(label => label.visible = !label.visible);
+                this.classList.toggle('active');
+            });
+            
+            document.getElementById('toggleExplode').addEventListener('click', function() {
+                toggleExplodedView();
+                this.classList.toggle('active');
+            });
+            
+            document.getElementById('resetView').addEventListener('click', function() {
+                camera.position.set(0, 0, 15);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+
+            // View buttons
+            document.getElementById('view3D').addEventListener('click', function() {
+                camera.position.set(0, 0, 15);
+                camera.lookAt(0, 0, 0);
+                camera.up.set(0, 1, 0);
+                controls.update();
+                
+                document.getElementById('viewTop').classList.remove('active');
+                document.getElementById('viewFront').classList.remove('active');
+                this.classList.add('active');
+            });
+            
+            document.getElementById('viewTop').addEventListener('click', function() {
+                camera.position.set(0, 15, 0);
+                camera.lookAt(0, 0, 0);
+                camera.up.set(0, 0, -1);
+                controls.update();
+                
+                document.getElementById('view3D').classList.remove('active');
+                document.getElementById('viewFront').classList.remove('active');
+                this.classList.add('active');
+            });
+            
+            document.getElementById('viewFront').addEventListener('click', function() {
+                camera.position.set(0, 0, 15);
+                camera.lookAt(0, 0, 0);
+                camera.up.set(0, 1, 0);
+                controls.update();
+                
+                document.getElementById('view3D').classList.remove('active');
+                document.getElementById('viewTop').classList.remove('active');
+                this.classList.add('active');
+            });
+
+            // Interaction mode buttons
+            document.getElementById('orbitMode').addEventListener('click', function() {
+                interactionMode = 'orbit';
+                controls.enabled = true;
+                
+                // Reset any hovered object
+                if (intersectedObject && intersectedObject !== selectedObject) {
+                    resetObjectMaterial(intersectedObject);
+                    intersectedObject = null;
+                }
+                
+                document.body.style.cursor = 'auto';
+                
+                document.getElementById('selectMode').classList.remove('active');
+                this.classList.add('active');
+            });
+            
+            document.getElementById('selectMode').addEventListener('click', function() {
+                interactionMode = 'select';
+                controls.enabled = false;
+                
+                document.getElementById('orbitMode').classList.remove('active');
+                this.classList.add('active');
+            });
+
+            // Key press for shift key to temporarily enter selection mode
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Shift' && interactionMode === 'orbit') {
+                    interactionMode = 'select';
+                    controls.enabled = false;
+                    document.getElementById('orbitMode').classList.remove('active');
+                    document.getElementById('selectMode').classList.add('active');
+                }
+            });
+            
+            document.addEventListener('keyup', function(event) {
+                if (event.key === 'Shift' && interactionMode === 'select') {
+                    interactionMode = 'orbit';
+                    controls.enabled = true;
+                    
+                    // Reset any hovered object
+                    if (intersectedObject && intersectedObject !== selectedObject) {
+                        resetObjectMaterial(intersectedObject);
+                        intersectedObject = null;
+                    }
+                    
+                    document.body.style.cursor = 'auto';
+                    
+                    document.getElementById('selectMode').classList.remove('active');
+                    document.getElementById('orbitMode').classList.add('active');
+                }
+            });
+
+            // Add event listeners
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('click', onClick);
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                try {
+                    // Rotate objects
+                    if(objectsData.spiral.object) {
+                        objectsData.spiral.object.rotation.z += 0.003;
+                    }
+                    
+                    if(objectsData.polyhedron.object) {
+                        objectsData.polyhedron.object.rotation.y += 0.001;
+                    }
+                    
+                    controls.update();
+                    renderer.render(scene, camera);
+                } catch (e) {
+                    console.error("Animation error:", e);
+                }
+            }
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Start animation
+            animate();
+        }
+    </script>
+</body>
+</html>
