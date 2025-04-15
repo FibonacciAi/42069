@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Signal Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #111;
+            color: #eee;
+        }
+        .container {
+            background-color: #222;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 200, 0.2);
+        }
+        h1 {
+            color: #5cffaf;
+            text-align: center;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+        .component {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .component h3 {
+            margin-top: 0;
+            color: #5cffaf;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        button {
+            background-color: #5cffaf;
+            color: #111;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 0;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3dd987;
+        }
+        .main-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .pulser-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 15px;
+        }
+        .visualizer {
+            height: 100px;
+            background-color: #000;
+            margin: 15px 0;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        .visualizer-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #f00;
+        }
+        .status.active {
+            background-color: #5cffaf;
+            box-shadow: 0 0 10px #5cffaf;
+        }
+        .component-toggle {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .component-toggle input {
+            margin-right: 10px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        .volume-display {
+            text-align: center;
+            font-size: 0.8em;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UAP Signal Generator</h1>
+        
+        <div class="visualizer">
+            <canvas class="visualizer-canvas"></canvas>
+            <div class="status"></div>
+        </div>
+        
+        <div class="main-controls">
+            <button id="start-button">Start Signal</button>
+            <button id="stop-button">Stop Signal</button>
+        </div>
+        
+        <div class="component">
+            <h3>Master Settings</h3>
+            <label for="master-volume">Master Volume: <span id="volume-value">0.1</span></label>
+            <input type="range" id="master-volume" min="0" max="1" step="0.01" value="0.1">
+            <p class="volume-display">Low volume recommended as stated in the source</p>
+            
+            <div class="pulser-controls">
+                <label>Signal Mode:</label>
+                <div>
+                    <input type="radio" id="continuous" name="mode" value="continuous" checked>
+                    <label for="continuous">Continuous</label>
+                    
+                    <input type="radio" id="pulsed" name="mode" value="pulsed">
+                    <label for="pulsed">Pulsed</label>
+                </div>
+                
+                <div id="pulse-settings" style="display: none; width: 100%;">
+                    <label for="pulse-rate">Pulse Rate (seconds): <span id="pulse-rate-value">2</span></label>
+                    <input type="range" id="pulse-rate" min="0.5" max="5" step="0.1" value="2">
+                </div>
+            </div>
+        </div>
+        
+        <div class="component">
+            <h3>Signal Components</h3>
+            
+            <div class="component-toggle">
+                <input type="checkbox" id="schumann-toggle" checked>
+                <label for="schumann-toggle">7.83 Hz carrier (Schumann resonance, via 100 Hz modulated tone)</label>
+            </div>
+            
+            <div class="component-toggle">
+                <input type="checkbox" id="spiritual-toggle" checked>
+                <label for="spiritual-toggle">528 Hz harmonic (spiritual frequency)</label>
+            </div>
+            
+            <div class="component-toggle">
+                <input type="checkbox" id="ultrasonic-toggle" checked>
+                <label for="ultrasonic-toggle">17 kHz ultrasonic ping (subtle, tech-detectable)</label>
+            </div>
+            
+            <div class="component-toggle">
+                <input type="checkbox" id="chirps-toggle" checked>
+                <label for="chirps-toggle">Organic 2.5 kHz chirps (every 10 sec)</label>
+            </div>
+            
+            <div class="component-toggle">
+                <input type="checkbox" id="ambient-toggle" checked>
+                <label for="ambient-toggle">432 Hz ambient pad (smooth masking layer)</label>
+            </div>
+            
+            <div class="component-toggle">
+                <input type="checkbox" id="breath-toggle" checked>
+                <label for="breath-toggle">Breath layer (shaped white noise)</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioContext;
+        let masterGain;
+        let analyser;
+        let isPlaying = false;
+        let oscillators = {};
+        let gainNodes = {};
+        let noiseNodes = {};
+        let lfoNodes = {};
+        let chirpInterval;
+        let pulseInterval;
+        let visualizerCanvas;
+        let canvasCtx;
+        let dataArray;
+        
+        // Initialize audio context and setup
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioContext.createGain();
+                masterGain.gain.value = parseFloat(document.getElementById('master-volume').value);
+                masterGain.connect(audioContext.destination);
+                
+                // Setup analyzer for visualization
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                masterGain.connect(analyser);
+                
+                setupVisualization();
+            } catch (e) {
+                console.error("Web Audio API is not supported in this browser", e);
+                alert("Sorry, Web Audio API is not supported in this browser. Try using Chrome or Firefox.");
+            }
+        }
+        
+        // Setup the audio visualization
+        function setupVisualization() {
+            visualizerCanvas = document.querySelector('.visualizer-canvas');
+            canvasCtx = visualizerCanvas.getContext('2d');
+            
+            // Set canvas dimensions
+            visualizerCanvas.width = visualizerCanvas.offsetWidth;
+            visualizerCanvas.height = visualizerCanvas.offsetHeight;
+            
+            // Start drawing
+            drawVisualizer();
+        }
+        
+        // Draw the visualizer
+        function drawVisualizer() {
+            requestAnimationFrame(drawVisualizer);
+            
+            if (!analyser) return;
+            
+            const width = visualizerCanvas.width;
+            const height = visualizerCanvas.height;
+            
+            analyser.getByteTimeDomainData(dataArray);
+            
+            canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+            canvasCtx.fillRect(0, 0, width, height);
+            
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = 'rgb(92, 255, 175)';
+            canvasCtx.beginPath();
+            
+            const sliceWidth = width / dataArray.length;
+            let x = 0;
+            
+            for (let i = 0; i < dataArray.length; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * height / 2;
+                
+                if (i === 0) {
+                    canvasCtx.moveTo(x, y);
+                } else {
+                    canvasCtx.lineTo(x, y);
+                }
+                
+                x += sliceWidth;
+            }
+            
+            canvasCtx.lineTo(width, height / 2);
+            canvasCtx.stroke();
+        }
+        
+        // Create the 7.83 Hz Schumann resonance via 100 Hz modulation
+        function createSchumannResonance() {
+            // Create 100 Hz carrier tone
+            const carrier = audioContext.createOscillator();
+            carrier.type = 'sine';
+            carrier.frequency.value = 100;
+            
+            // Create gain node for amplitude modulation
+            const modulationGain = audioContext.createGain();
+            carrier.connect(modulationGain);
+            
+            // Create 7.83 Hz LFO for modulation
+            const lfo = audioContext.createOscillator();
+            lfo.type = 'sine';
+            lfo.frequency.value = 7.83;
+            
+            // Create gain for LFO depth
+            const lfoGain = audioContext.createGain();
+            lfoGain.gain.value = 0.5; // Modulation depth
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(modulationGain.gain);
+            
+            // Create an output gain node
+            const outputGain = audioContext.createGain();
+            outputGain.gain.value = 0.15;
+            modulationGain.connect(outputGain);
+            outputGain.connect(masterGain);
+            
+            // Start oscillators
+            carrier.start();
+            lfo.start();
+            
+            // Store nodes for later access
+            oscillators.schumann = carrier;
+            lfoNodes.schumann = lfo;
+            gainNodes.schumann = outputGain;
+        }
+        
+        // Create the 528 Hz "spiritual frequency"
+        function createSpiritualFrequency() {
+            const osc = audioContext.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = 528;
+            
+            const gain = audioContext.createGain();
+            gain.gain.value = 0.1;
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start();
+            
+            oscillators.spiritual = osc;
+            gainNodes.spiritual = gain;
+        }
+        
+        // Create 17 kHz ultrasonic ping
+        function createUltrasonicPing() {
+            const osc = audioContext.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = 17000;
+            
+            const gain = audioContext.createGain();
+            gain.gain.value = 0.05; // Very subtle
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start();
+            
+            oscillators.ultrasonic = osc;
+            gainNodes.ultrasonic = gain;
+        }
+        
+        // Create 2.5 kHz organic chirps
+        function createOrganicChirps() {
+            const chirpGain = audioContext.createGain();
+            chirpGain.gain.value = 0;
+            chirpGain.connect(masterGain);
+            
+            gainNodes.chirps = chirpGain;
+            
+            // Create chirps every 10 seconds
+            chirpInterval = setInterval(() => {
+                if (!isPlaying) return;
+                
+                const chirp = audioContext.createOscillator();
+                chirp.type = 'sine';
+                chirp.frequency.value = 2500;
+                
+                // Create a quick envelope
+                const chirpEnvelope = audioContext.createGain();
+                chirpEnvelope.gain.value = 0;
+                
+                chirp.connect(chirpEnvelope);
+                chirpEnvelope.connect(chirpGain);
+                
+                // Generate organic randomness
+                const duration = 0.2 + Math.random() * 0.3; // 200-500ms
+                const now = audioContext.currentTime;
+                
+                // Frequency modulation for chirp effect
+                chirp.frequency.setValueAtTime(2500, now);
+                chirp.frequency.exponentialRampToValueAtTime(2500 + Math.random() * 500, now + duration);
+                
+                // Amplitude envelope
+                chirpEnvelope.gain.setValueAtTime(0, now);
+                chirpEnvelope.gain.linearRampToValueAtTime(0.2, now + 0.01);
+                chirpEnvelope.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                
+                chirp.start(now);
+                chirp.stop(now + duration);
+                
+            }, 10000); // Every 10 seconds
+        }
+        
+        // Create 432 Hz ambient pad
+        function createAmbientPad() {
+            const osc1 = audioContext.createOscillator();
+            osc1.type = 'sine';
+            osc1.frequency.value = 432;
+            
+            const osc2 = audioContext.createOscillator();
+            osc2.type = 'sine';
+            osc2.frequency.value = 432 + 3; // Slight detuning for thickness
+            
+            const gain = audioContext.createGain();
+            gain.gain.value = 0.08;
+            
+            // Some light filtering for smoothness
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 800;
+            filter.Q.value = 0.7;
+            
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(filter);
+            filter.connect(masterGain);
+            
+            osc1.start();
+            osc2.start();
+            
+            oscillators.ambient1 = osc1;
+            oscillators.ambient2 = osc2;
+            gainNodes.ambient = gain;
+        }
+        
+        // Create breath layer (shaped white noise)
+        function createBreathLayer() {
+            // Create noise source
+            const noiseBuffer = audioContext.createBuffer(
+                1, 
+                audioContext.sampleRate * 2, // 2 seconds of noise
+                audioContext.sampleRate
+            );
+            
+            // Fill the buffer with white noise
+            const data = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            // Create noise source
+            const noise = audioContext.createBufferSource();
+            noise.buffer = noiseBuffer;
+            noise.loop = true;
+            
+            // Filter the noise to shape it like breath
+            const breathFilter = audioContext.createBiquadFilter();
+            breathFilter.type = 'bandpass';
+            breathFilter.frequency.value = 500;
+            breathFilter.Q.value = 0.5;
+            
+            // Create breath modulation
+            const breathLfo = audioContext.createOscillator();
+            breathLfo.type = 'sine';
+            breathLfo.frequency.value = 0.2; // Very slow modulation like breathing
+            
+            const breathLfoGain = audioContext.createGain();
+            breathLfoGain.gain.value = 0.15;
+            
+            breathLfo.connect(breathLfoGain);
+            
+            // Output gain
+            const breathGain = audioContext.createGain();
+            breathGain.gain.value = 0.1;
+            
+            // LFO modulates filter frequency for breath-like effect
+            breathLfoGain.connect(breathFilter.frequency);
+            
+            noise.connect(breathFilter);
+            breathFilter.connect(breathGain);
+            breathGain.connect(masterGain);
+            
+            noise.start();
+            breathLfo.start();
+            
+            noiseNodes.breath = noise;
+            lfoNodes.breath = breathLfo;
+            gainNodes.breath = breathGain;
+        }
+        
+        // Start generating the sound
+        function startSignal() {
+            if (isPlaying) return;
+            
+            if (!audioContext) {
+                initAudio();
+            } else if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            isPlaying = true;
+            document.querySelector('.status').classList.add('active');
+            
+            // Create each component if it's toggled on
+            if (document.getElementById('schumann-toggle').checked) {
+                createSchumannResonance();
+            }
+            
+            if (document.getElementById('spiritual-toggle').checked) {
+                createSpiritualFrequency();
+            }
+            
+            if (document.getElementById('ultrasonic-toggle').checked) {
+                createUltrasonicPing();
+            }
+            
+            if (document.getElementById('chirps-toggle').checked) {
+                createOrganicChirps();
+            }
+            
+            if (document.getElementById('ambient-toggle').checked) {
+                createAmbientPad();
+            }
+            
+            if (document.getElementById('breath-toggle').checked) {
+                createBreathLayer();
+            }
+            
+            // Setup pulsing if selected
+            if (document.getElementById('pulsed').checked) {
+                setupPulsing();
+            }
+        }
+        
+        // Setup pulsing effect
+        function setupPulsing() {
+            const pulseRate = parseFloat(document.getElementById('pulse-rate').value) * 1000; // Convert to ms
+            
+            pulseInterval = setInterval(() => {
+                if (!isPlaying) return;
+                
+                // Pulse the master gain
+                const now = audioContext.currentTime;
+                masterGain.gain.cancelScheduledValues(now);
+                masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+                masterGain.gain.linearRampToValueAtTime(0.001, now + 0.1);
+                
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    const currentValue = parseFloat(document.getElementById('master-volume').value);
+                    const laterNow = audioContext.currentTime;
+                    masterGain.gain.setValueAtTime(0.001, laterNow);
+                    masterGain.gain.linearRampToValueAtTime(currentValue, laterNow + 0.1);
+                }, 300);
+                
+            }, pulseRate);
+        }
+        
+        // Stop the signal and clean up
+        function stopSignal() {
+            isPlaying = false;
+            document.querySelector('.status').classList.remove('active');
+            
+            // Stop and disconnect all oscillators
+            for (const key in oscillators) {
+                if (oscillators[key]) {
+                    oscillators[key].stop();
+                    oscillators[key].disconnect();
+                    oscillators[key] = null;
+                }
+            }
+            
+            // Stop and disconnect all LFOs
+            for (const key in lfoNodes) {
+                if (lfoNodes[key]) {
+                    lfoNodes[key].stop();
+                    lfoNodes[key].disconnect();
+                    lfoNodes[key] = null;
+                }
+            }
+            
+            // Disconnect gain nodes
+            for (const key in gainNodes) {
+                if (gainNodes[key]) {
+                    gainNodes[key].disconnect();
+                    gainNodes[key] = null;
+                }
+            }
+            
+            // Stop and disconnect noise nodes
+            for (const key in noiseNodes) {
+                if (noiseNodes[key]) {
+                    noiseNodes[key].stop();
+                    noiseNodes[key].disconnect();
+                    noiseNodes[key] = null;
+                }
+            }
+            
+            // Clear intervals
+            if (chirpInterval) {
+                clearInterval(chirpInterval);
+                chirpInterval = null;
+            }
+            
+            if (pulseInterval) {
+                clearInterval(pulseInterval);
+                pulseInterval = null;
+            }
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Button event listeners
+            document.getElementById('start-button').addEventListener('click', startSignal);
+            document.getElementById('stop-button').addEventListener('click', stopSignal);
+            
+            // Master volume change
+            document.getElementById('master-volume').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('volume-value').textContent = value.toFixed(2);
+                
+                if (masterGain) {
+                    masterGain.gain.value = value;
+                }
+            });
+            
+            // Pulse rate change
+            document.getElementById('pulse-rate').addEventListener('input', (e) => {
+                document.getElementById('pulse-rate-value').textContent = e.target.value;
+                
+                // Update pulse interval if it's running
+                if (pulseInterval && isPlaying && document.getElementById('pulsed').checked) {
+                    clearInterval(pulseInterval);
+                    setupPulsing();
+                }
+            });
+            
+            // Mode change (pulsed vs continuous)
+            document.querySelectorAll('input[name="mode"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const isPulsed = e.target.value === 'pulsed';
+                    document.getElementById('pulse-settings').style.display = isPulsed ? 'block' : 'none';
+                    
+                    if (isPlaying) {
+                        if (isPulsed) {
+                            setupPulsing();
+                        } else if (pulseInterval) {
+                            clearInterval(pulseInterval);
+                            pulseInterval = null;
+                            
+                            // Restore volume to normal
+                            if (masterGain) {
+                                const volumeValue = parseFloat(document.getElementById('master-volume').value);
+                                masterGain.gain.value = volumeValue;
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Handle window resize for canvas
+            window.addEventListener('resize', () => {
+                if (visualizerCanvas) {
+                    visualizerCanvas.width = visualizerCanvas.offsetWidth;
+                    visualizerCanvas.height = visualizerCanvas.offsetHeight;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
