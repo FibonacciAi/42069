@@ -1,0 +1,2474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="description" content="GME Cycle Resonator -- Squeeze Mechanics &amp; Temporal Harmonics">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>GME Cycle Resonator: MOASS Alert System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+    <style>
+    /* ───────────────────────────────────────
+       VARIABLES + RESET
+    ─────────────────────────────────────── */
+    :root {
+        --bg-color: #0b0b0b;
+        --text-color: #fff;
+        --panel-bg: rgba(11, 11, 11, .90);
+        --highlight: #00ffcc;
+        --secondary-highlight: #ff3399;
+        --third-highlight: #ffaa00;
+        --control-bg: rgba(26, 26, 26, .8);
+        --control-border: rgba(255, 255, 255, .1);
+        --control-hover: rgba(255, 255, 255, .2);
+        --code-bg: #1d1f21;
+        --code-text: #00ffcc;
+        --active-indicator: rgba(0, 255, 204, .3);
+        --shadow-highlight: rgba(0, 255, 204, .3);
+        --shadow-dark: rgba(0, 0, 0, .5);
+        --modal-bg: rgba(11, 11, 11, .95);
+        --header-gradient: linear-gradient(90deg, rgba(0, 255, 204, .7), rgba(255, 51, 153, .7));
+    }
+
+    html.light-theme {
+        --bg-color: #1a1a1a;
+        --panel-bg: rgba(26, 26, 26, .92);
+        --control-border: rgba(255, 255, 255, .2);
+        --control-bg: rgba(255, 255, 255, .15);
+        --control-hover: rgba(255, 255, 255, .25);
+        --modal-bg: rgba(26, 26, 26, .95);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        overscroll-behavior: none
+    }
+
+    body {
+        background: var(--bg-color);
+        color: var(--text-color);
+        font-family: 'Inter', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: background .3s, color .3s;
+        overflow-y: auto;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    @media (min-width: 801px) {
+        body {
+            overflow: hidden
+        }
+    }/* ───────────────────────────────────────
+       THEME TOGGLE
+    ─────────────────────────────────────── */
+    .theme-toggle {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 20px;
+        transition: all .3s;
+        box-shadow: 0 2px 10px var(--shadow-dark);
+        z-index: 100;
+    }
+
+    .theme-toggle:hover {
+        background: var(--control-hover);
+        transform: scale(1.1);
+    }
+
+    .theme-toggle:active {
+        transform: scale(0.95)
+    }/* ───────────────────────────────────────
+       CANVAS
+    ─────────────────────────────────────── */
+    #cycleCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        touch-action: none;
+        display: block;
+    }/* ───────────────────────────────────────
+       GRID CONTROLS
+    ─────────────────────────────────────── */
+    .controls {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 900px;
+        background: var(--panel-bg);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 204, .2);
+        box-shadow: 0 4px 16px var(--shadow-dark);
+        padding: 1rem 1.25rem;
+        z-index: 15;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        align-items: center;
+        transition: transform .3s, box-shadow .3s;
+    }
+
+    .controls:hover {
+        box-shadow: 0 6px 20px var(--shadow-highlight);
+    }
+
+    .controls button {
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
+        color: var(--text-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: .95rem;
+        transition: all .2s;
+        flex: 1 1 110px;
+        min-width: 0;
+    }
+
+    .controls button:hover {
+        background: var(--control-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px var(--shadow-highlight);
+    }
+
+    .controls button:active {
+        transform: translateY(1px);
+        box-shadow: none
+    }
+
+    .control-buttons, .control-toggles, .volume-controls, .time-scrub-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .date-display {
+        font-size: .95rem;
+        font-weight: 600;
+        text-align: center;
+        background: rgba(0, 0, 0, .2);
+        border-radius: 6px;
+        padding: 8px 12px;
+        flex-grow: 1;
+        letter-spacing: 0.02em;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(0, 255, 204, .1);
+    }/* Custom checkbox and range sliders */
+    .control-toggles {
+        position: relative;
+        display: flex;
+        align-items: center;
+        font-size: .9rem;
+        background: rgba(0, 0, 0, .2);
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+    }
+
+    .control-toggles input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 36px;
+        height: 18px;
+        background: rgba(0, 0, 0, .4);
+        border-radius: 10px;
+        position: relative;
+        margin-left: 10px;
+        cursor: pointer;
+        transition: all .3s;
+        border: 1px solid var(--control-border);
+    }
+
+    .control-toggles input[type="checkbox"]:checked {
+        background: var(--highlight);
+    }
+
+    .control-toggles input[type="checkbox"]::before {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        top: 1px;
+        left: 1px;
+        transition: transform .3s;
+    }
+
+    .control-toggles input[type="checkbox"]:checked::before {
+        transform: translateX(18px);
+    }
+
+    .volume-controls, .time-scrub-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        font-size: .9rem;
+        background: rgba(0, 0, 0, .2);
+        border-radius: 6px;
+        padding: 6px 12px;
+    }
+
+    .volume-controls input[type="range"], .time-scrub-container input[type="range"], .control-toggles input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        background: rgba(0, 0, 0, .4);
+        border-radius: 3px;
+        margin-left: 10px;
+        outline: none;
+    }
+
+    .volume-controls input[type="range"]::-webkit-slider-thumb, .time-scrub-container input[type="range"]::-webkit-slider-thumb, .control-toggles input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: var(--highlight);
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        transition: all .2s;
+    }
+
+    .volume-controls input[type="range"]::-webkit-slider-thumb:hover, .time-scrub-container input[type="range"]::-webkit-slider-thumb:hover, .control-toggles input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 1px 5px var(--shadow-highlight);
+    }
+
+    .volume-controls input[type="range"]::-moz-range-thumb, .time-scrub-container input[type="range"]::-moz-range-thumb, .control-toggles input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: var(--highlight);
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        transition: all .2s;
+    }
+
+    .volume-controls input[type="range"]::-moz-range-thumb:hover, .time-scrub-container input[type="range"]::-moz-range-thumb:hover, .control-toggles input[type="range"]::-moz-range-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 1px 5px var(--shadow-highlight);
+    }
+
+    .time-scrub-container input[type="range"] {
+        flex: 1;
+    }
+
+    #time-speed {
+        background: var(--highlight);
+        color: #000;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: .85rem;
+        min-width: 46px;
+        text-align: center;
+    }/* ───────────────────────────────────────
+       LOGO / EMOJI / TOOLTIP / NOTIF
+    ─────────────────────────────────────── */
+    .logo-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 5;
+        pointer-events: none;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .logo-container img {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 0 20px var(--shadow-dark);
+        transition: all .5s;
+    }
+
+    .logo-container img:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 25px var(--shadow-highlight);
+        filter: brightness(1.2);
+    }
+
+    .emoji {
+        position: absolute;
+        top: -30px;
+        font-size: 30px;
+        opacity: 0;
+        transition: opacity .3s, transform .5s;
+        pointer-events: none;
+        filter: drop-shadow(0 0 5px rgba(0, 0, 0, .5));
+    }
+
+    .emoji.active {
+        opacity: 1;
+        transform: translateY(-20px);
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(-20px)
+        }
+
+        50% {
+            transform: translateY(-30px)
+        }
+
+        100% {
+            transform: translateY(-20px)
+        }
+    }
+
+    .tooltip {
+        position: absolute;
+        background: var(--panel-bg);
+        color: var(--text-color);
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: .85rem;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity .3s, transform .3s;
+        z-index: 20;
+        max-width: 280px;
+        box-shadow: 0 3px 15px var(--shadow-dark);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(0, 255, 204, .2);
+        text-align: center;
+        transform: translateY(10px);
+    }
+
+    .tooltip.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .notification {
+        position: absolute;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: var(--panel-bg);
+        color: var(--text-color);
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px var(--shadow-dark);
+        z-index: 100;
+        max-width: 300px;
+        text-align: center;
+        opacity: 0;
+        transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity .4s;
+        pointer-events: none;
+        border: 1px solid rgba(0, 255, 204, .2);
+        font-weight: 500;
+    }
+
+    .notification.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-color);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity .5s;
+    }
+
+    .loading.done {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        position: relative;
+        margin-bottom: 30px;
+    }
+
+    .loading-spinner::before, .loading-spinner::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(to right, var(--highlight), var(--secondary-highlight));
+        animation: pulse-ring 2s linear infinite;
+    }
+
+    .loading-spinner::after {
+        animation-delay: -1s;
+    }
+
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(0.5);
+            opacity: 1
+        }
+
+        100% {
+            transform: scale(1.5);
+            opacity: 0
+        }
+    }
+
+    .loading-text {
+        font-size: 1.3rem;
+        font-weight: 600;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        margin-bottom: 5px;
+    }
+
+    .loading-subtext {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        max-width: 80%;
+        text-align: center;
+    }
+
+    .loading-progress {
+        width: 200px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        margin-top: 20px;
+        overflow: hidden;
+    }
+
+    .loading-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: var(--highlight);
+        border-radius: 2px;
+        transition: width 0.3s;
+    }/* ───────────────────────────────────────
+       LEGEND
+    ─────────────────────────────────────── */
+    .legend {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        width: 90%;
+        max-width: 900px;
+        background: var(--panel-bg);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 204, .2);
+        box-shadow: 0 4px 16px var(--shadow-dark);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        font-size: .85rem;
+        max-height: 30vh;
+        overflow-y: auto;
+        z-index: 12;
+        transition: transform .3s, box-shadow .3s;
+    }
+
+    .legend:hover {
+        box-shadow: 0 6px 20px var(--shadow-highlight);
+    }
+
+    .legend-header {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: var(--highlight);
+        text-align: center;
+        position: relative;
+        padding-bottom: 6px;
+        width: 100%;
+    }
+
+    .legend-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--header-gradient);
+        border-radius: 1px;
+    }
+
+    .legend-indicator {
+        font-size: .95rem;
+        color: var(--highlight);
+        min-height: 1.2em;
+        padding: 6px 12px;
+        background: rgba(0, 0, 0, .2);
+        border-radius: 6px;
+        width: 100%;
+        text-align: center;
+        transition: all .3s;
+        font-weight: 500;
+    }
+
+    .legend-indicator.active {
+        color: #fff;
+        background: var(--active-indicator);
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px var(--shadow-highlight);
+    }
+
+    .legend ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+        list-style: none;
+    }
+
+    .legend li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1 1 150px;
+        justify-content: flex-start;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, .2);
+        transition: all .3s;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .legend li:hover {
+        background: rgba(255, 255, 255, .1);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px var(--shadow-highlight);
+    }
+
+    .legend li:active {
+        transform: translateY(1px);
+        box-shadow: none;
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        box-shadow: 0 0 4px rgba(0, 0, 0, .3);
+        transition: transform .3s;
+    }
+
+    .legend li:hover .legend-dot {
+        transform: scale(1.5);
+    }
+
+    .legend-dot.vibrate {
+        animation: pulse-dot 0.8s infinite;
+    }
+
+    @keyframes pulse-dot {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0, 255, 204, .7)
+        }
+
+        70% {
+            transform: scale(1.4);
+            box-shadow: 0 0 0 8px rgba(0, 255, 204, 0)
+        }
+
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0, 255, 204, 0)
+        }
+    }/* ───────────────────────────────────────
+       DOCKED INFO / OPTIONS / API PANEL
+    ─────────────────────────────────────── */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0);
+        display: none;
+        opacity: 0;
+        transition: opacity .3s;
+        z-index: 900;
+    }
+
+    .modal-overlay.show {
+        display: block;
+        opacity: 1;
+        background: rgba(0, 0, 0, .5);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+    }
+
+    .modal-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: auto;
+        width: clamp(280px, 30vw, 450px);
+        height: 100vh;
+        max-height: 100vh;
+        transform: translateX(100%);
+        background: var(--modal-bg);
+        border-left: 1px solid rgba(0, 255, 204, .2);
+        border-radius: 12px 0 0 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: -4px 0 30px var(--shadow-dark);
+        z-index: 950;
+        opacity: 0;
+        pointer-events: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+        transition: transform .4s cubic-bezier(0.165, 0.84, 0.44, 1), opacity .3s;
+    }
+
+    .modal-panel.show {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(0, 255, 204, .2);
+        background: rgba(0, 0, 0, .2);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--highlight);
+        text-shadow: 0 2px 8px rgba(0, 255, 204, .3);
+    }
+
+    .modal-close {
+        background: rgba(0, 0, 0, .3);
+        border: 1px solid rgba(255, 255, 255, .1);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 24px;
+        cursor: pointer;
+        opacity: .9;
+        transition: all .2s;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, .2);
+        transform: rotate(90deg);
+    }
+
+    .modal-tabs {
+        display: flex;
+        gap: 2px;
+        border-bottom: 1px solid rgba(0, 255, 204, .2);
+        background: rgba(0, 0, 0, .15);
+        padding: 0 20px;
+        position: sticky;
+        top: 68px;
+        z-index: 15;
+    }
+
+    .modal-tab {
+        padding: 12px 20px;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all .3s;
+        color: #aaa;
+        font-size: .9rem;
+        font-weight: 500;
+    }
+
+    .modal-tab:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, .05);
+    }
+
+    .modal-tab.active {
+        color: var(--highlight);
+        border-bottom-color: var(--highlight);
+    }
+
+    .modal-content {
+        padding: 20px;
+        max-height: none;
+    }
+
+    .tab-content {
+        display: none;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity .4s, transform .4s;
+    }
+
+    .tab-content.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .modal-section {
+        margin-bottom: 24px;
+    }
+
+    .modal-section-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: var(--highlight);
+        margin-bottom: 12px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid rgba(0, 255, 204, .2);
+    }
+
+    .modal-section p {
+        margin-bottom: 16px;
+        line-height: 1.6;
+    }
+
+    .modal-section p:last-child {
+        margin-bottom: 0;
+    }
+
+    .modal-section ul {
+        margin-left: 20px;
+        margin-bottom: 16px;
+    }
+
+    .modal-section li {
+        margin-bottom: 8px;
+        line-height: 1.5;
+    }
+
+    .modal-section li:last-child {
+        margin-bottom: 0;
+    }
+
+    .modal-section li strong {
+        color: var(--highlight);
+    }/* options strategy styles */
+    .cycle-strategy-card {
+        background: rgba(0, 0, 0, .2);
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 20px;
+        border-left: 3px solid var(--highlight);
+        transition: all .3s;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .2);
+    }
+
+    .cycle-strategy-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px var(--shadow-highlight);
+    }
+
+    .cycle-title {
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: var(--highlight);
+        margin-bottom: 14px;
+    }
+
+    .strategy-section {
+        margin-bottom: 14px;
+    }
+
+    .strategy-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        background: var(--third-highlight);
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    .strategy-list {
+        list-style-type: none;
+        padding-left: 8px;
+    }
+
+    .strategy-list li {
+        position: relative;
+        padding-left: 18px;
+        margin-bottom: 8px;
+        font-size: .95rem;
+        line-height: 1.5;
+    }
+
+    .strategy-list li::before {
+        content: "▸";
+        position: absolute;
+        left: 0;
+        color: var(--secondary-highlight);
+        font-weight: bold;
+    }
+
+    .strategy-list li:last-child {
+        margin-bottom: 0;
+    }/* code block styling */
+    .code-block {
+        background: var(--code-bg);
+        padding: 16px;
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: .85rem;
+        color: var(--code-text);
+        overflow-x: auto;
+        line-height: 1.5;
+        white-space: pre;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, .4);
+        border: 1px solid rgba(0, 255, 204, .1);
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .script-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        justify-content: flex-end;
+    }
+
+    .script-btn {
+        font-size: .85rem;
+        padding: 8px 14px;
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
+        border-radius: 6px;
+        color: var(--text-color);
+        cursor: pointer;
+        transition: all .3s;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .script-btn::before {
+        content: '📋';
+        margin-right: 6px;
+    }
+
+    .script-btn:hover {
+        background: var(--control-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px var(--shadow-highlight);
+    }
+
+    .script-btn:active {
+        transform: translateY(1px);
+        box-shadow: none;
+    }/* ───────────────────────────────────────
+       KEYBOARD SHORTCUTS
+    ─────────────────────────────────────── */
+    .keyboard-shortcuts {
+        position: fixed;
+        left: 20px;
+        top: 20px;
+        background: var(--panel-bg);
+        border-radius: 8px;
+        padding: 10px;
+        z-index: 100;
+        font-size: .85rem;
+        box-shadow: 0 2px 10px var(--shadow-dark);
+        border: 1px solid rgba(0, 255, 204, .2);
+        display: none;
+        transform: translateY(-10px);
+        opacity: 0;
+        transition: all 0.3s;
+    }
+
+    .keyboard-shortcuts.show {
+        display: block;
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .keyboard-shortcuts table {
+        border-spacing: 0;
+        border-collapse: collapse;
+    }
+
+    .keyboard-shortcuts td {
+        padding: 2px 6px;
+    }
+
+    .keyboard-shortcuts td:first-child {
+        text-align: right;
+    }
+
+    .keyboard-shortcuts .key {
+        background: rgba(0, 0, 0, .3);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: .8rem;
+        border: 1px solid var(--control-border);
+        margin-right: 4px;
+        display: inline-block;
+    }
+
+    .keyboard-help-btn {
+        position: fixed;
+        left: 20px;
+        top: 20px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 101;
+        transition: all 0.3s;
+        box-shadow: 0 2px 10px var(--shadow-dark);
+    }
+
+    .keyboard-help-btn:hover {
+        background: var(--control-hover);
+        transform: scale(1.1);
+    }/* ───────────────────────────────────────
+       RESPONSIVE
+    ─────────────────────────────────────── */
+    @media (max-width: 900px) {
+        .modal-panel {
+            width: 100%;
+            height: 80%;
+            max-height: 80vh;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            top: auto;
+            transform: translateY(100%);
+            border-radius: 20px 20px 0 0;
+            border-left: none;
+            border-top: 1px solid rgba(0, 255, 204, .2);
+        }
+
+        .modal-panel.show {
+            transform: translateY(0);
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            width: 44px;
+            height: 44px;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, .7);
+            z-index: 1000;
+            border: 1px solid rgba(0, 255, 204, .3);
+        }
+
+        .modal-tabs {
+            top: 0;
+            justify-content: center;
+            position: relative;
+            padding: 0;
+        }
+
+        .modal-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 10px;
+        }
+
+        .keyboard-help-btn {
+            top: 70px;
+        }
+
+        .keyboard-shortcuts {
+            top: 70px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .controls {
+            padding: .75rem .85rem;
+            top: 15px;
+        }
+
+        .controls button {
+            padding: 7px 12px;
+            font-size: .9rem;
+        }
+
+        .legend li {
+            flex: 1 1 120px;
+            font-size: .8rem;
+            padding: 6px 10px;
+        }
+
+        .modal-panel {
+            height: 75%;
+        }
+
+        .cycle-strategy-card {
+            padding: 12px;
+        }
+
+        .cycle-title {
+            font-size: 1rem;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+        }
+
+        .strategy-list li {
+            font-size: 0.85rem;
+        }
+
+        .keyboard-help-btn {
+            top: 72px;
+        }
+
+        .keyboard-shortcuts {
+            top: 72px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .controls {
+            padding: .65rem .75rem;
+            gap: 8px;
+        }
+
+        .controls button {
+            font-size: .85rem;
+            padding: 6px 10px;
+        }
+
+        .legend li {
+            flex: 1 1 130px;
+        }
+
+        .modal-panel {
+            height: 70%;
+        }
+
+        .modal-tab {
+            padding: 10px 5px;
+            font-size: 0.8rem;
+        }
+
+        .modal-content {
+            padding: 15px;
+        }
+    }
+    </style>
+</head>
+
+<body>
+    <header>
+        <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark theme">🌓</button>
+        <button class="keyboard-help-btn" id="keyboard-help-btn" title="Keyboard shortcuts">?</button>
+
+        <div class="keyboard-shortcuts" id="keyboard-shortcuts">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span class="key">Space</span>
+                        </td>
+                        <td>Pause/Play</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">R</span>
+                        </td>
+                        <td>Reset timeline</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">↑</span>
+                        </td>
+                        <td>Speed up</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">↓</span>
+                        </td>
+                        <td>Slow down</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">I</span>
+                        </td>
+                        <td>Info panel</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">O</span>
+                        </td>
+                        <td>Options panel</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">A</span>
+                        </td>
+                        <td>API panel</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">T</span>
+                        </td>
+                        <td>Toggle theme</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="key">Esc</span>
+                        </td>
+                        <td>Close panels</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </header>
+
+    <main id="container">
+        <!-- LOADING -->
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Initializing GME Cycle Resonator...</div>
+            <div class="loading-subtext">Loading temporal mechanics and quantum harmonic oscillators</div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loading-progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- CANVAS -->
+        <canvas id="cycleCanvas">
+        </canvas>
+
+        <!-- CONTROLS -->
+        <div class="controls" id="controls">
+            <button id="pause-btn" title="Pause/resume simulation">Pause</button>
+            <button id="reset-btn" title="Reset to starting point">Reset</button>
+            <button id="speed-down-btn" title="Decrease simulation speed">Slower</button>
+            <button id="speed-up-btn" title="Increase simulation speed">Faster</button>
+            <button id="info-btn" title="View cycle information">Info</button>
+            <button id="options-btn" title="View trading strategies">Options</button>
+            <div class="date-display" id="date-display">Current: …</div>
+            <label class="control-toggles" title="Toggle sound effects">
+                Mute Sound
+                <input type="checkbox" id="muteSound">
+            </label>
+            <label class="control-toggles" title="Adjust harmonic ratio">
+                Harmonic
+                <input type="range" id="harmonicSlider" min="0.5" max="2" step="0.01" value="1">
+            </label>
+            <label class="time-scrub-container" title="Navigate through timeline">
+                Time
+                <input type="range" id="time-scrub" min="0" max="5000" step="1" value="0">
+            </label>
+            <span class="time-scrub-container" id="time-speed">1x</span>
+        </div>
+
+        <!-- LOGO & EMOJI -->
+        <div class="logo-container">
+            <img id="custom-logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjkwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNiIgLz48cGF0aCBkPSJNNTAgMTAwaDEwME0xMDAgNTB2MTAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjI1IiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48cGF0aCBkPSJNNjAgMTQwbDgwLTgwTTE0MCA2MEw2MCAxNDAiIHN0cm9rZT0iI2ZmMzM5OSIgc3Ryb2tlLXdpZHRoPSIzIiAvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iNzAiIHN0cm9rZT0iI2ZmMzM5OSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtZGFzaGFycmF5PSI1IDUiIC8+PC9zdmc+" alt="GME Logo" class="glow">
+            <span class="emoji fire">🚀</span>
+            <span class="emoji boom">💎</span>
+            <span class="emoji beer">🦍</span>
+        </div>
+
+        <!-- TOOLTIP & NOTIFICATION -->
+        <div class="tooltip" id="tooltip"></div>
+        <div class="notification" id="notification"></div>
+
+        <!-- MODAL SIDEBAR -->
+        <div class="modal-overlay" id="modal-overlay"></div>
+        <div class="modal-panel" id="main-modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">GME Cycle Information</div>
+                <button class="modal-close" id="modal-close" aria-label="Close panel" title="Close panel">×</button>
+            </div>
+            <div class="modal-tabs">
+                <div class="modal-tab active" data-tab="info-tab">Info</div>
+                <div class="modal-tab" data-tab="options-tab">Options Strategy</div>
+                <div class="modal-tab" data-tab="api-tab">Trading API</div>
+            </div>
+            <div class="modal-content">
+                <!-- Info Tab -->
+                <div class="tab-content active" id="info-tab">
+                    <p>The GME Cycle Resonator visualizes key temporal mechanics that drive GameStop's unique market behavior. This tool renders multiple overlapping cycles to identify potential resonances and squeeze mechanics.</p>
+                    <p>Each ring represents a different trading cycle, from institutional accumulation (1461) to intraday pulse patterns (21). When cycles align, resonances occur, potentially indicating significant meme stock events.</p>
+
+                    <div class="modal-section">
+                        <div class="modal-section-title">Key Cycle Mechanics:</div>
+                        <ul>
+                            <li>
+                                <strong>1461: Institutional Accumulation</strong>
+                                 - Matches U.S. presidential cycle. Mirrors long-game ETF rebalancing.
+                            </li>
+                            <li>
+                                <strong>741: Short Squeeze Trigger</strong>
+                                 - Institutional unwind window (741/999 = 0.741741… echoing infinity).
+                            </li>
+                            <li>
+                                <strong>35: Momentum Surge</strong>
+                                 - Heart of the FTD force-buy engine (T+35 settlement mechanics).
+                            </li>
+                            <li>
+                                <strong>999: The Tesla Loop</strong>
+                                 - 999 days from GameStonk tweet → Feb 18, 2025. Vortex math alignment.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="modal-section">
+                        <div class="modal-section-title">Controls:</div>
+                        <ul>
+                            <li>
+                                <strong>Pause/Play</strong>
+                                 - Toggle simulation
+                            </li>
+                            <li>
+                                <strong>Reset</strong>
+                                 - Return to starting point
+                            </li>
+                            <li>
+                                <strong>Slower/Faster</strong>
+                                 - Adjust time speed
+                            </li>
+                            <li>
+                                <strong>Time Scrub</strong>
+                                 - Navigate through timeline
+                            </li>
+                        </ul>
+                    </div>
+
+                    <p>Watch for special alignments between key cycles. The most powerful signals occur when multiple resonances stack at once!</p>
+                    <p>Power to the players. Power to the creators. Power to the collectors. 🚀</p>
+                </div>
+
+                <!-- Options Strategy Tab -->
+                <div class="tab-content" id="options-tab">
+                    <div class="cycle-strategy-card">
+                        <div class="cycle-title">55: FOMO Swing (Retail Lightning Loop)</div>
+                        <div class="strategy-section">
+                            <div class="section-title">Ideal Trades:</div>
+                            <ul class="strategy-list">
+                                <li>Short-dated OTM calls (2-4 weeks to expiry)</li>
+                                <li>Gamma ramp scalps</li>
+                                <li>0DTE meme catalysts with IV pops</li>
+                            </ul>
+                        </div>
+                        <div class="strategy-section">
+                            <div class="section-title">Signal Triggers:</div>
+                            <ul class="strategy-list">
+                                <li>RK Tweet Surge</li>
+                                <li>Sudden call volume spikes</li>
+                                <li>55-day from previous high-volume node</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="cycle-strategy-card">
+                        <div class="cycle-title">35: Momentum Surge (T+35 Settlement Pulse)</div>
+                        <div class="strategy-section">
+                            <div class="section-title">Ideal Trades:</div>
+                            <ul class="strategy-list">
+                                <li>Calendar spreads targeting T+35 expiry</li>
+                                <li>Deep ITM calls to force-deliver shares</li>
+                                <li>Roll-up strategies anticipating FTD covers</li>
+                            </ul>
+                        </div>
+                        <div class="strategy-section">
+                            <div class="section-title">Signal Triggers:</div>
+                            <ul class="strategy-list">
+                                <li>Options chain sweeps on DITM strikes</li>
+                                <li>Abnormal FTD print 35 days ago</li>
+                                <li>Price dip into known reset window</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="cycle-strategy-card">
+                        <div class="cycle-title">741: Short Squeeze Trigger (The Infinity Echo)</div>
+                        <div class="strategy-section">
+                            <div class="section-title">Ideal Trades:</div>
+                            <ul class="strategy-list">
+                                <li>Long-dated synthetic LEAPs</li>
+                                <li>Straddle into volatility triggers</li>
+                                <li>Swoop-in post-puke accumulation</li>
+                            </ul>
+                        </div>
+                        <div class="strategy-section">
+                            <div class="section-title">Signal Triggers:</div>
+                            <ul class="strategy-list">
+                                <li>Institutional 13F filings or RC 13D</li>
+                                <li>Long periods of IV compression</li>
+                                <li>Convergence with broader macro resets (VIX)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Tab -->
+                <div class="tab-content" id="api-tab">
+                    <div class="modal-section">
+                        <div class="modal-section-title">TradingView PineScript Overlay</div>
+                        <p>Copy this code to add GME cycle indicators to your TradingView chart:</p>
+                        <div class="code-block">//@version=5
+                        indicator("🧿 GME Cycle Overlay", overlay=true)
+
+                        startDate = input.time(timestamp("2020-08-01 00:00 +0000"), "Start Point")
+
+                        cycleLengths = array.fromlist([55, 35, 147, 741, 999])
+                        cycleNames = array.fromlist(["FOMO Swing", "Momentum Surge", "Gamma Bloom", "Infinity Echo", "Tesla Harmonic"])
+                        colors = array.fromlist([color.new(color.orange, 70), color.new(color.red, 70), color.new(color.blue, 70), color.new(color.green, 70), color.new(color.purple, 70)])
+
+                        for i = 0 to array.size(cycleLengths) - 1
+                            cl = array.get(cycleLengths, i)
+                            cyc = startDate + cl * 86400
+                            line.new(x1=cyc, y1=low - 10, x2=cyc, y2=high + 10, color=array.get(colors, i), width=2)
+                            label.new(x=cyc, y=high, text=array.get(cycleNames, i), style=label.style_label_left, color=array.get(colors, i), size=size.small</div>
+                        <div class="script-actions">
+                            <button class="script-btn" id="copy-pinescript">Copy PineScript</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEGEND -->
+        <div class="legend" id="legend">
+            <div class="legend-header">🧿 GameStop Resonance Cycles</div>
+            <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+            <ul>
+                <li id="legend-1461" data-cycle="1461">
+                    <span class="legend-dot" style="background:hsl(0,100%,40%)"></span>
+                    1461: Institutional Accumulation
+                </li>
+                <li id="legend-741" data-cycle="741">
+                    <span class="legend-dot" style="background:hsl(60,100%,40%)"></span>
+                    741: Short Squeeze Trigger
+                </li>
+                <li id="legend-55" data-cycle="55">
+                    <span class="legend-dot" style="background:hsl(30,100%,40%)"></span>
+                    55: FOMO Swing
+                </li>
+                <li id="legend-35" data-cycle="35">
+                    <span class="legend-dot" style="background:hsl(0,100%,40%)"></span>
+                    35: Momentum Surge
+                </li>
+                <li id="legend-21" data-cycle="21">
+                    <span class="legend-dot" style="background:hsl(60,100%,40%)"></span>
+                    21: Intraday Pulse
+                </li>
+                <li id="legend-999" data-cycle="999">
+                    <span class="legend-dot" style="background:hsl(330,100%,40%)"></span>
+                    999: The Tesla Loop
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <script>
+    /******************************************
+         * SETTINGS MANAGEMENT WITH FALLBACK
+        ******************************************/
+    const DEFAULT_SETTINGS = {
+        lightTheme: false,
+        harmonicFactor: 1.0,
+        muteSound: false,
+        highPerformanceMode: true
+    };
+
+    let settings = DEFAULT_SETTINGS;
+
+    // Safe localStorage wrapper with memory fallback
+    const storage = {
+        memoryStore: {},
+
+        getItem(key) {
+            try {
+                return localStorage.getItem(key);
+            } catch (e) {
+                console.log('Using memory storage fallback');
+                return this.memoryStore[key] || null;
+            }
+        },
+
+        setItem(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (e) {
+                this.memoryStore[key] = value;
+            }
+        }
+    };
+
+    function loadSettings() {
+        try {
+            const saved = storage.getItem("gmeResonatorSettings");
+            return saved ? {
+                ...DEFAULT_SETTINGS,
+                ...JSON.parse(saved)
+            } : DEFAULT_SETTINGS;
+        } catch (e) {
+            console.log("Settings load error, using defaults:", e);
+            return DEFAULT_SETTINGS;
+        }
+    }
+
+    function saveSettings() {
+        try {
+            settings.harmonicFactor = parseFloat(document.getElementById('harmonicSlider').value);
+            settings.muteSound = document.getElementById('muteSound').checked;
+            storage.setItem("gmeResonatorSettings", JSON.stringify(settings));
+        } catch (e) {
+            console.log("Settings save error:", e);
+        }
+    }
+
+    /******************************************
+         * SIMPLE AUDIO INTERFACE
+        ******************************************/
+    const audioContext = {
+        ctx: null,
+        initialized: false,
+
+        init() {
+            if (this.initialized)
+                return;
+
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    this.ctx = new AudioContext();
+                    this.initialized = true;
+
+                    // Add a user interaction handler to unlock audio
+                    const unlockAudio = () => {
+                        if (this.ctx && this.ctx.state === 'suspended') {
+                            this.ctx.resume();
+                        }
+                        document.removeEventListener('click', unlockAudio);
+                        document.removeEventListener('touchstart', unlockAudio);
+                        document.removeEventListener('keydown', unlockAudio);
+                    };
+
+                    document.addEventListener('click', unlockAudio);
+                    document.addEventListener('touchstart', unlockAudio);
+                    document.addEventListener('keydown', unlockAudio);
+
+                    showNotification("Sound initialized", "info");
+                } else {
+                    showNotification("Audio not supported in this browser", "error");
+                }
+            } catch (e) {
+                console.log("Audio initialization error:", e);
+                showNotification("Audio initialization failed", "error");
+            }
+        },
+
+        playTone(frequency, duration=0.2, type='sine') {
+            if (!this.initialized || !this.ctx || settings.muteSound)
+                return;
+
+            try {
+                const oscillator = this.ctx.createOscillator();
+                const gainNode = this.ctx.createGain();
+
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, this.ctx.currentTime);
+
+                gainNode.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.ctx.destination);
+
+                oscillator.start();
+                oscillator.stop(this.ctx.currentTime + duration);
+            } catch (e) {
+                console.log("Error playing tone:", e);
+            }
+        },
+
+        playResonanceSound() {
+            if (!this.initialized || !this.ctx || settings.muteSound)
+                return;
+
+            // Play a pleasant chord for resonance
+            this.playTone(261.63, 0.5); // C4
+            setTimeout(() => this.playTone(329.63, 0.4), 100); // E4
+            setTimeout(() => this.playTone(392.00, 0.3), 200); // G4
+        },
+
+        playCrucialDateSound() {
+            if (!this.initialized || !this.ctx || settings.muteSound)
+                return;
+
+            // Play a distinct sound for crucial dates
+            this.playTone(440.00, 0.3); // A4
+            setTimeout(() => this.playTone(523.25, 0.3), 150); // C5
+            setTimeout(() => this.playTone(659.25, 0.3), 300); // E5
+        }
+    };
+
+    /******************************************
+         * VISUALIZATION CORE
+        ******************************************/
+    let cycleCanvas,
+        cycleCtx;
+    let cycleWidth,
+        cycleHeight;
+    let time = 0;
+    let isPaused = false;
+    let speedMultiplier = 0.05;
+    let harmonicFactor = 1.0;
+    let lastFrameTime = 0;
+    let fpsLimit = 60;
+    let particles = [];
+    let isModalOpen = false;
+    let activeTab = 'info-tab';
+    let isKeyboardHelpVisible = false;
+
+    const CYCLES = [
+    {
+        name: "1461: Institutional Accumulation",
+        length: 1461,
+        hue: 0,
+        importance: 10
+    },
+    {
+        name: "741: Short Squeeze Trigger",
+        length: 741,
+        hue: 60,
+        importance: 8
+    },
+    {
+        name: "55: FOMO Swing",
+        length: 55,
+        hue: 30,
+        importance: 6
+    },
+    {
+        name: "35: Momentum Surge",
+        length: 35,
+        hue: 0,
+        importance: 5
+    },
+    {
+        name: "21: Intraday Pulse",
+        length: 21,
+        hue: 60,
+        importance: 4
+    },
+    {
+        name: "999: The Tesla Loop",
+        length: 999,
+        hue: 330,
+        importance: 10
+    }
+    ];
+
+    const CRUCIAL_DATES = [
+    {
+        date: new Date(2025, 0, 28),
+        name: "FOMO Tsunami",
+        color: "#ffaa00",
+        description: "Massive retail buying wave triggered by social media activity"
+    },
+    {
+        date: new Date(2025, 0, 23),
+        name: "T+35 Settlement Wave",
+        color: "#cc3300",
+        description: "FTD cycle settlement pressure creates forced buying"
+    },
+    {
+        date: new Date(2025, 1, 18),
+        name: "Tesla Loop Completion",
+        color: "#ff00ff",
+        description: "999 days from original GameStonk tweet - cosmic resonance point"
+    }
+    ];
+
+    const EMOJI_DATES = {
+        '2025-01-27': '🚀',
+        '2025-01-28': '💎',
+        '2025-01-29': '🦍'
+    };
+
+    function applyTheme() {
+        document.documentElement.classList.toggle('light-theme', settings.lightTheme);
+        document.getElementById('theme-toggle').textContent = settings.lightTheme ? '🌙' : '☀️';
+    }
+
+    function startVisualization() {
+        settings = loadSettings();
+        applyTheme();
+        cycleCanvas = document.getElementById('cycleCanvas');
+        cycleCtx = cycleCanvas.getContext('2d');
+        resizeCycleCanvas();
+        initializeLoadingAnimation();
+        initializeButtonHandlers();
+        initializeModalSystem();
+        attachEventListeners();
+        document.getElementById('date-display').textContent = "Current: " + formatDate(getCurrentDate(time));
+        document.getElementById('time-speed').textContent = `${speedMultiplier.toFixed(2)}x`;
+
+        // Set initial values from settings
+        document.getElementById('harmonicSlider').value = settings.harmonicFactor;
+        document.getElementById('muteSound').checked = settings.muteSound;
+        harmonicFactor = settings.harmonicFactor;
+
+        // Initialize audio
+        audioContext.init();
+
+        requestAnimationFrame(animate);
+        setTimeout(() => document.getElementById('loading').classList.add('done'), 1500);
+    }
+
+    function initializeLoadingAnimation() {
+        const bar = document.getElementById('loading-progress-bar');
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 5;
+            if (progress > 100) {
+                progress = 100;
+                clearInterval(interval);
+            }
+            bar.style.width = `${progress}%`;
+        }, 100);
+    }
+
+    function initializeButtonHandlers() {
+        document.getElementById('pause-btn').addEventListener('click', togglePause);
+        document.getElementById('reset-btn').addEventListener('click', resetTime);
+        document.getElementById('speed-down-btn').addEventListener('click', speedDown);
+        document.getElementById('speed-up-btn').addEventListener('click', speedUp);
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        document.getElementById('info-btn').addEventListener('click', () => showModal('info-tab'));
+        document.getElementById('options-btn').addEventListener('click', () => showModal('options-tab'));
+        document.getElementById('keyboard-help-btn').addEventListener('click', toggleKeyboardHelp);
+
+        // Initialize the harmonic slider and mute checkbox
+        document.getElementById('harmonicSlider').addEventListener('input', (e) => {
+            harmonicFactor = parseFloat(e.target.value);
+            saveSettings();
+        });
+
+        document.getElementById('muteSound').addEventListener('change', (e) => {
+            settings.muteSound = e.target.checked;
+            saveSettings();
+            showNotification(settings.muteSound ? "Sound muted" : "Sound enabled", "info");
+        });
+    }
+
+    function initializeModalSystem() {
+        document.getElementById('modal-close').addEventListener('click', closeModal);
+        document.getElementById('modal-overlay').addEventListener('click', closeModal);
+        document.querySelectorAll('.modal-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                activateModalTab(e.target.dataset.tab);
+            });
+        });
+
+        // Add swipe down to close modal on mobile
+        if (window.innerWidth <= 900) {
+            let touchStartY = 0;
+            let touchMoveY = 0;
+
+            document.getElementById('main-modal').addEventListener('touchstart', function(e) {
+                touchStartY = e.touches[0].clientY;
+            }, {
+                passive: true
+            });
+
+            document.getElementById('main-modal').addEventListener('touchmove', function(e) {
+                touchMoveY = e.touches[0].clientY;
+                const modalPanel = document.getElementById('main-modal');
+                const delta = touchMoveY - touchStartY;
+
+                // Only allow swiping down
+                if (delta > 0) {
+                    modalPanel.style.transform = `translateY(${delta}px)`;
+                    modalPanel.style.transition = 'none';
+                }
+            }, {
+                passive: true
+            });
+
+            document.getElementById('main-modal').addEventListener('touchend', function() {
+                const modalPanel = document.getElementById('main-modal');
+                modalPanel.style.transition = 'transform .4s cubic-bezier(0.165, 0.84, 0.44, 1), opacity .3s';
+
+                if (touchMoveY - touchStartY > 100) {
+                    closeModal();
+                } else {
+                    modalPanel.style.transform = '';
+                }
+            }, {
+                passive: true
+            });
+        }
+    }
+
+    function toggleKeyboardHelp() {
+        isKeyboardHelpVisible = !isKeyboardHelpVisible;
+        document.getElementById('keyboard-shortcuts').classList.toggle('show', isKeyboardHelpVisible);
+    }
+
+    function showModal(tabId) {
+        document.getElementById('modal-overlay').classList.add('show');
+        document.getElementById('main-modal').classList.add('show');
+        activateModalTab(tabId);
+        isModalOpen = true;
+
+        // Make sure we can see the close button on mobile
+        const closeBtn = document.getElementById('modal-close');
+        closeBtn.style.display = 'flex';
+
+        if (window.innerWidth <= 900) {
+            closeBtn.style.position = 'fixed';
+            closeBtn.style.top = '10px';
+            closeBtn.style.right = '10px';
+            closeBtn.style.zIndex = '1000';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.remove('show');
+        document.getElementById('main-modal').classList.remove('show');
+        isModalOpen = false;
+
+        // Reset any transform style that might have been applied during swipe
+        document.getElementById('main-modal').style.transform = '';
+    }
+
+    function activateModalTab(tabId) {
+        document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`.modal-tab[data-tab="${tabId}"]`).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        const titles = {
+            'info-tab': 'GME Cycle Information',
+            'options-tab': 'GME Options Strategy by Cycle',
+            'api-tab': 'Trading API & Overlays'
+        };
+        document.getElementById('modal-title').textContent = titles[tabId];
+        activeTab = tabId;
+    }
+
+    function toggleTheme() {
+        settings.lightTheme = !settings.lightTheme;
+        applyTheme();
+        saveSettings();
+        showNotification(settings.lightTheme ? "Light theme activated" : "Dark theme activated", "info");
+    }
+
+    function attachEventListeners() {
+        document.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('resize', debounceResize);
+        document.getElementById('time-scrub').addEventListener('input', (e) => {
+            time = parseInt(e.target.value, 10);
+            updateDateDisplay();
+        });
+
+        // Legend cycle highlights
+        document.querySelectorAll('.legend li').forEach(item => {
+            item.addEventListener('click', e => {
+                highlightCycle(parseInt(e.currentTarget.dataset.cycle, 10));
+            });
+        });
+
+        // Make canvas responsive to interactions
+        cycleCanvas.addEventListener('mousemove', onMouseMove);
+        cycleCanvas.addEventListener('touchstart', onTouchStart, {
+            passive: true
+        });
+        cycleCanvas.addEventListener('touchmove', onTouchMove, {
+            passive: true
+        });
+        cycleCanvas.addEventListener('touchend', onTouchEnd, {
+            passive: true
+        });
+    }
+
+    function highlightCycle(cycleId) {
+        const cycle = CYCLES.find(c => c.length === cycleId);
+        if (!cycle)
+            return;
+
+        showNotification(`Focusing on ${cycle.name}`, "info");
+
+        // Visual highlighting effect
+        const idx = CYCLES.findIndex(c => c.length === cycleId);
+        const centerX = cycleWidth / 2,
+            centerY = cycleHeight / 2;
+        const spacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length);
+        const radius = spacing * (CYCLES.length - idx);
+
+        // Add particles around the selected cycle ring
+        for (let i = 0; i < 15; i++) {
+            const angle = (i / 15) * Math.PI * 2;
+            spawnParticle(
+            centerX + Math.cos(angle) * radius,
+            centerY + Math.sin(angle) * radius,
+            cycle.hue
+            );
+        }
+
+        // Play a sound when highlighting a cycle
+        audioContext.playTone(220 + (cycle.length % 100), 0.3);
+
+        // If the options tab isn't showing, show it
+        if (!isModalOpen) {
+            showModal('options-tab');
+            setTimeout(() => highlightStrategy(cycle.name.split(':')[0].trim()), 100);
+        } else if (activeTab === 'options-tab') {
+            highlightStrategy(cycle.name.split(':')[0].trim());
+        }
+    }
+
+    function highlightStrategy(cyclePeriod) {
+        document.querySelectorAll('.cycle-strategy-card').forEach(card => {
+            const title = card.querySelector('.cycle-title').textContent;
+            if (title.startsWith(cyclePeriod + ':')) {
+                card.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                card.style.boxShadow = '0 0 30px rgba(0,255,204,0.8)';
+                card.style.transform = 'translateY(-8px)';
+                setTimeout(() => {
+                    card.style.boxShadow = '';
+                    card.style.transform = '';
+                }, 2000);
+            }
+        });
+    }
+
+    function spawnParticle(x, y, hue) {
+        // Add a new particle with limited lifetime
+        particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            hue,
+            size: Math.random() * 3 + 2,
+            life: 1,
+            decay: 0.02 + Math.random() * 0.02
+        });
+
+        // Enforce particle limit for performance
+        if (particles.length > 150) {
+            particles.splice(0, particles.length - 150);
+        }
+    }
+
+    function updateParticles() {
+        // Only update particles if we have some
+        if (particles.length === 0)
+            return;
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= p.decay;
+
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+            } else {
+                cycleCtx.beginPath();
+                cycleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                cycleCtx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.life})`;
+                cycleCtx.fill();
+            }
+        }
+    }
+
+    function debounceResize() {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(resizeCycleCanvas, 200);
+    }
+
+    function resizeCycleCanvas() {
+        cycleWidth = window.innerWidth;
+        cycleHeight = window.innerHeight;
+        cycleCanvas.style.width = cycleWidth + 'px';
+        cycleCanvas.style.height = cycleHeight + 'px';
+
+        // Handle device pixel ratio for sharp rendering
+        const dpr = window.devicePixelRatio || 1;
+        cycleCanvas.width = cycleWidth * dpr;
+        cycleCanvas.height = cycleHeight * dpr;
+
+        // Reset transform and scale for proper rendering
+        cycleCtx.setTransform(1, 0, 0, 1, 0, 0);
+        cycleCtx.scale(dpr, dpr);
+    }
+
+    function togglePause() {
+        isPaused = !isPaused;
+        document.getElementById('pause-btn').textContent = isPaused ? 'Play' : 'Pause';
+        showNotification(isPaused ? "Simulation paused" : "Simulation running", "info");
+    }
+
+    function resetTime() {
+        time = 0;
+        particles = [];
+        document.getElementById('time-scrub').value = 0;
+        updateDateDisplay();
+        showNotification("Timeline reset to beginning", "success");
+    }
+
+    function speedDown() {
+        speedMultiplier = Math.max(speedMultiplier / 1.5, 0.01);
+        document.getElementById('time-speed').textContent = `${speedMultiplier.toFixed(2)}x`;
+        showNotification(`Speed: ${speedMultiplier.toFixed(2)}x`, "info");
+    }
+
+    function speedUp() {
+        speedMultiplier = Math.min(speedMultiplier * 1.5, 10);
+        document.getElementById('time-speed').textContent = `${speedMultiplier.toFixed(2)}x`;
+        showNotification(`Speed: ${speedMultiplier.toFixed(2)}x`, "info");
+    }
+
+    function handleKeyDown(e) {
+        if (document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA')
+            return;
+
+        switch (e.key) {
+        case ' ':
+            e.preventDefault();
+            togglePause();
+            break;
+        case 'r':
+        case 'R':
+            resetTime();
+            break;
+        case 'ArrowUp':
+            e.preventDefault();
+            speedUp();
+            break;
+        case 'ArrowDown':
+            e.preventDefault();
+            speedDown();
+            break;
+        case 'i':
+        case 'I':
+            isModalOpen ? closeModal() : showModal('info-tab');
+            break;
+        case 'o':
+        case 'O':
+            isModalOpen ? closeModal() : showModal('options-tab');
+            break;
+        case 'a':
+        case 'A':
+            isModalOpen ? closeModal() : showModal('api-tab');
+            break;
+        case 't':
+        case 'T':
+            toggleTheme();
+            break;
+        case '?':
+            toggleKeyboardHelp();
+            break;
+        case 'Escape':
+            if (isModalOpen)
+                closeModal();
+            else if (isKeyboardHelpVisible)
+                toggleKeyboardHelp();
+            break;
+        }
+    }
+
+    function onTouchStart(e) {
+        // Track the touch for potential interactions
+        window.touchStartX = e.touches[0].clientX;
+        window.touchStartY = e.touches[0].clientY;
+    }
+
+    function onTouchMove(e) {
+        if (!window.touchStartX)
+            return;
+
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = currentX - window.touchStartX;
+        const diffY = currentY - window.touchStartY;
+
+        // Only continue if there's significant movement
+        if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10)
+            return;
+
+        // Horizontal swipe - maybe adjust time
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            // Update time based on swipe direction
+            const sensitivity = 0.5;
+            time += diffX * sensitivity;
+            if (time < 0)
+                time = 0;
+
+            window.touchStartX = currentX;
+            document.getElementById('time-scrub').value = time;
+            updateDateDisplay();
+        }
+    }
+
+    function onTouchEnd() {
+        window.touchStartX = null;
+        window.touchStartY = null;
+    }
+
+    function onMouseMove(e) {
+        const centerX = cycleWidth / 2;
+        const centerY = cycleHeight / 2;
+        const dx = e.clientX - centerX;
+        const dy = e.clientY - centerY;
+        const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+
+        // Calculate which ring the mouse is hovering over
+        const spacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length + 2);
+        const ringIndex = Math.round(distanceFromCenter / spacing);
+
+        // Add particles for interactivity when mouse moves over rings
+        if (ringIndex > 0 && ringIndex <= CYCLES.length && Math.random() < 0.1) {
+            const cycleIndex = CYCLES.length - ringIndex;
+            if (cycleIndex >= 0 && cycleIndex < CYCLES.length) {
+                const cycle = CYCLES[cycleIndex];
+                const angle = Math.atan2(dy, dx);
+
+                // Add a particle at the cursor position on the ring
+                spawnParticle(
+                centerX + Math.cos(angle) * spacing * ringIndex,
+                centerY + Math.sin(angle) * spacing * ringIndex,
+                cycle.hue
+                );
+            }
+        }
+    }
+
+    function showNotification(msg, type="info") {
+        const n = document.getElementById('notification');
+
+        switch (type) {
+        case "error":
+            n.style.borderLeft = "4px solid #ff3333";
+            n.style.background = "rgba(255, 51, 51, 0.1)";
+            break;
+        case "success":
+            n.style.borderLeft = "4px solid #00ffcc";
+            n.style.background = "rgba(0, 255, 204, 0.1)";
+            break;
+        default:
+            n.style.borderLeft = "4px solid var(--highlight)";
+            n.style.background = "rgba(0, 255, 204, 0.05)";
+        }
+
+        n.textContent = msg;
+        n.classList.add('show');
+
+        // Clear any existing timeout
+        clearTimeout(n.timeout);
+
+        // Set a new timeout
+        n.timeout = setTimeout(() => n.classList.remove('show'), 3000);
+    }
+
+    function animate(timestamp) {
+        // Limit frame rate for better performance
+        if (timestamp - lastFrameTime < 1000 / fpsLimit) {
+            requestAnimationFrame(animate);
+            return;
+        }
+        lastFrameTime = timestamp;
+
+        // Only clear and redraw if needed
+        cycleCtx.clearRect(0, 0, cycleWidth, cycleHeight);
+        drawCycles();
+        updateParticles();
+
+        // Update time scrubber control
+        document.getElementById('time-scrub').value = time;
+
+        // Update date displays
+        if (!isPaused && time % 1 < speedMultiplier) {
+            updateDateDisplay();
+        }
+
+        // Update time if not paused
+        if (!isPaused) {
+            time += speedMultiplier;
+        }
+
+        // Check for emoji events and crucial dates
+        const currentDate = getCurrentDate(time);
+        checkEmojiEvents(currentDate);
+        checkCrucialDates(cycleWidth / 2, cycleHeight / 2, currentDate);
+
+        requestAnimationFrame(animate);
+    }
+
+    function updateDateDisplay() {
+        document.getElementById('date-display').textContent = "Current: " + formatDate(getCurrentDate(time));
+    }
+
+    function getCurrentDate(t) {
+        return new Date(new Date(2021, 0, 28).getTime() + t * 86400000);
+    }
+
+    function formatDate(d) {
+        return d.toLocaleDateString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function getMarketPhase(p) {
+        return p < 0.25 ?
+        {
+            phase: "Accumulation",
+            lightness: 30
+        } :
+        p < 0.5 ?
+        {
+            phase: "Markup",
+            lightness: 50
+        } :
+        p < 0.75 ?
+        {
+            phase: "Distribution",
+            lightness: 70
+        } :
+        {
+            phase: "Markdown",
+            lightness: 40
+        };
+    }
+
+    function getCycleColor(cycle, progress) {
+        const {lightness} = getMarketPhase(progress);
+        return `hsl(${cycle.hue}, 100%, ${lightness}%)`;
+    }
+
+    function drawCycles() {
+        const cx = cycleWidth / 2,
+            cy = cycleHeight / 2;
+        const spacing = Math.min(cycleWidth, cycleHeight) / (2 * CYCLES.length + 2);
+        const progresses = [];
+
+        // Draw each cycle ring
+        CYCLES.forEach((c, i) => {
+            const prog = (time % c.length) / c.length;
+            progresses.push(prog);
+            const r = spacing * (CYCLES.length - i + 1);
+            const col = getCycleColor(c, prog);
+
+            drawCycleRing(cx, cy, r, prog, col, c);
+        });
+
+        // Check for resonances between rings
+        for (let i = 0; i < CYCLES.length; i++) {
+            for (let j = i + 1; j < CYCLES.length; j++) {
+                const thresh = 0.03;
+                const diff = Math.abs(progresses[i] - progresses[j]);
+
+                if (diff < thresh || Math.abs(1 - diff) < thresh) {
+                    // Rings i and j are in resonance!
+                    const ring1 = spacing * (CYCLES.length - i + 1);
+                    const ring2 = spacing * (CYCLES.length - j + 1);
+
+                    // Draw a connection between the resonating rings
+                    const angle1 = progresses[i] * 2 * Math.PI;
+                    const angle2 = progresses[j] * 2 * Math.PI;
+
+                    const x1 = cx + Math.cos(angle1) * ring1;
+                    const y1 = cy + Math.sin(angle1) * ring1;
+                    const x2 = cx + Math.cos(angle2) * ring2;
+                    const y2 = cy + Math.sin(angle2) * ring2;
+
+                    // Draw resonance connection
+                    cycleCtx.beginPath();
+                    cycleCtx.moveTo(x1, y1);
+                    cycleCtx.lineTo(x2, y2);
+                    cycleCtx.strokeStyle = 'rgba(0, 255, 204, 0.6)';
+                    cycleCtx.lineWidth = 2;
+                    cycleCtx.stroke();
+
+                    // Add particles at connection points
+                    if (Math.random() < 0.2) {
+                        spawnParticle(x1, y1, CYCLES[i].hue);
+                        spawnParticle(x2, y2, CYCLES[j].hue);
+                    }
+
+                    // Show resonance indicator
+                    const ind = document.getElementById('resonance-indicator');
+                    ind.textContent = `Resonance: ${CYCLES[i].name} & ${CYCLES[j].name}`;
+                    ind.classList.add('active');
+
+                    // Play resonance sound (ensure we don't spam sounds)
+                    if (Math.random() < 0.1) {
+                        audioContext.playResonanceSound();
+                    }
+
+                    // Add vibration effect to legend items
+                    const period1 = CYCLES[i].name.split(":")[0].trim();
+                    const period2 = CYCLES[j].name.split(":")[0].trim();
+                    const legend1 = document.getElementById(`legend-${period1}`);
+                    const legend2 = document.getElementById(`legend-${period2}`);
+
+                    if (legend1) {
+                        const dot1 = legend1.querySelector('.legend-dot');
+                        if (dot1)
+                            dot1.classList.add("vibrate");
+                        legend1.style.background = "rgba(0, 255, 204, 0.3)";
+                        setTimeout(() => {
+                            if (dot1)
+                                dot1.classList.remove("vibrate");
+                            legend1.style.background = "";
+                        }, 800);
+                    }
+
+                    if (legend2) {
+                        const dot2 = legend2.querySelector('.legend-dot');
+                        if (dot2)
+                            dot2.classList.add("vibrate");
+                        legend2.style.background = "rgba(0, 255, 204, 0.3)";
+                        setTimeout(() => {
+                            if (dot2)
+                                dot2.classList.remove("vibrate");
+                            legend2.style.background = "";
+                        }, 800);
+                    }
+
+                    setTimeout(() => {
+                        ind.textContent = 'Resonance: Off';
+                        ind.classList.remove('active');
+                    }, 3000);
+                }
+            }
+        }
+    }
+
+    function drawCycleRing(x, y, radius, progress, color, cycle) {
+        const angle = progress * 2 * Math.PI;
+
+        // Draw base ring
+        cycleCtx.beginPath();
+        cycleCtx.arc(x, y, radius, 0, 2 * Math.PI);
+        cycleCtx.strokeStyle = color;
+        cycleCtx.lineWidth = 1;
+        cycleCtx.stroke();
+
+        // Draw progress arc
+        cycleCtx.beginPath();
+        cycleCtx.arc(x, y, radius, 0, angle);
+        cycleCtx.strokeStyle = color;
+        cycleCtx.lineWidth = 3;
+        cycleCtx.lineCap = 'round';
+        cycleCtx.stroke();
+
+        // Draw position marker
+        const mx = x + Math.cos(angle) * radius;
+        const my = y + Math.sin(angle) * radius;
+        cycleCtx.beginPath();
+        cycleCtx.arc(mx, my, 4, 0, 2 * Math.PI);
+        cycleCtx.fillStyle = '#fff';
+        cycleCtx.fill();
+
+        // Add labels for important cycles
+        if (cycle.importance > 7) {
+            const labelAngle = angle + 0.1; // Slight offset
+            const lx = x + Math.cos(labelAngle) * (radius + 15);
+            const ly = y + Math.sin(labelAngle) * (radius + 15);
+
+            cycleCtx.font = '13px Inter, sans-serif';
+            cycleCtx.fillStyle = color;
+            cycleCtx.textAlign = 'center';
+            cycleCtx.textBaseline = 'middle';
+
+            // Extract just the number part
+            const cycleName = cycle.name.split(':')[0].trim();
+            cycleCtx.fillText(cycleName, lx, ly);
+        }
+    }
+
+    function checkCrucialDates(x, y, currentDate) {
+        for (const cd of CRUCIAL_DATES) {
+            const diff = Math.abs((currentDate - cd.date) / 86400000);
+            if (diff < 1) {
+                const col = cd.color || 'rgba(255,165,0,0.8)';
+
+                // Create enhanced crucial date visualization
+                cycleCtx.beginPath();
+                cycleCtx.arc(x, y, 120, 0, 2 * Math.PI);
+                cycleCtx.strokeStyle = col;
+                cycleCtx.lineWidth = 4;
+                cycleCtx.stroke();
+
+                // Add some particles around the event
+                for (let i = 0; i < 20; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const d = 120 * Math.random();
+                    spawnParticle(x + Math.cos(a) * d, y + Math.sin(a) * d, 30);
+                }
+
+                // Play a special sound for crucial dates
+                audioContext.playCrucialDateSound();
+
+                // Update the resonance indicator
+                const ind = document.getElementById('resonance-indicator');
+                ind.textContent = `Crucial Date: ${cd.name} - ${formatDate(currentDate)}`;
+                ind.classList.add('active');
+
+                // Show a notification about the crucial date
+                showNotification(`Crucial Date: ${cd.name}`, "success");
+
+                // Show description in a separate notification
+                if (cd.description) {
+                    setTimeout(() => {
+                        showNotification(cd.description, "info");
+                    }, 2500);
+                }
+
+                break;
+            }
+        }
+    }
+
+    function checkEmojiEvents(currentDate) {
+        const f = currentDate.toISOString().split('T')[0];
+        Object.entries(EMOJI_DATES).forEach(([d, e]) => {
+            if (d === f) {
+                document.querySelectorAll('.emoji').forEach(el => el.classList.remove('active'));
+                const el = document.querySelector('.emoji.fire');
+                el.textContent = e;
+                el.classList.add('active');
+            }
+        });
+    }
+
+    // Add copy function for PineScript button
+    document.getElementById('copy-pinescript').addEventListener('click', function() {
+        const code = document.querySelector('.code-block').textContent;
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(code)
+            .then(() => showNotification("Code copied to clipboard", "success"))
+            .catch(() => showNotification("Could not copy code - permission denied", "error"));
+        } else {
+            // Fallback for browsers without clipboard API
+            const textarea = document.createElement('textarea');
+            textarea.value = code;
+            textarea.style.position = 'fixed';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                showNotification(successful ? "Code copied to clipboard" : "Copy failed",
+                successful ? "success" : "error");
+            } catch (err) {
+                showNotification("Copy failed: " + err, "error");
+            }
+
+            document.body.removeChild(textarea);
+        }
+    });
+
+    // Start the visualization when the page loads
+    window.addEventListener('load', startVisualization);
+    </script>
+
+</body>
+</html>
