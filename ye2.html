@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chladni Patterns Visualizer</title>
+    <style>
+        :root {
+            --primary: #0088ff;
+            --secondary: #00ccff;
+            --text: #ffffff;
+            --background: #000000;
+            --card-bg: #111111;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: var(--text);
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .visualization-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: black;
+        }
+        
+        #visualization-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .frequency-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 12px;
+            border-radius: 20px;
+            color: var(--secondary);
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .slider-container {
+            padding: 10px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--secondary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .freq-button {
+            background-color: var(--primary);
+            color: var(--text);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .freq-button.active {
+            background-color: var(--secondary);
+        }
+        
+        .action-button {
+            background-color: #333;
+            color: var(--text);
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .action-button:hover {
+            background-color: #444;
+        }
+        
+        .info-text {
+            line-height: 1.5;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <p class="info-text">
+                These visualizations show Chladni patterns - how particles arrange themselves
+                along nodal lines where there is no vibration on a plate at different frequencies.
+            </p>
+        </div>
+        
+        <div class="visualization-container">
+            <canvas id="visualization-canvas"></canvas>
+            <div class="frequency-display" id="frequency-display">345 Hz</div>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Frequency</span>
+                <span id="freq-value">345 Hz</span>
+            </div>
+            <input type="range" min="100" max="6000" value="345" id="frequency-slider">
+        </div>
+        
+        <div class="controls">
+            <button class="freq-button active" data-freq="345">345 Hz</button>
+            <button class="freq-button" data-freq="1033">1033 Hz</button>
+            <button class="freq-button" data-freq="1820">1820 Hz</button>
+            <button class="freq-button" data-freq="2041">2041 Hz</button>
+            <button class="freq-button" data-freq="3240">3240 Hz</button>
+            <button class="freq-button" data-freq="3835">3835 Hz</button>
+            <button class="freq-button" data-freq="3975">3975 Hz</button>
+            <button class="freq-button" data-freq="4444">4444 Hz</button>
+        </div>
+        
+        <button class="action-button" id="play-sound">Play Sound</button>
+        <button class="action-button" id="animate-btn">Animate Pattern</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('visualization-canvas');
+            const ctx = canvas.getContext('2d');
+            const frequencyDisplay = document.getElementById('frequency-display');
+            const freqValue = document.getElementById('freq-value');
+            const frequencySlider = document.getElementById('frequency-slider');
+            const buttons = document.querySelectorAll('.freq-button');
+            const playButton = document.getElementById('play-sound');
+            const animateButton = document.getElementById('animate-btn');
+            
+            let currentFrequency = 345;
+            let audioContext = null;
+            let oscillator = null;
+            let isPlaying = false;
+            let animating = false;
+            
+            // Set canvas size for proper resolution
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                const size = container.clientWidth;
+                // Use a smaller multiplier for better performance on mobile
+                const pixelRatio = window.devicePixelRatio || 1;
+                canvas.width = size * pixelRatio;
+                canvas.height = size * pixelRatio;
+                canvas.style.width = size + 'px';
+                canvas.style.height = size + 'px';
+                ctx.scale(pixelRatio, pixelRatio);
+                drawChladniPattern(currentFrequency);
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // Update frequency from slider
+            frequencySlider.addEventListener('input', function() {
+                currentFrequency = parseInt(this.value);
+                updateFrequencyDisplay();
+                updateActiveButton();
+                drawChladniPattern(currentFrequency);
+                
+                // Update oscillator if playing
+                if (isPlaying && oscillator) {
+                    oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
+                }
+            });
+            
+            // Frequency button clicks
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    currentFrequency = parseInt(this.dataset.freq);
+                    frequencySlider.value = currentFrequency;
+                    updateFrequencyDisplay();
+                    updateActiveButton();
+                    drawChladniPattern(currentFrequency);
+                    
+                    // Update oscillator if playing
+                    if (isPlaying && oscillator) {
+                        oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
+                    }
+                });
+            });
+            
+            // Play/stop sound
+            playButton.addEventListener('click', function() {
+                if (isPlaying) {
+                    stopSound();
+                    this.textContent = 'Play Sound';
+                } else {
+                    playSound();
+                    this.textContent = 'Stop Sound';
+                }
+            });
+            
+            // Animate pattern formation
+            animateButton.addEventListener('click', function() {
+                if (animating) {
+                    animating = false;
+                    this.textContent = 'Animate Pattern';
+                    drawChladniPattern(currentFrequency);
+                } else {
+                    animating = true;
+                    this.textContent = 'Stop Animation';
+                    animateFormation();
+                }
+            });
+            
+            function updateFrequencyDisplay() {
+                frequencyDisplay.textContent = `${currentFrequency} Hz`;
+                freqValue.textContent = `${currentFrequency} Hz`;
+            }
+            
+            function updateActiveButton() {
+                buttons.forEach(btn => {
+                    if (parseInt(btn.dataset.freq) === currentFrequency) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+            
+            function playSound() {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator.start();
+                    isPlaying = true;
+                } catch (e) {
+                    console.error("Web Audio API not supported:", e);
+                }
+            }
+            
+            function stopSound() {
+                if (oscillator) {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                    oscillator = null;
+                }
+                if (audioContext) {
+                    audioContext.close();
+                    audioContext = null;
+                }
+                isPlaying = false;
+            }
+            
+            function drawChladniPattern(frequency) {
+                const width = canvas.width / (window.devicePixelRatio || 1);
+                const height = canvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear the canvas
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Parameters for different frequency ranges
+                let a, b, intensity, threshold;
+                
+                // Adjust parameters based on frequency range
+                if (frequency < 800) {
+                    // For very low frequencies
+                    a = Math.ceil(frequency / 200);
+                    b = Math.ceil(frequency / 300);
+                    intensity = 0.01 + (frequency / 40000);
+                    threshold = 0.05;
+                } else if (frequency < 2000) {
+                    // For mid-low frequencies
+                    a = Math.ceil(frequency / 350);
+                    b = Math.ceil(frequency / 400);
+                    intensity = 0.015 + (frequency / 30000);
+                    threshold = 0.04;
+                } else if (frequency < 4000) {
+                    // For mid-high frequencies
+                    a = Math.ceil(frequency / 450);
+                    b = Math.ceil(frequency / 500);
+                    intensity = 0.02 + (frequency / 25000);
+                    threshold = 0.03;
+                } else {
+                    // For high frequencies
+                    a = Math.ceil(frequency / 550);
+                    b = Math.ceil(frequency / 600);
+                    intensity = 0.025 + (frequency / 20000);
+                    threshold = 0.025;
+                }
+                
+                // Make sure we have at least 1 for a and b
+                a = Math.max(1, a);
+                b = Math.max(1, b);
+                
+                // Use different pattern types for different frequencies
+                const patternType = Math.floor(frequency / 1000) % 4;
+                
+                // Draw the pattern
+                ctx.fillStyle = 'white';
+                
+                // Use a resolution based on frequency
+                // Higher frequencies need more detail
+                const resolution = frequency > 3000 ? 3 : 
+                                  frequency > 1500 ? 4 : 5;
+                
+                for (let x = 0; x < width; x += resolution) {
+                    for (let y = 0; y < height; y += resolution) {
+                        // Normalize coordinates to -1 to 1
+                        const nx = (2 * x / width) - 1;
+                        const ny = (2 * y / height) - 1;
+                        
+                        // Calculate value based on pattern type
+                        let value;
+                        
+                        switch (patternType) {
+                            case 0:
+                                // Classic Chladni pattern
+                                value = Math.sin(Math.PI * a * nx * intensity) * 
+                                       Math.sin(Math.PI * b * ny * intensity) - 
+                                       Math.sin(Math.PI * b * nx * intensity) * 
+                                       Math.sin(Math.PI * a * ny * intensity);
+                                break;
+                            case 1:
+                                // Square terms pattern
+                                value = Math.sin(Math.PI * a * nx * nx * intensity) * 
+                                       Math.sin(Math.PI * b * ny * ny * intensity) - 
+                                       Math.sin(Math.PI * b * nx * nx * intensity) * 
+                                       Math.sin(Math.PI * a * ny * ny * intensity);
+                                break;
+                            case 2:
+                                // Cross-term pattern
+                                value = Math.sin(Math.PI * a * nx * intensity) * 
+                                       Math.sin(Math.PI * b * ny * intensity) * 
+                                       Math.cos(Math.PI * (a+b) * nx * ny * intensity);
+                                break;
+                            case 3:
+                                // Radial pattern
+                                const r = Math.sqrt(nx*nx + ny*ny);
+                                value = Math.sin(Math.PI * a * r * intensity) * 
+                                       Math.cos(Math.PI * b * Math.atan2(ny, nx) * intensity);
+                                break;
+                        }
+                        
+                        // Draw points near nodal lines (where value is close to 0)
+                        if (Math.abs(value) < threshold) {
+                            ctx.fillRect(x, y, resolution, resolution);
+                        }
+                    }
+                }
+                
+                // Draw center point
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            function animateFormation() {
+                if (!animating) return;
+                
+                const width = canvas.width / (window.devicePixelRatio || 1);
+                const height = canvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear the canvas
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Get current time for animation
+                const time = Date.now() / 1000;
+                
+                // Parameters for different frequency ranges
+                let a, b, intensity, threshold;
+                
+                // Adjust parameters based on frequency range
+                if (currentFrequency < 800) {
+                    a = Math.ceil(currentFrequency / 200);
+                    b = Math.ceil(currentFrequency / 300);
+                    intensity = 0.01 + (currentFrequency / 40000);
+                    threshold = 0.05;
+                } else if (currentFrequency < 2000) {
+                    a = Math.ceil(currentFrequency / 350);
+                    b = Math.ceil(currentFrequency / 400);
+                    intensity = 0.015 + (currentFrequency / 30000);
+                    threshold = 0.04;
+                } else if (currentFrequency < 4000) {
+                    a = Math.ceil(currentFrequency / 450);
+                    b = Math.ceil(currentFrequency / 500);
+                    intensity = 0.02 + (currentFrequency / 25000);
+                    threshold = 0.03;
+                } else {
+                    a = Math.ceil(currentFrequency / 550);
+                    b = Math.ceil(currentFrequency / 600);
+                    intensity = 0.025 + (currentFrequency / 20000);
+                    threshold = 0.025;
+                }
+                
+                // Make sure we have at least 1 for a and b
+                a = Math.max(1, a);
+                b = Math.max(1, b);
+                
+                // Use different pattern types for different frequencies
+                const patternType = Math.floor(currentFrequency / 1000) % 4;
+                
+                // Draw the pattern with animation factor
+                ctx.fillStyle = 'white';
+                
+                // Adjust resolution for performance
+                const resolution = currentFrequency > 3000 ? 3 : 
+                                  currentFrequency > 1500 ? 4 : 5;
+                
+                // Animation effect
+                const animFactor = 0.5 + 0.5 * Math.sin(time * 3);
+                
+                for (let x = 0; x < width; x += resolution) {
+                    for (let y = 0; y < height; y += resolution) {
+                        // Normalize coordinates to -1 to 1
+                        const nx = (2 * x / width) - 1;
+                        const ny = (2 * y / height) - 1;
+                        
+                        // Calculate value based on pattern type
+                        let value;
+                        
+                        switch (patternType) {
+                            case 0:
+                                value = Math.sin(Math.PI * a * nx * intensity) * 
+                                       Math.sin(Math.PI * b * ny * intensity) - 
+                                       Math.sin(Math.PI * b * nx * intensity) * 
+                                       Math.sin(Math.PI * a * ny * intensity);
+                                break;
+                            case 1:
+                                value = Math.sin(Math.PI * a * nx * nx * intensity) * 
+                                       Math.sin(Math.PI * b * ny * ny * intensity) - 
+                                       Math.sin(Math.PI * b * nx * nx * intensity) * 
+                                       Math.sin(Math.PI * a * ny * ny * intensity);
+                                break;
+                            case 2:
+                                value = Math.sin(Math.PI * a * nx * intensity) * 
+                                       Math.sin(Math.PI * b * ny * intensity) * 
+                                       Math.cos(Math.PI * (a+b) * nx * ny * intensity);
+                                break;
+                            case 3:
+                                const r = Math.sqrt(nx*nx + ny*ny);
+                                value = Math.sin(Math.PI * a * r * intensity) * 
+                                       Math.cos(Math.PI * b * Math.atan2(ny, nx) * intensity);
+                                break;
+                        }
+                        
+                        // Apply animation effect
+                        value *= animFactor;
+                        
+                        // Draw points near nodal lines
+                        if (Math.abs(value) < threshold) {
+                            ctx.fillRect(x, y, resolution, resolution);
+                        }
+                    }
+                }
+                
+                // Draw center point
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                requestAnimationFrame(animateFormation);
+            }
+            
+            // Initial draw
+            drawChladniPattern(currentFrequency);
+        });
+    </script>
+</body>
+</html>
