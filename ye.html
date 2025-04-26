@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spherical Harmonics Visualization</title>
+    <style>
+        :root {
+            --ios-blue: #0088ff;
+            --true-black: #000000;
+            --dark-gray: #121212;
+            --medium-gray: #222222;
+            --light-gray: #333333;
+            --white: #ffffff;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--true-black);
+            color: var(--white);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        #info-panel {
+            background-color: var(--dark-gray);
+            border-radius: 10px;
+            margin: 10px;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            margin: 10px 0;
+            font-size: 16px;
+            line-height: 1.4;
+            color: #f0f0f0;
+        }
+        
+        #renderer-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            min-height: 50vh;
+            background-color: var(--true-black);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #renderer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--ios-blue);
+            animation: spin 1s ease-in-out infinite;
+            position: absolute;
+            z-index: 5;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #controls-panel {
+            background-color: var(--dark-gray);
+            border-radius: 10px;
+            margin: 0 10px 10px 10px;
+            padding: 20px;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        label {
+            font-weight: 400;
+            width: 120px;
+            flex-shrink: 0;
+            font-size: 17px;
+        }
+        
+        .slider-container {
+            flex: 1;
+            margin: 0 15px;
+            position: relative;
+        }
+        
+        /* iOS-style slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--light-gray);
+            outline: none;
+            border-radius: 2px;
+            margin: 0;
+        }
+        
+        /* Blue colored active track */
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 4px;
+            cursor: pointer;
+            background: var(--light-gray);
+            border-radius: 2px;
+        }
+        
+        /* iOS-style white circular thumb */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--white);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            margin-top: -9px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: var(--white);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            border: none;
+        }
+        
+        .value-display {
+            min-width: 40px;
+            text-align: right;
+            font-weight: 400;
+            font-size: 17px;
+        }
+        
+        /* iOS-style select dropdown */
+        .select-container {
+            position: relative;
+            margin-left: 10px;
+        }
+        
+        select {
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--light-gray);
+            color: white;
+            border: none;
+            padding: 10px 35px 10px 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        .select-arrow {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 14px;
+        }
+        
+        .button-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background-color: var(--ios-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #0077ee;
+        }
+        
+        #error-message {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(200, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            z-index: 10;
+        }
+        
+        @media (max-width: 500px) {
+            label {
+                width: 120px;
+            }
+            
+            .control-row {
+                margin-bottom: 20px;
+            }
+            
+            p {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="info-panel">
+            <h1>Spherical Harmonics Visualization</h1>
+            <p>This visualization shows different shapes based on spherical harmonics (Y<sub>lm</sub>).</p>
+            <p>Use the controls to adjust parameters and explore different patterns.</p>
+            <p>Click and drag to rotate the view.</p>
+        </div>
+        
+        <div id="renderer-container">
+            <div id="loading-spinner"></div>
+            <div id="renderer"></div>
+            <div id="error-message">
+                WebGL not supported or error loading visualization.<br>
+                Please try a different browser or device.
+            </div>
+        </div>
+        
+        <div id="controls-panel">
+            <div class="control-row">
+                <label for="typeSelect">Shape Type:</label>
+                <div class="select-container">
+                    <select id="typeSelect">
+                        <option value="basic">Basic (Row A)</option>
+                        <option value="quad">Quadruple (Row B)</option>
+                        <option value="complex" selected>Complex (Row C)</option>
+                        <option value="detailed">Detailed (Row D)</option>
+                        <option value="spiky">Spiky (Row E)</option>
+                    </select>
+                    <div class="select-arrow">▼</div>
+                </div>
+            </div>
+            
+            <div class="control-row">
+                <label for="lValue">L Value:</label>
+                <div class="slider-container">
+                    <input type="range" id="lValue" min="0" max="24" value="18" step="1">
+                </div>
+                <span id="lValueDisplay" class="value-display">18</span>
+            </div>
+            
+            <div class="control-row">
+                <label for="mValue">M Value:</label>
+                <div class="slider-container">
+                    <input type="range" id="mValue" min="0" max="10" value="5" step="1">
+                </div>
+                <span id="mValueDisplay" class="value-display">5</span>
+            </div>
+            
+            <div class="control-row">
+                <label for="amplitude">Amplitude:</label>
+                <div class="slider-container">
+                    <input type="range" id="amplitude" min="0.1" max="2" value="0.9" step="0.1">
+                </div>
+                <span id="amplitudeDisplay" class="value-display">0.9</span>
+            </div>
+            
+            <div class="button-row">
+                <button id="animateButton">Start Animation</button>
+                <button id="resetButton">Reset View</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show loading spinner
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        // Function to check if WebGL is available
+        function isWebGLAvailable() {
+            try {
+                const canvas = document.createElement('canvas');
+                return !!(window.WebGLRenderingContext && 
+                    (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // Update slider tracks to match iOS style
+        function updateSliderTracks() {
+            document.querySelectorAll('input[type="range"]').forEach(slider => {
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                const value = parseFloat(slider.value);
+                const percentage = ((value - min) / (max - min)) * 100;
+                slider.style.background = `linear-gradient(to right, #0088ff ${percentage}%, #333333 ${percentage}%)`;
+            });
+        }
+        
+        // Call immediately to style sliders
+        updateSliderTracks();
+
+        // Add event listeners to update slider tracks when values change
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', () => {
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                const value = parseFloat(slider.value);
+                const percentage = ((value - min) / (max - min)) * 100;
+                slider.style.background = `linear-gradient(to right, #0088ff ${percentage}%, #333333 ${percentage}%)`;
+            });
+        });
+
+        // Show error if WebGL is not supported
+        if (!isWebGLAvailable()) {
+            document.getElementById('error-message').style.display = 'block';
+            loadingSpinner.style.display = 'none';
+        } else {
+            // Load Three.js with a fallback strategy
+            function loadScript(src, callback, errorCallback) {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = callback;
+                script.onerror = () => {
+                    // Try alternative CDN if first fails
+                    if (src.includes('cdnjs')) {
+                        const altScript = document.createElement('script');
+                        altScript.src = 'https://unpkg.com/three@0.128.0/build/three.min.js';
+                        altScript.onload = callback;
+                        altScript.onerror = errorCallback;
+                        document.head.appendChild(altScript);
+                    } else {
+                        errorCallback();
+                    }
+                };
+                document.head.appendChild(script);
+            }
+
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 
+                initVisualization, 
+                () => {
+                    document.getElementById('error-message').textContent = 'Error loading Three.js library. Please check your internet connection.';
+                    document.getElementById('error-message').style.display = 'block';
+                    loadingSpinner.style.display = 'none';
+                }
+            );
+        }
+
+        function initVisualization() {
+            try {
+                // Initialize ThreeJS scene
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x000000);
+                
+                // Get the container dimensions
+                const container = document.getElementById('renderer-container');
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                
+                // Create camera with proper aspect ratio
+                const camera = new THREE.PerspectiveCamera(
+                    75, 
+                    containerWidth / containerHeight, 
+                    0.1, 
+                    1000
+                );
+                camera.position.z = 5;
+                
+                // Create renderer with proper pixel ratio and size
+                const renderer = new THREE.WebGLRenderer({ 
+                    antialias: true,
+                    alpha: true
+                });
+                
+                renderer.setSize(containerWidth, containerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                
+                // Clear previous content and append renderer
+                const rendererElement = document.getElementById('renderer');
+                rendererElement.innerHTML = '';
+                rendererElement.appendChild(renderer.domElement);
+                
+                // Function to update renderer size
+                function updateRendererSize() {
+                    const width = container.clientWidth;
+                    const height = container.clientHeight;
+                    renderer.setSize(width, height);
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                }
+                
+                // Call resize function immediately to ensure proper sizing
+                updateRendererSize();
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0x404040);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                scene.add(directionalLight);
+                
+                const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+                directionalLight2.position.set(-1, -1, 1);
+                scene.add(directionalLight2);
+                
+                // Add a point light for better highlights
+                const pointLight = new THREE.PointLight(0xffffff, 0.5);
+                pointLight.position.set(0, 0, 3);
+                scene.add(pointLight);
+                
+                // Material with better settings for visibility
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0xdddddd,
+                    specular: 0x666666,
+                    shininess: 30,
+                    flatShading: false
+                });
+                
+                // Create a basic sphere mesh
+                let geometry = new THREE.SphereGeometry(1, 64, 64);
+                let mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                
+                // Add orbit controls
+                class OrbitControl {
+                    constructor(camera, domElement) {
+                        this.camera = camera;
+                        this.domElement = domElement;
+                        this.target = new THREE.Vector3(0, 0, 0);
+                        this.rotateSpeed = 0.1;
+                        this.radius = 5;
+                        this.theta = 0;
+                        this.phi = Math.PI / 2;
+                        
+                        this.isDragging = false;
+                        this.lastMouseX = 0;
+                        this.lastMouseY = 0;
+                        
+                        this.domElement.addEventListener('mousedown', this.onMouseDown.bind(this));
+                        this.domElement.addEventListener('mousemove', this.onMouseMove.bind(this));
+                        this.domElement.addEventListener('mouseup', this.onMouseUp.bind(this));
+                        document.addEventListener('mouseup', this.onMouseUp.bind(this));
+                        this.domElement.addEventListener('touchstart', this.onTouchStart.bind(this));
+                        this.domElement.addEventListener('touchmove', this.onTouchMove.bind(this));
+                        this.domElement.addEventListener('touchend', this.onTouchEnd.bind(this));
+                        
+                        this.update();
+                    }
+                    
+                    onMouseDown(event) {
+                        this.isDragging = true;
+                        this.lastMouseX = event.clientX;
+                        this.lastMouseY = event.clientY;
+                    }
+                    
+                    onMouseMove(event) {
+                        if (!this.isDragging) return;
+                        
+                        const deltaX = event.clientX - this.lastMouseX;
+                        const deltaY = event.clientY - this.lastMouseY;
+                        
+                        this.theta += deltaX * this.rotateSpeed * 0.01;
+                        this.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.phi + deltaY * this.rotateSpeed * 0.01));
+                        
+                        this.lastMouseX = event.clientX;
+                        this.lastMouseY = event.clientY;
+                        
+                        this.update();
+                    }
+                    
+                    onMouseUp() {
+                        this.isDragging = false;
+                    }
+                    
+                    onTouchStart(event) {
+                        if (event.touches.length === 1) {
+                            this.isDragging = true;
+                            this.lastMouseX = event.touches[0].clientX;
+                            this.lastMouseY = event.touches[0].clientY;
+                        }
+                    }
+                    
+                    onTouchMove(event) {
+                        if (!this.isDragging || event.touches.length !== 1) return;
+                        
+                        const touch = event.touches[0];
+                        const deltaX = touch.clientX - this.lastMouseX;
+                        const deltaY = touch.clientY - this.lastMouseY;
+                        
+                        this.theta += deltaX * this.rotateSpeed * 0.01;
+                        this.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.phi + deltaY * this.rotateSpeed * 0.01));
+                        
+                        this.lastMouseX = touch.clientX;
+                        this.lastMouseY = touch.clientY;
+                        
+                        this.update();
+                    }
+                    
+                    onTouchEnd() {
+                        this.isDragging = false;
+                    }
+                    
+                    update() {
+                        const x = this.radius * Math.sin(this.phi) * Math.cos(this.theta);
+                        const y = this.radius * Math.cos(this.phi);
+                        const z = this.radius * Math.sin(this.phi) * Math.sin(this.theta);
+                        
+                        this.camera.position.set(x, y, z);
+                        this.camera.lookAt(this.target);
+                    }
+                    
+                    reset() {
+                        this.theta = 0;
+                        this.phi = Math.PI / 2;
+                        this.update();
+                    }
+                }
+                
+                const controls = new OrbitControl(camera, renderer.domElement);
+                
+                // Handle window resize
+                window.addEventListener('resize', updateRendererSize);
+                
+                // Spherical Harmonics calculation
+                function sphericalHarmonic(l, m, theta, phi, type, amplitude) {
+                    // Different types of shape modifications based on the row in the image
+                    let r = 1.0;
+                    
+                    // Basic spherical harmonics calculation (simplified)
+                    switch (type) {
+                        case 'basic': // Row A
+                            r = 1.0 + amplitude * 0.5 * Math.cos(l * phi) * Math.sin(theta);
+                            break;
+                        case 'quad': // Row B
+                            r = 1.0 + amplitude * 0.3 * (Math.cos(l * theta) * Math.sin(2 * phi));
+                            break;
+                        case 'complex': // Row C
+                            r = 1.0 + amplitude * 0.3 * Math.cos(l * phi) * Math.cos(m * theta);
+                            break;
+                        case 'detailed': // Row D
+                            r = 1.0 + amplitude * 0.4 * Math.sin(l * phi) * Math.cos(m * theta);
+                            break;
+                        case 'spiky': // Row E
+                            r = 1.0 + amplitude * 0.5 * Math.abs(Math.sin(l * phi) * Math.cos(m * theta));
+                            break;
+                    }
+                    
+                    return r;
+                }
+                
+                // Update geometry based on parameters
+                function updateGeometry(l, m, type, amplitude) {
+                    scene.remove(mesh);
+                    
+                    // Create a new geometry
+                    geometry = new THREE.SphereGeometry(1, 64, 64);
+                    const positions = geometry.attributes.position;
+                    
+                    // Modify the vertices
+                    for (let i = 0; i < positions.count; i++) {
+                        const x = positions.getX(i);
+                        const y = positions.getY(i);
+                        const z = positions.getZ(i);
+                        
+                        // Convert to spherical coordinates
+                        const radius = Math.sqrt(x*x + y*y + z*z);
+                        const theta = Math.acos(y / radius);
+                        const phi = Math.atan2(z, x);
+                        
+                        // Calculate new radius using spherical harmonic
+                        const newRadius = sphericalHarmonic(l, m, theta, phi, type, amplitude);
+                        
+                        // Update position
+                        positions.setX(i, (x / radius) * newRadius);
+                        positions.setY(i, (y / radius) * newRadius);
+                        positions.setZ(i, (z / radius) * newRadius);
+                    }
+                    
+                    // Update normals
+                    geometry.computeVertexNormals();
+                    
+                    // Create new mesh
+                    mesh = new THREE.Mesh(geometry, material);
+                    scene.add(mesh);
+                    
+                    // Rotate mesh slightly to make it more interesting
+                    mesh.rotation.y = 0.2;
+                }
+                
+                // Set up controls
+                const typeSelect = document.getElementById('typeSelect');
+                const lValueSlider = document.getElementById('lValue');
+                const mValueSlider = document.getElementById('mValue');
+                const amplitudeSlider = document.getElementById('amplitude');
+                const lValueDisplay = document.getElementById('lValueDisplay');
+                const mValueDisplay = document.getElementById('mValueDisplay');
+                const amplitudeDisplay = document.getElementById('amplitudeDisplay');
+                const animateButton = document.getElementById('animateButton');
+                const resetButton = document.getElementById('resetButton');
+                
+                // Update functions
+                function updateShape() {
+                    const l = parseInt(lValueSlider.value);
+                    const m = parseInt(mValueSlider.value);
+                    const type = typeSelect.value;
+                    const amplitude = parseFloat(amplitudeSlider.value);
+                    
+                    lValueDisplay.textContent = l;
+                    mValueDisplay.textContent = m;
+                    amplitudeDisplay.textContent = amplitude.toFixed(1);
+                    
+                    updateGeometry(l, m, type, amplitude);
+                }
+                
+                // Event listeners
+                typeSelect.addEventListener('change', updateShape);
+                lValueSlider.addEventListener('input', function() {
+                    updateSliderTracks();
+                    updateShape();
+                });
+                mValueSlider.addEventListener('input', function() {
+                    updateSliderTracks();
+                    updateShape();
+                });
+                amplitudeSlider.addEventListener('input', function() {
+                    updateSliderTracks();
+                    updateShape();
+                });
+                resetButton.addEventListener('click', () => controls.reset());
+                
+                // Animation
+                let animating = false;
+                let animationFrame;
+                
+                animateButton.addEventListener('click', () => {
+                    if (animating) {
+                        animating = false;
+                        cancelAnimationFrame(animationFrame);
+                        animateButton.textContent = 'Start Animation';
+                    } else {
+                        animating = true;
+                        animateButton.textContent = 'Stop Animation';
+                        animateL();
+                    }
+                });
+                
+                function animateL() {
+                    if (!animating) return;
+                    
+                    let currentL = parseInt(lValueSlider.value);
+                    currentL = (currentL + 1) % 25;
+                    lValueSlider.value = currentL;
+                    updateSliderTracks();
+                    updateShape();
+                    
+                    animationFrame = requestAnimationFrame(animateL);
+                }
+                
+                // Initial render with values from screenshots
+                updateShape();
+                
+                // Add gentle continuous rotation for better visualization
+                let autoRotate = true;
+                let lastInteraction = Date.now();
+                
+                renderer.domElement.addEventListener('mousedown', () => {
+                    autoRotate = false;
+                    lastInteraction = Date.now();
+                });
+                
+                renderer.domElement.addEventListener('touchstart', () => {
+                    autoRotate = false;
+                    lastInteraction = Date.now();
+                });
+                
+                // Animation loop
+                function animate() {
+                    requestAnimationFrame(animate);
+                    
+                    // Resume auto rotation after 5 seconds of no interaction
+                    if (!autoRotate && Date.now() - lastInteraction > 5000) {
+                        autoRotate = true;
+                    }
+                    
+                    if (autoRotate) {
+                        mesh.rotation.y += 0.005;
+                    }
+                    
+                    renderer.render(scene, camera);
+                }
+                
+                // Hide loading spinner once we're ready
+                loadingSpinner.style.display = 'none';
+                
+                // Start animation loop
+                animate();
+                
+            } catch (error) {
+                console.error("Visualization initialization error:", error);
+                document.getElementById('error-message').textContent = 'Error initializing visualization: ' + error.message;
+                document.getElementById('error-message').style.display = 'block';
+                loadingSpinner.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
