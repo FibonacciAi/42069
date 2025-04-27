@@ -5,7 +5,7 @@
   <meta name="description" content="GME Cycle Resonator -- Squeeze Mechanics & Temporal Harmonics" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <meta name="theme-color" content="#000000" />
-  <title>GME Cycle Resonator</title>
+  <title>GME Cycle Resonator Pro</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
 :root{
@@ -13,12 +13,48 @@
   --text-color:#fff;
   --panel-bg:rgba(11,11,11,.90);
   --highlight:#00ffcc;
+  --highlight-alt:#00ccaa;
   --secondary-highlight:#ff3399;
+  --tertiary-highlight:#ffcc00;
+  --vortex-color:#ff3399;
+  --angel-color:#ffcc00;
+  --meme-color:#00ccff;
+  --ftd-color:#ff7700;
+  --fib-color:#cc33ff;
   --control-bg:rgba(26,26,26,.8);
   --control-border:rgba(255,255,255,.1);
   --resonance-color:rgba(0,255,204,0.6);
   --resonance-glow:0 0 15px rgba(0,255,204,0.6);
 }
+
+.cosmic-theme {
+  --bg-color:#050510;
+  --panel-bg:rgba(5,5,16,.92);
+  --highlight:#00ffff;
+  --highlight-alt:#00ddff;
+  --secondary-highlight:#ff00cc;
+  --tertiary-highlight:#ffaa00;
+  --vortex-color:#ff00cc;
+  --angel-color:#ffaa00;
+  --meme-color:#00ffff;
+  --resonance-color:rgba(0,255,255,0.6);
+  --resonance-glow:0 0 15px rgba(0,255,255,0.6);
+}
+
+.light-theme {
+  --bg-color:#f0f0f0;
+  --text-color:#111;
+  --panel-bg:rgba(240,240,240,.90);
+  --highlight:#00aa88;
+  --highlight-alt:#009977;
+  --secondary-highlight:#cc2266;
+  --tertiary-highlight:#dd9900;
+  --control-bg:rgba(255,255,255,.8);
+  --control-border:rgba(0,0,0,.1);
+  --resonance-color:rgba(0,170,136,0.6);
+  --resonance-glow:0 0 15px rgba(0,170,136,0.6);
+}
+
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overscroll-behavior:none}
 body{
@@ -29,6 +65,7 @@ body{
   font-size:14px;
   line-height:1.5;
   -webkit-tap-highlight-color:transparent;
+  transition:background-color 0.5s ease;
 }
 
 .control-button {
@@ -44,6 +81,11 @@ body{
   align-items: center;
   font-size: 20px;
   z-index: 100;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.control-button:active {
+  transform: scale(0.95);
 }
 
 .theme-toggle {
@@ -59,6 +101,74 @@ body{
 .toggle-legend {
   bottom: 80px;
   right: 15px;
+}
+
+.mini-mode-toggle {
+  bottom: 80px;
+  left: 15px;
+}
+
+.mode-selector {
+  position: fixed;
+  top: 15px;
+  left: 75px;
+  right: 75px;
+  background: var(--control-bg);
+  border-radius: 20px;
+  display: flex;
+  border: 1px solid var(--control-border);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.mode-option {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+
+.mode-option.active {
+  background: var(--highlight);
+  color: black;
+}
+
+.background-pulse {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 2s;
+  background: radial-gradient(circle at center, 
+    rgba(0,255,204,0.05) 0%, 
+    rgba(0,255,204,0.02) 40%, 
+    rgba(0,0,0,0) 70%
+  );
+}
+
+.cosmic-theme .background-pulse {
+  background: radial-gradient(circle at center, 
+    rgba(0,255,255,0.08) 0%, 
+    rgba(0,255,255,0.03) 40%, 
+    rgba(0,0,0,0) 70%
+  );
+}
+
+.background-pulse.active {
+  opacity: 1;
+  animation: pulse-bg 4s infinite;
+}
+
+@keyframes pulse-bg {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
 }
 
 #cycleCanvas {
@@ -86,6 +196,49 @@ body{
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-top: 1px solid rgba(0,255,204,.2);
+  transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.mini-mode .controls-bar {
+  transform: translateY(60px);
+}
+
+.mini-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--highlight);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.5s;
+}
+
+.mini-mode .mini-bar {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mini-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--highlight);
+}
+
+.mini-score {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--highlight);
+  color: black;
+  border-radius: 10px;
+  font-weight: 600;
 }
 
 .control-group {
@@ -105,6 +258,11 @@ body{
   color: var(--text-color);
   border-radius: 50%;
   font-size: 18px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.button-control:active {
+  transform: scale(0.95);
 }
 
 .date-display {
@@ -113,8 +271,20 @@ body{
   text-align: center;
   padding: 5px 10px;
   background: rgba(0,0,0,.3);
-  border-radius: 6px;
+  border-radius: 12px;
   min-width: 120px;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.date-display.resonating {
+  background: rgba(0,255,204,.15);
+  box-shadow: 0 0 10px rgba(0,255,204,0.2);
+  transform: scale(1.05);
+}
+
+.cosmic-theme .date-display.resonating {
+  background: rgba(0,255,255,.15);
+  box-shadow: 0 0 10px rgba(0,255,255,0.2);
 }
 
 .time-speed {
@@ -122,10 +292,38 @@ body{
   color: #000;
   font-weight: 600;
   padding: 5px 10px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 0.9rem;
   text-align: center;
   min-width: 60px;
+  transition: background 0.3s;
+}
+
+.cosmic-theme .time-speed {
+  background: var(--highlight);
+}
+
+.alert-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  background: var(--secondary-highlight);
+  border-radius: 50%;
+  font-size: 10px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.alert-badge.active {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .logo-container {
@@ -140,6 +338,12 @@ body{
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: all 0.5s;
+}
+
+.mini-mode .logo-container {
+  transform: translate(-50%, -50%) scale(0.7);
+  opacity: 0.8;
 }
 
 .logo-container img {
@@ -148,11 +352,44 @@ body{
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  transition: all 0.5s;
 }
 
 .logo-container.resonating img {
   animation: pulse-logo 2s infinite ease-in-out;
   box-shadow: 0 0 30px var(--resonance-color);
+}
+
+.logo-container.vortex img {
+  animation: pulse-logo 1.5s infinite ease-in-out;
+  box-shadow: 0 0 30px var(--vortex-color);
+}
+
+.logo-container.angel img {
+  animation: pulse-logo 2s infinite ease-in-out;
+  box-shadow: 0 0 30px var(--angel-color);
+}
+
+.logo-container.fibonacci img {
+  animation: pulse-logo 2.5s infinite ease-in-out;
+  box-shadow: 0 0 30px var(--fib-color);
+}
+
+.resonance-score {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--highlight);
+  text-shadow: 0 0 5px rgba(0,0,0,0.5);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.resonance-score.active {
+  opacity: 1;
 }
 
 @keyframes pulse-logo {
@@ -168,14 +405,14 @@ body{
   background: var(--panel-bg);
   color: var(--text-color);
   padding: 12px 20px;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   z-index: 100;
   max-width: 90%;
   width: 300px;
   text-align: center;
   opacity: 0;
-  transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275),opacity .4s;
+  transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity .4s;
   pointer-events: none;
   border: 1px solid rgba(0,255,204,.2);
   font-weight: 500;
@@ -184,6 +421,45 @@ body{
 .notification.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.notification.vortex {
+  border-color: var(--vortex-color);
+  background: rgba(255,51,153,0.15);
+}
+
+.notification.fibonacci {
+  border-color: var(--fib-color);
+  background: rgba(204,51,255,0.15);
+}
+
+.notification.angel {
+  border-color: var(--angel-color);
+  background: rgba(255,204,0,0.15);
+}
+
+.notification-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--highlight);
+  opacity: 0.7;
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+.notification.vortex .notification-progress {
+  background: var(--vortex-color);
+}
+
+.notification.fibonacci .notification-progress {
+  background: var(--fib-color);
+}
+
+.notification.angel .notification-progress {
+  background: var(--angel-color);
 }
 
 .scrub-indicator {
@@ -203,6 +479,7 @@ body{
   pointer-events: none;
   z-index: 50;
   box-shadow: var(--resonance-glow);
+  transition: opacity 0.2s;
 }
 
 .scrub-indicator.active {
@@ -212,6 +489,7 @@ body{
 .scrub-direction {
   font-size: 40px;
   color: var(--highlight);
+  text-shadow: 0 0 8px var(--highlight-alt);
 }
 
 .loading {
@@ -237,22 +515,46 @@ body{
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid transparent;
-  border-top-color: var(--highlight);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  position: relative;
   margin-bottom: 20px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loading-spinner::before,
+.loading-spinner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(to right, var(--highlight), var(--secondary-highlight));
+  animation: pulse-ring 2s linear infinite;
+}
+
+.loading-spinner::after {
+  animation-delay: -1s;
+}
+
+@keyframes pulse-ring {
+  0%{transform:scale(0.5);opacity:1}
+  100%{transform:scale(1.5);opacity:0}
 }
 
 .loading-text {
   font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
+  background: linear-gradient(to right, var(--highlight), var(--secondary-highlight));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.loading-subtext {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin-bottom: 20px;
 }
 
 .loading-progress {
@@ -261,7 +563,6 @@ body{
   height: 4px;
   background: rgba(255,255,255,0.1);
   border-radius: 2px;
-  margin-top: 20px;
   overflow: hidden;
 }
 
@@ -283,12 +584,16 @@ body{
   border-radius: 15px 15px 0 0;
   z-index: 9;
   transform: translateY(100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   border-top: 1px solid rgba(0,255,204,.2);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   max-height: 60vh;
   overflow-y: auto;
+}
+
+.mini-mode .legend {
+  bottom: 24px;
 }
 
 .legend.open {
@@ -312,30 +617,41 @@ body{
   z-index: 2;
 }
 
-.legend-indicator {
-  font-size: .9rem;
-  color: var(--highlight);
-  min-height: 1.2em;
-  padding: 8px 12px;
-  background: rgba(0,0,0,.2);
-  border-radius: 6px;
-  width: 100%;
-  text-align: center;
-  transition: all .3s;
-  font-weight: 500;
+.legend-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
   margin-bottom: 10px;
 }
 
-.legend-indicator.active {
-  color: #fff;
-  background: rgba(0,255,204,0.3);
-  box-shadow: 0 2px 8px rgba(0,255,204,0.3);
-  animation: pulse-indicator 2s infinite;
+.legend-metric {
+  background: rgba(0,0,0,.2);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
 }
 
-@keyframes pulse-indicator {
-  0%, 100% { background: rgba(0,255,204,0.3); }
-  50% { background: rgba(0,255,204,0.5); }
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--highlight);
+  margin-bottom: 2px;
+}
+
+.metric-label {
+  font-size: 11px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-metric.resonating {
+  background: rgba(0,255,204,0.15);
+  box-shadow: 0 0 10px rgba(0,255,204,0.2);
 }
 
 .legend-section {
@@ -350,6 +666,17 @@ body{
   padding: 5px 10px;
   background: rgba(0,0,0,0.3);
   border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-count {
+  font-size: 12px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 10px;
+  padding: 2px 8px;
+  opacity: 0.8;
 }
 
 .cycle-grid {
@@ -368,11 +695,56 @@ body{
   background: rgba(0,0,0,.2);
   font-weight: 500;
   font-size: 0.85rem;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.cycle-item::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 3px;
+  border-radius: 0 8px 8px 0;
+  opacity: 0.7;
+}
+
+.cycle-item[data-type="vortex"]::after {
+  background: var(--vortex-color);
+}
+
+.cycle-item[data-type="angel"]::after {
+  background: var(--angel-color);
+}
+
+.cycle-item[data-type="meme"]::after {
+  background: var(--meme-color);
+}
+
+.cycle-item[data-type="ftd"]::after {
+  background: var(--ftd-color);
 }
 
 .cycle-item.resonating {
   background: rgba(0,255,204,0.15);
-  box-shadow: 0 0 10px rgba(0,255,204,0.4);
+  box-shadow: 0 0 10px rgba(0,255,204,0.2);
+  transform: scale(1.02);
+}
+
+.cycle-item.vortex-resonance {
+  background: rgba(255,51,153,0.15);
+  box-shadow: 0 0 10px rgba(255,51,153,0.2);
+}
+
+.cycle-item.fibonacci-resonance {
+  background: rgba(204,51,255,0.15);
+  box-shadow: 0 0 10px rgba(204,51,255,0.2);
+}
+
+.cycle-item.angel-resonance {
+  background: rgba(255,204,0,0.15);
+  box-shadow: 0 0 10px rgba(255,204,0,0.2);
 }
 
 .cycle-dot {
@@ -381,13 +753,25 @@ body{
   border-radius: 50%;
   box-shadow: 0 0 4px rgba(0,0,0,.3);
   flex-shrink: 0;
+  transition: transform 0.3s;
+}
+
+.cycle-item.resonating .cycle-dot {
+  transform: scale(1.2);
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
 }
 
 .toggle-wrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-top: 10px;
+  justify-content: space-between;
+  margin: 15px 0;
+  padding: 0 5px;
 }
 
 .toggle-switch {
@@ -395,7 +779,6 @@ body{
   display: inline-block;
   width: 52px;
   height: 26px;
-  margin-left: 10px;
 }
 
 .toggle-switch input {
@@ -436,14 +819,144 @@ input:checked + .toggle-slider {
 input:checked + .toggle-slider:before {
   transform: translateX(26px);
 }
+
+.resonance-history {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.history-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  color: var(--highlight);
+}
+
+.history-chart {
+  height: 40px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.history-bar {
+  flex: 1;
+  background: var(--highlight);
+  opacity: 0.2;
+  height: 5px;
+  border-radius: 1px;
+  transition: height 0.3s, opacity 0.3s;
+}
+
+.history-bar.active {
+  opacity: 0.8;
+}
+
+.prediction-timeline {
+  margin-top: 15px;
+  display: flex;
+  height: 40px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  position: relative;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.timeline-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255,255,255,0.5);
+}
+
+.timeline-now {
+  background: var(--highlight);
+  width: 3px;
+  z-index: 2;
+  box-shadow: 0 0 10px var(--highlight);
+}
+
+.prediction-point {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+
+.prediction-point.vortex {
+  background: var(--vortex-color);
+  box-shadow: 0 0 8px var(--vortex-color);
+}
+
+.prediction-point.fibonacci {
+  background: var(--fib-color);
+  box-shadow: 0 0 8px var(--fib-color);
+}
+
+.prediction-point.normal {
+  background: var(--highlight);
+  box-shadow: 0 0 8px var(--highlight);
+}
+
+/* Power-saving mode styles */
+.power-saver .cycle-item.resonating {
+  background: rgba(0,255,204,0.15);
+  box-shadow: none;
+}
+
+.power-saver .background-pulse {
+  display: none;
+}
+
+.power-saver .logo-container.resonating img {
+  animation: none;
+  box-shadow: 0 0 15px var(--resonance-color);
+}
+
+.tooltip {
+  position: absolute;
+  background: var(--panel-bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  max-width: 200px;
+}
+
+.tooltip.show {
+  opacity: 1;
+}
   </style>
 </head>
 
 <body>
   <!-- FLOATING CONTROL BUTTONS -->
-  <button class="control-button theme-toggle" id="theme-toggle" title="Toggle light/dark theme">☀️</button>
+  <button class="control-button theme-toggle" id="theme-toggle" title="Toggle theme">☀️</button>
   <button class="control-button help-button" id="help-button" title="Help">?</button>
   <button class="control-button toggle-legend" id="toggle-legend" title="Toggle legend">🔍</button>
+  <button class="control-button mini-mode-toggle" id="mini-mode-toggle" title="Toggle mini mode">⚡</button>
+  
+  <!-- MODE SELECTOR -->
+  <div class="mode-selector">
+    <div class="mode-option active" data-mode="standard">Standard</div>
+    <div class="mode-option" data-mode="vortex">Vortex Math</div>
+    <div class="mode-option" data-mode="fibonacci">Fibonacci</div>
+  </div>
+  
+  <!-- BACKGROUND EFFECT -->
+  <div class="background-pulse" id="background-pulse"></div>
   
   <!-- SCRUBBING INDICATORS -->
   <div class="scrub-indicator" id="scrub-indicator">
@@ -455,7 +968,8 @@ input:checked + .toggle-slider:before {
     <!-- LOADING -->
     <div class="loading" id="loading">
       <div class="loading-spinner"></div>
-      <div class="loading-text">Initializing GME Cycle Resonator</div>
+      <div class="loading-text">GME Cycle Resonator Pro</div>
+      <div class="loading-subtext">Loading advanced vortex algorithms...</div>
       <div class="loading-progress">
         <div class="loading-progress-bar" id="loading-progress-bar"></div>
       </div>
@@ -463,6 +977,16 @@ input:checked + .toggle-slider:before {
 
     <!-- CANVAS -->
     <canvas id="cycleCanvas"></canvas>
+    
+    <!-- TOOLTIP -->
+    <div class="tooltip" id="tooltip"></div>
+    
+    <!-- MINI BAR -->
+    <div class="mini-bar" id="mini-bar">
+      <div class="mini-text" id="mini-date">Jan 28, 2021</div>
+      <div class="mini-text" id="mini-resonance">Scanning cycles...</div>
+      <div class="mini-score" id="mini-score">0</div>
+    </div>
     
     <!-- SIMPLIFIED CONTROLS BAR -->
     <div class="controls-bar" id="controls-bar">
@@ -480,20 +1004,34 @@ input:checked + .toggle-slider:before {
       </div>
     </div>
 
-    <!-- LOGO & EMOJI -->
+    <!-- LOGO & RESONANCE SCORE -->
     <div class="logo-container" id="logo-container">
       <img id="custom-logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjkwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNiIgLz48cGF0aCBkPSJNNTAgMTAwaDEwME0xMDAgNTB2MTAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjI1IiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48cGF0aCBkPSJNNjAgMTQwbDgwLTgwTTE0MCA2MEw2MCAxNDAiIHN0cm9rZT0iI2ZmMzM5OSIgc3Ryb2tlLXdpZHRoPSIzIiAvPjwvc3ZnPg==" alt="GME Logo">
+      <div class="resonance-score" id="resonance-score">5.2</div>
     </div>
 
     <!-- NOTIFICATION -->
-    <div class="notification" id="notification"></div>
+    <div class="notification" id="notification">
+      <div class="notification-progress" id="notification-progress"></div>
+    </div>
 
     <!-- LEGEND -->
     <div class="legend" id="legend">
-      <div class="legend-header" id="legend-header">🧿 GME Resonance Cycles</div>
+      <div class="legend-header" id="legend-header">🧿 GME Cycle Analysis</div>
       <div class="legend-content">
-        <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+        <!-- METRICS DISPLAY -->
+        <div class="legend-metrics">
+          <div class="legend-metric" id="metric-resonance">
+            <div class="metric-value" id="metric-resonance-value">0</div>
+            <div class="metric-label">Resonance Score</div>
+          </div>
+          <div class="legend-metric" id="metric-active">
+            <div class="metric-value" id="metric-active-value">0</div>
+            <div class="metric-label">Active Cycles</div>
+          </div>
+        </div>
         
+        <!-- TOGGLES -->
         <div class="toggle-wrapper">
           <span>Fibonacci Harmony</span>
           <label class="toggle-switch">
@@ -502,22 +1040,48 @@ input:checked + .toggle-slider:before {
           </label>
         </div>
         
+        <div class="toggle-wrapper">
+          <span>Power-Saving Mode</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="powerSaving">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <!-- RESONANCE HISTORY -->
+        <div class="resonance-history">
+          <div class="history-title">Resonance History</div>
+          <div class="history-chart" id="history-chart">
+            <!-- Bars will be added dynamically -->
+          </div>
+        </div>
+        
+        <!-- PREDICTION TIMELINE -->
+        <div class="prediction-timeline" id="prediction-timeline">
+          <div class="timeline-marker timeline-now" style="left: 33%;"></div>
+          <!-- Prediction points will be added dynamically -->
+        </div>
+        
+        <!-- CYCLE SECTIONS -->
         <div class="legend-section">
-          <div class="legend-section-title">Long Cycles</div>
+          <div class="legend-section-title">
+            Long Cycles
+            <span class="section-count" id="long-count">0 active</span>
+          </div>
           <div class="cycle-grid">
-            <div class="cycle-item" id="legend-1667" data-cycle="1667">
+            <div class="cycle-item" id="legend-1667" data-cycle="1667" data-type="vortex">
               <span class="cycle-dot" style="background:hsl(340,100%,50%)"></span>
               1667: Harmonic
             </div>
-            <div class="cycle-item" id="legend-1482" data-cycle="1482">
+            <div class="cycle-item" id="legend-1482" data-cycle="1482" data-type="vortex">
               <span class="cycle-dot" style="background:hsl(320,100%,50%)"></span>
               1482: Vortex
             </div>
-            <div class="cycle-item" id="legend-1428" data-cycle="1428">
+            <div class="cycle-item" id="legend-1428" data-cycle="1428" data-type="vortex">
               <span class="cycle-dot" style="background:hsl(300,100%,50%)"></span>
               1428: Vortex
             </div>
-            <div class="cycle-item" id="legend-1000" data-cycle="1000">
+            <div class="cycle-item" id="legend-1000" data-cycle="1000" data-type="angel">
               <span class="cycle-dot" style="background:hsl(280,100%,50%)"></span>
               1000: Angel
             </div>
@@ -525,29 +1089,32 @@ input:checked + .toggle-slider:before {
         </div>
         
         <div class="legend-section">
-          <div class="legend-section-title">Medium Cycles</div>
+          <div class="legend-section-title">
+            Medium Cycles
+            <span class="section-count" id="medium-count">0 active</span>
+          </div>
           <div class="cycle-grid">
-            <div class="cycle-item" id="legend-833" data-cycle="833">
+            <div class="cycle-item" id="legend-833" data-cycle="833" data-type="vortex">
               <span class="cycle-dot" style="background:hsl(260,100%,50%)"></span>
               833: Special
             </div>
-            <div class="cycle-item" id="legend-741" data-cycle="741">
+            <div class="cycle-item" id="legend-741" data-cycle="741" data-type="vortex">
               <span class="cycle-dot" style="background:hsl(240,100%,50%)"></span>
               741: Infinity
             </div>
-            <div class="cycle-item" id="legend-714" data-cycle="714">
+            <div class="cycle-item" id="legend-714" data-cycle="714" data-type="squeeze">
               <span class="cycle-dot" style="background:hsl(220,100%,50%)"></span>
               714: Squeeze
             </div>
-            <div class="cycle-item" id="legend-471" data-cycle="471">
+            <div class="cycle-item" id="legend-471" data-cycle="471" data-type="pattern">
               <span class="cycle-dot" style="background:hsl(200,100%,50%)"></span>
               471: Pattern
             </div>
-            <div class="cycle-item" id="legend-420" data-cycle="420">
+            <div class="cycle-item" id="legend-420" data-cycle="420" data-type="meme">
               <span class="cycle-dot" style="background:hsl(180,100%,50%)"></span>
               420: Meme
             </div>
-            <div class="cycle-item" id="legend-417" data-cycle="417">
+            <div class="cycle-item" id="legend-417" data-cycle="417" data-type="angel">
               <span class="cycle-dot" style="background:hsl(160,100%,50%)"></span>
               417: Angel
             </div>
@@ -555,33 +1122,36 @@ input:checked + .toggle-slider:before {
         </div>
         
         <div class="legend-section">
-          <div class="legend-section-title">Short Cycles</div>
+          <div class="legend-section-title">
+            Short Cycles
+            <span class="section-count" id="short-count">0 active</span>
+          </div>
           <div class="cycle-grid">
-            <div class="cycle-item" id="legend-240" data-cycle="240">
+            <div class="cycle-item" id="legend-240" data-cycle="240" data-type="options">
               <span class="cycle-dot" style="background:hsl(140,100%,50%)"></span>
               240: Options
             </div>
-            <div class="cycle-item" id="legend-109" data-cycle="109">
+            <div class="cycle-item" id="legend-109" data-cycle="109" data-type="angel">
               <span class="cycle-dot" style="background:hsl(120,100%,50%)"></span>
               109: Angel
             </div>
-            <div class="cycle-item" id="legend-69" data-cycle="69">
+            <div class="cycle-item" id="legend-69" data-cycle="69" data-type="meme">
               <span class="cycle-dot" style="background:hsl(100,100%,50%)"></span>
               69: Meme
             </div>
-            <div class="cycle-item" id="legend-55" data-cycle="55">
+            <div class="cycle-item" id="legend-55" data-cycle="55" data-type="fomo">
               <span class="cycle-dot" style="background:hsl(80,100%,50%)"></span>
               55: FOMO
             </div>
-            <div class="cycle-item" id="legend-42" data-cycle="42">
+            <div class="cycle-item" id="legend-42" data-cycle="42" data-type="vortex">
               <span class="cycle-dot" style="background:hsl(60,100%,50%)"></span>
               42: Answer
             </div>
-            <div class="cycle-item" id="legend-36" data-cycle="36">
+            <div class="cycle-item" id="legend-36" data-cycle="36" data-type="ftd">
               <span class="cycle-dot" style="background:hsl(40,100%,50%)"></span>
               36: T+2/T+35
             </div>
-            <div class="cycle-item" id="legend-35" data-cycle="35">
+            <div class="cycle-item" id="legend-35" data-cycle="35" data-type="ftd">
               <span class="cycle-dot" style="background:hsl(20,100%,50%)"></span>
               35: FTD
             </div>
@@ -592,27 +1162,34 @@ input:checked + .toggle-slider:before {
   </main>
 
   <script>
-    // Error tracking and reporting
+    /******************************************
+     * INITIALIZATION & ERROR HANDLING
+    ******************************************/
     window.onerror = function(msg, url, line, col, error) {
-      console.log("Error caught:", msg);
+      console.error("Error caught:", msg);
       showNotification("Error detected: " + msg.substring(0, 50), "error");
       return false;
     };
     
-    // Simple loading sequence
+    window.addEventListener('unhandledrejection', function(event) {
+      console.error("Promise rejection:", event.reason);
+      showNotification("Processing error: " + event.reason, "error");
+    });
+    
+    // Loading sequence
     let loadingTimeout;
     function startLoading() {
       const bar = document.getElementById('loading-progress-bar');
       let progress = 0;
       const interval = setInterval(() => {
-        progress += 5;
+        progress += Math.random() * 3 + 2; // Randomized progress for more natural feel
         if (progress >= 100) {
           progress = 100;
           clearInterval(interval);
           window.isLoadingComplete = true;
         }
         bar.style.width = `${progress}%`;
-      }, 50);
+      }, 80);
       
       loadingTimeout = setTimeout(() => {
         if (!window.isLoadingComplete) {
@@ -625,12 +1202,17 @@ input:checked + .toggle-slider:before {
     // Start loading animation immediately
     startLoading();
     
-    // Settings management
+    /******************************************
+     * SETTINGS & CONFIGURATION
+    ******************************************/
     const DEFAULT_SETTINGS = {
-      lightTheme: false,
+      theme: 'dark', // dark, light, cosmic
       useFibonacci: false,
-      muteSound: false,
-      legendOpen: false
+      powerSaving: false,
+      miniMode: false,
+      legendOpen: false,
+      activeMode: 'standard', // standard, vortex, fibonacci
+      lastResonanceEvents: []
     };
     
     let settings = DEFAULT_SETTINGS;
@@ -647,18 +1229,24 @@ input:checked + .toggle-slider:before {
     
     function saveSettings() {
       try {
+        // Collect current UI state
         settings.useFibonacci = document.getElementById('useFibonacci').checked;
+        settings.powerSaving = document.getElementById('powerSaving').checked;
         settings.legendOpen = document.getElementById('legend').classList.contains('open');
+        settings.miniMode = document.body.classList.contains('mini-mode');
+        
+        // Save to localStorage
         localStorage.setItem("gmeResonatorSettings", JSON.stringify(settings));
       } catch (e) {
         console.log("Settings save error:", e);
       }
     }
     
-    // Simple sound system
+    /******************************************
+     * SOUND SYSTEM WITH ENHANCED EFFECTS
+    ******************************************/
     const SoundManager = {
       context: null,
-      muted: false,
       initialized: false,
       
       init() {
@@ -690,44 +1278,114 @@ input:checked + .toggle-slider:before {
         }
       },
       
-      playTone(frequency, duration = 0.2, volume = 0.3) {
-        if (settings.muteSound) return;
-        if (!this.initialized) return;
+      playTone(frequency, duration = 0.2, type = 'sine', volume = 0.3) {
+        if (settings.powerSaving) {
+          volume *= 0.7; // Reduce volume in power saving mode
+        }
+        
+        if (!this.initialized) {
+          this.init();
+        }
         
         try {
           const oscillator = this.context.createOscillator();
-          oscillator.type = 'sine';
+          oscillator.type = type;
           oscillator.frequency.value = frequency;
           
           const gainNode = this.context.createGain();
           gainNode.gain.value = volume;
           
-          oscillator.connect(gainNode);
+          // Add slight filter for warmer tone
+          const filter = this.context.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 2000;
+          
+          oscillator.connect(filter);
+          filter.connect(gainNode);
           gainNode.connect(this.context.destination);
           
           const now = this.context.currentTime;
+          
+          // Smoother attack/release with slight fade-in and fade-out
+          gainNode.gain.setValueAtTime(0, now);
+          gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
+          gainNode.gain.linearRampToValueAtTime(0, now + duration);
+          
           oscillator.start(now);
-          oscillator.stop(now + duration);
+          oscillator.stop(now + duration + 0.01);
           
           oscillator.onended = () => {
             oscillator.disconnect();
+            filter.disconnect();
             gainNode.disconnect();
           };
         } catch (e) {
           console.log("Error playing tone:", e);
         }
+      },
+      
+      // Play a special chord for different resonance types
+      playResonanceChord(type = 'normal') {
+        let baseFreq, interval, duration;
+        
+        switch(type) {
+          case 'vortex':
+            baseFreq = 174.61; // F3
+            interval = 100;
+            duration = 0.4;
+            this.playTone(baseFreq, duration, 'sine', 0.15);
+            setTimeout(() => this.playTone(baseFreq * 1.5, duration, 'sine', 0.15), interval);
+            setTimeout(() => this.playTone(baseFreq * 2, duration, 'sine', 0.15), interval * 2);
+            setTimeout(() => this.playTone(baseFreq * 3, duration * 0.8, 'sine', 0.15), interval * 3);
+            break;
+            
+          case 'fibonacci':
+            baseFreq = 220; // A3
+            interval = 125;
+            duration = 0.5;
+            this.playTone(baseFreq, duration, 'sine', 0.15);
+            setTimeout(() => this.playTone(baseFreq * 1.618, duration, 'sine', 0.15), interval);
+            setTimeout(() => this.playTone(baseFreq * 2.618, duration, 'sine', 0.15), interval * 2);
+            break;
+            
+          case 'angel':
+            baseFreq = 277.18; // C#4
+            interval = 150;
+            duration = 0.4;
+            this.playTone(baseFreq, duration, 'sine', 0.15);
+            setTimeout(() => this.playTone(baseFreq * 1.2, duration, 'sine', 0.15), interval);
+            setTimeout(() => this.playTone(baseFreq * 1.5, duration, 'sine', 0.15), interval * 2);
+            setTimeout(() => this.playTone(baseFreq * 2, duration * 0.7, 'sine', 0.15), interval * 3);
+            break;
+            
+          default: // normal
+            baseFreq = 261.63; // C4
+            interval = 120;
+            duration = 0.3;
+            this.playTone(baseFreq, duration, 'sine', 0.15);
+            setTimeout(() => this.playTone(baseFreq * 1.25, duration, 'sine', 0.15), interval);
+            setTimeout(() => this.playTone(baseFreq * 1.5, duration, 'sine', 0.15), interval * 2);
+            break;
+        }
       }
     };
     
-    // Timeline scrubbing
-    const TimelineScrubber = {
+    /******************************************
+     * ENHANCED TOUCH CONTROLS
+    ******************************************/
+    const TouchControls = {
       isDragging: false,
       startX: 0,
       lastX: 0,
+      startY: 0,
+      lastY: 0,
       sensitivity: 0.3,
       direction: 0,
       indicator: null,
       directionElement: null,
+      isZooming: false,
+      startDistance: 0,
+      currentZoom: 1,
       
       init() {
         this.indicator = document.getElementById('scrub-indicator');
@@ -736,14 +1394,43 @@ input:checked + .toggle-slider:before {
         document.addEventListener('touchstart', this.onStart.bind(this), { passive: true });
         document.addEventListener('touchmove', this.onMove.bind(this), { passive: true });
         document.addEventListener('touchend', this.onEnd.bind(this), { passive: true });
+        
+        // Double tap for cycle focus
+        let lastTap = 0;
+        document.addEventListener('touchend', (e) => {
+          const currentTime = new Date().getTime();
+          const tapLength = currentTime - lastTap;
+          
+          if (tapLength < 500 && tapLength > 0) {
+            // Double tap detected
+            const x = e.changedTouches[0].clientX;
+            const y = e.changedTouches[0].clientY;
+            this.handleDoubleTap(x, y);
+            e.preventDefault();
+          }
+          
+          lastTap = currentTime;
+        });
       },
       
       onStart(event) {
         const target = event.target;
         if (target.id !== 'cycleCanvas') return;
         
+        if (event.touches.length === 2) {
+          // Two finger gesture - potentially zooming
+          this.isZooming = true;
+          this.startDistance = this.getDistance(
+            event.touches[0].clientX, event.touches[0].clientY,
+            event.touches[1].clientX, event.touches[1].clientY
+          );
+          return;
+        }
+        
         this.startX = event.touches[0].clientX;
         this.lastX = this.startX;
+        this.startY = event.touches[0].clientY;
+        this.lastY = this.startY;
         
         this.isDragging = true;
         this.direction = 0;
@@ -759,32 +1446,75 @@ input:checked + .toggle-slider:before {
       },
       
       onMove(event) {
+        if (this.isZooming && event.touches.length === 2) {
+          // Handle pinch zoom
+          const currentDistance = this.getDistance(
+            event.touches[0].clientX, event.touches[0].clientY,
+            event.touches[1].clientX, event.touches[1].clientY
+          );
+          
+          const zoomDelta = currentDistance / this.startDistance;
+          this.handleZoom(zoomDelta);
+          this.startDistance = currentDistance;
+          return;
+        }
+        
         if (!this.isDragging) return;
         
         const currentX = event.touches[0].clientX;
+        const currentY = event.touches[0].clientY;
+        
+        // Calculate both X and Y deltas
         const deltaX = currentX - this.lastX;
+        const deltaY = currentY - this.lastY;
+        
         this.lastX = currentX;
+        this.lastY = currentY;
         
-        if (deltaX > 0) {
-          this.direction = 1;
-          this.directionElement.textContent = '→';
-        } else if (deltaX < 0) {
-          this.direction = -1;
-          this.directionElement.textContent = '←';
-        }
-        
-        if (this.direction !== 0) {
-          const moveAmount = Math.abs(deltaX) * this.sensitivity;
-          time += moveAmount * this.direction;
+        // Determine if movement is more horizontal or vertical
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          // Horizontal movement - timeline scrubbing
+          if (deltaX > 0) {
+            this.direction = 1;
+            this.directionElement.textContent = '→';
+          } else if (deltaX < 0) {
+            this.direction = -1;
+            this.directionElement.textContent = '←';
+          }
           
-          if (time < 0) time = 0;
-          
-          updateDateDisplay();
-          this.updateIndicator(true);
+          if (this.direction !== 0) {
+            const moveAmount = Math.abs(deltaX) * this.sensitivity;
+            time += moveAmount * this.direction;
+            
+            if (time < 0) time = 0;
+            
+            updateDateDisplay();
+            this.updateIndicator(true);
+            
+            // Play subtle feedback tone occasionally
+            if (Math.random() < 0.05 && !settings.powerSaving) {
+              const baseFreq = this.direction > 0 ? 800 : 400;
+              SoundManager.playTone(baseFreq + Math.random() * 200, 0.05, 'sine', 0.08);
+            }
+          }
+        } else {
+          // Vertical movement - potentially adjust speed
+          if (Math.abs(deltaY) > 1.5) {
+            if (deltaY < 0) {
+              // Swipe up - speed up
+              speedMultiplier = Math.min(speedMultiplier * 1.02, 5);
+            } else {
+              // Swipe down - slow down
+              speedMultiplier = Math.max(speedMultiplier / 1.02, 0.01);
+            }
+            document.getElementById('time-speed').textContent = `${speedMultiplier.toFixed(2)}x`;
+          }
         }
       },
       
       onEnd() {
+        this.isZooming = false;
+        
         if (!this.isDragging) return;
         
         this.isDragging = false;
@@ -797,6 +1527,62 @@ input:checked + .toggle-slider:before {
         }
       },
       
+      getDistance(x1, y1, x2, y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+      },
+      
+      handleZoom(delta) {
+        // Adjust zoom sensitivity 
+        delta = delta > 1 ? 1 + (delta - 1) * 0.3 : 1 - (1 - delta) * 0.3;
+        
+        this.currentZoom *= delta;
+        
+        // Clamp zoom level
+        this.currentZoom = Math.min(Math.max(this.currentZoom, 0.5), 2.5);
+        
+        // Apply zoom effect
+        visualScaling = this.currentZoom;
+      },
+      
+      handleDoubleTap(x, y) {
+        // Find the closest cycle to the tap position
+        const cx = cycleWidth / 2;
+        const cy = cycleHeight / 2;
+        
+        // Convert tap position to canvas coordinates
+        const canvasX = x - cx;
+        const canvasY = y - cy;
+        const tapDistance = Math.sqrt(canvasX * canvasX + canvasY * canvasY);
+        const tapAngle = Math.atan2(canvasY, canvasX);
+        
+        let closestCycle = null;
+        let minDistance = Infinity;
+        
+        CYCLES.forEach((cycle, index) => {
+          const progress = (time % cycle.length) / cycle.length;
+          const angle = progress * 2 * Math.PI;
+          const radius = getCycleRadius(index);
+          
+          // Calculate marker position
+          const mx = Math.cos(angle) * radius;
+          const my = Math.sin(angle) * radius;
+          
+          // Distance to tap
+          const distance = Math.sqrt(Math.pow(mx - canvasX, 2) + Math.pow(my - canvasY, 2));
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestCycle = cycle;
+          }
+        });
+        
+        // If a cycle is close enough, highlight it
+        if (closestCycle && minDistance < 50) {
+          highlightCycle(closestCycle);
+          showCycleTooltip(closestCycle, x, y);
+        }
+      },
+      
       updateIndicator(show = true) {
         if (show) {
           this.indicator.classList.add('active');
@@ -806,44 +1592,179 @@ input:checked + .toggle-slider:before {
       }
     };
     
-    // Core visualization
+    /******************************************
+     * TOOLTIP & NOTIFICATION SYSTEM
+    ******************************************/
+    
+    function showTooltip(message, x, y) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.textContent = message;
+      
+      // Position tooltip
+      const padding = 10;
+      tooltip.style.left = `${Math.min(x, window.innerWidth - tooltip.offsetWidth - padding)}px`;
+      tooltip.style.top = `${Math.min(y - tooltip.offsetHeight - 10, window.innerHeight - tooltip.offsetHeight - padding)}px`;
+      
+      tooltip.classList.add('show');
+      
+      // Auto hide after 2 seconds
+      clearTimeout(tooltip.hideTimer);
+      tooltip.hideTimer = setTimeout(() => {
+        tooltip.classList.remove('show');
+      }, 2000);
+    }
+    
+    function showCycleTooltip(cycle, x, y) {
+      const cycleDays = cycle.length;
+      const cycleType = cycle.type;
+      
+      let message = `${cycle.name}\n`;
+      
+      // Add special info based on cycle type
+      switch(cycleType) {
+        case 'vortex':
+          message += `Vortex number: ${cycleDays % 9 || 9}/9`;
+          break;
+        case 'angel':
+          message += `Angel significance: harmony & balance`;
+          break;
+        case 'meme':
+          message += `Cultural multiplier: high energy cycle`;
+          break;
+        case 'ftd':
+          message += `Failure-to-deliver cycle: forced buys`;
+          break;
+        default:
+          message += `${cycleDays} day resonator`;
+      }
+      
+      showTooltip(message, x, y);
+    }
+    
+    function showNotification(message, type = 'info', duration = 3000) {
+      const notification = document.getElementById('notification');
+      const progress = document.getElementById('notification-progress');
+      
+      // Clear any existing notification timer
+      clearTimeout(notification.timer);
+      
+      // Remove previous type classes
+      notification.className = 'notification';
+      
+      // Add type-specific class
+      if (type !== 'info') {
+        notification.classList.add(type);
+      }
+      
+      notification.textContent = message;
+      notification.appendChild(progress);
+      notification.classList.add('show');
+      
+      // Animate progress bar
+      progress.style.transform = 'scaleX(0)';
+      setTimeout(() => {
+        progress.style.transition = `transform ${duration}ms linear`;
+        progress.style.transform = 'scaleX(1)';
+      }, 10);
+      
+      // Set timer to hide notification
+      notification.timer = setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          progress.style.transition = 'none';
+        }, 300);
+      }, duration);
+      
+      // Also update mini-bar info if in mini mode
+      if (document.body.classList.contains('mini-mode')) {
+        if (type === 'vortex' || type === 'fibonacci' || type === 'angel') {
+          document.getElementById('mini-resonance').textContent = message.split(':')[0];
+        }
+      }
+    }
+    
+    /******************************************
+     * VISUALIZATION CORE
+    ******************************************/
     let cycleCanvas, cycleCtx;
     let cycleWidth, cycleHeight;
     let time = 0;
     let isPaused = false;
     let speedMultiplier = 0.05;
+    let visualScaling = 1.0;
     let lastFrameTime = 0;
     let activeResonances = [];
+    let activeCycles = [];
+    let resonanceScore = 0;
+    let resonanceHistory = new Array(20).fill(0);
+    let predictionPoints = [];
     let lastResonanceTime = 0;
     let particles = [];
+    let resonanceType = 'none';
     
-    // Define cycles with Fibonacci sequence considerations
+    // Dynamic colors
+    let dynamicColors = {
+      resonance: 'rgba(0,255,204,0.6)',
+      vortex: 'rgba(255,51,153,0.6)',
+      fibonacci: 'rgba(204,51,255,0.6)',
+      angel: 'rgba(255,204,0,0.6)'
+    };
+    
+    // Define cycles with metadata
     const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597];
     
     const CYCLES = [
       // Long Cycles
-      { name: "1667: Harmonic", length: 1667, hue: 340, importance: 10, type: "vortex" },
-      { name: "1482: Vortex", length: 1482, hue: 320, importance: 9, type: "vortex" },
-      { name: "1428: Vortex", length: 1428, hue: 300, importance: 9, type: "vortex" },
-      { name: "1000: Angel", length: 1000, hue: 280, importance: 8, type: "angel" },
+      { name: "1667: Harmonic", length: 1667, hue: 340, importance: 10, type: "vortex", category: "long" },
+      { name: "1482: Vortex", length: 1482, hue: 320, importance: 9, type: "vortex", category: "long" },
+      { name: "1428: Vortex", length: 1428, hue: 300, importance: 9, type: "vortex", category: "long" },
+      { name: "1000: Angel", length: 1000, hue: 280, importance: 8, type: "angel", category: "long" },
       
       // Medium Cycles
-      { name: "833: Special", length: 833, hue: 260, importance: 7, type: "vortex" },
-      { name: "741: Infinity", length: 741, hue: 240, importance: 10, type: "vortex" },
-      { name: "714: Squeeze", length: 714, hue: 220, importance: 8, type: "squeeze" },
-      { name: "471: Pattern", length: 471, hue: 200, importance: 7, type: "pattern" },
-      { name: "420: Meme", length: 420, hue: 180, importance: 8, type: "meme" },
-      { name: "417: Angel", length: 417, hue: 160, importance: 9, type: "angel" },
+      { name: "833: Special", length: 833, hue: 260, importance: 7, type: "vortex", category: "medium" },
+      { name: "741: Infinity", length: 741, hue: 240, importance: 10, type: "vortex", category: "medium" },
+      { name: "714: Squeeze", length: 714, hue: 220, importance: 8, type: "squeeze", category: "medium" },
+      { name: "471: Pattern", length: 471, hue: 200, importance: 7, type: "pattern", category: "medium" },
+      { name: "420: Meme", length: 420, hue: 180, importance: 8, type: "meme", category: "medium" },
+      { name: "417: Angel", length: 417, hue: 160, importance: 9, type: "angel", category: "medium" },
       
       // Short Cycles
-      { name: "240: Options", length: 240, hue: 140, importance: 7, type: "options" },
-      { name: "109: Angel", length: 109, hue: 120, importance: 8, type: "angel" },
-      { name: "69: Meme", length: 69, hue: 100, importance: 7, type: "meme" },
-      { name: "55: FOMO", length: 55, hue: 80, importance: 8, type: "fomo" },
-      { name: "42: Answer", length: 42, hue: 60, importance: 7, type: "vortex" },
-      { name: "36: T+2/T+35", length: 36, hue: 40, importance: 9, type: "ftd" },
-      { name: "35: FTD", length: 35, hue: 20, importance: 9, type: "ftd" }
+      { name: "240: Options", length: 240, hue: 140, importance: 7, type: "options", category: "short" },
+      { name: "109: Angel", length: 109, hue: 120, importance: 8, type: "angel", category: "short" },
+      { name: "69: Meme", length: 69, hue: 100, importance: 7, type: "meme", category: "short" },
+      { name: "55: FOMO", length: 55, hue: 80, importance: 8, type: "fomo", category: "short" },
+      { name: "42: Answer", length: 42, hue: 60, importance: 7, type: "vortex", category: "short" },
+      { name: "36: T+2/T+35", length: 36, hue: 40, importance: 9, type: "ftd", category: "short" },
+      { name: "35: FTD", length: 35, hue: 20, importance: 9, type: "ftd", category: "short" }
     ];
+    
+    function applyTheme(theme) {
+      // Remove all theme classes first
+      document.body.classList.remove('light-theme', 'cosmic-theme');
+      
+      // Then apply the selected theme
+      if (theme === 'light') {
+        document.body.classList.add('light-theme');
+        document.getElementById('theme-toggle').textContent = '🌙';
+      } else if (theme === 'cosmic') {
+        document.body.classList.add('cosmic-theme');
+        document.getElementById('theme-toggle').textContent = '✨';
+      } else {
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      
+      settings.theme = theme;
+      saveSettings();
+    }
+    
+    function cycleTheme() {
+      const themes = ['dark', 'light', 'cosmic'];
+      const currentIndex = themes.indexOf(settings.theme);
+      const nextIndex = (currentIndex + 1) % themes.length;
+      applyTheme(themes[nextIndex]);
+      
+      SoundManager.playTone(440 + nextIndex * 110, 0.2);
+    }
     
     function setupCanvas() {
       try {
@@ -867,7 +1788,7 @@ input:checked + .toggle-slider:before {
       cycleHeight = window.innerHeight;
       
       // Handle high DPI displays but limit resolution for performance
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = settings.powerSaving ? 1 : Math.min(window.devicePixelRatio || 1, 2);
       cycleCanvas.width = cycleWidth * dpr;
       cycleCanvas.height = cycleHeight * dpr;
       cycleCanvas.style.width = cycleWidth + 'px';
@@ -887,16 +1808,37 @@ input:checked + .toggle-slider:before {
       document.getElementById('speed-up-btn').addEventListener('click', speedUp);
       
       // Side controls
-      document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+      document.getElementById('theme-toggle').addEventListener('click', cycleTheme);
       document.getElementById('help-button').addEventListener('click', showHelp);
       document.getElementById('toggle-legend').addEventListener('click', toggleLegend);
       document.getElementById('legend-header').addEventListener('click', toggleLegend);
+      document.getElementById('mini-mode-toggle').addEventListener('click', toggleMiniMode);
       
-      // Fibonacci toggle
+      // Toggles
       document.getElementById('useFibonacci').addEventListener('change', (e) => {
-        settings.useFibonacci = e.checked;
+        settings.useFibonacci = e.target.checked;
         saveSettings();
         SoundManager.playTone(440, 0.1);
+        
+        // Update mode if needed
+        if (e.target.checked && settings.activeMode === 'standard') {
+          setActiveMode('fibonacci');
+        }
+      });
+      
+      document.getElementById('powerSaving').addEventListener('change', (e) => {
+        settings.powerSaving = e.target.checked;
+        document.body.classList.toggle('power-saver', settings.powerSaving);
+        saveSettings();
+        SoundManager.playTone(e.target.checked ? 220 : 440, 0.1);
+      });
+      
+      // Mode selector
+      document.querySelectorAll('.mode-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+          setActiveMode(e.target.dataset.mode);
+          SoundManager.playTone(392 + Math.random() * 100, 0.2);
+        });
       });
       
       // Cycle items
@@ -906,18 +1848,190 @@ input:checked + .toggle-slider:before {
           const cycle = CYCLES.find(c => c.length === cycleId);
           if (cycle) {
             highlightCycle(cycle);
-            SoundManager.playTone(330 + (cycle.length % 10) * 10, 0.2);
+            
+            // Set appropriate tone based on cycle type
+            if (cycle.type === 'vortex') {
+              SoundManager.playTone(294 + (cycle.length % 10) * 5, 0.25, 'sine', 0.2);
+            } else if (cycle.type === 'angel') {
+              SoundManager.playTone(330 + (cycle.length % 7) * 10, 0.3, 'sine', 0.2);
+            } else if (cycle.type === 'meme') {
+              SoundManager.playTone(392 + (cycle.length % 5) * 20, 0.2, 'square', 0.15);
+            } else {
+              SoundManager.playTone(349 + (cycle.length % 9) * 10, 0.25, 'sine', 0.2);
+            }
           }
           SoundManager.unlock();
         });
       });
       
-      // Initialize timeline scrubber
-      TimelineScrubber.init();
+      // Initialize touch controls
+      TouchControls.init();
       
       // Set up audio unlocking on any interaction
       document.addEventListener('click', SoundManager.unlock.bind(SoundManager));
       document.addEventListener('touchstart', SoundManager.unlock.bind(SoundManager), { passive: true });
+      
+      // Initialize resonance history chart
+      initHistoryChart();
+      
+      // Initialize prediction timeline
+      refreshPredictions();
+    }
+    
+    function setActiveMode(mode) {
+      settings.activeMode = mode;
+      saveSettings();
+      
+      // Update UI
+      document.querySelectorAll('.mode-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.mode === mode);
+      });
+      
+      // Special mode settings
+      if (mode === 'fibonacci') {
+        document.getElementById('useFibonacci').checked = true;
+      }
+      
+      // Show notification about mode change
+      let modeDesc;
+      switch(mode) {
+        case 'vortex':
+          modeDesc = "Vortex Math Mode: 3-6-9 sequence analysis";
+          break;
+        case 'fibonacci':
+          modeDesc = "Fibonacci Mode: Golden ratio harmonic detection";
+          break;
+        default:
+          modeDesc = "Standard Mode: Multi-cycle resonance scanning";
+      }
+      
+      showNotification(modeDesc);
+    }
+    
+    function toggleMiniMode() {
+      const miniMode = !document.body.classList.contains('mini-mode');
+      document.body.classList.toggle('mini-mode', miniMode);
+      settings.miniMode = miniMode;
+      saveSettings();
+      
+      // Update mini-bar info
+      document.getElementById('mini-date').textContent = document.getElementById('date-display').textContent;
+      
+      // Play transition sound
+      SoundManager.playTone(miniMode ? 587.33 : 440, 0.15);
+    }
+    
+    function initHistoryChart() {
+      const chart = document.getElementById('history-chart');
+      chart.innerHTML = '';
+      
+      // Create initial empty bars
+      for (let i = 0; i < resonanceHistory.length; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'history-bar';
+        chart.appendChild(bar);
+      }
+    }
+    
+    function updateHistoryChart() {
+      const bars = document.querySelectorAll('.history-bar');
+      
+      resonanceHistory.forEach((value, index) => {
+        if (bars[index]) {
+          bars[index].style.height = `${Math.min(value * 8, 40)}px`;
+          bars[index].classList.toggle('active', value > 0);
+        }
+      });
+    }
+    
+    function refreshPredictions() {
+      const timeline = document.getElementById('prediction-timeline');
+      
+      // Clear existing prediction points
+      timeline.querySelectorAll('.prediction-point').forEach(point => point.remove());
+      
+      // Create prediction points
+      predictionPoints = generatePredictions();
+      
+      predictionPoints.forEach(point => {
+        const element = document.createElement('div');
+        element.className = `prediction-point ${point.type}`;
+        element.style.left = `${point.position}%`;
+        
+        // Add data for tooltip
+        element.dataset.days = point.days;
+        element.dataset.type = point.type;
+        element.dataset.cycles = point.cycles;
+        
+        timeline.appendChild(element);
+      });
+    }
+    
+    function generatePredictions() {
+      // Generate predictions for the next 30 days
+      const predictions = [];
+      const lookAhead = 30; // Days to look ahead
+      const currentTimeIndex = time;
+      
+      // Pre-calculate all cycle positions at each future day
+      const futureCycles = [];
+      
+      for (let day = 1; day <= lookAhead; day++) {
+        const futureTime = currentTimeIndex + day;
+        const positions = CYCLES.map(cycle => (futureTime % cycle.length) / cycle.length);
+        futureCycles.push(positions);
+      }
+      
+      // Find resonances in future days
+      for (let day = 1; day <= lookAhead; day++) {
+        const positions = futureCycles[day - 1];
+        let hasResonance = false;
+        let isVortex = false;
+        let isFibonacci = false;
+        
+        const resonatingCycles = [];
+        
+        // Check for standard resonances
+        for (let i = 0; i < positions.length; i++) {
+          for (let j = i + 1; j < positions.length; j++) {
+            const diff = Math.abs(positions[i] - positions[j]);
+            
+            if (diff < 0.05 || Math.abs(1 - diff) < 0.05) {
+              hasResonance = true;
+              resonatingCycles.push(`${CYCLES[i].length}+${CYCLES[j].length}`);
+              
+              // Check for vortex type resonances
+              if (CYCLES[i].type === 'vortex' && CYCLES[j].type === 'vortex') {
+                isVortex = true;
+              }
+              
+              // Check for Fibonacci if enabled
+              if (settings.useFibonacci) {
+                if (FIBONACCI.includes(CYCLES[i].length) || FIBONACCI.includes(CYCLES[j].length)) {
+                  const ratio = CYCLES[i].length / CYCLES[j].length;
+                  if (Math.abs(ratio - 1.618) < 0.2 || Math.abs(ratio - 0.618) < 0.2) {
+                    isFibonacci = true;
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        // If resonance found, add prediction
+        if (hasResonance) {
+          const type = isFibonacci ? 'fibonacci' : isVortex ? 'vortex' : 'normal';
+          
+          predictions.push({
+            days: day,
+            position: (day / lookAhead) * 100,
+            type: type,
+            cycles: resonatingCycles.slice(0, 2).join(', ')
+          });
+        }
+      }
+      
+      return predictions;
     }
     
     function togglePause() {
@@ -931,14 +2045,38 @@ input:checked + .toggle-slider:before {
       time = 0;
       particles = [];
       activeResonances = [];
+      activeCycles = [];
+      resonanceType = 'none';
+      resonanceScore = 0;
+      resonanceHistory = new Array(20).fill(0);
       updateDateDisplay();
-      document.getElementById('resonance-indicator').textContent = "Resonance: Off";
-      document.getElementById('resonance-indicator').classList.remove('active');
-      document.getElementById('logo-container').classList.remove('resonating');
+      document.getElementById('resonance-score').textContent = '0.0';
+      document.getElementById('resonance-score').classList.remove('active');
+      document.getElementById('metric-resonance-value').textContent = '0';
+      document.getElementById('metric-active-value').textContent = '0';
+      document.getElementById('background-pulse').classList.remove('active');
+      document.getElementById('logo-container').className = 'logo-container';
+      
+      // Reset section counts
+      document.getElementById('long-count').textContent = '0 active';
+      document.getElementById('medium-count').textContent = '0 active';
+      document.getElementById('short-count').textContent = '0 active';
       
       document.querySelectorAll('.cycle-item').forEach(item => {
-        item.classList.remove('resonating');
+        item.className = 'cycle-item';
       });
+      
+      // Reset metrics
+      document.querySelectorAll('.legend-metric').forEach(metric => {
+        metric.classList.remove('resonating');
+      });
+      
+      // Reset mini-mode display
+      document.getElementById('mini-resonance').textContent = 'Scanning cycles...';
+      document.getElementById('mini-score').textContent = '0';
+      
+      // Update history chart
+      updateHistoryChart();
       
       showNotification("Timeline reset");
       SoundManager.playTone(587.33, 0.2);
@@ -956,16 +2094,8 @@ input:checked + .toggle-slider:before {
       SoundManager.playTone(880, 0.1);
     }
     
-    function toggleTheme() {
-      settings.lightTheme = !settings.lightTheme;
-      document.getElementById('theme-toggle').textContent = settings.lightTheme ? '🌙' : '☀️';
-      document.documentElement.classList.toggle('light-theme', settings.lightTheme);
-      saveSettings();
-      SoundManager.playTone(settings.lightTheme ? 587.33 : 349.23, 0.2);
-    }
-    
     function showHelp() {
-      showNotification("Swipe horizontally to scrub timeline. Tap cycles to highlight.");
+      showNotification("Swipe to scrub timeline. Double-tap cycles for info. Pinch to zoom.");
       SoundManager.playTone(466.16, 0.1);
     }
     
@@ -985,28 +2115,11 @@ input:checked + .toggle-slider:before {
         year: 'numeric'
       });
       document.getElementById('date-display').textContent = formatted;
-    }
-    
-    function showNotification(msg, type = "info") {
-      const notification = document.getElementById('notification');
+      document.getElementById('mini-date').textContent = formatted;
       
-      clearTimeout(notification.timer);
-      
-      // Apply styling based on type
-      if (type === "error") {
-        notification.style.borderLeft = "4px solid #ff3333";
-        notification.style.background = "rgba(255, 51, 51, 0.1)";
-      } else {
-        notification.style.borderLeft = "4px solid var(--highlight)";
-        notification.style.background = "rgba(0, 255, 204, 0.05)";
-      }
-      
-      notification.textContent = msg;
-      notification.classList.add('show');
-      
-      notification.timer = setTimeout(() => {
-        notification.classList.remove('show');
-      }, type === "error" ? 5000 : 2000);
+      // Pulsate the date display when at significant dates
+      const dateDisplay = document.getElementById('date-display');
+      dateDisplay.classList.toggle('resonating', resonanceScore > 5);
     }
     
     function highlightCycle(cycle) {
@@ -1025,210 +2138,569 @@ input:checked + .toggle-slider:before {
     function getCycleRadius(cycleIndex) {
       // Calculate using a function to ensure they're in bounds for mobile
       const minRadius = Math.min(cycleWidth, cycleHeight) * 0.08;
-      const maxRadius = Math.min(cycleWidth, cycleHeight) * 0.4;
+      const maxRadius = Math.min(cycleWidth, cycleHeight) * 0.38;
       const range = maxRadius - minRadius;
       
-      return minRadius + range * (1 - cycleIndex / CYCLES.length);
+      return (minRadius + range * (1 - cycleIndex / CYCLES.length)) * visualScaling;
     }
     
     function checkResonance() {
       const progresses = CYCLES.map(cycle => (time % cycle.length) / cycle.length);
+      
+      // Reset tracking variables
       activeResonances = [];
+      activeCycles = [];
+      resonanceScore = 0;
       
-      // Base threshold adjusted for mobile
-      const baseThreshold = 0.05;
+      // Track categories
+      const activeCycleCounts = {
+        long: 0,
+        medium: 0,
+        short: 0
+      };
       
-      // Check for resonance - simplified for mobile
-      for (let i = 0; i < progresses.length; i++) {
-        for (let j = i + 1; j < progresses.length; j++) {
-          const diff = Math.abs(progresses[i] - progresses[j]);
-          
-          if (diff < baseThreshold || Math.abs(1 - diff) < baseThreshold) {
-            activeResonances.push([i, j]);
-          }
-        }
+      // Base threshold - different for different modes
+      let baseThreshold;
+      switch(settings.activeMode) {
+        case 'vortex':
+          baseThreshold = 0.06; // Wider threshold for vortex
+          break;
+        case 'fibonacci':
+          baseThreshold = 0.07; // Even wider for fibonacci
+          break;
+        default:
+          baseThreshold = 0.05; // Standard
       }
       
-      // Fibonacci harmonies
-      if (settings.useFibonacci) {
-        for (let i = 0; i < CYCLES.length; i++) {
-          const cycleFib = FIBONACCI.some(fib => Math.abs(CYCLES[i].length % fib) < 3);
+      // Check cycle activation first
+      CYCLES.forEach((cycle, index) => {
+        const progress = progresses[index];
+        // Check key positions (0%, 25%, 50%, 75%)
+        const isActivated = [0, 0.25, 0.5, 0.75].some(pos => 
+          Math.abs(progress - pos) < baseThreshold / 2
+        );
+        
+        if (isActivated) {
+          activeCycles.push(index);
+          activeCycleCounts[cycle.category]++;
           
-          if (cycleFib) {
-            for (let j = i + 1; j < CYCLES.length; j++) {
-              const ratio = CYCLES[i].length / CYCLES[j].length;
-              if (Math.abs(ratio - 1.618) < 0.15 || Math.abs(ratio - 0.618) < 0.15) {
-                activeResonances.push([i, j]);
+          // Update UI for activated cycle
+          const element = document.getElementById(`legend-${cycle.length}`);
+          if (element) {
+            element.classList.add('resonating');
+          }
+        }
+      });
+      
+      // Vortex math checks - special for vortex mode
+      let hasVortexResonance = false;
+      if (settings.activeMode === 'vortex') {
+        // Check for 3-6-9 vortex patterns
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            // Get vortex values (mod 9)
+            const vortex1 = CYCLES[i].length % 9 || 9; // 0 becomes 9 in vortex math
+            const vortex2 = CYCLES[j].length % 9 || 9;
+            
+            // Check for 3-6-9 relationship
+            const isVortexPattern = 
+              (vortex1 === 3 && vortex2 === 6) || 
+              (vortex1 === 6 && vortex2 === 3) ||
+              (vortex1 === 3 && vortex2 === 9) ||
+              (vortex1 === 9 && vortex2 === 3) ||
+              (vortex1 === 6 && vortex2 === 9) ||
+              (vortex1 === 9 && vortex2 === 6);
+            
+            // If vortex pattern and cycles are resonating
+            if (isVortexPattern) {
+              const diff = Math.abs(progresses[i] - progresses[j]);
+              if (diff < baseThreshold || Math.abs(1 - diff) < baseThreshold) {
+                activeResonances.push([i, j, 'vortex']);
+                hasVortexResonance = true;
+                
+                // Update UI for vortex resonance
+                const element1 = document.getElementById(`legend-${CYCLES[i].length}`);
+                const element2 = document.getElementById(`legend-${CYCLES[j].length}`);
+                
+                if (element1) element1.classList.add('vortex-resonance');
+                if (element2) element2.classList.add('vortex-resonance');
               }
             }
           }
         }
       }
       
-      return activeResonances.length > 0;
+      // Fibonacci harmony checks
+      let hasFibonacciResonance = false;
+      if (settings.useFibonacci || settings.activeMode === 'fibonacci') {
+        for (let i = 0; i < CYCLES.length; i++) {
+          for (let j = i + 1; j < CYCLES.length; j++) {
+            // Check if either cycle is a Fibonacci number or close to one
+            const isFib1 = FIBONACCI.some(fib => Math.abs(CYCLES[i].length - fib) < 2);
+            const isFib2 = FIBONACCI.some(fib => Math.abs(CYCLES[j].length - fib) < 2);
+            
+            if (isFib1 || isFib2) {
+              // Calculate ratio to check for golden ratio (phi ≈ 1.618)
+              const ratio = CYCLES[i].length / CYCLES[j].length;
+              const isGoldenRatio = Math.abs(ratio - 1.618) < 0.1 || Math.abs(ratio - 0.618) < 0.1;
+              
+              if (isGoldenRatio) {
+                const diff = Math.abs(progresses[i] - progresses[j]);
+                if (diff < baseThreshold * 1.2 || Math.abs(1 - diff) < baseThreshold * 1.2) {
+                  activeResonances.push([i, j, 'fibonacci']);
+                  hasFibonacciResonance = true;
+                  
+                  // Update UI for fibonacci resonance
+                  const element1 = document.getElementById(`legend-${CYCLES[i].length}`);
+                  const element2 = document.getElementById(`legend-${CYCLES[j].length}`);
+                  
+                  if (element1) element1.classList.add('fibonacci-resonance');
+                  if (element2) element2.classList.add('fibonacci-resonance');
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Angel number checks
+      let hasAngelResonance = false;
+      CYCLES.forEach((cycle, i) => {
+        if (cycle.type === 'angel') {
+          // Check if angel cycle is at a key position
+          const progress = progresses[i];
+          const isActivated = [0, 0.5].some(pos => Math.abs(progress - pos) < baseThreshold / 2);
+          
+          if (isActivated) {
+            // Look for other resonating cycles
+            for (let j = 0; j < CYCLES.length; j++) {
+              if (i !== j) {
+                const diff = Math.abs(progresses[i] - progresses[j]);
+                if (diff < baseThreshold || Math.abs(1 - diff) < baseThreshold) {
+                  activeResonances.push([i, j, 'angel']);
+                  hasAngelResonance = true;
+                  
+                  // Update UI for angel resonance
+                  const element1 = document.getElementById(`legend-${CYCLES[i].length}`);
+                  const element2 = document.getElementById(`legend-${CYCLES[j].length}`);
+                  
+                  if (element1) element1.classList.add('angel-resonance');
+                  if (element2) element2.classList.add('angel-resonance');
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Standard resonance check for all cycles
+      for (let i = 0; i < progresses.length; i++) {
+        for (let j = i + 1; j < progresses.length; j++) {
+          const diff = Math.abs(progresses[i] - progresses[j]);
+          
+          if (diff < baseThreshold || Math.abs(1 - diff) < baseThreshold) {
+            // Check if this pair isn't already counted in a special resonance
+            const alreadyCounted = activeResonances.some(([x, y]) => 
+              (x === i && y === j) || (x === j && y === i)
+            );
+            
+            if (!alreadyCounted) {
+              activeResonances.push([i, j, 'standard']);
+            }
+          }
+        }
+      }
+      
+      // Calculate resonance score - weights different types
+      activeResonances.forEach(([i, j, type]) => {
+        const cycle1 = CYCLES[i];
+        const cycle2 = CYCLES[j];
+        
+        // Base score from cycle importance
+        let score = (cycle1.importance + cycle2.importance) / 20;
+        
+        // Adjust based on type
+        switch(type) {
+          case 'vortex':
+            score *= 1.3; // 30% boost for vortex resonance
+            break;
+          case 'fibonacci':
+            score *= 1.4; // 40% boost for fibonacci
+            break;
+          case 'angel':
+            score *= 1.2; // 20% boost for angel
+            break;
+        }
+        
+        resonanceScore += score;
+      });
+      
+      // Add bonus for multiple resonances
+      if (activeResonances.length >= 3) {
+        resonanceScore *= 1 + (activeResonances.length - 2) * 0.1;
+      }
+      
+      // Determine primary resonance type
+      if (hasVortexResonance) {
+        resonanceType = 'vortex';
+      } else if (hasFibonacciResonance) {
+        resonanceType = 'fibonacci';
+      } else if (hasAngelResonance) {
+        resonanceType = 'angel';
+      } else if (activeResonances.length > 0) {
+        resonanceType = 'normal';
+      } else {
+        resonanceType = 'none';
+      }
+      
+      // Update category counts
+      document.getElementById('long-count').textContent = `${activeCycleCounts.long} active`;
+      document.getElementById('medium-count').textContent = `${activeCycleCounts.medium} active`;
+      document.getElementById('short-count').textContent = `${activeCycleCounts.short} active`;
+      
+      // Update metrics display
+      document.getElementById('metric-resonance-value').textContent = resonanceScore.toFixed(1);
+      document.getElementById('metric-active-value').textContent = activeCycles.length;
+      
+      // Update metric highlights
+      document.getElementById('metric-resonance').classList.toggle('resonating', resonanceScore > 3);
+      document.getElementById('metric-active').classList.toggle('resonating', activeCycles.length > 3);
+      
+      // Update resonance history
+      resonanceHistory.shift();
+      resonanceHistory.push(resonanceScore);
+      updateHistoryChart();
+      
+      // Update score display
+      document.getElementById('resonance-score').textContent = resonanceScore.toFixed(1);
+      document.getElementById('resonance-score').classList.toggle('active', resonanceScore > 0);
+      
+      // Update mini display
+      document.getElementById('mini-score').textContent = Math.round(resonanceScore * 10) / 10;
+      
+      // Return resonance state
+      return {
+        hasResonance: activeResonances.length > 0,
+        type: resonanceType, 
+        score: resonanceScore
+      };
     }
     
-    function spawnParticle(x, y, hue) {
+    function spawnParticle(x, y, hue, size = null, speed = null) {
+      // Skip particles in power-saving mode
+      if (settings.powerSaving && Math.random() > 0.3) return;
+      
+      const baseSize = size || (Math.random() * 2 + 1);
+      const baseSpeed = speed || 1;
+      
       particles.push({
         x,
         y,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: (Math.random() - 0.5) * 1.5,
-        size: Math.random() * 2 + 1,
+        vx: (Math.random() - 0.5) * 1.5 * baseSpeed,
+        vy: (Math.random() - 0.5) * 1.5 * baseSpeed,
+        size: baseSize,
         hue,
         life: 1
       });
       
-      // Limit particles for mobile
-      if (particles.length > 40) {
-        particles.splice(0, particles.length - 40);
+      // Limit particles based on power-saving mode
+      const limit = settings.powerSaving ? 25 : 50;
+      if (particles.length > limit) {
+        particles.splice(0, particles.length - limit);
       }
     }
     
     function animate(timestamp) {
-      // Limit update rate for mobile
-      if (timestamp - lastFrameTime < 33) { // ~30fps target
+      // Limit update rate
+      const targetFps = settings.powerSaving ? 30 : 60;
+      const frameLimit = 1000 / targetFps;
+      
+      if (timestamp - lastFrameTime < frameLimit) {
         requestAnimationFrame(animate);
         return;
       }
       lastFrameTime = timestamp;
       
       // Clear with black background
-      cycleCtx.fillStyle = '#000000';
+      cycleCtx.fillStyle = document.body.classList.contains('light-theme') ? '#f0f0f0' : '#000000';
       cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
       
-      // Check for resonance early to minimize calculations
-      const hasResonance = checkResonance();
+      // Check for resonance
+      const resonanceState = checkResonance();
       
       // Draw cycles
       const cx = cycleWidth / 2;
       const cy = cycleHeight / 2;
       
-      // Draw each cycle ring with performance optimizations
-      const maxVisibleCycles = Math.min(CYCLES.length, 12); // Limit visible cycles on mobile
+      // Apply visual mode adjustments
+      let maxVisibleCycles = CYCLES.length;
+      if (settings.powerSaving) {
+        maxVisibleCycles = Math.min(CYCLES.length, 10);
+      }
       
+      // Update UI based on resonance
+      document.getElementById('background-pulse').classList.toggle('active', resonanceState.hasResonance);
+      
+      // Update logo container class based on resonance type
+      const logoContainer = document.getElementById('logo-container');
+      logoContainer.className = 'logo-container';
+      if (resonanceState.hasResonance) {
+        logoContainer.classList.add(resonanceState.type);
+      }
+      
+      // Calculate modeCyclesOnly based on active mode
+      let modeCyclesOnly = false;
+      let specialTypeFilter = null;
+      
+      switch(settings.activeMode) {
+        case 'vortex':
+          specialTypeFilter = 'vortex';
+          modeCyclesOnly = resonanceState.score > 1; // Only filter when significant resonance
+          break;
+        case 'fibonacci':
+          modeCyclesOnly = resonanceState.score > 1.5;
+          break;
+      }
+      
+      // Draw each cycle ring with performance optimizations
       for (let i = 0; i < maxVisibleCycles; i++) {
         const cycle = CYCLES[i];
+        
+        // Skip certain cycles in specialized modes when resonating
+        if (modeCyclesOnly) {
+          if (specialTypeFilter && cycle.type !== specialTypeFilter && !activeCycles.includes(i)) {
+            continue;
+          }
+          
+          if (settings.activeMode === 'fibonacci') {
+            const isFib = FIBONACCI.some(fib => Math.abs(cycle.length - fib) < 2);
+            if (!isFib && !activeCycles.includes(i)) {
+              continue;
+            }
+          }
+        }
+        
         const progress = (time % cycle.length) / cycle.length;
         const radius = getCycleRadius(i);
         const angle = progress * 2 * Math.PI;
         const hue = cycle.hue;
-        const color = `hsl(${hue}, 100%, 50%)`;
         
-        // Draw circle (simplified)
+        let color, ringOpacity;
+        
+        // Determine color and opacity based on cycle type and mode
+        if (settings.activeMode === 'vortex' && cycle.type === 'vortex') {
+          color = `hsl(${hue}, 100%, 55%)`;
+          ringOpacity = 0.6;
+        } else if (settings.activeMode === 'fibonacci' && FIBONACCI.some(fib => Math.abs(cycle.length - fib) < 2)) {
+          color = `hsl(${hue}, 100%, 55%)`;
+          ringOpacity = 0.6;
+        } else {
+          color = `hsl(${hue}, 100%, 50%)`;
+          ringOpacity = activeCycles.includes(i) ? 0.7 : 0.4;
+        }
+        
+        // Draw circle 
         cycleCtx.beginPath();
         cycleCtx.arc(cx, cy, radius, 0, 2 * Math.PI);
-        cycleCtx.strokeStyle = `hsla(${hue}, 100%, 30%, 0.4)`;
+        cycleCtx.strokeStyle = `hsla(${hue}, 100%, 30%, ${ringOpacity - 0.1})`;
         cycleCtx.lineWidth = 1;
         cycleCtx.stroke();
         
-        // Draw progress arc (simplified)
+        // Draw progress arc
         cycleCtx.beginPath();
         cycleCtx.arc(cx, cy, radius, 0, angle);
         cycleCtx.strokeStyle = color;
-        cycleCtx.lineWidth = 2;
+        cycleCtx.lineWidth = activeCycles.includes(i) ? 3 : 2;
         cycleCtx.stroke();
         
-        // Draw marker
+        // Draw marker with enhanced styling
         const mx = cx + Math.cos(angle) * radius;
         const my = cy + Math.sin(angle) * radius;
+        
+        // Draw glow effect for active cycles
+        if (activeCycles.includes(i) && !settings.powerSaving) {
+          cycleCtx.beginPath();
+          cycleCtx.arc(mx, my, 6, 0, 2 * Math.PI);
+          cycleCtx.fillStyle = 'rgba(255,255,255,0.3)';
+          cycleCtx.fill();
+        }
+        
         cycleCtx.beginPath();
-        cycleCtx.arc(mx, my, 3, 0, 2 * Math.PI);
-        cycleCtx.fillStyle = '#fff';
+        cycleCtx.arc(mx, my, 4, 0, 2 * Math.PI);
+        
+        // Special marker colors based on cycle type
+        let markerColor;
+        
+        if (activeCycles.includes(i)) {
+          if (cycle.type === 'vortex') {
+            markerColor = 'rgb(255,51,153)';
+          } else if (cycle.type === 'angel') {
+            markerColor = 'rgb(255,204,0)';
+          } else if (cycle.type === 'meme') {
+            markerColor = 'rgb(0,204,255)';
+          } else if (cycle.type === 'ftd') {
+            markerColor = 'rgb(255,119,0)';
+          } else {
+            markerColor = 'rgb(0,255,204)';
+          }
+        } else {
+          markerColor = document.body.classList.contains('light-theme') ? '#333' : '#fff';
+        }
+        
+        cycleCtx.fillStyle = markerColor;
         cycleCtx.fill();
+        
+        // Add mini-label for cycle length if activated
+        if (activeCycles.includes(i) && !settings.powerSaving) {
+          const labelX = cx + Math.cos(angle) * (radius + 15);
+          const labelY = cy + Math.sin(angle) * (radius + 15);
+          
+          cycleCtx.fillStyle = document.body.classList.contains('light-theme') ? '#333' : '#fff';
+          cycleCtx.font = '10px Arial';
+          cycleCtx.textAlign = 'center';
+          cycleCtx.textBaseline = 'middle';
+          cycleCtx.fillText(cycle.length.toString(), labelX, labelY);
+        }
+        
+        // Spawn particles on active cycles occasionally
+        if (activeCycles.includes(i) && Math.random() < 0.1 && !settings.powerSaving) {
+          spawnParticle(mx, my, hue);
+        }
       }
       
-      // Handle resonances (simplified for mobile)
-      if (hasResonance) {
-        // Toggle logo
-        document.getElementById('logo-container').classList.add('resonating');
+      // Draw resonance connections with enhanced effects
+      for (let idx = 0; idx < activeResonances.length; idx++) {
+        const [i, j, type] = activeResonances[idx];
+        const cycle1 = CYCLES[i];
+        const cycle2 = CYCLES[j];
         
-        // Draw resonance connections (limited for performance)
-        const maxLines = Math.min(activeResonances.length, 5); // Limit connections
+        // Skip if cycle indices are out of visible range
+        if (i >= maxVisibleCycles || j >= maxVisibleCycles) continue;
         
-        for (let idx = 0; idx < maxLines; idx++) {
-          const [i, j] = activeResonances[idx];
+        // Calculate position on rings
+        const prog1 = (time % cycle1.length) / cycle1.length;
+        const prog2 = (time % cycle2.length) / cycle2.length;
+        
+        const radius1 = getCycleRadius(i);
+        const radius2 = getCycleRadius(j);
+        
+        const angle1 = prog1 * 2 * Math.PI;
+        const angle2 = prog2 * 2 * Math.PI;
+        
+        const x1 = cx + Math.cos(angle1) * radius1;
+        const y1 = cy + Math.sin(angle1) * radius1;
+        const x2 = cx + Math.cos(angle2) * radius2;
+        const y2 = cy + Math.sin(angle2) * radius2;
+        
+        // Draw connection line with styling based on type
+        let lineColor, lineWidth, drawCurved = false;
+        
+        switch(type) {
+          case 'vortex':
+            lineColor = dynamicColors.vortex;
+            lineWidth = 2;
+            drawCurved = true;
+            break;
+          case 'fibonacci':
+            lineColor = dynamicColors.fibonacci;
+            lineWidth = 2;
+            drawCurved = true;
+            break;
+          case 'angel':
+            lineColor = dynamicColors.angel;
+            lineWidth = 2;
+            drawCurved = false;
+            break;
+          default:
+            lineColor = dynamicColors.resonance;
+            lineWidth = 1.5;
+            drawCurved = false;
+        }
+        
+        // Pulse effect for the line
+        const pulsePhase = (time * 5) % Math.PI;
+        const pulseScale = Math.sin(pulsePhase) * 0.5 + 1.5;
+        
+        if (drawCurved && !settings.powerSaving) {
+          // Draw curved path
+          const midX = (x1 + x2) / 2;
+          const midY = (y1 + y2) / 2;
+          const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
           
-          // Skip if indices are out of visible range
-          if (i >= maxVisibleCycles || j >= maxVisibleCycles) continue;
+          // Perpendicular offset
+          const perpX = -(y2 - y1) / distance * (distance * 0.3);
+          const perpY = (x2 - x1) / distance * (distance * 0.3);
           
-          const cycle1 = CYCLES[i];
-          const cycle2 = CYCLES[j];
+          const ctrlX = midX + perpX;
+          const ctrlY = midY + perpY;
           
-          // Calculate position on rings
-          const prog1 = (time % cycle1.length) / cycle1.length;
-          const prog2 = (time % cycle2.length) / cycle2.length;
+          cycleCtx.beginPath();
+          cycleCtx.moveTo(x1, y1);
+          cycleCtx.quadraticCurveTo(ctrlX, ctrlY, x2, y2);
           
-          const radius1 = getCycleRadius(i);
-          const radius2 = getCycleRadius(j);
+          // Only add glow for high scores
+          if (resonanceScore > 4 && !settings.powerSaving) {
+            cycleCtx.shadowColor = lineColor;
+            cycleCtx.shadowBlur = 10;
+          }
           
-          const angle1 = prog1 * 2 * Math.PI;
-          const angle2 = prog2 * 2 * Math.PI;
+          cycleCtx.strokeStyle = lineColor;
+          cycleCtx.lineWidth = lineWidth * pulseScale;
+          cycleCtx.stroke();
+          cycleCtx.shadowBlur = 0;
           
-          const x1 = cx + Math.cos(angle1) * radius1;
-          const y1 = cy + Math.sin(angle1) * radius1;
-          const x2 = cx + Math.cos(angle2) * radius2;
-          const y2 = cy + Math.sin(angle2) * radius2;
-          
-          // Draw simplified connection
+          // Add particles along curve
+          if (Math.random() < 0.3 && !settings.powerSaving) {
+            const t = Math.random();
+            const particleX = Math.pow(1-t, 2) * x1 + 2 * (1-t) * t * ctrlX + Math.pow(t, 2) * x2;
+            const particleY = Math.pow(1-t, 2) * y1 + 2 * (1-t) * t * ctrlY + Math.pow(t, 2) * y2;
+            
+            let particleHue;
+            if (type === 'vortex') particleHue = 330;
+            else if (type === 'fibonacci') particleHue = 270;
+            else particleHue = cycle1.hue;
+            
+            spawnParticle(particleX, particleY, particleHue);
+          }
+        } else {
+          // Draw straight line
           cycleCtx.beginPath();
           cycleCtx.moveTo(x1, y1);
           cycleCtx.lineTo(x2, y2);
-          cycleCtx.strokeStyle = 'rgba(0, 255, 204, 0.6)';
-          cycleCtx.lineWidth = 1.5;
+          
+          if (resonanceScore > 4 && !settings.powerSaving) {
+            cycleCtx.shadowColor = lineColor;
+            cycleCtx.shadowBlur = 8;
+          }
+          
+          cycleCtx.strokeStyle = lineColor;
+          cycleCtx.lineWidth = lineWidth * (settings.powerSaving ? 1 : pulseScale);
           cycleCtx.stroke();
+          cycleCtx.shadowBlur = 0;
           
-          // Add minimal particles
-          if (Math.random() < 0.1) {
-            const midX = (x1 + x2) / 2;
-            const midY = (y1 + y2) / 2;
-            spawnParticle(midX, midY, Math.random() * 360);
-          }
-          
-          // Highlight resonating cycles in the legend
-          const item1 = document.getElementById(`legend-${cycle1.length}`);
-          const item2 = document.getElementById(`legend-${cycle2.length}`);
-          
-          if (item1) item1.classList.add('resonating');
-          if (item2) item2.classList.add('resonating');
-        }
-        
-        // Update resonance indicator text
-        document.getElementById('resonance-indicator').textContent = `Resonance: ${activeResonances.length} Active`;
-        document.getElementById('resonance-indicator').classList.add('active');
-        
-        // Show notification for new resonances
-        const now = performance.now();
-        if (now - lastResonanceTime > 5000) {
-          lastResonanceTime = now;
-          showNotification(`Resonance Detected: ${activeResonances.length} cycles`);
-          if (!settings.muteSound) {
-            SoundManager.playTone(261.63, 0.3); // C4
-            setTimeout(() => SoundManager.playTone(392.00, 0.3), 300); // G4
+          // Add particles along line
+          if (Math.random() < 0.2 && !settings.powerSaving) {
+            const t = Math.random();
+            const particleX = x1 + t * (x2 - x1);
+            const particleY = y1 + t * (y2 - y1);
+            spawnParticle(particleX, particleY, cycle1.hue);
           }
         }
-      } else {
-        // Reset indicators
-        document.getElementById('resonance-indicator').textContent = "Resonance: Off";
-        document.getElementById('resonance-indicator').classList.remove('active');
-        document.getElementById('logo-container').classList.remove('resonating');
-        
-        // Reset cycle items
-        document.querySelectorAll('.cycle-item').forEach(item => {
-          item.classList.remove('resonating');
-        });
       }
       
-      // Handle particles (simplified)
+      // Handle particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.05; // Faster decay for mobile
+        p.life -= settings.powerSaving ? 0.07 : 0.04; // Faster decay in power saving
         
         if (p.life <= 0) {
           particles.splice(i, 1);
         } else {
+          // Skip some particles in power saving mode
+          if (settings.powerSaving && i % 2 === 0) continue;
+          
           cycleCtx.beginPath();
           cycleCtx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
           cycleCtx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.life})`;
@@ -1236,32 +2708,83 @@ input:checked + .toggle-slider:before {
         }
       }
       
+      // Check for significant resonance event
+      if (resonanceState.score > 5 && resonanceState.type !== 'none') {
+        const now = performance.now();
+        if (now - lastResonanceTime > 3000) {
+          lastResonanceTime = now;
+          
+          // Calculate which cycles are resonating
+          const resonatingPairs = activeResonances.map(([i, j]) => 
+            `${CYCLES[i].length} & ${CYCLES[j].length}`
+          );
+          
+          let uniquePairs = [...new Set(resonatingPairs)];
+          let pairsStr = uniquePairs.length > 2 
+            ? `${uniquePairs.slice(0, 2).join(', ')} +${uniquePairs.length - 2} more`
+            : uniquePairs.join(', ');
+          
+          const notifMsg = `${resonanceState.type.charAt(0).toUpperCase() + resonanceState.type.slice(1)} Resonance: ${pairsStr}`;
+          
+          // Show notification
+          showNotification(notifMsg, resonanceState.type, 5000);
+          
+          // Play appropriate sound
+          if (!settings.powerSaving) {
+            SoundManager.playResonanceChord(resonanceState.type);
+          }
+          
+          // Store event in history
+          if (settings.lastResonanceEvents) {
+            settings.lastResonanceEvents.push({
+              type: resonanceState.type,
+              score: resonanceState.score,
+              time: time,
+              cycles: pairsStr
+            });
+            
+            // Keep only last 10 events
+            if (settings.lastResonanceEvents.length > 10) {
+              settings.lastResonanceEvents.shift();
+            }
+            
+            saveSettings();
+          }
+          
+          // Refresh predictions after significant event
+          refreshPredictions();
+        }
+      }
+      
       // Update time if not paused
       if (!isPaused) {
         time += speedMultiplier;
-        
-        // Only update date occasionally
-        if (Math.random() < 0.1) {
-          updateDateDisplay();
-        }
+        updateDateDisplay();
       }
       
       requestAnimationFrame(animate);
     }
     
+    // ADVANCED APPLICATION INITIALIZATION
     function startApp() {
       try {
         // Load settings
         settings = loadSettings();
-        document.documentElement.classList.toggle('light-theme', settings.lightTheme);
-        document.getElementById('theme-toggle').textContent = settings.lightTheme ? '🌙' : '☀️';
         
-        // Apply UI state
+        // Apply theme and UI state
+        applyTheme(settings.theme || 'dark');
+        document.body.classList.toggle('mini-mode', settings.miniMode);
+        document.body.classList.toggle('power-saver', settings.powerSaving);
+        
         if (settings.legendOpen) {
           document.getElementById('legend').classList.add('open');
         }
         
         document.getElementById('useFibonacci').checked = settings.useFibonacci;
+        document.getElementById('powerSaving').checked = settings.powerSaving;
+        
+        // Set active mode
+        setActiveMode(settings.activeMode || 'standard');
         
         // Setup UI
         updateDateDisplay();
@@ -1269,7 +2792,7 @@ input:checked + .toggle-slider:before {
         // Initialize controls
         initializeControls();
         
-        // Start canvas animations with error handling
+        // Start canvas animations
         if (setupCanvas()) {
           window.animationRunning = true;
           requestAnimationFrame(animate);
@@ -1284,19 +2807,19 @@ input:checked + .toggle-slider:before {
         document.getElementById('loading').classList.add('done');
         clearTimeout(loadingTimeout);
         
-        // Welcome notification after a slight delay
+        // Welcome notification
         setTimeout(() => {
-          showNotification("GME Cycle Resonator Loaded");
-        }, 800);
+          showNotification("GME Cycle Resonator Pro initialized", "info", 3000);
+        }, 500);
       } catch (e) {
         console.error("Initialization error:", e);
         document.getElementById('loading').classList.add('done');
         clearTimeout(loadingTimeout);
-        showNotification("Initialization error: " + e.message, "error");
+        showNotification("Initialization error: " + e.message, "error", 5000);
       }
     }
     
-    // Start the application with a slight delay
+    // Start the application with a slight delay for better loading experience
     document.addEventListener('DOMContentLoaded', function() {
       setTimeout(startApp, 500);
     });
