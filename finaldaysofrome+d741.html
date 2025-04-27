@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="GME Cycle Resonator -- Squeeze Mechanics & Temporal Harmonics" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#000000" />
+  <title>GME Cycle Resonator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+:root{
+  --bg-color:#0b0b0b;
+  --text-color:#fff;
+  --panel-bg:rgba(11,11,11,.90);
+  --highlight:#00ffcc;
+  --secondary-highlight:#ff3399;
+  --control-bg:rgba(26,26,26,.8);
+  --control-border:rgba(255,255,255,.1);
+  --resonance-color:rgba(0,255,204,0.6);
+  --resonance-glow:0 0 15px rgba(0,255,204,0.6);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overscroll-behavior:none}
+body{
+  background:var(--bg-color);
+  color:var(--text-color);
+  font-family:'Inter',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  font-size:14px;
+  line-height:1.5;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.control-button {
+  position: fixed;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  color: var(--text-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  z-index: 100;
+}
+
+.theme-toggle {
+  top: 15px;
+  right: 15px;
+}
+
+.help-button {
+  top: 15px;
+  left: 15px;
+}
+
+.toggle-legend {
+  bottom: 80px;
+  right: 15px;
+}
+
+#cycleCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  touch-action: none;
+}
+
+.controls-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--panel-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 5px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0,255,204,.2);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.button-control {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  color: var(--text-color);
+  border-radius: 50%;
+  font-size: 18px;
+}
+
+.date-display {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 5px 10px;
+  background: rgba(0,0,0,.3);
+  border-radius: 6px;
+  min-width: 120px;
+}
+
+.time-speed {
+  background: var(--highlight);
+  color: #000;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  min-width: 60px;
+}
+
+.logo-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 5;
+  pointer-events: none;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-container img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.logo-container.resonating img {
+  animation: pulse-logo 2s infinite ease-in-out;
+  box-shadow: 0 0 30px var(--resonance-color);
+}
+
+@keyframes pulse-logo {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.notification {
+  position: fixed;
+  bottom: 75px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel-bg);
+  color: var(--text-color);
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 100;
+  max-width: 90%;
+  width: 300px;
+  text-align: center;
+  opacity: 0;
+  transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275),opacity .4s;
+  pointer-events: none;
+  border: 1px solid rgba(0,255,204,.2);
+  font-weight: 500;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.scrub-indicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,255,204,0.15);
+  border: 2px solid var(--highlight);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: var(--resonance-glow);
+}
+
+.scrub-indicator.active {
+  opacity: 1;
+}
+
+.scrub-direction {
+  font-size: 40px;
+  color: var(--highlight);
+}
+
+.loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .5s;
+}
+
+.loading.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid transparent;
+  border-top-color: var(--highlight);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.loading-progress {
+  width: 80%;
+  max-width: 250px;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  margin-top: 20px;
+  overflow: hidden;
+}
+
+.loading-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--highlight);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.legend {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 60px;
+  padding: 10px;
+  background: var(--panel-bg);
+  border-radius: 15px 15px 0 0;
+  z-index: 9;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  border-top: 1px solid rgba(0,255,204,.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.legend.open {
+  transform: translateY(0);
+}
+
+.legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--highlight);
+  text-align: center;
+  height: 40px;
+  width: 100%;
+  position: relative;
+  position: sticky;
+  top: 0;
+  background: var(--panel-bg);
+  z-index: 2;
+}
+
+.legend-indicator {
+  font-size: .9rem;
+  color: var(--highlight);
+  min-height: 1.2em;
+  padding: 8px 12px;
+  background: rgba(0,0,0,.2);
+  border-radius: 6px;
+  width: 100%;
+  text-align: center;
+  transition: all .3s;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.legend-indicator.active {
+  color: #fff;
+  background: rgba(0,255,204,0.3);
+  box-shadow: 0 2px 8px rgba(0,255,204,0.3);
+  animation: pulse-indicator 2s infinite;
+}
+
+@keyframes pulse-indicator {
+  0%, 100% { background: rgba(0,255,204,0.3); }
+  50% { background: rgba(0,255,204,0.5); }
+}
+
+.legend-section {
+  margin-bottom: 15px;
+}
+
+.legend-section-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--secondary-highlight);
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+}
+
+.cycle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding-bottom: 5px;
+}
+
+.cycle-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,.2);
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.cycle-item.resonating {
+  background: rgba(0,255,204,0.15);
+  box-shadow: 0 0 10px rgba(0,255,204,0.4);
+}
+
+.cycle-dot {
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0,0,0,.3);
+  flex-shrink: 0;
+}
+
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 26px;
+  margin-left: 10px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,.4);
+  transition: .4s;
+  border-radius: 34px;
+  border: 1px solid var(--control-border);
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--highlight);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+  </style>
+</head>
+
+<body>
+  <!-- FLOATING CONTROL BUTTONS -->
+  <button class="control-button theme-toggle" id="theme-toggle" title="Toggle light/dark theme">☀️</button>
+  <button class="control-button help-button" id="help-button" title="Help">?</button>
+  <button class="control-button toggle-legend" id="toggle-legend" title="Toggle legend">🔍</button>
+  
+  <!-- SCRUBBING INDICATORS -->
+  <div class="scrub-indicator" id="scrub-indicator">
+    <div class="scrub-direction" id="scrub-direction"></div>
+  </div>
+  
+  <!-- MAIN CONTAINER -->
+  <main id="container">
+    <!-- LOADING -->
+    <div class="loading" id="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Initializing GME Cycle Resonator</div>
+      <div class="loading-progress">
+        <div class="loading-progress-bar" id="loading-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- CANVAS -->
+    <canvas id="cycleCanvas"></canvas>
+    
+    <!-- SIMPLIFIED CONTROLS BAR -->
+    <div class="controls-bar" id="controls-bar">
+      <div class="control-group">
+        <button class="button-control" id="pause-btn" title="Pause/resume">⏯️</button>
+        <button class="button-control" id="reset-btn" title="Reset">🔄</button>
+      </div>
+      
+      <div class="date-display" id="date-display">Jan 28, 2021</div>
+      
+      <div class="control-group">
+        <button class="button-control" id="speed-down-btn" title="Slower">⏪</button>
+        <div class="time-speed" id="time-speed">0.05x</div>
+        <button class="button-control" id="speed-up-btn" title="Faster">⏩</button>
+      </div>
+    </div>
+
+    <!-- LOGO & EMOJI -->
+    <div class="logo-container" id="logo-container">
+      <img id="custom-logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjkwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNiIgLz48cGF0aCBkPSJNNTAgMTAwaDEwME0xMDAgNTB2MTAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjI1IiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48cGF0aCBkPSJNNjAgMTQwbDgwLTgwTTE0MCA2MEw2MCAxNDAiIHN0cm9rZT0iI2ZmMzM5OSIgc3Ryb2tlLXdpZHRoPSIzIiAvPjwvc3ZnPg==" alt="GME Logo">
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div class="notification" id="notification"></div>
+
+    <!-- LEGEND -->
+    <div class="legend" id="legend">
+      <div class="legend-header" id="legend-header">🧿 GME Resonance Cycles</div>
+      <div class="legend-content">
+        <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+        
+        <div class="toggle-wrapper">
+          <span>Fibonacci Harmony</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="useFibonacci">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="legend-section">
+          <div class="legend-section-title">Long Cycles</div>
+          <div class="cycle-grid">
+            <div class="cycle-item" id="legend-1667" data-cycle="1667">
+              <span class="cycle-dot" style="background:hsl(340,100%,50%)"></span>
+              1667: Harmonic
+            </div>
+            <div class="cycle-item" id="legend-1482" data-cycle="1482">
+              <span class="cycle-dot" style="background:hsl(320,100%,50%)"></span>
+              1482: Vortex
+            </div>
+            <div class="cycle-item" id="legend-1428" data-cycle="1428">
+              <span class="cycle-dot" style="background:hsl(300,100%,50%)"></span>
+              1428: Vortex
+            </div>
+            <div class="cycle-item" id="legend-1000" data-cycle="1000">
+              <span class="cycle-dot" style="background:hsl(280,100%,50%)"></span>
+              1000: Angel
+            </div>
+          </div>
+        </div>
+        
+        <div class="legend-section">
+          <div class="legend-section-title">Medium Cycles</div>
+          <div class="cycle-grid">
+            <div class="cycle-item" id="legend-833" data-cycle="833">
+              <span class="cycle-dot" style="background:hsl(260,100%,50%)"></span>
+              833: Special
+            </div>
+            <div class="cycle-item" id="legend-741" data-cycle="741">
+              <span class="cycle-dot" style="background:hsl(240,100%,50%)"></span>
+              741: Infinity
+            </div>
+            <div class="cycle-item" id="legend-714" data-cycle="714">
+              <span class="cycle-dot" style="background:hsl(220,100%,50%)"></span>
+              714: Squeeze
+            </div>
+            <div class="cycle-item" id="legend-471" data-cycle="471">
+              <span class="cycle-dot" style="background:hsl(200,100%,50%)"></span>
+              471: Pattern
+            </div>
+            <div class="cycle-item" id="legend-420" data-cycle="420">
+              <span class="cycle-dot" style="background:hsl(180,100%,50%)"></span>
+              420: Meme
+            </div>
+            <div class="cycle-item" id="legend-417" data-cycle="417">
+              <span class="cycle-dot" style="background:hsl(160,100%,50%)"></span>
+              417: Angel
+            </div>
+          </div>
+        </div>
+        
+        <div class="legend-section">
+          <div class="legend-section-title">Short Cycles</div>
+          <div class="cycle-grid">
+            <div class="cycle-item" id="legend-240" data-cycle="240">
+              <span class="cycle-dot" style="background:hsl(140,100%,50%)"></span>
+              240: Options
+            </div>
+            <div class="cycle-item" id="legend-109" data-cycle="109">
+              <span class="cycle-dot" style="background:hsl(120,100%,50%)"></span>
+              109: Angel
+            </div>
+            <div class="cycle-item" id="legend-69" data-cycle="69">
+              <span class="cycle-dot" style="background:hsl(100,100%,50%)"></span>
+              69: Meme
+            </div>
+            <div class="cycle-item" id="legend-55" data-cycle="55">
+              <span class="cycle-dot" style="background:hsl(80,100%,50%)"></span>
+              55: FOMO
+            </div>
+            <div class="cycle-item" id="legend-42" data-cycle="42">
+              <span class="cycle-dot" style="background:hsl(60,100%,50%)"></span>
+              42: Answer
+            </div>
+            <div class="cycle-item" id="legend-36" data-cycle="36">
+              <span class="cycle-dot" style="background:hsl(40,100%,50%)"></span>
+              36: T+2/T+35
+            </div>
+            <div class="cycle-item" id="legend-35" data-cycle="35">
+              <span class="cycle-dot" style="background:hsl(20,100%,50%)"></span>
+              35: FTD
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Error tracking and reporting
+    window.onerror = function(msg, url, line, col, error) {
+      console.log("Error caught:", msg);
+      showNotification("Error detected: " + msg.substring(0, 50), "error");
+      return false;
+    };
+    
+    // Simple loading sequence
+    let loadingTimeout;
+    function startLoading() {
+      const bar = document.getElementById('loading-progress-bar');
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 5;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          window.isLoadingComplete = true;
+        }
+        bar.style.width = `${progress}%`;
+      }, 50);
+      
+      loadingTimeout = setTimeout(() => {
+        if (!window.isLoadingComplete) {
+          document.getElementById('loading').classList.add('done');
+          window.isLoadingComplete = true;
+        }
+      }, 3000);
+    }
+    
+    // Start loading animation immediately
+    startLoading();
+    
+    // Settings management
+    const DEFAULT_SETTINGS = {
+      lightTheme: false,
+      useFibonacci: false,
+      muteSound: false,
+      legendOpen: false
+    };
+    
+    let settings = DEFAULT_SETTINGS;
+    
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem("gmeResonatorSettings");
+        return saved ? {...DEFAULT_SETTINGS, ...JSON.parse(saved)} : DEFAULT_SETTINGS;
+      } catch (e) {
+        console.log("Using default settings");
+        return DEFAULT_SETTINGS;
+      }
+    }
+    
+    function saveSettings() {
+      try {
+        settings.useFibonacci = document.getElementById('useFibonacci').checked;
+        settings.legendOpen = document.getElementById('legend').classList.contains('open');
+        localStorage.setItem("gmeResonatorSettings", JSON.stringify(settings));
+      } catch (e) {
+        console.log("Settings save error:", e);
+      }
+    }
+    
+    // Simple sound system
+    const SoundManager = {
+      context: null,
+      muted: false,
+      initialized: false,
+      
+      init() {
+        if (this.initialized) return true;
+        
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) {
+            console.log("Web Audio API not supported");
+            return false;
+          }
+          
+          this.context = new AudioContext();
+          this.initialized = true;
+          return true;
+        } catch (e) {
+          console.log("Audio initialization error:", e);
+          return false;
+        }
+      },
+      
+      unlock() {
+        if (!this.initialized) {
+          this.init();
+        }
+        
+        if (this.context && this.context.state === 'suspended') {
+          this.context.resume();
+        }
+      },
+      
+      playTone(frequency, duration = 0.2, volume = 0.3) {
+        if (settings.muteSound) return;
+        if (!this.initialized) return;
+        
+        try {
+          const oscillator = this.context.createOscillator();
+          oscillator.type = 'sine';
+          oscillator.frequency.value = frequency;
+          
+          const gainNode = this.context.createGain();
+          gainNode.gain.value = volume;
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(this.context.destination);
+          
+          const now = this.context.currentTime;
+          oscillator.start(now);
+          oscillator.stop(now + duration);
+          
+          oscillator.onended = () => {
+            oscillator.disconnect();
+            gainNode.disconnect();
+          };
+        } catch (e) {
+          console.log("Error playing tone:", e);
+        }
+      }
+    };
+    
+    // Timeline scrubbing
+    const TimelineScrubber = {
+      isDragging: false,
+      startX: 0,
+      lastX: 0,
+      sensitivity: 0.3,
+      direction: 0,
+      indicator: null,
+      directionElement: null,
+      
+      init() {
+        this.indicator = document.getElementById('scrub-indicator');
+        this.directionElement = document.getElementById('scrub-direction');
+        
+        document.addEventListener('touchstart', this.onStart.bind(this), { passive: true });
+        document.addEventListener('touchmove', this.onMove.bind(this), { passive: true });
+        document.addEventListener('touchend', this.onEnd.bind(this), { passive: true });
+      },
+      
+      onStart(event) {
+        const target = event.target;
+        if (target.id !== 'cycleCanvas') return;
+        
+        this.startX = event.touches[0].clientX;
+        this.lastX = this.startX;
+        
+        this.isDragging = true;
+        this.direction = 0;
+        
+        if (!isPaused) {
+          window.wasPlaying = true;
+          togglePause();
+        } else {
+          window.wasPlaying = false;
+        }
+        
+        SoundManager.unlock();
+      },
+      
+      onMove(event) {
+        if (!this.isDragging) return;
+        
+        const currentX = event.touches[0].clientX;
+        const deltaX = currentX - this.lastX;
+        this.lastX = currentX;
+        
+        if (deltaX > 0) {
+          this.direction = 1;
+          this.directionElement.textContent = '→';
+        } else if (deltaX < 0) {
+          this.direction = -1;
+          this.directionElement.textContent = '←';
+        }
+        
+        if (this.direction !== 0) {
+          const moveAmount = Math.abs(deltaX) * this.sensitivity;
+          time += moveAmount * this.direction;
+          
+          if (time < 0) time = 0;
+          
+          updateDateDisplay();
+          this.updateIndicator(true);
+        }
+      },
+      
+      onEnd() {
+        if (!this.isDragging) return;
+        
+        this.isDragging = false;
+        setTimeout(() => {
+          this.updateIndicator(false);
+        }, 200);
+        
+        if (window.wasPlaying) {
+          togglePause();
+        }
+      },
+      
+      updateIndicator(show = true) {
+        if (show) {
+          this.indicator.classList.add('active');
+        } else {
+          this.indicator.classList.remove('active');
+        }
+      }
+    };
+    
+    // Core visualization
+    let cycleCanvas, cycleCtx;
+    let cycleWidth, cycleHeight;
+    let time = 0;
+    let isPaused = false;
+    let speedMultiplier = 0.05;
+    let lastFrameTime = 0;
+    let activeResonances = [];
+    let lastResonanceTime = 0;
+    let particles = [];
+    
+    // Define cycles with Fibonacci sequence considerations
+    const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597];
+    
+    const CYCLES = [
+      // Long Cycles
+      { name: "1667: Harmonic", length: 1667, hue: 340, importance: 10, type: "vortex" },
+      { name: "1482: Vortex", length: 1482, hue: 320, importance: 9, type: "vortex" },
+      { name: "1428: Vortex", length: 1428, hue: 300, importance: 9, type: "vortex" },
+      { name: "1000: Angel", length: 1000, hue: 280, importance: 8, type: "angel" },
+      
+      // Medium Cycles
+      { name: "833: Special", length: 833, hue: 260, importance: 7, type: "vortex" },
+      { name: "741: Infinity", length: 741, hue: 240, importance: 10, type: "vortex" },
+      { name: "714: Squeeze", length: 714, hue: 220, importance: 8, type: "squeeze" },
+      { name: "471: Pattern", length: 471, hue: 200, importance: 7, type: "pattern" },
+      { name: "420: Meme", length: 420, hue: 180, importance: 8, type: "meme" },
+      { name: "417: Angel", length: 417, hue: 160, importance: 9, type: "angel" },
+      
+      // Short Cycles
+      { name: "240: Options", length: 240, hue: 140, importance: 7, type: "options" },
+      { name: "109: Angel", length: 109, hue: 120, importance: 8, type: "angel" },
+      { name: "69: Meme", length: 69, hue: 100, importance: 7, type: "meme" },
+      { name: "55: FOMO", length: 55, hue: 80, importance: 8, type: "fomo" },
+      { name: "42: Answer", length: 42, hue: 60, importance: 7, type: "vortex" },
+      { name: "36: T+2/T+35", length: 36, hue: 40, importance: 9, type: "ftd" },
+      { name: "35: FTD", length: 35, hue: 20, importance: 9, type: "ftd" }
+    ];
+    
+    function setupCanvas() {
+      try {
+        cycleCanvas = document.getElementById('cycleCanvas');
+        cycleCtx = cycleCanvas.getContext('2d', { alpha: false });
+        
+        // Set initial canvas size
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        return true;
+      } catch (e) {
+        console.log("Canvas setup error:", e);
+        showNotification("Canvas error: " + e.message, "error");
+        return false;
+      }
+    }
+    
+    function resizeCanvas() {
+      cycleWidth = window.innerWidth;
+      cycleHeight = window.innerHeight;
+      
+      // Handle high DPI displays but limit resolution for performance
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cycleCanvas.width = cycleWidth * dpr;
+      cycleCanvas.height = cycleHeight * dpr;
+      cycleCanvas.style.width = cycleWidth + 'px';
+      cycleCanvas.style.height = cycleHeight + 'px';
+      cycleCtx.scale(dpr, dpr);
+      
+      // Ensure black background
+      cycleCtx.fillStyle = '#000000';
+      cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+    }
+    
+    function initializeControls() {
+      // Main controls
+      document.getElementById('pause-btn').addEventListener('click', togglePause);
+      document.getElementById('reset-btn').addEventListener('click', resetTime);
+      document.getElementById('speed-down-btn').addEventListener('click', speedDown);
+      document.getElementById('speed-up-btn').addEventListener('click', speedUp);
+      
+      // Side controls
+      document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+      document.getElementById('help-button').addEventListener('click', showHelp);
+      document.getElementById('toggle-legend').addEventListener('click', toggleLegend);
+      document.getElementById('legend-header').addEventListener('click', toggleLegend);
+      
+      // Fibonacci toggle
+      document.getElementById('useFibonacci').addEventListener('change', (e) => {
+        settings.useFibonacci = e.checked;
+        saveSettings();
+        SoundManager.playTone(440, 0.1);
+      });
+      
+      // Cycle items
+      document.querySelectorAll('.cycle-item').forEach(item => {
+        item.addEventListener('click', e => {
+          const cycleId = parseInt(e.currentTarget.dataset.cycle, 10);
+          const cycle = CYCLES.find(c => c.length === cycleId);
+          if (cycle) {
+            highlightCycle(cycle);
+            SoundManager.playTone(330 + (cycle.length % 10) * 10, 0.2);
+          }
+          SoundManager.unlock();
+        });
+      });
+      
+      // Initialize timeline scrubber
+      TimelineScrubber.init();
+      
+      // Set up audio unlocking on any interaction
+      document.addEventListener('click', SoundManager.unlock.bind(SoundManager));
+      document.addEventListener('touchstart', SoundManager.unlock.bind(SoundManager), { passive: true });
+    }
+    
+    function togglePause() {
+      isPaused = !isPaused;
+      document.getElementById('pause-btn').textContent = isPaused ? "▶️" : "⏸️";
+      showNotification(isPaused ? "Paused" : "Running");
+      SoundManager.playTone(isPaused ? 330 : 440, 0.1);
+    }
+    
+    function resetTime() {
+      time = 0;
+      particles = [];
+      activeResonances = [];
+      updateDateDisplay();
+      document.getElementById('resonance-indicator').textContent = "Resonance: Off";
+      document.getElementById('resonance-indicator').classList.remove('active');
+      document.getElementById('logo-container').classList.remove('resonating');
+      
+      document.querySelectorAll('.cycle-item').forEach(item => {
+        item.classList.remove('resonating');
+      });
+      
+      showNotification("Timeline reset");
+      SoundManager.playTone(587.33, 0.2);
+    }
+    
+    function speedDown() {
+      speedMultiplier = Math.max(speedMultiplier / 1.5, 0.01);
+      document.getElementById('time-speed').textContent = `${speedMultiplier.toFixed(2)}x`;
+      SoundManager.playTone(220, 0.1);
+    }
+    
+    function speedUp() {
+      speedMultiplier = Math.min(speedMultiplier * 1.5, 5);
+      document.getElementById('time-speed').textContent = `${speedMultiplier.toFixed(2)}x`;
+      SoundManager.playTone(880, 0.1);
+    }
+    
+    function toggleTheme() {
+      settings.lightTheme = !settings.lightTheme;
+      document.getElementById('theme-toggle').textContent = settings.lightTheme ? '🌙' : '☀️';
+      document.documentElement.classList.toggle('light-theme', settings.lightTheme);
+      saveSettings();
+      SoundManager.playTone(settings.lightTheme ? 587.33 : 349.23, 0.2);
+    }
+    
+    function showHelp() {
+      showNotification("Swipe horizontally to scrub timeline. Tap cycles to highlight.");
+      SoundManager.playTone(466.16, 0.1);
+    }
+    
+    function toggleLegend() {
+      const legend = document.getElementById('legend');
+      legend.classList.toggle('open');
+      settings.legendOpen = legend.classList.contains('open');
+      saveSettings();
+      SoundManager.playTone(392, 0.1);
+    }
+    
+    function updateDateDisplay() {
+      const currentDate = new Date(new Date(2021, 0, 28).getTime() + time * 86400000);
+      const formatted = currentDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      document.getElementById('date-display').textContent = formatted;
+    }
+    
+    function showNotification(msg, type = "info") {
+      const notification = document.getElementById('notification');
+      
+      clearTimeout(notification.timer);
+      
+      // Apply styling based on type
+      if (type === "error") {
+        notification.style.borderLeft = "4px solid #ff3333";
+        notification.style.background = "rgba(255, 51, 51, 0.1)";
+      } else {
+        notification.style.borderLeft = "4px solid var(--highlight)";
+        notification.style.background = "rgba(0, 255, 204, 0.05)";
+      }
+      
+      notification.textContent = msg;
+      notification.classList.add('show');
+      
+      notification.timer = setTimeout(() => {
+        notification.classList.remove('show');
+      }, type === "error" ? 5000 : 2000);
+    }
+    
+    function highlightCycle(cycle) {
+      showNotification(`Selected: ${cycle.name}`);
+      
+      const legendItem = document.getElementById(`legend-${cycle.length}`);
+      if (legendItem) {
+        legendItem.classList.add('resonating');
+        
+        setTimeout(() => {
+          legendItem.classList.remove('resonating');
+        }, 2000);
+      }
+    }
+    
+    function getCycleRadius(cycleIndex) {
+      // Calculate using a function to ensure they're in bounds for mobile
+      const minRadius = Math.min(cycleWidth, cycleHeight) * 0.08;
+      const maxRadius = Math.min(cycleWidth, cycleHeight) * 0.4;
+      const range = maxRadius - minRadius;
+      
+      return minRadius + range * (1 - cycleIndex / CYCLES.length);
+    }
+    
+    function checkResonance() {
+      const progresses = CYCLES.map(cycle => (time % cycle.length) / cycle.length);
+      activeResonances = [];
+      
+      // Base threshold adjusted for mobile
+      const baseThreshold = 0.05;
+      
+      // Check for resonance - simplified for mobile
+      for (let i = 0; i < progresses.length; i++) {
+        for (let j = i + 1; j < progresses.length; j++) {
+          const diff = Math.abs(progresses[i] - progresses[j]);
+          
+          if (diff < baseThreshold || Math.abs(1 - diff) < baseThreshold) {
+            activeResonances.push([i, j]);
+          }
+        }
+      }
+      
+      // Fibonacci harmonies
+      if (settings.useFibonacci) {
+        for (let i = 0; i < CYCLES.length; i++) {
+          const cycleFib = FIBONACCI.some(fib => Math.abs(CYCLES[i].length % fib) < 3);
+          
+          if (cycleFib) {
+            for (let j = i + 1; j < CYCLES.length; j++) {
+              const ratio = CYCLES[i].length / CYCLES[j].length;
+              if (Math.abs(ratio - 1.618) < 0.15 || Math.abs(ratio - 0.618) < 0.15) {
+                activeResonances.push([i, j]);
+              }
+            }
+          }
+        }
+      }
+      
+      return activeResonances.length > 0;
+    }
+    
+    function spawnParticle(x, y, hue) {
+      particles.push({
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5,
+        size: Math.random() * 2 + 1,
+        hue,
+        life: 1
+      });
+      
+      // Limit particles for mobile
+      if (particles.length > 40) {
+        particles.splice(0, particles.length - 40);
+      }
+    }
+    
+    function animate(timestamp) {
+      // Limit update rate for mobile
+      if (timestamp - lastFrameTime < 33) { // ~30fps target
+        requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTime = timestamp;
+      
+      // Clear with black background
+      cycleCtx.fillStyle = '#000000';
+      cycleCtx.fillRect(0, 0, cycleWidth, cycleHeight);
+      
+      // Check for resonance early to minimize calculations
+      const hasResonance = checkResonance();
+      
+      // Draw cycles
+      const cx = cycleWidth / 2;
+      const cy = cycleHeight / 2;
+      
+      // Draw each cycle ring with performance optimizations
+      const maxVisibleCycles = Math.min(CYCLES.length, 12); // Limit visible cycles on mobile
+      
+      for (let i = 0; i < maxVisibleCycles; i++) {
+        const cycle = CYCLES[i];
+        const progress = (time % cycle.length) / cycle.length;
+        const radius = getCycleRadius(i);
+        const angle = progress * 2 * Math.PI;
+        const hue = cycle.hue;
+        const color = `hsl(${hue}, 100%, 50%)`;
+        
+        // Draw circle (simplified)
+        cycleCtx.beginPath();
+        cycleCtx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        cycleCtx.strokeStyle = `hsla(${hue}, 100%, 30%, 0.4)`;
+        cycleCtx.lineWidth = 1;
+        cycleCtx.stroke();
+        
+        // Draw progress arc (simplified)
+        cycleCtx.beginPath();
+        cycleCtx.arc(cx, cy, radius, 0, angle);
+        cycleCtx.strokeStyle = color;
+        cycleCtx.lineWidth = 2;
+        cycleCtx.stroke();
+        
+        // Draw marker
+        const mx = cx + Math.cos(angle) * radius;
+        const my = cy + Math.sin(angle) * radius;
+        cycleCtx.beginPath();
+        cycleCtx.arc(mx, my, 3, 0, 2 * Math.PI);
+        cycleCtx.fillStyle = '#fff';
+        cycleCtx.fill();
+      }
+      
+      // Handle resonances (simplified for mobile)
+      if (hasResonance) {
+        // Toggle logo
+        document.getElementById('logo-container').classList.add('resonating');
+        
+        // Draw resonance connections (limited for performance)
+        const maxLines = Math.min(activeResonances.length, 5); // Limit connections
+        
+        for (let idx = 0; idx < maxLines; idx++) {
+          const [i, j] = activeResonances[idx];
+          
+          // Skip if indices are out of visible range
+          if (i >= maxVisibleCycles || j >= maxVisibleCycles) continue;
+          
+          const cycle1 = CYCLES[i];
+          const cycle2 = CYCLES[j];
+          
+          // Calculate position on rings
+          const prog1 = (time % cycle1.length) / cycle1.length;
+          const prog2 = (time % cycle2.length) / cycle2.length;
+          
+          const radius1 = getCycleRadius(i);
+          const radius2 = getCycleRadius(j);
+          
+          const angle1 = prog1 * 2 * Math.PI;
+          const angle2 = prog2 * 2 * Math.PI;
+          
+          const x1 = cx + Math.cos(angle1) * radius1;
+          const y1 = cy + Math.sin(angle1) * radius1;
+          const x2 = cx + Math.cos(angle2) * radius2;
+          const y2 = cy + Math.sin(angle2) * radius2;
+          
+          // Draw simplified connection
+          cycleCtx.beginPath();
+          cycleCtx.moveTo(x1, y1);
+          cycleCtx.lineTo(x2, y2);
+          cycleCtx.strokeStyle = 'rgba(0, 255, 204, 0.6)';
+          cycleCtx.lineWidth = 1.5;
+          cycleCtx.stroke();
+          
+          // Add minimal particles
+          if (Math.random() < 0.1) {
+            const midX = (x1 + x2) / 2;
+            const midY = (y1 + y2) / 2;
+            spawnParticle(midX, midY, Math.random() * 360);
+          }
+          
+          // Highlight resonating cycles in the legend
+          const item1 = document.getElementById(`legend-${cycle1.length}`);
+          const item2 = document.getElementById(`legend-${cycle2.length}`);
+          
+          if (item1) item1.classList.add('resonating');
+          if (item2) item2.classList.add('resonating');
+        }
+        
+        // Update resonance indicator text
+        document.getElementById('resonance-indicator').textContent = `Resonance: ${activeResonances.length} Active`;
+        document.getElementById('resonance-indicator').classList.add('active');
+        
+        // Show notification for new resonances
+        const now = performance.now();
+        if (now - lastResonanceTime > 5000) {
+          lastResonanceTime = now;
+          showNotification(`Resonance Detected: ${activeResonances.length} cycles`);
+          if (!settings.muteSound) {
+            SoundManager.playTone(261.63, 0.3); // C4
+            setTimeout(() => SoundManager.playTone(392.00, 0.3), 300); // G4
+          }
+        }
+      } else {
+        // Reset indicators
+        document.getElementById('resonance-indicator').textContent = "Resonance: Off";
+        document.getElementById('resonance-indicator').classList.remove('active');
+        document.getElementById('logo-container').classList.remove('resonating');
+        
+        // Reset cycle items
+        document.querySelectorAll('.cycle-item').forEach(item => {
+          item.classList.remove('resonating');
+        });
+      }
+      
+      // Handle particles (simplified)
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.05; // Faster decay for mobile
+        
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+        } else {
+          cycleCtx.beginPath();
+          cycleCtx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
+          cycleCtx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.life})`;
+          cycleCtx.fill();
+        }
+      }
+      
+      // Update time if not paused
+      if (!isPaused) {
+        time += speedMultiplier;
+        
+        // Only update date occasionally
+        if (Math.random() < 0.1) {
+          updateDateDisplay();
+        }
+      }
+      
+      requestAnimationFrame(animate);
+    }
+    
+    function startApp() {
+      try {
+        // Load settings
+        settings = loadSettings();
+        document.documentElement.classList.toggle('light-theme', settings.lightTheme);
+        document.getElementById('theme-toggle').textContent = settings.lightTheme ? '🌙' : '☀️';
+        
+        // Apply UI state
+        if (settings.legendOpen) {
+          document.getElementById('legend').classList.add('open');
+        }
+        
+        document.getElementById('useFibonacci').checked = settings.useFibonacci;
+        
+        // Setup UI
+        updateDateDisplay();
+        
+        // Initialize controls
+        initializeControls();
+        
+        // Start canvas animations with error handling
+        if (setupCanvas()) {
+          window.animationRunning = true;
+          requestAnimationFrame(animate);
+        } else {
+          throw new Error("Canvas initialization failed");
+        }
+        
+        // Initialize sound
+        SoundManager.init();
+        
+        // Hide loading screen
+        document.getElementById('loading').classList.add('done');
+        clearTimeout(loadingTimeout);
+        
+        // Welcome notification after a slight delay
+        setTimeout(() => {
+          showNotification("GME Cycle Resonator Loaded");
+        }, 800);
+      } catch (e) {
+        console.error("Initialization error:", e);
+        document.getElementById('loading').classList.add('done');
+        clearTimeout(loadingTimeout);
+        showNotification("Initialization error: " + e.message, "error");
+      }
+    }
+    
+    // Start the application with a slight delay
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(startApp, 500);
+    });
+  </script>
+</body>
+</html>
