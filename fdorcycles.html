@@ -108,6 +108,12 @@ body{
   left: 15px;
 }
 
+.date-toggle {
+  top: 70px;
+  left: 15px;
+  font-size: 16px;
+}
+
 .mode-selector {
   position: fixed;
   top: 15px;
@@ -617,6 +623,15 @@ body{
   z-index: 2;
 }
 
+.startdate-display {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-size: 0.7rem;
+  opacity: 0.5;
+  font-weight: normal;
+}
+
 .legend-metrics {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -947,6 +962,7 @@ input:checked + .toggle-slider:before {
   <button class="control-button help-button" id="help-button" title="Help">?</button>
   <button class="control-button toggle-legend" id="toggle-legend" title="Toggle legend">🔍</button>
   <button class="control-button mini-mode-toggle" id="mini-mode-toggle" title="Toggle mini mode">⚡</button>
+  <button class="control-button date-toggle" id="date-toggle" title="Toggle start date">📅</button>
   
   <!-- MODE SELECTOR -->
   <div class="mode-selector">
@@ -983,7 +999,7 @@ input:checked + .toggle-slider:before {
     
     <!-- MINI BAR -->
     <div class="mini-bar" id="mini-bar">
-      <div class="mini-text" id="mini-date">Jan 28, 2021</div>
+      <div class="mini-text" id="mini-date">Jul 19, 2019</div>
       <div class="mini-text" id="mini-resonance">Scanning cycles...</div>
       <div class="mini-score" id="mini-score">0</div>
     </div>
@@ -995,7 +1011,7 @@ input:checked + .toggle-slider:before {
         <button class="button-control" id="reset-btn" title="Reset">🔄</button>
       </div>
       
-      <div class="date-display" id="date-display">Jan 28, 2021</div>
+      <div class="date-display" id="date-display">Jul 19, 2019</div>
       
       <div class="control-group">
         <button class="button-control" id="speed-down-btn" title="Slower">⏪</button>
@@ -1017,7 +1033,10 @@ input:checked + .toggle-slider:before {
 
     <!-- LEGEND -->
     <div class="legend" id="legend">
-      <div class="legend-header" id="legend-header">🧿 GME Cycle Analysis</div>
+      <div class="legend-header" id="legend-header">
+        🧿 GME Cycle Analysis
+        <div class="startdate-display" id="startdate-display">From: Jul 19, 2019</div>
+      </div>
       <div class="legend-content">
         <!-- METRICS DISPLAY -->
         <div class="legend-metrics">
@@ -1118,6 +1137,14 @@ input:checked + .toggle-slider:before {
               <span class="cycle-dot" style="background:hsl(160,100%,50%)"></span>
               417: Angel
             </div>
+            <div class="cycle-item" id="legend-315" data-cycle="315" data-type="pattern">
+              <span class="cycle-dot" style="background:hsl(170,100%,50%)"></span>
+              315: Quantum
+            </div>
+            <div class="cycle-item" id="legend-300" data-cycle="300" data-type="options">
+              <span class="cycle-dot" style="background:hsl(150,100%,50%)"></span>
+              300: Quarter
+            </div>
           </div>
         </div>
         
@@ -1212,10 +1239,19 @@ input:checked + .toggle-slider:before {
       miniMode: false,
       legendOpen: false,
       activeMode: 'standard', // standard, vortex, fibonacci
-      lastResonanceEvents: []
+      lastResonanceEvents: [],
+      startDate: 'jul2019' // jul2019, apr2020
     };
     
     let settings = DEFAULT_SETTINGS;
+    
+    // Start date options
+    const START_DATES = {
+      jul2019: new Date(2019, 6, 19), // July 19, 2019
+      apr2020: new Date(2020, 3, 3)   // April 3, 2020
+    };
+    
+    let currentStartDate = START_DATES.jul2019;
     
     function loadSettings() {
       try {
@@ -1727,6 +1763,8 @@ input:checked + .toggle-slider:before {
       { name: "471: Pattern", length: 471, hue: 200, importance: 7, type: "pattern", category: "medium" },
       { name: "420: Meme", length: 420, hue: 180, importance: 8, type: "meme", category: "medium" },
       { name: "417: Angel", length: 417, hue: 160, importance: 9, type: "angel", category: "medium" },
+      { name: "315: Quantum", length: 315, hue: 170, importance: 8, type: "pattern", category: "medium" },
+      { name: "300: Quarter", length: 300, hue: 150, importance: 8, type: "options", category: "medium" },
       
       // Short Cycles
       { name: "240: Options", length: 240, hue: 140, importance: 7, type: "options", category: "short" },
@@ -1764,6 +1802,26 @@ input:checked + .toggle-slider:before {
       applyTheme(themes[nextIndex]);
       
       SoundManager.playTone(440 + nextIndex * 110, 0.2);
+    }
+    
+    function toggleStartDate() {
+      // Toggle between Jul 2019 and Apr 2020
+      settings.startDate = settings.startDate === 'jul2019' ? 'apr2020' : 'jul2019';
+      currentStartDate = START_DATES[settings.startDate]; 
+      saveSettings();
+      
+      // Update UI elements
+      const dateStr = settings.startDate === 'jul2019' ? 'Jul 19, 2019' : 'Apr 3, 2020';
+      document.getElementById('startdate-display').textContent = `From: ${dateStr}`;
+      
+      // Play toggle sound
+      SoundManager.playTone(587.33, 0.2);
+      
+      // Show notification
+      showNotification(`Start date changed to ${dateStr}`);
+      
+      // Reset timeline and update display
+      resetTime();
     }
     
     function setupCanvas() {
@@ -1813,6 +1871,7 @@ input:checked + .toggle-slider:before {
       document.getElementById('toggle-legend').addEventListener('click', toggleLegend);
       document.getElementById('legend-header').addEventListener('click', toggleLegend);
       document.getElementById('mini-mode-toggle').addEventListener('click', toggleMiniMode);
+      document.getElementById('date-toggle').addEventListener('click', toggleStartDate);
       
       // Toggles
       document.getElementById('useFibonacci').addEventListener('change', (e) => {
@@ -2108,7 +2167,8 @@ input:checked + .toggle-slider:before {
     }
     
     function updateDateDisplay() {
-      const currentDate = new Date(new Date(2021, 0, 28).getTime() + time * 86400000);
+      // Calculate current date based on startDate
+      const currentDate = new Date(currentStartDate.getTime() + time * 86400000);
       const formatted = currentDate.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -2771,6 +2831,9 @@ input:checked + .toggle-slider:before {
         // Load settings
         settings = loadSettings();
         
+        // Set start date 
+        currentStartDate = START_DATES[settings.startDate || 'jul2019'];
+        
         // Apply theme and UI state
         applyTheme(settings.theme || 'dark');
         document.body.classList.toggle('mini-mode', settings.miniMode);
@@ -2779,6 +2842,10 @@ input:checked + .toggle-slider:before {
         if (settings.legendOpen) {
           document.getElementById('legend').classList.add('open');
         }
+        
+        // Update date display in header 
+        const dateStr = settings.startDate === 'jul2019' ? 'Jul 19, 2019' : 'Apr 3, 2020';
+        document.getElementById('startdate-display').textContent = `From: ${dateStr}`;
         
         document.getElementById('useFibonacci').checked = settings.useFibonacci;
         document.getElementById('powerSaving').checked = settings.powerSaving;
@@ -2807,9 +2874,9 @@ input:checked + .toggle-slider:before {
         document.getElementById('loading').classList.add('done');
         clearTimeout(loadingTimeout);
         
-        // Welcome notification
+        // Welcome notification with start date info
         setTimeout(() => {
-          showNotification("GME Cycle Resonator Pro initialized", "info", 3000);
+          showNotification(`GME Cycle Resonator Pro initialized (${dateStr})`, "info", 3000);
         }, 500);
       } catch (e) {
         console.error("Initialization error:", e);
