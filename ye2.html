@@ -549,6 +549,7 @@
             let baseFrequency = 345;
             let fineTuning = 0;
             let currentVisualization = 'standard';
+            let previousVisualization = 'standard';
             let currentPattern = 'classic';
             let currentResolution = 'auto';
             let actualResolution = 2; // Default step size
@@ -621,6 +622,23 @@
                 }
             };
             
+            // Clear all canvases and reset state
+            function clearAllCanvases() {
+                const width = mainCanvas.width / (window.devicePixelRatio || 1);
+                const height = mainCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear main canvas
+                mainCtx.fillStyle = 'black';
+                mainCtx.fillRect(0, 0, width, height);
+                
+                // Clear particle canvas (important to prevent particles from persisting)
+                particleCtx.clearRect(0, 0, width, height);
+                
+                // Reset global alpha which might have been changed
+                mainCtx.globalAlpha = 1.0;
+                particleCtx.globalAlpha = 1.0;
+            }
+            
             // Canvas sizing with optimized resolution
             function resizeCanvases() {
                 const container = mainCanvas.parentElement;
@@ -668,10 +686,40 @@
                     offscreenCtx.imageSmoothingQuality = 'high';
                 }
                 
+                // Reset all states by clearing all canvases
+                clearAllCanvases();
+                
                 // Update current resolution
                 updateResolution();
                 
                 // Redraw visualization
+                renderCurrentVisualization();
+            }
+            
+            // Switch visualization mode
+            function switchVisualizationMode(newMode) {
+                // Store previous mode
+                previousVisualization = currentVisualization;
+                currentVisualization = newMode;
+                
+                // Clear all canvases to prevent persistence
+                clearAllCanvases();
+                
+                // Reset particles if needed
+                if (newMode === 'particles') {
+                    initializeParticles();
+                }
+                
+                // Show animation speed control for specific modes
+                animationSpeedControl.classList.toggle('show', 
+                    newMode === '3d' || newMode === 'amplitude');
+                
+                // Reset animation state variables if we're no longer using them
+                if (['standard', 'particles'].includes(newMode)) {
+                    particleCanvas.style.opacity = newMode === 'particles' ? '1' : '0';
+                }
+                
+                // Render the new visualization
                 renderCurrentVisualization();
             }
             
@@ -693,23 +741,12 @@
                         tabs.forEach(t => t.classList.remove('active'));
                         this.classList.add('active');
                         
-                        // Switch visualization mode
-                        currentVisualization = mode;
-                        
-                        // Handle special initialization for certain modes
-                        if (mode === 'particles') {
-                            initializeParticles();
-                        }
+                        // Switch visualization mode with proper cleanup
+                        switchVisualizationMode(mode);
                         
                         // Reset auto-adjustment notice
                         performanceNotice.classList.remove('show');
                         resolutionAutoAdjusted = false;
-                        
-                        // Show animation speed control for 3D and amplitude modes
-                        animationSpeedControl.classList.toggle('show', 
-                            mode === '3d' || mode === 'amplitude');
-                        
-                        renderCurrentVisualization();
                     });
                 });
                 
@@ -781,6 +818,9 @@
                         // Reset animation state
                         rotationAngle3D = 0;
                         animationPhase = 0;
+                        
+                        // Hide animation speed control
+                        animationSpeedControl.classList.remove('show');
                         
                         renderCurrentVisualization();
                     } else {
@@ -1104,6 +1144,9 @@
                 mainCtx.fillStyle = 'black';
                 mainCtx.fillRect(0, 0, width, height);
                 
+                // Also clear particle canvas to ensure no particles remain visible
+                particleCtx.clearRect(0, 0, width, height);
+                
                 // Set drawing color
                 mainCtx.fillStyle = 'white';
                 
@@ -1196,6 +1239,9 @@
                 mainCtx.fillStyle = 'black';
                 mainCtx.fillRect(0, 0, width, height);
                 
+                // Also clear particle canvas to ensure no particles remain visible
+                particleCtx.clearRect(0, 0, width, height);
+                
                 // Use high resolution for sampling the function
                 const resolution = 1; // Ultra-high resolution
                 
@@ -1277,9 +1323,10 @@
                 const width = mainCanvas.width / (window.devicePixelRatio || 1);
                 const height = mainCanvas.height / (window.devicePixelRatio || 1);
                 
-                // Clear the canvas
+                // Clear both canvases
                 mainCtx.fillStyle = 'black';
                 mainCtx.fillRect(0, 0, width, height);
+                particleCtx.clearRect(0, 0, width, height);
                 
                 // Use step size from resolution setting
                 const resolution = actualResolution;
@@ -1402,9 +1449,10 @@
                 const width = mainCanvas.width / (window.devicePixelRatio || 1);
                 const height = mainCanvas.height / (window.devicePixelRatio || 1);
                 
-                // Clear the canvas
+                // Clear both canvases
                 mainCtx.fillStyle = 'black';
                 mainCtx.fillRect(0, 0, width, height);
+                particleCtx.clearRect(0, 0, width, height);
                 
                 // Set grid resolution based on our resolution setting
                 const gridSize = actualResolution <= 1.5 ? 60 : 
@@ -1510,8 +1558,12 @@
             
             // Render current visualization based on selected mode
             function renderCurrentVisualization() {
+                // Make sure all state is properly initialized for the current visualization
                 switch (currentVisualization) {
                     case 'standard':
+                        // Hide particle canvas to ensure it doesn't show when not needed
+                        particleCanvas.style.opacity = '0';
+                        
                         // Use high-resolution line drawing for ultra setting
                         if (currentResolution === 'ultra' && actualResolution <= 1) {
                             drawNodalLinesHighResolution();
@@ -1521,6 +1573,9 @@
                         break;
                     
                     case 'particles':
+                        // Show particle canvas and ensure it's properly initialized
+                        particleCanvas.style.opacity = '1';
+                        
                         if (!animating) {
                             // Draw static version if not animating
                             mainCtx.globalAlpha = 0.3;
@@ -1535,10 +1590,14 @@
                         break;
                     
                     case 'amplitude':
+                        // Hide particle canvas
+                        particleCanvas.style.opacity = '0';
                         drawAmplitudeVisualization();
                         break;
                     
                     case '3d':
+                        // Hide particle canvas
+                        particleCanvas.style.opacity = '0';
                         draw3DVisualization();
                         break;
                 }
@@ -1594,6 +1653,8 @@
                         break;
                     
                     case 'particles':
+                        // Make sure particle canvas is visible during animation
+                        particleCanvas.style.opacity = '1';
                         updateParticles();
                         break;
                     
@@ -1650,6 +1711,9 @@
                 
                 // Set up canvases
                 resizeCanvases();
+                
+                // Hide particle canvas initially
+                particleCanvas.style.opacity = '0';
                 
                 // Initial visualization
                 renderCurrentVisualization();
