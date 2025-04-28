@@ -439,7 +439,7 @@
         
         <div class="visualization-container">
             <canvas id="main-canvas"></canvas>
-            <canvas id="particle-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+            <canvas id="particle-canvas"></canvas>
             <div class="overlay-info" id="frequency-display">345 Hz</div>
             <div class="resolution-indicator" id="resolution-display">Resolution: High</div>
             <div class="fps-display" id="fps-display">60 FPS</div>
@@ -572,6 +572,12 @@
             let offscreenCanvas = null;
             let offscreenCtx = null;
             
+            // Position particle canvas
+            particleCanvas.style.position = 'absolute';
+            particleCanvas.style.top = '0';
+            particleCanvas.style.left = '0';
+            particleCanvas.style.pointerEvents = 'none';
+            
             // Create offscreen canvas for buffer drawing
             function createOffscreenCanvas() {
                 offscreenCanvas = document.createElement('canvas');
@@ -622,8 +628,8 @@
                 }
             };
             
-            // Clear all canvases and reset state
-            function clearAllCanvases() {
+            // Clear main canvas
+            function clearMainCanvas() {
                 const width = mainCanvas.width / (window.devicePixelRatio || 1);
                 const height = mainCanvas.height / (window.devicePixelRatio || 1);
                 
@@ -631,11 +637,19 @@
                 mainCtx.fillStyle = 'black';
                 mainCtx.fillRect(0, 0, width, height);
                 
-                // Clear particle canvas (important to prevent particles from persisting)
+                // Reset global alpha which might have been changed
+                mainCtx.globalAlpha = 1.0;
+            }
+            
+            // Clear particle canvas
+            function clearParticleCanvas() {
+                const width = particleCanvas.width / (window.devicePixelRatio || 1);
+                const height = particleCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear particle canvas
                 particleCtx.clearRect(0, 0, width, height);
                 
                 // Reset global alpha which might have been changed
-                mainCtx.globalAlpha = 1.0;
                 particleCtx.globalAlpha = 1.0;
             }
             
@@ -686,8 +700,9 @@
                     offscreenCtx.imageSmoothingQuality = 'high';
                 }
                 
-                // Reset all states by clearing all canvases
-                clearAllCanvases();
+                // Reset all states by clearing canvases
+                clearMainCanvas();
+                clearParticleCanvas();
                 
                 // Update current resolution
                 updateResolution();
@@ -702,8 +717,9 @@
                 previousVisualization = currentVisualization;
                 currentVisualization = newMode;
                 
-                // Clear all canvases to prevent persistence
-                clearAllCanvases();
+                // Clear both canvases to prevent persistence
+                clearMainCanvas();
+                clearParticleCanvas();
                 
                 // Reset particles if needed
                 if (newMode === 'particles') {
@@ -713,11 +729,6 @@
                 // Show animation speed control for specific modes
                 animationSpeedControl.classList.toggle('show', 
                     newMode === '3d' || newMode === 'amplitude');
-                
-                // Reset animation state variables if we're no longer using them
-                if (['standard', 'particles'].includes(newMode)) {
-                    particleCanvas.style.opacity = newMode === 'particles' ? '1' : '0';
-                }
                 
                 // Render the new visualization
                 renderCurrentVisualization();
@@ -1140,12 +1151,11 @@
                 const width = mainCanvas.width / (window.devicePixelRatio || 1);
                 const height = mainCanvas.height / (window.devicePixelRatio || 1);
                 
-                // Clear the canvas
-                mainCtx.fillStyle = 'black';
-                mainCtx.fillRect(0, 0, width, height);
+                // Clear the main canvas
+                clearMainCanvas();
                 
-                // Also clear particle canvas to ensure no particles remain visible
-                particleCtx.clearRect(0, 0, width, height);
+                // Also clear particle canvas
+                clearParticleCanvas();
                 
                 // Set drawing color
                 mainCtx.fillStyle = 'white';
@@ -1236,11 +1246,10 @@
                 const height = mainCanvas.height / (window.devicePixelRatio || 1);
                 
                 // Clear the canvas
-                mainCtx.fillStyle = 'black';
-                mainCtx.fillRect(0, 0, width, height);
+                clearMainCanvas();
                 
-                // Also clear particle canvas to ensure no particles remain visible
-                particleCtx.clearRect(0, 0, width, height);
+                // Also clear particle canvas
+                clearParticleCanvas();
                 
                 // Use high resolution for sampling the function
                 const resolution = 1; // Ultra-high resolution
@@ -1323,10 +1332,9 @@
                 const width = mainCanvas.width / (window.devicePixelRatio || 1);
                 const height = mainCanvas.height / (window.devicePixelRatio || 1);
                 
-                // Clear both canvases
-                mainCtx.fillStyle = 'black';
-                mainCtx.fillRect(0, 0, width, height);
-                particleCtx.clearRect(0, 0, width, height);
+                // Clear the canvases
+                clearMainCanvas();
+                clearParticleCanvas();
                 
                 // Use step size from resolution setting
                 const resolution = actualResolution;
@@ -1367,8 +1375,7 @@
                 particleCtx.clearRect(0, 0, width, height);
                 
                 // Draw background on main canvas
-                mainCtx.fillStyle = 'black';
-                mainCtx.fillRect(0, 0, width, height);
+                clearMainCanvas();
                 
                 // Use higher resolution sampling for accurate force calculation
                 const subSamplingFactor = 2; // Oversample for smoother force calculation
@@ -1440,8 +1447,47 @@
                 
                 // Draw reference nodal lines on main canvas (faint)
                 mainCtx.globalAlpha = 0.15;
-                drawStandardPattern();
+                
+                // Draw the standard pattern directly without calling drawStandardPattern
+                // to avoid clearing the particle canvas
+                const resolution = actualResolution;
+                const threshold = currentFrequency < 500 ? 0.06 : 
+                                currentFrequency < 1000 ? 0.05 : 
+                                currentFrequency < 3000 ? 0.04 - (currentFrequency / 100000) : 
+                                0.03 - (currentFrequency / 200000);
+                
+                mainCtx.fillStyle = 'white';
+                
+                // Batch drawing
+                const nodalPoints = [];
+                
+                for (let x = 0; x < width; x += resolution) {
+                    for (let y = 0; y < height; y += resolution) {
+                        const nx = (2 * x / width) - 1;
+                        const ny = (2 * y / height) - 1;
+                        const value = calculateChladniValue(nx, ny, currentPattern);
+                        
+                        if (Math.abs(value) < threshold) {
+                            nodalPoints.push({
+                                x: x,
+                                y: y,
+                                width: resolution,
+                                height: resolution
+                            });
+                        }
+                    }
+                }
+                
+                batchDrawNodalPoints(nodalPoints);
+                
+                // Reset alpha
                 mainCtx.globalAlpha = 1.0;
+                
+                // Draw center indicator
+                mainCtx.fillStyle = '#ffaa00';
+                mainCtx.beginPath();
+                mainCtx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
+                mainCtx.fill();
             }
             
             // Draw 3D visualization
@@ -1450,9 +1496,8 @@
                 const height = mainCanvas.height / (window.devicePixelRatio || 1);
                 
                 // Clear both canvases
-                mainCtx.fillStyle = 'black';
-                mainCtx.fillRect(0, 0, width, height);
-                particleCtx.clearRect(0, 0, width, height);
+                clearMainCanvas();
+                clearParticleCanvas();
                 
                 // Set grid resolution based on our resolution setting
                 const gridSize = actualResolution <= 1.5 ? 60 : 
@@ -1561,8 +1606,8 @@
                 // Make sure all state is properly initialized for the current visualization
                 switch (currentVisualization) {
                     case 'standard':
-                        // Hide particle canvas to ensure it doesn't show when not needed
-                        particleCanvas.style.opacity = '0';
+                        // Clear any previous particle view artifacts
+                        clearParticleCanvas();
                         
                         // Use high-resolution line drawing for ultra setting
                         if (currentResolution === 'ultra' && actualResolution <= 1) {
@@ -1573,31 +1618,26 @@
                         break;
                     
                     case 'particles':
-                        // Show particle canvas and ensure it's properly initialized
-                        particleCanvas.style.opacity = '1';
+                        // Initialize particles if empty
+                        if (particles.length === 0) {
+                            initializeParticles();
+                        }
                         
                         if (!animating) {
                             // Draw static version if not animating
-                            mainCtx.globalAlpha = 0.3;
-                            drawStandardPattern();
-                            mainCtx.globalAlpha = 1;
-                            // Draw some initial particles
-                            if (particles.length === 0) {
-                                initializeParticles();
-                            }
                             updateParticles();
                         }
                         break;
                     
                     case 'amplitude':
-                        // Hide particle canvas
-                        particleCanvas.style.opacity = '0';
+                        // Clear any previous particle view artifacts
+                        clearParticleCanvas();
                         drawAmplitudeVisualization();
                         break;
                     
                     case '3d':
-                        // Hide particle canvas
-                        particleCanvas.style.opacity = '0';
+                        // Clear any previous particle view artifacts
+                        clearParticleCanvas();
                         draw3DVisualization();
                         break;
                 }
@@ -1641,9 +1681,12 @@
                     rotationAngle3D += 0.005 * speedFactor * deltaTime / 16.67;
                 }
                 
-                // Render current visualization
+                // Render current visualization based on mode
                 switch (currentVisualization) {
                     case 'standard':
+                        // Make sure particle canvas is cleared
+                        clearParticleCanvas();
+                        
                         // Animate standard pattern
                         if (currentResolution === 'ultra' && actualResolution <= 1) {
                             drawNodalLinesHighResolution(animationPhase);
@@ -1653,18 +1696,19 @@
                         break;
                     
                     case 'particles':
-                        // Make sure particle canvas is visible during animation
-                        particleCanvas.style.opacity = '1';
+                        // Animate particles
                         updateParticles();
                         break;
                     
                     case 'amplitude':
                         // Animated amplitude visualization with phase shift
+                        clearParticleCanvas();
                         drawAmplitudeVisualization(animationPhase);
                         break;
                     
                     case '3d':
                         // Animate 3D view with rotation and phase
+                        clearParticleCanvas();
                         draw3DVisualization(rotationAngle3D, animationPhase);
                         break;
                 }
@@ -1711,9 +1755,6 @@
                 
                 // Set up canvases
                 resizeCanvases();
-                
-                // Hide particle canvas initially
-                particleCanvas.style.opacity = '0';
                 
                 // Initial visualization
                 renderCurrentVisualization();
