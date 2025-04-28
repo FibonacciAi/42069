@@ -3,40 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chladni Patterns Visualizer</title>
+    <title>Ultra-High Resolution Chladni Patterns</title>
     <style>
         :root {
             --primary: #0088ff;
+            --primary-dark: #0066cc;
             --secondary: #00ccff;
+            --accent: #ffaa00;
             --text: #ffffff;
+            --text-secondary: #cccccc;
             --background: #000000;
             --card-bg: #111111;
+            --button-bg: #222222;
+            --slider-bg: #333333;
+            --border-radius: 12px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
             background-color: var(--background);
             color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
         }
         
         .container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
         }
         
         .header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .info-button {
+            background-color: var(--button-bg);
+            color: var(--text);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .card {
             background-color: var(--card-bg);
-            border-radius: 12px;
+            border-radius: var(--border-radius);
             padding: 15px;
             margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-card {
+            display: none;
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .info-card.show {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
         }
         
         .visualization-container {
@@ -44,18 +88,19 @@
             width: 100%;
             aspect-ratio: 1;
             margin-bottom: 15px;
-            border-radius: 12px;
+            border-radius: var(--border-radius);
             overflow: hidden;
             background-color: black;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
-        #visualization-canvas {
+        canvas {
             width: 100%;
             height: 100%;
             display: block;
         }
         
-        .frequency-display {
+        .overlay-info {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -65,30 +110,71 @@
             color: var(--secondary);
             font-weight: bold;
             font-size: 16px;
+            z-index: 5;
         }
         
-        .slider-container {
-            padding: 10px;
+        .resolution-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            z-index: 5;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
             background-color: var(--card-bg);
-            border-radius: 12px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background-color: var(--card-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            border: none;
+        }
+        
+        .tab.active {
+            background-color: var(--primary);
+            color: var(--text);
+        }
+        
+        .control-group {
             margin-bottom: 15px;
         }
         
-        .slider-label {
+        .control-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 16px;
+        }
+        
+        .slider-container {
+            padding: 0 5px;
         }
         
         input[type="range"] {
             width: 100%;
-            margin: 10px 0;
             -webkit-appearance: none;
             appearance: none;
             height: 6px;
-            background: #333;
+            background: var(--slider-bg);
             border-radius: 3px;
+            margin: 15px 0;
         }
         
         input[type="range"]::-webkit-slider-thumb {
@@ -99,12 +185,33 @@
             background: var(--secondary);
             border-radius: 50%;
             cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
         
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+        .fine-control {
+            display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        
+        .fine-control button {
+            background-color: var(--button-bg);
+            color: var(--text);
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .freq-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
             margin-bottom: 15px;
         }
         
@@ -112,63 +219,254 @@
             background-color: var(--primary);
             color: var(--text);
             border: none;
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
+            border-radius: 8px;
+            padding: 10px 0;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
         }
         
         .freq-button.active {
             background-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         
         .action-button {
-            background-color: #333;
+            flex: 1;
+            background-color: var(--button-bg);
             color: var(--text);
             border: none;
-            border-radius: 10px;
-            padding: 14px;
-            font-size: 16px;
-            margin-bottom: 10px;
+            border-radius: 8px;
+            padding: 12px 0;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
         .action-button:hover {
-            background-color: #444;
+            background-color: #333;
         }
         
-        .info-text {
-            line-height: 1.5;
+        .action-button.primary {
+            background-color: var(--primary);
+        }
+        
+        .action-button.primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .action-button.active {
+            background-color: var(--secondary);
+        }
+        
+        .icon {
+            font-size: 18px;
+            line-height: 1;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .option-select {
+            background-color: var(--button-bg);
+            color: var(--text);
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
             font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: var(--secondary);
+            margin-left: 4px;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: var(--text);
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            top: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: normal;
+            font-size: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .fps-display {
+            position: absolute;
+            top: 45px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: var(--accent);
+            font-size: 12px;
+            z-index: 5;
+            display: none;
+        }
+        
+        .stat-display {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .performance-notice {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .performance-notice.show {
+            display: block;
+        }
+        
+        .animation-speed-control {
+            display: none;
+            margin-top: 10px;
+        }
+        
+        .animation-speed-control.show {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .animation-speed-control label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .animation-speed-control input {
+            flex: 1;
+        }
+        
+        .animation-speed-control span {
+            font-size: 14px;
+            color: var(--secondary);
+            min-width: 36px;
+            text-align: right;
+        }
+        
+        /* Mobile optimization */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .freq-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tab {
+                padding: 8px 5px;
+                font-size: 13px;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <p class="info-text">
-                These visualizations show Chladni patterns - how particles arrange themselves
-                along nodal lines where there is no vibration on a plate at different frequencies.
-            </p>
+        <div class="header">
+            <h1>Ultra-High Resolution Chladni Patterns</h1>
+            <button id="info-toggle" class="info-button">i</button>
+        </div>
+        
+        <div id="info-card" class="card info-card">
+            <p>Chladni patterns are formed when a plate vibrates at specific frequencies, causing particles to move away from regions of high vibration and settle along nodal lines where there is no vibration.</p>
+            <p>This visualizer features ultra-high resolution rendering to precisely display the intricate nodal patterns formed at various frequencies (100 Hz - 6000 Hz).</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" data-mode="standard">Standard</button>
+            <button class="tab" data-mode="particles">Particles</button>
+            <button class="tab" data-mode="amplitude">Amplitude</button>
+            <button class="tab" data-mode="3d">3D View</button>
         </div>
         
         <div class="visualization-container">
-            <canvas id="visualization-canvas"></canvas>
-            <div class="frequency-display" id="frequency-display">345 Hz</div>
+            <canvas id="main-canvas"></canvas>
+            <canvas id="particle-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+            <div class="overlay-info" id="frequency-display">345 Hz</div>
+            <div class="resolution-indicator" id="resolution-display">Resolution: High</div>
+            <div class="fps-display" id="fps-display">60 FPS</div>
         </div>
         
-        <div class="slider-container">
-            <div class="slider-label">
-                <span>Frequency</span>
-                <span id="freq-value">345 Hz</span>
+        <div class="card">
+            <div class="control-group">
+                <div class="control-group-title">
+                    <span>Frequency</span>
+                    <span id="freq-value">345 Hz</span>
+                </div>
+                <input type="range" min="100" max="6000" value="345" step="1" id="frequency-slider">
+                <div class="fine-control">
+                    <button id="freq-down">−</button>
+                    <div class="slider-container">
+                        <input type="range" min="-50" max="50" value="0" step="1" id="fine-tuning-slider">
+                    </div>
+                    <button id="freq-up">+</button>
+                </div>
+                <div class="stat-display">
+                    <span>Wavelength: <span id="wavelength-display">99.4 cm</span></span>
+                    <span>Mode: <span id="mode-display">1,1</span></span>
+                </div>
             </div>
-            <input type="range" min="100" max="6000" value="345" id="frequency-slider">
         </div>
         
-        <div class="controls">
+        <div class="freq-buttons">
             <button class="freq-button active" data-freq="345">345 Hz</button>
             <button class="freq-button" data-freq="1033">1033 Hz</button>
             <button class="freq-button" data-freq="1820">1820 Hz</button>
@@ -179,105 +477,458 @@
             <button class="freq-button" data-freq="4444">4444 Hz</button>
         </div>
         
-        <button class="action-button" id="play-sound">Play Sound</button>
-        <button class="action-button" id="animate-btn">Animate Pattern</button>
+        <div class="options-grid">
+            <select id="pattern-algorithm" class="option-select">
+                <option value="classic">Classic Chladni</option>
+                <option value="square">Square Terms</option>
+                <option value="combined">Combined</option>
+                <option value="radial">Radial Pattern</option>
+            </select>
+            <select id="resolution-setting" class="option-select">
+                <option value="auto">Auto Resolution</option>
+                <option value="ultra">Ultra High</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+        </div>
+        
+        <div class="action-buttons">
+            <button id="play-sound" class="action-button">
+                <span class="icon">▶</span> Play Sound
+            </button>
+            <button id="animate-btn" class="action-button">
+                <span class="icon">↻</span> Animate
+            </button>
+        </div>
+        
+        <div id="animation-speed-control" class="animation-speed-control">
+            <label>Animation Speed:</label>
+            <input type="range" min="1" max="10" value="5" id="animation-speed-slider">
+            <span id="animation-speed-value">5</span>
+        </div>
+        
+        <div id="performance-notice" class="performance-notice">
+            Resolution automatically adjusted for better performance
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const canvas = document.getElementById('visualization-canvas');
-            const ctx = canvas.getContext('2d');
+            // DOM Elements
+            const mainCanvas = document.getElementById('main-canvas');
+            const particleCanvas = document.getElementById('particle-canvas');
+            const mainCtx = mainCanvas.getContext('2d');
+            const particleCtx = particleCanvas.getContext('2d', { alpha: true });
+            
             const frequencyDisplay = document.getElementById('frequency-display');
             const freqValue = document.getElementById('freq-value');
+            const wavelengthDisplay = document.getElementById('wavelength-display');
+            const modeDisplay = document.getElementById('mode-display');
             const frequencySlider = document.getElementById('frequency-slider');
+            const fineTuningSlider = document.getElementById('fine-tuning-slider');
+            const animationSpeedSlider = document.getElementById('animation-speed-slider');
+            const animationSpeedValue = document.getElementById('animation-speed-value');
+            const animationSpeedControl = document.getElementById('animation-speed-control');
+            const resolutionSetting = document.getElementById('resolution-setting');
+            const resolutionDisplay = document.getElementById('resolution-display');
+            const fpsDisplay = document.getElementById('fps-display');
+            const patternAlgorithm = document.getElementById('pattern-algorithm');
+            const freqDownBtn = document.getElementById('freq-down');
+            const freqUpBtn = document.getElementById('freq-up');
             const buttons = document.querySelectorAll('.freq-button');
             const playButton = document.getElementById('play-sound');
             const animateButton = document.getElementById('animate-btn');
+            const infoToggle = document.getElementById('info-toggle');
+            const infoCard = document.getElementById('info-card');
+            const tabs = document.querySelectorAll('.tab');
+            const performanceNotice = document.getElementById('performance-notice');
             
+            // Application state
             let currentFrequency = 345;
+            let baseFrequency = 345;
+            let fineTuning = 0;
+            let currentVisualization = 'standard';
+            let currentPattern = 'classic';
+            let currentResolution = 'auto';
+            let actualResolution = 2; // Default step size
             let audioContext = null;
             let oscillator = null;
             let isPlaying = false;
             let animating = false;
+            let infoVisible = false;
+            let particles = [];
+            let particleDensity = 2000;
+            let frames = 0;
+            let fps = 60;
+            let lastFpsUpdate = 0;
+            let lastRenderTime = 0;
+            let needsAutoAdjust = false;
+            let resolutionAutoAdjusted = false;
+            let animationSpeed = 5; // Medium speed by default
+            let rotationAngle3D = 0;
+            let animationPhase = 0;
+            let offscreenCanvas = null;
+            let offscreenCtx = null;
             
-            // Set canvas size for proper resolution
-            function resizeCanvas() {
-                const container = canvas.parentElement;
-                const size = container.clientWidth;
-                // Use a smaller multiplier for better performance on mobile
-                const pixelRatio = window.devicePixelRatio || 1;
-                canvas.width = size * pixelRatio;
-                canvas.height = size * pixelRatio;
-                canvas.style.width = size + 'px';
-                canvas.style.height = size + 'px';
-                ctx.scale(pixelRatio, pixelRatio);
-                drawChladniPattern(currentFrequency);
+            // Create offscreen canvas for buffer drawing
+            function createOffscreenCanvas() {
+                offscreenCanvas = document.createElement('canvas');
+                offscreenCtx = offscreenCanvas.getContext('2d');
             }
             
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-            
-            // Update frequency from slider
-            frequencySlider.addEventListener('input', function() {
-                currentFrequency = parseInt(this.value);
-                updateFrequencyDisplay();
-                updateActiveButton();
-                drawChladniPattern(currentFrequency);
+            // Device capabilities detection
+            const devicePerformance = {
+                // Get rough device performance level based on screen size and device pixel ratio
+                getLevel: function() {
+                    const dpr = window.devicePixelRatio || 1;
+                    const screenSize = window.screen.width * window.screen.height;
+                    
+                    if (dpr >= 3 && screenSize > 1000000) {
+                        return 'high'; // High-end mobile or desktop
+                    } else if (dpr >= 2 && screenSize > 500000) {
+                        return 'medium'; // Mid-range device
+                    } else {
+                        return 'low'; // Low-end device
+                    }
+                },
                 
-                // Update oscillator if playing
+                // Map resolution setting to step size
+                getResolutionStep: function(setting) {
+                    const performanceLevel = this.getLevel();
+                    
+                    // Resolution step sizes (smaller = higher resolution)
+                    const resolutionMap = {
+                        'ultra': { 'high': 1, 'medium': 1, 'low': 2 },
+                        'high': { 'high': 1.5, 'medium': 2, 'low': 3 },
+                        'medium': { 'high': 2, 'medium': 3, 'low': 4 },
+                        'low': { 'high': 3, 'medium': 4, 'low': 5 },
+                        'auto': { 'high': 1.5, 'medium': 2, 'low': 3 }
+                    };
+                    
+                    // Get appropriate resolution step for this device
+                    let step = resolutionMap[setting][performanceLevel];
+                    
+                    // For high frequencies, we need more detail
+                    if (currentFrequency > 3000) {
+                        step = Math.max(1, step - 0.5);
+                    } else if (currentFrequency < 500) {
+                        // For low frequencies, we need less detail but not too much less
+                        step += 0.3;
+                    }
+                    
+                    return step;
+                }
+            };
+            
+            // Canvas sizing with optimized resolution
+            function resizeCanvases() {
+                const container = mainCanvas.parentElement;
+                const size = container.clientWidth;
+                
+                // Use a higher device pixel ratio for better resolution
+                // but cap it for performance reasons
+                const dpr = Math.min(window.devicePixelRatio || 1, 3);
+                
+                // Main canvas
+                mainCanvas.width = size * dpr;
+                mainCanvas.height = size * dpr;
+                mainCanvas.style.width = size + 'px';
+                mainCanvas.style.height = size + 'px';
+                
+                // Particle canvas
+                particleCanvas.width = size * dpr;
+                particleCanvas.height = size * dpr;
+                particleCanvas.style.width = size + 'px';
+                particleCanvas.style.height = size + 'px';
+                
+                // Offscreen canvas (for buffer drawing)
+                if (offscreenCanvas) {
+                    offscreenCanvas.width = size * dpr;
+                    offscreenCanvas.height = size * dpr;
+                }
+                
+                // Update context for high-resolution drawing
+                mainCtx.scale(dpr, dpr);
+                particleCtx.scale(dpr, dpr);
+                
+                if (offscreenCtx) {
+                    offscreenCtx.scale(dpr, dpr);
+                }
+                
+                // Reset any patterns or states
+                mainCtx.setLineDash([]);
+                
+                // Enable anti-aliasing for smoother lines
+                mainCtx.imageSmoothingEnabled = true;
+                mainCtx.imageSmoothingQuality = 'high';
+                
+                if (offscreenCtx) {
+                    offscreenCtx.imageSmoothingEnabled = true;
+                    offscreenCtx.imageSmoothingQuality = 'high';
+                }
+                
+                // Update current resolution
+                updateResolution();
+                
+                // Redraw visualization
+                renderCurrentVisualization();
+            }
+            
+            // Initialize UI event listeners
+            function initializeUI() {
+                // Info toggle
+                infoToggle.addEventListener('click', function() {
+                    infoVisible = !infoVisible;
+                    infoCard.classList.toggle('show', infoVisible);
+                });
+                
+                // Visualization tabs
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const mode = this.dataset.mode;
+                        if (mode === currentVisualization) return;
+                        
+                        // Update active tab
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Switch visualization mode
+                        currentVisualization = mode;
+                        
+                        // Handle special initialization for certain modes
+                        if (mode === 'particles') {
+                            initializeParticles();
+                        }
+                        
+                        // Reset auto-adjustment notice
+                        performanceNotice.classList.remove('show');
+                        resolutionAutoAdjusted = false;
+                        
+                        // Show animation speed control for 3D and amplitude modes
+                        animationSpeedControl.classList.toggle('show', 
+                            mode === '3d' || mode === 'amplitude');
+                        
+                        renderCurrentVisualization();
+                    });
+                });
+                
+                // Main frequency slider
+                frequencySlider.addEventListener('input', function() {
+                    baseFrequency = parseInt(this.value);
+                    fineTuning = 0;
+                    fineTuningSlider.value = 0;
+                    updateFrequency();
+                });
+                
+                // Fine tuning slider
+                fineTuningSlider.addEventListener('input', function() {
+                    fineTuning = parseInt(this.value);
+                    updateFrequency();
+                });
+                
+                // Animation speed slider
+                animationSpeedSlider.addEventListener('input', function() {
+                    animationSpeed = parseInt(this.value);
+                    animationSpeedValue.textContent = animationSpeed;
+                });
+                
+                // Fine tuning buttons
+                freqDownBtn.addEventListener('click', function() {
+                    fineTuning = Math.max(-50, fineTuning - 1);
+                    fineTuningSlider.value = fineTuning;
+                    updateFrequency();
+                });
+                
+                freqUpBtn.addEventListener('click', function() {
+                    fineTuning = Math.min(50, fineTuning + 1);
+                    fineTuningSlider.value = fineTuning;
+                    updateFrequency();
+                });
+                
+                // Preset frequency buttons
+                buttons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        baseFrequency = parseInt(this.dataset.freq);
+                        fineTuning = 0;
+                        fineTuningSlider.value = 0;
+                        frequencySlider.value = baseFrequency;
+                        updateFrequency();
+                        updateActiveButton();
+                    });
+                });
+                
+                // Play/stop sound
+                playButton.addEventListener('click', function() {
+                    if (isPlaying) {
+                        stopSound();
+                        this.innerHTML = '<span class="icon">▶</span> Play Sound';
+                        this.classList.remove('active');
+                    } else {
+                        playSound();
+                        this.innerHTML = '<span class="icon">◼</span> Stop Sound';
+                        this.classList.add('active');
+                    }
+                });
+                
+                // Animate pattern
+                animateButton.addEventListener('click', function() {
+                    if (animating) {
+                        animating = false;
+                        this.innerHTML = '<span class="icon">↻</span> Animate';
+                        this.classList.remove('active');
+                        
+                        // Reset animation state
+                        rotationAngle3D = 0;
+                        animationPhase = 0;
+                        
+                        renderCurrentVisualization();
+                    } else {
+                        animating = true;
+                        this.innerHTML = '<span class="icon">◼</span> Stop Animation';
+                        this.classList.add('active');
+                        
+                        // Show animation speed control for 3D and amplitude modes
+                        animationSpeedControl.classList.toggle('show', 
+                            currentVisualization === '3d' || currentVisualization === 'amplitude');
+                        
+                        startAnimation();
+                    }
+                });
+                
+                // Pattern algorithm select
+                patternAlgorithm.addEventListener('change', function() {
+                    currentPattern = this.value;
+                    renderCurrentVisualization();
+                });
+                
+                // Resolution setting select
+                resolutionSetting.addEventListener('change', function() {
+                    currentResolution = this.value;
+                    updateResolution();
+                    
+                    // Reset auto-adjustment flag
+                    resolutionAutoAdjusted = false;
+                    performanceNotice.classList.remove('show');
+                    
+                    // Show FPS counter if using ultra-high resolution
+                    fpsDisplay.style.display = (currentResolution === 'ultra') ? 'block' : 'none';
+                    
+                    renderCurrentVisualization();
+                });
+                
+                // Show FPS on canvas click (debug feature)
+                mainCanvas.addEventListener('dblclick', function() {
+                    fpsDisplay.style.display = (fpsDisplay.style.display === 'none' || !fpsDisplay.style.display) ? 'block' : 'none';
+                });
+            }
+            
+            // Initialize particles for particle visualization
+            function initializeParticles() {
+                particles = [];
+                const width = particleCanvas.width / (window.devicePixelRatio || 1);
+                const height = particleCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Adaptive particle count based on device performance
+                const performanceLevel = devicePerformance.getLevel();
+                particleDensity = performanceLevel === 'high' ? 3000 : 
+                                 performanceLevel === 'medium' ? 2000 : 1000;
+                
+                for (let i = 0; i < particleDensity; i++) {
+                    particles.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        size: Math.random() * 2 + 1,
+                        speedX: 0,
+                        speedY: 0,
+                        color: Math.random() < 0.9 ? '#ffffff' : '#ffaa00'
+                    });
+                }
+            }
+            
+            // Update resolution settings
+            function updateResolution() {
+                // Get appropriate resolution step
+                actualResolution = devicePerformance.getResolutionStep(currentResolution);
+                
+                // Update resolution display
+                let resolutionText;
+                if (currentResolution === 'ultra') {
+                    resolutionText = "Ultra High";
+                } else if (actualResolution <= 1.5) {
+                    resolutionText = "High";
+                } else if (actualResolution <= 2.5) {
+                    resolutionText = "Medium";
+                } else {
+                    resolutionText = "Low";
+                }
+                
+                resolutionDisplay.textContent = `Resolution: ${resolutionText}`;
+            }
+            
+            // Automatically adjust resolution if performance is low
+            function autoAdjustResolution() {
+                if (currentResolution !== 'auto' || resolutionAutoAdjusted) return;
+                
+                // If FPS is consistently below threshold, reduce resolution
+                if (fps < 25) {
+                    // Increase step size to reduce resolution
+                    actualResolution += 1;
+                    actualResolution = Math.min(actualResolution, 5);
+                    
+                    // Update display and show notice
+                    resolutionDisplay.textContent = `Resolution: Auto (Adjusted)`;
+                    performanceNotice.classList.add('show');
+                    resolutionAutoAdjusted = true;
+                }
+            }
+            
+            // Update frequency from sliders
+            function updateFrequency() {
+                currentFrequency = baseFrequency + fineTuning;
+                currentFrequency = Math.max(100, Math.min(6000, currentFrequency));
+                
+                // Update displays
+                frequencyDisplay.textContent = `${currentFrequency} Hz`;
+                freqValue.textContent = `${currentFrequency} Hz`;
+                
+                // Calculate and update wavelength
+                const speedOfSound = 343; // m/s
+                const wavelengthM = speedOfSound / currentFrequency;
+                const wavelengthCm = Math.round(wavelengthM * 100 * 10) / 10;
+                wavelengthDisplay.textContent = `${wavelengthCm} cm`;
+                
+                // Estimate mode numbers (simplified model)
+                // For low frequencies, ensure we still show at least 1,1
+                const n = Math.max(1, Math.floor(currentFrequency / 400));
+                const m = Math.max(1, Math.floor(currentFrequency / 500));
+                modeDisplay.textContent = `${n},${m}`;
+                
+                // Update active button if frequency matches a preset
+                updateActiveButton();
+                
+                // Update sound if playing
                 if (isPlaying && oscillator) {
                     oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
                 }
-            });
-            
-            // Frequency button clicks
-            buttons.forEach(button => {
-                button.addEventListener('click', function() {
-                    currentFrequency = parseInt(this.dataset.freq);
-                    frequencySlider.value = currentFrequency;
-                    updateFrequencyDisplay();
-                    updateActiveButton();
-                    drawChladniPattern(currentFrequency);
-                    
-                    // Update oscillator if playing
-                    if (isPlaying && oscillator) {
-                        oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
-                    }
-                });
-            });
-            
-            // Play/stop sound
-            playButton.addEventListener('click', function() {
-                if (isPlaying) {
-                    stopSound();
-                    this.textContent = 'Play Sound';
-                } else {
-                    playSound();
-                    this.textContent = 'Stop Sound';
+                
+                // Update resolution based on frequency
+                updateResolution();
+                
+                // Reset auto-adjustment for new frequency
+                if (resolutionAutoAdjusted) {
+                    resolutionAutoAdjusted = false;
+                    performanceNotice.classList.remove('show');
                 }
-            });
-            
-            // Animate pattern formation
-            animateButton.addEventListener('click', function() {
-                if (animating) {
-                    animating = false;
-                    this.textContent = 'Animate Pattern';
-                    drawChladniPattern(currentFrequency);
-                } else {
-                    animating = true;
-                    this.textContent = 'Stop Animation';
-                    animateFormation();
-                }
-            });
-            
-            function updateFrequencyDisplay() {
-                frequencyDisplay.textContent = `${currentFrequency} Hz`;
-                freqValue.textContent = `${currentFrequency} Hz`;
+                
+                // Update visualization
+                renderCurrentVisualization();
             }
             
+            // Update active frequency button
             function updateActiveButton() {
                 buttons.forEach(btn => {
-                    if (parseInt(btn.dataset.freq) === currentFrequency) {
+                    if (parseInt(btn.dataset.freq) === baseFrequency && fineTuning === 0) {
                         btn.classList.add('active');
                     } else {
                         btn.classList.remove('active');
@@ -285,6 +936,7 @@
                 });
             }
             
+            // Play frequency as sound
             function playSound() {
                 try {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -302,9 +954,11 @@
                     isPlaying = true;
                 } catch (e) {
                     console.error("Web Audio API not supported:", e);
+                    alert("Sound playback is not supported in your browser.");
                 }
             }
             
+            // Stop sound playback
             function stopSound() {
                 if (oscillator) {
                     oscillator.stop();
@@ -318,222 +972,691 @@
                 isPlaying = false;
             }
             
-            function drawChladniPattern(frequency) {
-                const width = canvas.width / (window.devicePixelRatio || 1);
-                const height = canvas.height / (window.devicePixelRatio || 1);
+            // Calculate Chladni pattern value at given coordinates
+            function calculateChladniValue(nx, ny, pattern = 'classic', timePhase = 0) {
+                // Special frequency-dependent parameters to ensure visible patterns at all frequencies
+                let a, b, scale;
                 
-                // Clear the canvas
-                ctx.fillStyle = 'black';
-                ctx.fillRect(0, 0, width, height);
-                
-                // Parameters for different frequency ranges
-                let a, b, intensity, threshold;
-                
-                // Adjust parameters based on frequency range
-                if (frequency < 800) {
-                    // For very low frequencies
-                    a = Math.ceil(frequency / 200);
-                    b = Math.ceil(frequency / 300);
-                    intensity = 0.01 + (frequency / 40000);
-                    threshold = 0.05;
-                } else if (frequency < 2000) {
-                    // For mid-low frequencies
-                    a = Math.ceil(frequency / 350);
-                    b = Math.ceil(frequency / 400);
-                    intensity = 0.015 + (frequency / 30000);
-                    threshold = 0.04;
-                } else if (frequency < 4000) {
-                    // For mid-high frequencies
-                    a = Math.ceil(frequency / 450);
-                    b = Math.ceil(frequency / 500);
-                    intensity = 0.02 + (frequency / 25000);
-                    threshold = 0.03;
+                // Special handling for different frequency ranges
+                if (currentFrequency < 200) {
+                    // Very low frequencies need special parameters
+                    a = 1;
+                    b = 2;
+                    scale = 0.07; // Larger scale to make pattern visible
+                } else if (currentFrequency < 500) {
+                    // Low frequencies
+                    a = Math.max(1, Math.floor(currentFrequency / 500) + 1);
+                    b = Math.max(2, Math.floor(currentFrequency / 400) + 1);
+                    scale = 0.04 + (currentFrequency / 12000);
+                } else if (currentFrequency < 1000) {
+                    // Medium-low frequencies
+                    a = Math.max(1, Math.floor(currentFrequency / 450));
+                    b = Math.max(1, Math.floor(currentFrequency / 350));
+                    scale = 0.02 + (currentFrequency / 20000);
+                } else if (currentFrequency < 3000) {
+                    // Medium-high frequencies
+                    a = Math.max(1, Math.floor(currentFrequency / 400));
+                    b = Math.max(1, Math.floor(currentFrequency / 500));
+                    scale = 0.015 + (currentFrequency / 25000);
                 } else {
-                    // For high frequencies
-                    a = Math.ceil(frequency / 550);
-                    b = Math.ceil(frequency / 600);
-                    intensity = 0.025 + (frequency / 20000);
-                    threshold = 0.025;
+                    // High frequencies
+                    a = Math.max(2, Math.floor(currentFrequency / 500));
+                    b = Math.max(2, Math.floor(currentFrequency / 600));
+                    scale = 0.01 + (currentFrequency / 30000);
                 }
                 
-                // Make sure we have at least 1 for a and b
-                a = Math.max(1, a);
-                b = Math.max(1, b);
+                // Ensure different parameters for different frequency ranges
+                if (a === b && currentFrequency < 1000) {
+                    b = a + 1; // Ensure different parameters for visible patterns
+                }
                 
-                // Use different pattern types for different frequencies
-                const patternType = Math.floor(frequency / 1000) % 4;
+                // Apply time phase for animation
+                const phaseShift = timePhase || 0;
                 
-                // Draw the pattern
-                ctx.fillStyle = 'white';
+                let value;
+                switch (pattern) {
+                    case 'classic':
+                        // Classic Chladni equation
+                        if (currentFrequency < 200) {
+                            // For very low frequencies, use simpler equation that produces clearer patterns
+                            value = Math.sin(Math.PI * a * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * b * ny * scale + phaseShift);
+                        } else {
+                            value = Math.sin(Math.PI * a * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * b * ny * scale + phaseShift) - 
+                                   Math.sin(Math.PI * b * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * a * ny * scale + phaseShift);
+                        }
+                        break;
+                    
+                    case 'square':
+                        // Square terms pattern - works well for all frequencies
+                        value = Math.sin(Math.PI * a * nx * nx * scale + phaseShift) * 
+                               Math.sin(Math.PI * b * ny * ny * scale + phaseShift) - 
+                               Math.sin(Math.PI * b * nx * nx * scale + phaseShift) * 
+                               Math.sin(Math.PI * a * ny * ny * scale + phaseShift);
+                        break;
+                    
+                    case 'combined':
+                        // Combined pattern - adjusted for low frequencies
+                        if (currentFrequency < 300) {
+                            value = Math.sin(Math.PI * a * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * b * ny * scale + phaseShift) * 
+                                   Math.cos(Math.PI * 2 * nx * ny * scale + phaseShift);
+                        } else {
+                            value = Math.sin(Math.PI * a * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * b * ny * scale + phaseShift) * 
+                                   Math.cos(Math.PI * Math.max(1, Math.abs(a-b)) * nx * ny * scale + phaseShift);
+                        }
+                        break;
+                    
+                    case 'radial':
+                        // Radial pattern - good for all frequencies with some adjustments
+                        const r = Math.sqrt(nx*nx + ny*ny);
+                        const theta = Math.atan2(ny, nx) + phaseShift * 0.5; // Apply phase to angle for rotation
+                        
+                        if (currentFrequency < 300) {
+                            // For very low frequencies, use a simpler radial pattern
+                            value = Math.sin(Math.PI * a * r * scale * 2 + phaseShift);
+                        } else {
+                            value = Math.sin(Math.PI * a * r * scale + phaseShift) * 
+                                   Math.cos(Math.PI * b * theta * 2);
+                        }
+                        break;
+                    
+                    default:
+                        // Default to classic pattern with low frequency support
+                        if (currentFrequency < 200) {
+                            value = Math.sin(Math.PI * a * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * b * ny * scale + phaseShift);
+                        } else {
+                            value = Math.sin(Math.PI * a * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * b * ny * scale + phaseShift) - 
+                                   Math.sin(Math.PI * b * nx * scale + phaseShift) * 
+                                   Math.sin(Math.PI * a * ny * scale + phaseShift);
+                        }
+                }
                 
-                // Use a resolution based on frequency
-                // Higher frequencies need more detail
-                const resolution = frequency > 3000 ? 3 : 
-                                  frequency > 1500 ? 4 : 5;
+                return value;
+            }
+            
+            // Optimized batch drawing using path instead of individual rects
+            function batchDrawNodalPoints(pointsArray, ctx) {
+                if (pointsArray.length === 0) return;
                 
+                // Use provided context or default to main context
+                const context = ctx || mainCtx;
+                
+                context.beginPath();
+                for (let i = 0; i < pointsArray.length; i++) {
+                    const point = pointsArray[i];
+                    context.rect(point.x, point.y, point.width, point.height);
+                }
+                context.fill();
+            }
+            
+            // Draw standard Chladni pattern with high-resolution optimizations
+            function drawStandardPattern(timePhase = 0) {
+                const width = mainCanvas.width / (window.devicePixelRatio || 1);
+                const height = mainCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear the canvas
+                mainCtx.fillStyle = 'black';
+                mainCtx.fillRect(0, 0, width, height);
+                
+                // Set drawing color
+                mainCtx.fillStyle = 'white';
+                
+                // Dynamic threshold based on frequency
+                // Thicker lines for low frequencies, thinner for high frequencies
+                let threshold;
+                if (currentFrequency < 200) {
+                    threshold = 0.08; // Much wider lines for very low frequencies
+                } else if (currentFrequency < 500) {
+                    threshold = 0.06; // Wider lines for low frequencies
+                } else if (currentFrequency < 1000) {
+                    threshold = 0.05; // Medium width lines
+                } else if (currentFrequency < 3000) {
+                    threshold = 0.04 - (currentFrequency / 100000); // Progressively thinner
+                } else {
+                    threshold = 0.03 - (currentFrequency / 200000); // Thin lines for high frequencies
+                }
+                
+                // Use actual resolution (step size) from our resolution setting
+                const resolution = actualResolution;
+                
+                // Batch drawing for better performance
+                const nodalPoints = [];
+                
+                // Calculate nodal lines
                 for (let x = 0; x < width; x += resolution) {
                     for (let y = 0; y < height; y += resolution) {
                         // Normalize coordinates to -1 to 1
                         const nx = (2 * x / width) - 1;
                         const ny = (2 * y / height) - 1;
                         
-                        // Calculate value based on pattern type
-                        let value;
+                        // Calculate value based on current pattern with time phase for animation
+                        const value = calculateChladniValue(nx, ny, currentPattern, timePhase);
                         
-                        switch (patternType) {
-                            case 0:
-                                // Classic Chladni pattern
-                                value = Math.sin(Math.PI * a * nx * intensity) * 
-                                       Math.sin(Math.PI * b * ny * intensity) - 
-                                       Math.sin(Math.PI * b * nx * intensity) * 
-                                       Math.sin(Math.PI * a * ny * intensity);
-                                break;
-                            case 1:
-                                // Square terms pattern
-                                value = Math.sin(Math.PI * a * nx * nx * intensity) * 
-                                       Math.sin(Math.PI * b * ny * ny * intensity) - 
-                                       Math.sin(Math.PI * b * nx * nx * intensity) * 
-                                       Math.sin(Math.PI * a * ny * ny * intensity);
-                                break;
-                            case 2:
-                                // Cross-term pattern
-                                value = Math.sin(Math.PI * a * nx * intensity) * 
-                                       Math.sin(Math.PI * b * ny * intensity) * 
-                                       Math.cos(Math.PI * (a+b) * nx * ny * intensity);
-                                break;
-                            case 3:
-                                // Radial pattern
-                                const r = Math.sqrt(nx*nx + ny*ny);
-                                value = Math.sin(Math.PI * a * r * intensity) * 
-                                       Math.cos(Math.PI * b * Math.atan2(ny, nx) * intensity);
-                                break;
-                        }
-                        
-                        // Draw points near nodal lines (where value is close to 0)
+                        // Add points near nodal lines to our batch
                         if (Math.abs(value) < threshold) {
-                            ctx.fillRect(x, y, resolution, resolution);
+                            nodalPoints.push({
+                                x: x,
+                                y: y,
+                                width: resolution,
+                                height: resolution
+                            });
                         }
                     }
                 }
                 
-                // Draw center point
-                ctx.fillStyle = '#ffaa00';
-                ctx.beginPath();
-                ctx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
-                ctx.fill();
+                // If no nodal points were found (can happen with some parameter combinations),
+                // try again with a higher threshold
+                if (nodalPoints.length < 10) {
+                    nodalPoints.length = 0; // Clear the array
+                    const highThreshold = threshold * 2;
+                    
+                    for (let x = 0; x < width; x += resolution) {
+                        for (let y = 0; y < height; y += resolution) {
+                            const nx = (2 * x / width) - 1;
+                            const ny = (2 * y / height) - 1;
+                            const value = calculateChladniValue(nx, ny, currentPattern, timePhase);
+                            
+                            if (Math.abs(value) < highThreshold) {
+                                nodalPoints.push({
+                                    x: x,
+                                    y: y,
+                                    width: resolution,
+                                    height: resolution
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                // Batch draw all points
+                batchDrawNodalPoints(nodalPoints);
+                
+                // Draw center indicator
+                mainCtx.fillStyle = '#ffaa00';
+                mainCtx.beginPath();
+                mainCtx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
+                mainCtx.fill();
+                
+                // Update rendering information
+                updateFPS();
             }
             
-            function animateFormation() {
+            // High-resolution continuous line drawing for nodal lines
+            function drawNodalLinesHighResolution(timePhase = 0) {
+                const width = mainCanvas.width / (window.devicePixelRatio || 1);
+                const height = mainCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear the canvas
+                mainCtx.fillStyle = 'black';
+                mainCtx.fillRect(0, 0, width, height);
+                
+                // Use high resolution for sampling the function
+                const resolution = 1; // Ultra-high resolution
+                
+                // We'll use a technique to detect zero-crossings to draw continuous lines
+                const nodalPoints = [];
+                
+                // Sample the function at high resolution
+                for (let x = 0; x <= width; x += resolution) {
+                    for (let y = 0; y <= height; y += resolution) {
+                        // Normalize coordinates to -1 to 1
+                        const nx = (2 * x / width) - 1;
+                        const ny = (2 * y / height) - 1;
+                        
+                        // Calculate value at this point with time phase for animation
+                        const value = calculateChladniValue(nx, ny, currentPattern, timePhase);
+                        
+                        // Dynamic threshold based on frequency
+                        let threshold;
+                        if (currentFrequency < 200) {
+                            threshold = 0.05; // Wider detection for low frequencies
+                        } else if (currentFrequency < 1000) {
+                            threshold = 0.02;
+                        } else {
+                            threshold = 0.01;
+                        }
+                        
+                        // Store points very close to nodal lines
+                        if (Math.abs(value) < threshold) {
+                            nodalPoints.push({ x, y });
+                        }
+                    }
+                }
+                
+                // Draw nodal points as anti-aliased dots for smoother appearance
+                mainCtx.fillStyle = 'white';
+                mainCtx.beginPath();
+                for (const point of nodalPoints) {
+                    mainCtx.rect(point.x, point.y, 1, 1);
+                }
+                mainCtx.fill();
+                
+                // If very few points were found, try with a larger threshold
+                if (nodalPoints.length < width/10) {
+                    mainCtx.fillStyle = 'rgba(255,255,255,0.7)';
+                    mainCtx.beginPath();
+                    
+                    for (let x = 0; x <= width; x += resolution) {
+                        for (let y = 0; y <= height; y += resolution) {
+                            const nx = (2 * x / width) - 1;
+                            const ny = (2 * y / height) - 1;
+                            const value = calculateChladniValue(nx, ny, currentPattern, timePhase);
+                            
+                            let largerThreshold;
+                            if (currentFrequency < 200) {
+                                largerThreshold = 0.1;
+                            } else if (currentFrequency < 1000) {
+                                largerThreshold = 0.05;
+                            } else {
+                                largerThreshold = 0.03;
+                            }
+                            
+                            if (Math.abs(value) < largerThreshold && Math.abs(value) >= 0.01) {
+                                mainCtx.rect(x, y, 1, 1);
+                            }
+                        }
+                    }
+                    mainCtx.fill();
+                }
+                
+                // Draw center indicator
+                mainCtx.fillStyle = '#ffaa00';
+                mainCtx.beginPath();
+                mainCtx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
+                mainCtx.fill();
+            }
+            
+            // Draw amplitude visualization with high resolution
+            function drawAmplitudeVisualization(timePhase = 0) {
+                const width = mainCanvas.width / (window.devicePixelRatio || 1);
+                const height = mainCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear the canvas
+                mainCtx.fillStyle = 'black';
+                mainCtx.fillRect(0, 0, width, height);
+                
+                // Use step size from resolution setting
+                const resolution = actualResolution;
+                
+                // Draw the amplitude pattern
+                for (let x = 0; x < width; x += resolution) {
+                    for (let y = 0; y < height; y += resolution) {
+                        // Normalize coordinates to -1 to 1
+                        const nx = (2 * x / width) - 1;
+                        const ny = (2 * y / height) - 1;
+                        
+                        // Calculate value with time phase for animation
+                        const value = calculateChladniValue(nx, ny, currentPattern, timePhase);
+                        
+                        // Map value (-1 to 1) to color
+                        const normalizedValue = (value + 1) / 2; // Map -1..1 to 0..1
+                        
+                        // Rainbow gradient (hue from 0 to 240 degrees)
+                        const hue = Math.floor(240 * normalizedValue);
+                        mainCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                        mainCtx.fillRect(x, y, resolution, resolution);
+                    }
+                }
+                
+                // Draw center indicator
+                mainCtx.fillStyle = 'white';
+                mainCtx.beginPath();
+                mainCtx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
+                mainCtx.fill();
+            }
+            
+            // Update and draw particles with improved physics
+            function updateParticles() {
+                const width = particleCanvas.width / (window.devicePixelRatio || 1);
+                const height = particleCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear particle canvas with transparency for trails
+                particleCtx.clearRect(0, 0, width, height);
+                
+                // Draw background on main canvas
+                mainCtx.fillStyle = 'black';
+                mainCtx.fillRect(0, 0, width, height);
+                
+                // Use higher resolution sampling for accurate force calculation
+                const subSamplingFactor = 2; // Oversample for smoother force calculation
+                
+                // Adjust force magnitude based on frequency
+                let forceMagnitude;
+                if (currentFrequency < 200) {
+                    forceMagnitude = 0.002; // Stronger forces for low frequencies
+                } else if (currentFrequency < 1000) {
+                    forceMagnitude = 0.0015;
+                } else {
+                    forceMagnitude = 0.001 * (1 + currentFrequency / 3000);
+                }
+                
+                // Update and draw each particle
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    
+                    // Normalize coordinates to -1 to 1
+                    const nx = (2 * p.x / width) - 1;
+                    const ny = (2 * p.y / height) - 1;
+                    
+                    // Calculate Chladni value for multiple nearby points for more accurate forces
+                    const value = calculateChladniValue(nx, ny, currentPattern);
+                    
+                    // Calculate gradient with higher accuracy
+                    const dx1 = calculateChladniValue(nx + 0.01/subSamplingFactor, ny, currentPattern);
+                    const dx2 = calculateChladniValue(nx - 0.01/subSamplingFactor, ny, currentPattern);
+                    const dy1 = calculateChladniValue(nx, ny + 0.01/subSamplingFactor, currentPattern);
+                    const dy2 = calculateChladniValue(nx, ny - 0.01/subSamplingFactor, currentPattern);
+                    
+                    // Central difference for more accurate gradient
+                    const dx = (dx1 - dx2) / (0.02/subSamplingFactor);
+                    const dy = (dy1 - dy2) / (0.02/subSamplingFactor);
+                    
+                    // Move particles based on value gradient
+                    // Particles are pushed away from high amplitude areas toward nodal lines
+                    p.speedX = p.speedX * 0.92 - dx * forceMagnitude;
+                    p.speedY = p.speedY * 0.92 - dy * forceMagnitude;
+                    
+                    // Apply some randomness for natural movement
+                    if (Math.random() < 0.01) {
+                        p.speedX += (Math.random() - 0.5) * 0.05;
+                        p.speedY += (Math.random() - 0.5) * 0.05;
+                    }
+                    
+                    // Dampen speed when near nodal lines (where value is close to 0)
+                    if (Math.abs(value) < 0.05) {
+                        p.speedX *= 0.8;
+                        p.speedY *= 0.8;
+                    }
+                    
+                    // Update position
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    
+                    // Bounce off walls with energy loss
+                    if (p.x < 0) { p.x = 0; p.speedX *= -0.5; }
+                    if (p.x > width) { p.x = width; p.speedX *= -0.5; }
+                    if (p.y < 0) { p.y = 0; p.speedY *= -0.5; }
+                    if (p.y > height) { p.y = height; p.speedY *= -0.5; }
+                    
+                    // Draw particle with anti-aliasing
+                    particleCtx.beginPath();
+                    particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    particleCtx.fillStyle = p.color;
+                    particleCtx.fill();
+                }
+                
+                // Draw reference nodal lines on main canvas (faint)
+                mainCtx.globalAlpha = 0.15;
+                drawStandardPattern();
+                mainCtx.globalAlpha = 1.0;
+            }
+            
+            // Draw 3D visualization
+            function draw3DVisualization(rotation = 0, timePhase = 0) {
+                const width = mainCanvas.width / (window.devicePixelRatio || 1);
+                const height = mainCanvas.height / (window.devicePixelRatio || 1);
+                
+                // Clear the canvas
+                mainCtx.fillStyle = 'black';
+                mainCtx.fillRect(0, 0, width, height);
+                
+                // Set grid resolution based on our resolution setting
+                const gridSize = actualResolution <= 1.5 ? 60 : 
+                               actualResolution <= 2.5 ? 40 : 25;
+                
+                // Create grid of points with Chladni values
+                const grid = [];
+                for (let i = 0; i <= gridSize; i++) {
+                    const row = [];
+                    for (let j = 0; j <= gridSize; j++) {
+                        // Convert grid position to normalized coordinates
+                        const nx = (2 * i / gridSize) - 1;
+                        const ny = (2 * j / gridSize) - 1;
+                        
+                        // Calculate Chladni value with time phase for animation
+                        let value = calculateChladniValue(nx, ny, currentPattern, timePhase);
+                        
+                        // Scale value for visibility
+                        // Use more scaling for low frequencies to make patterns more visible
+                        let scaleFactor = 0.5;
+                        if (currentFrequency < 200) {
+                            scaleFactor = 1.0; // More pronounced for very low frequencies
+                        } else if (currentFrequency < 500) {
+                            scaleFactor = 0.8;
+                        }
+                        
+                        value *= scaleFactor;
+                        
+                        row.push({
+                            x: i * (width / gridSize),
+                            y: j * (height / gridSize),
+                            z: value * (height / 4),
+                            value: value
+                        });
+                    }
+                    grid.push(row);
+                }
+                
+                // Enhanced isometric projection with rotation
+                const isoProject = (x, y, z) => {
+                    // Center offset
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    
+                    // Isometric angles with rotation
+                    const baseAngle = 0.7;
+                    const rotationAngle = rotation || 0;
+                    const a = baseAngle + rotationAngle;
+                    
+                    // Apply projection with rotation
+                    const rotatedX = (x - width/2) * Math.cos(rotationAngle) - (y - height/2) * Math.sin(rotationAngle);
+                    const rotatedY = (x - width/2) * Math.sin(rotationAngle) + (y - height/2) * Math.cos(rotationAngle);
+                    
+                    return {
+                        x: centerX + rotatedX * Math.cos(a) - rotatedY * Math.cos(a),
+                        y: centerY + rotatedX * Math.sin(a) + rotatedY * Math.sin(a) - z
+                    };
+                };
+                
+                // Wireframe mode for high resolution
+                mainCtx.strokeStyle = '#00ccff';
+                mainCtx.lineWidth = 1;
+                
+                // Draw horizontal grid lines
+                for (let i = 0; i < grid.length; i++) {
+                    mainCtx.beginPath();
+                    for (let j = 0; j < grid[i].length; j++) {
+                        const point = grid[i][j];
+                        const projected = isoProject(point.x, point.y, point.z);
+                        
+                        if (j === 0) {
+                            mainCtx.moveTo(projected.x, projected.y);
+                        } else {
+                            mainCtx.lineTo(projected.x, projected.y);
+                        }
+                    }
+                    mainCtx.stroke();
+                }
+                
+                // Draw vertical grid lines
+                for (let j = 0; j < grid[0].length; j++) {
+                    mainCtx.beginPath();
+                    for (let i = 0; i < grid.length; i++) {
+                        const point = grid[i][j];
+                        const projected = isoProject(point.x, point.y, point.z);
+                        
+                        if (i === 0) {
+                            mainCtx.moveTo(projected.x, projected.y);
+                        } else {
+                            mainCtx.lineTo(projected.x, projected.y);
+                        }
+                    }
+                    mainCtx.stroke();
+                }
+                
+                // Draw center indicator
+                const centerPoint = isoProject(width/2, height/2, 0);
+                mainCtx.fillStyle = '#ffaa00';
+                mainCtx.beginPath();
+                mainCtx.arc(centerPoint.x, centerPoint.y, 4, 0, Math.PI * 2);
+                mainCtx.fill();
+            }
+            
+            // Render current visualization based on selected mode
+            function renderCurrentVisualization() {
+                switch (currentVisualization) {
+                    case 'standard':
+                        // Use high-resolution line drawing for ultra setting
+                        if (currentResolution === 'ultra' && actualResolution <= 1) {
+                            drawNodalLinesHighResolution();
+                        } else {
+                            drawStandardPattern();
+                        }
+                        break;
+                    
+                    case 'particles':
+                        if (!animating) {
+                            // Draw static version if not animating
+                            mainCtx.globalAlpha = 0.3;
+                            drawStandardPattern();
+                            mainCtx.globalAlpha = 1;
+                            // Draw some initial particles
+                            if (particles.length === 0) {
+                                initializeParticles();
+                            }
+                            updateParticles();
+                        }
+                        break;
+                    
+                    case 'amplitude':
+                        drawAmplitudeVisualization();
+                        break;
+                    
+                    case '3d':
+                        draw3DVisualization();
+                        break;
+                }
+            }
+            
+            // Animation loop with performance monitoring
+            function animate(timestamp) {
                 if (!animating) return;
                 
-                const width = canvas.width / (window.devicePixelRatio || 1);
-                const height = canvas.height / (window.devicePixelRatio || 1);
+                // Calculate delta time for smooth animation
+                const deltaTime = timestamp - (lastRenderTime || timestamp);
+                lastRenderTime = timestamp;
                 
-                // Clear the canvas
-                ctx.fillStyle = 'black';
-                ctx.fillRect(0, 0, width, height);
+                // Count frames for FPS calculation
+                frames++;
                 
-                // Get current time for animation
-                const time = Date.now() / 1000;
-                
-                // Parameters for different frequency ranges
-                let a, b, intensity, threshold;
-                
-                // Adjust parameters based on frequency range
-                if (currentFrequency < 800) {
-                    a = Math.ceil(currentFrequency / 200);
-                    b = Math.ceil(currentFrequency / 300);
-                    intensity = 0.01 + (currentFrequency / 40000);
-                    threshold = 0.05;
-                } else if (currentFrequency < 2000) {
-                    a = Math.ceil(currentFrequency / 350);
-                    b = Math.ceil(currentFrequency / 400);
-                    intensity = 0.015 + (currentFrequency / 30000);
-                    threshold = 0.04;
-                } else if (currentFrequency < 4000) {
-                    a = Math.ceil(currentFrequency / 450);
-                    b = Math.ceil(currentFrequency / 500);
-                    intensity = 0.02 + (currentFrequency / 25000);
-                    threshold = 0.03;
-                } else {
-                    a = Math.ceil(currentFrequency / 550);
-                    b = Math.ceil(currentFrequency / 600);
-                    intensity = 0.025 + (currentFrequency / 20000);
-                    threshold = 0.025;
-                }
-                
-                // Make sure we have at least 1 for a and b
-                a = Math.max(1, a);
-                b = Math.max(1, b);
-                
-                // Use different pattern types for different frequencies
-                const patternType = Math.floor(currentFrequency / 1000) % 4;
-                
-                // Draw the pattern with animation factor
-                ctx.fillStyle = 'white';
-                
-                // Adjust resolution for performance
-                const resolution = currentFrequency > 3000 ? 3 : 
-                                  currentFrequency > 1500 ? 4 : 5;
-                
-                // Animation effect
-                const animFactor = 0.5 + 0.5 * Math.sin(time * 3);
-                
-                for (let x = 0; x < width; x += resolution) {
-                    for (let y = 0; y < height; y += resolution) {
-                        // Normalize coordinates to -1 to 1
-                        const nx = (2 * x / width) - 1;
-                        const ny = (2 * y / height) - 1;
-                        
-                        // Calculate value based on pattern type
-                        let value;
-                        
-                        switch (patternType) {
-                            case 0:
-                                value = Math.sin(Math.PI * a * nx * intensity) * 
-                                       Math.sin(Math.PI * b * ny * intensity) - 
-                                       Math.sin(Math.PI * b * nx * intensity) * 
-                                       Math.sin(Math.PI * a * ny * intensity);
-                                break;
-                            case 1:
-                                value = Math.sin(Math.PI * a * nx * nx * intensity) * 
-                                       Math.sin(Math.PI * b * ny * ny * intensity) - 
-                                       Math.sin(Math.PI * b * nx * nx * intensity) * 
-                                       Math.sin(Math.PI * a * ny * ny * intensity);
-                                break;
-                            case 2:
-                                value = Math.sin(Math.PI * a * nx * intensity) * 
-                                       Math.sin(Math.PI * b * ny * intensity) * 
-                                       Math.cos(Math.PI * (a+b) * nx * ny * intensity);
-                                break;
-                            case 3:
-                                const r = Math.sqrt(nx*nx + ny*ny);
-                                value = Math.sin(Math.PI * a * r * intensity) * 
-                                       Math.cos(Math.PI * b * Math.atan2(ny, nx) * intensity);
-                                break;
-                        }
-                        
-                        // Apply animation effect
-                        value *= animFactor;
-                        
-                        // Draw points near nodal lines
-                        if (Math.abs(value) < threshold) {
-                            ctx.fillRect(x, y, resolution, resolution);
-                        }
+                // Update FPS every second
+                if (timestamp - lastFpsUpdate >= 1000) {
+                    fps = Math.round((frames * 1000) / (timestamp - lastFpsUpdate));
+                    fpsDisplay.textContent = `${fps} FPS`;
+                    frames = 0;
+                    lastFpsUpdate = timestamp;
+                    
+                    // Auto-adjust resolution if needed
+                    if (needsAutoAdjust) {
+                        autoAdjustResolution();
+                        needsAutoAdjust = false;
+                    } else {
+                        needsAutoAdjust = true;
                     }
                 }
                 
-                // Draw center point
-                ctx.fillStyle = '#ffaa00';
-                ctx.beginPath();
-                ctx.arc(width / 2, height / 2, 4, 0, Math.PI * 2);
-                ctx.fill();
+                // Calculate animation speed factor based on slider
+                const speedFactor = animationSpeed / 5; // 5 is the middle value
                 
-                requestAnimationFrame(animateFormation);
+                // Update animation phase based on time and speed
+                animationPhase += 0.02 * speedFactor * deltaTime / 16.67; // Normalized to 60fps
+                
+                // Update 3D rotation angle if in 3D mode
+                if (currentVisualization === '3d') {
+                    rotationAngle3D += 0.005 * speedFactor * deltaTime / 16.67;
+                }
+                
+                // Render current visualization
+                switch (currentVisualization) {
+                    case 'standard':
+                        // Animate standard pattern
+                        if (currentResolution === 'ultra' && actualResolution <= 1) {
+                            drawNodalLinesHighResolution(animationPhase);
+                        } else {
+                            drawStandardPattern(animationPhase);
+                        }
+                        break;
+                    
+                    case 'particles':
+                        updateParticles();
+                        break;
+                    
+                    case 'amplitude':
+                        // Animated amplitude visualization with phase shift
+                        drawAmplitudeVisualization(animationPhase);
+                        break;
+                    
+                    case '3d':
+                        // Animate 3D view with rotation and phase
+                        draw3DVisualization(rotationAngle3D, animationPhase);
+                        break;
+                }
+                
+                requestAnimationFrame(animate);
             }
             
-            // Initial draw
-            drawChladniPattern(currentFrequency);
+            // Update FPS counter
+            function updateFPS() {
+                const now = performance.now();
+                frames++;
+                
+                if (now - lastFpsUpdate >= 1000) {
+                    fps = Math.round((frames * 1000) / (now - lastFpsUpdate));
+                    fpsDisplay.textContent = `${fps} FPS`;
+                    frames = 0;
+                    lastFpsUpdate = now;
+                }
+            }
+            
+            // Start animation loop
+            function startAnimation() {
+                lastRenderTime = 0;
+                lastFpsUpdate = performance.now();
+                frames = 0;
+                animationPhase = 0;
+                rotationAngle3D = 0;
+                requestAnimationFrame(animate);
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', resizeCanvases);
+            
+            // Initialize application
+            function init() {
+                // Create offscreen canvas for buffer drawing
+                createOffscreenCanvas();
+                
+                // Initialize UI
+                initializeUI();
+                
+                // Initial resolution display
+                updateResolution();
+                
+                // Set up canvases
+                resizeCanvases();
+                
+                // Initial visualization
+                renderCurrentVisualization();
+            }
+            
+            // Start the application
+            init();
         });
     </script>
 </body>
