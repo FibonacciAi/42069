@@ -31,6 +31,33 @@
             overscroll-behavior-x: none; /* Prevent bounce on horizontal */
         }
 
+        /* Auto-navigation progress indicator */
+        .auto-nav-progress {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .auto-nav-progress.active {
+            opacity: 1;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+
         /* Main Container - Strictly Contained */
         #audioviz-container {
             width: 100%;
@@ -1055,6 +1082,10 @@
                 width: 50px;
                 height: 50px;
             }
+            
+            .auto-nav-progress {
+                width: 150px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1085,6 +1116,10 @@
         <h1 id="start-title">Journey Through Dimensions of Consciousness</h1>
         <p id="start-subtitle">Experience a meditative exploration of consciousness levels from the physical to the absolute. Enable sound for a full immersive experience.</p>
         <button id="start-button">Begin Journey</button>
+    </div>
+
+    <div class="auto-nav-progress">
+        <div class="progress-bar"></div>
     </div>
 
     <div id="progress-bar-container">
@@ -1319,6 +1354,8 @@
         const muteButtons = document.querySelectorAll('.mute-button');
         const volumeControls = document.querySelectorAll('.volume-control');
         const body = document.body;
+        const autoNavProgress = document.querySelector('.auto-nav-progress');
+        const progressBar = document.querySelector('.progress-bar');
 
         // --- State Variables ---
         let audioContext;
@@ -1333,6 +1370,13 @@
         let smoothScrolling = true;
         let startX, startY;
         let isScrolling = false;
+        
+        // Auto-navigation variables
+        let autoNavigationActive = false;
+        let autoNavigationTimer = null;
+        const AUTO_NAVIGATION_DELAY = 7410; // 7.41 seconds in milliseconds
+        let progressInterval = null;
+        let currentProgress = 0;
 
         // --- STRICT HORIZONTAL SWIPE PREVENTION ---
         // Prevent all horizontal swiping with these aggressive measures
@@ -1400,6 +1444,65 @@
             }
         }
 
+        // --- Auto-Navigation System ---
+        function startAutoNavigation() {
+            autoNavigationActive = true;
+            autoNavProgress.classList.add('active');
+            navigateToLevel(0);
+        }
+
+        function navigateToLevel(index) {
+            if (index >= levels.length) {
+                // We've reached the end, stop auto-navigation
+                autoNavigationActive = false;
+                autoNavProgress.classList.remove('active');
+                clearProgressBar();
+                return;
+            }
+            
+            const targetLevel = levels[index];
+            targetLevel.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+            // Start progress bar
+            startProgressBar();
+            
+            // Schedule the next navigation if auto-navigation is active
+            if (autoNavigationActive) {
+                clearTimeout(autoNavigationTimer); // Clear any existing timer
+                autoNavigationTimer = setTimeout(() => {
+                    navigateToLevel(index + 1);
+                }, AUTO_NAVIGATION_DELAY);
+            }
+        }
+
+        function startProgressBar() {
+            // Reset progress
+            currentProgress = 0;
+            progressBar.style.width = '0%';
+            
+            // Clear any existing interval
+            clearInterval(progressInterval);
+            
+            // Update progress bar every 50ms
+            progressInterval = setInterval(() => {
+                currentProgress += (50 / AUTO_NAVIGATION_DELAY) * 100; // Increase by percentage
+                if (currentProgress >= 100) {
+                    currentProgress = 100;
+                    clearInterval(progressInterval);
+                }
+                progressBar.style.width = `${currentProgress}%`;
+            }, 50);
+        }
+        
+        function clearProgressBar() {
+            clearInterval(progressInterval);
+            progressBar.style.width = '0%';
+            currentProgress = 0;
+        }
+
         // --- Create Progress Bar ---
         function createProgressBar() {
             const levelIds = Array.from(levels).map(level => {
@@ -1418,6 +1521,14 @@
                 
                 // Add click/tap event
                 point.addEventListener('click', (e) => {
+                    // Cancel auto-navigation if manual navigation is used
+                    if (autoNavigationActive) {
+                        autoNavigationActive = false;
+                        clearTimeout(autoNavigationTimer);
+                        clearProgressBar();
+                        autoNavProgress.classList.remove('active');
+                    }
+                    
                     e.preventDefault();
                     const targetElement = document.getElementById(`level-${level.id}`);
                     if (targetElement) {
@@ -1632,21 +1743,10 @@
                 observer.observe(level);
             });
             
-            // Activate first level
+            // Start auto-navigation after overlay is hidden
             setTimeout(() => {
-                const firstLevel = levels[0];
-                const levelId = firstLevel.dataset.level;
-                firstLevel.classList.add('active');
-                currentActiveLevel = levelId;
-                if (isAudioInitialized && !isMuted) createLevelSound(levelId);
-                updateProgressPoints();
-                
-                // Scroll to first level
-                firstLevel.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-            }, 300);
+                startAutoNavigation();
+            }, 1500);
         }
 
         // --- Event Listeners ---
@@ -1657,6 +1757,14 @@
 
         // Allow keyboard navigation
         document.addEventListener('keydown', (e) => {
+            // Cancel auto-navigation if keyboard is used
+            if (autoNavigationActive && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                autoNavigationActive = false;
+                clearTimeout(autoNavigationTimer);
+                clearProgressBar();
+                autoNavProgress.classList.remove('active');
+            }
+            
             if (!currentActiveLevel) return;
             
             // Find current level index
