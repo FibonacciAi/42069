@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Audioviz Journey Through Dimensions</title>
+    <style>
+        /* Basic Reset & Strict Containment */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: pan-y; /* Only allow vertical scrolling */
+        }
+
+        html, body {
+            overflow-x: hidden;
+            position: relative;
+            width: 100vw;
+            height: 100%;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0a0a;
+            color: #f0f0f0;
+            line-height: 1.6;
+            transition: background-color 1s ease;
+            overscroll-behavior-x: none; /* Prevent bounce on horizontal */
+        }
+
+        /* Main Container - Strictly Contained */
+        #audioviz-container {
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            background-color: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            overflow-x: hidden;
+        }
+
+        /* Start Experience Overlay */
+        #start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw; /* Use viewport width */
+            height: 100vh; /* Use viewport height */
+            background: radial-gradient(circle, #050505 0%, #000000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1.5s ease, visibility 1.5s ease;
+            overflow: hidden;
+        }
+
+        #start-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #start-title {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 2s ease forwards;
+            padding: 0 20px;
+            width: 100%;
+            max-width: 90vw;
+        }
+
+        #start-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            color: #ccc;
+            max-width: 600px;
+            padding: 0 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 2s ease 0.5s forwards;
+            width: 100%;
+            max-width: 90vw;
+        }
+
+        #start-button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 2s ease 1s forwards;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+
+        #start-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+
+        #start-button:hover, #start-button:active {
+            color: white;
+            border-color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #start-button:hover::before {
+            width: 100%;
+        }
+
+        #start-button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Journey Visual Container */
+        #visual-journey {
+            position: relative;
+            padding-top: 20vh;
+            padding-bottom: 30vh;
+            width: 100%; /* Force full width */
+            max-width: 100vw; /* Prevent overflow */
+            overflow-x: hidden;
+        }
+
+        /* Navigation Progress Bar */
+        #progress-bar-container {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 1s ease 2s;
+        }
+
+        #progress-bar-container.visible {
+            opacity: 1;
+        }
+
+        .progress-point {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 8px 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            min-width: 24px; /* Larger touch target */
+            min-height: 24px; /* Larger touch target */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-point::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .progress-point:hover::before {
+            background-color: rgba(255, 255, 255, 0.7);
+            transform: scale(1.2);
+        }
+
+        .progress-point.active::before {
+            background-color: white;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+
+        .progress-point::after {
+            content: attr(data-label);
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .progress-point:hover::after {
+            opacity: 1;
+            transform: translateY(-50%) translateX(-5px);
+        }
+
+        .progress-line {
+            width: 2px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Level Audio Controls */
+        .audio-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 5;
+        }
+
+        .level.active .audio-controls {
+            opacity: 1;
+        }
+
+        .volume-control {
+            width: 60px;
+            margin: 0 10px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .volume-control::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px; /* Larger thumb */
+            height: 16px; /* Larger thumb */
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .mute-button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+            min-width: 36px; /* Larger touch target */
+            min-height: 36px; /* Larger touch target */
+        }
+
+        /* Individual Level Styling */
+        .level {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 40px 20px;
+            text-align: center;
+            opacity: 0.4;
+            transition: opacity 1s ease, transform 1s ease;
+            overflow: hidden;
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+            touch-action: pan-y; /* Only allow vertical scrolling */
+            width: 100vw; /* Full viewport width */
+            max-width: 100%; /* Prevent overflow */
+            left: 0; /* Ensure alignment */
+            transform-origin: center center; /* For scaling animations */
+        }
+
+        .level.active {
+            opacity: 1;
+            transform: scale(1.02);
+        }
+
+        .level-content {
+            max-width: 600px;
+            width: 90%; /* Constrain width */
+            position: relative;
+            z-index: 3;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.8s ease, opacity 0.8s ease;
+            margin: 0 auto; /* Center content */
+        }
+
+        .level.active .level-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .level h2 {
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 10px;
+            z-index: 2;
+            font-weight: 300;
+            letter-spacing: 1px;
+            width: 100%; /* Constrain width */
+        }
+
+        .level p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            z-index: 2;
+            margin-bottom: 15px;
+            width: 100%; /* Constrain width */
+        }
+
+        .level .description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            width: 100%; /* Constrain width */
+        }
+
+        /* Visual Elements in Each Level */
+        .visual-element {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+            pointer-events: none; /* Prevent interaction with visuals */
+        }
+
+        /* Particle Container */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+            pointer-events: none; /* Prevent interaction */
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat 20s linear infinite;
+            pointer-events: none; /* Prevent interaction */
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100%) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100%) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Specific Level Visuals --- */
+
+        /* Level 0-1: Base, Subconsciousness */
+        #level-0-1 {
+            background: linear-gradient(135deg, #1a0a0a 0%, #2a1a1a 50%, #3a2a2a 100%);
+        }
+
+        #level-0-1 .visual-element::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: rgba(30, 20, 20, 0.8);
+            box-shadow: 0 -10px 30px rgba(60, 30, 30, 0.4);
+            pointer-events: none;
+        }
+
+        #level-0-1 .visual-element::after {
+            content: '';
+            position: absolute;
+            bottom: 40%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(100, 50, 50, 0.5), transparent);
+            pointer-events: none;
+        }
+
+        /* Level 2: Physical Body */
+        #level-2 {
+            background: linear-gradient(135deg, #232323 0%, #2e2e2e 50%, #3a3a3a 100%);
+        }
+
+        #level-2 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-2 .body-outline {
+            width: 100px;
+            height: 250px;
+            border: 2px solid rgba(200, 200, 200, 0.4);
+            border-radius: 50px 50px 0 0;
+            position: relative;
+            overflow: visible;
+            pointer-events: none;
+        }
+
+        #level-2 .body-outline::before {
+            content: '';
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 70px;
+            border: 2px solid rgba(200, 200, 200, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        #level-2 .body-outline::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -60px;
+            width: 220px;
+            height: 2px;
+            background: rgba(200, 200, 200, 0.4);
+            pointer-events: none;
+        }
+
+        /* Level 3: Vital Body */
+        #level-3 {
+            background: linear-gradient(135deg, #311b45 0%, #432a5c 50%, #5a3a85 100%);
+        }
+
+        #level-3 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-3 .energy-field {
+            position: absolute;
+            width: 300px;
+            height: 400px;
+            border-radius: 150px / 200px;
+            background: radial-gradient(ellipse at center, rgba(138, 43, 226, 0.05) 0%, rgba(138, 43, 226, 0.2) 50%, rgba(138, 43, 226, 0) 70%);
+            animation: pulse 4s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        #level-3 .energy-lines {
+            position: absolute;
+            width: 280px;
+            height: 380px;
+            border-radius: 140px / 190px;
+            border: 1px dashed rgba(170, 120, 220, 0.4);
+            pointer-events: none;
+        }
+
+        #level-3 .energy-lines::before,
+        #level-3 .energy-lines::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            background: rgba(170, 120, 220, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(170, 120, 220, 0.8);
+            pointer-events: none;
+        }
+
+        #level-3 .energy-lines::before {
+            top: 15%;
+            animation: floatUpDown 3s ease-in-out infinite;
+        }
+
+        #level-3 .energy-lines::after {
+            bottom: 15%;
+            animation: floatUpDown 3s ease-in-out infinite reverse;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        @keyframes floatUpDown {
+            0% { transform: translate(-50%, -5px); }
+            50% { transform: translate(-50%, 5px); }
+            100% { transform: translate(-50%, -5px); }
+        }
+
+        /* Level 4: Mental/Astral Body */
+        #level-4 {
+            background: linear-gradient(135deg, #0a3b5c 0%, #1a5b8c 50%, #2a7bac 100%);
+        }
+
+        #level-4 .visual-element {
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-4 .thought-sphere {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate3D 30s linear infinite;
+            pointer-events: none;
+        }
+
+        #level-4 .sphere-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1px solid rgba(100, 180, 255, 0.3);
+            box-shadow: 0 0 20px rgba(100, 180, 255, 0.1);
+            pointer-events: none;
+        }
+
+        #level-4 .sphere-layer:nth-child(1) { transform: rotateX(0deg) rotateY(0deg); }
+        #level-4 .sphere-layer:nth-child(2) { transform: rotateX(60deg) rotateY(0deg); }
+        #level-4 .sphere-layer:nth-child(3) { transform: rotateX(0deg) rotateY(60deg); }
+        #level-4 .sphere-layer:nth-child(4) { transform: rotateX(45deg) rotateY(45deg); }
+        #level-4 .sphere-layer:nth-child(5) { transform: rotateX(-45deg) rotateY(45deg); }
+
+        #level-4 .thought-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        @keyframes rotate3D {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        /* Level 5: Buddhic Body */
+        #level-5 {
+            background: linear-gradient(135deg, #862a3a 0%, #ca5a4a 50%, #ff7e54 100%);
+        }
+
+        #level-5 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #level-5 .rainbow-lotus {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+        }
+
+        #level-5 .lotus-petal {
+            position: absolute;
+            width: 100px;
+            height: 150px;
+            border-radius: 50% 50% 0 0;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 200, 200, 0.4));
+            box-shadow: 0 0 20px rgba(255, 200, 200, 0.6);
+            transform-origin: bottom center;
+            animation: petalSway 10s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        #level-5 .lotus-petal:nth-child(1) { transform: rotate(0deg) translateY(-75px); animation-delay: 0s; }
+        #level-5 .lotus-petal:nth-child(2) { transform: rotate(45deg) translateY(-75px); animation-delay: 0.5s; }
+        #level-5 .lotus-petal:nth-child(3) { transform: rotate(90deg) translateY(-75px); animation-delay: 1s; }
+        #level-5 .lotus-petal:nth-child(4) { transform: rotate(135deg) translateY(-75px); animation-delay: 1.5s; }
+        #level-5 .lotus-petal:nth-child(5) { transform: rotate(180deg) translateY(-75px); animation-delay: 2s; }
+        #level-5 .lotus-petal:nth-child(6) { transform: rotate(225deg) translateY(-75px); animation-delay: 2.5s; }
+        #level-5 .lotus-petal:nth-child(7) { transform: rotate(270deg) translateY(-75px); animation-delay: 3s; }
+        #level-5 .lotus-petal:nth-child(8) { transform: rotate(315deg) translateY(-75px); animation-delay: 3.5s; }
+
+        #level-5 .lotus-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 200, 0, 0.6));
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 200, 0, 0.8);
+            animation: pulse 3s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes petalSway {
+            0% { transform-origin: bottom center; transform: rotate(var(--rotation)) translateY(-75px) rotateX(0deg); }
+            100% { transform-origin: bottom center; transform: rotate(var(--rotation)) translateY(-75px) rotateX(15deg); }
+        }
+
+        /* Level 6-7: Atmic/Trikaya */
+        #level-6-7 {
+            background: linear-gradient(135deg, #4a1a6a 0%, #7a3a9a 50%, #9a5aba 100%);
+        }
+
+        #level-6-7 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-6-7 .trikaya-structure {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+        }
+
+        #level-6-7 .triangle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 173px solid rgba(180, 130, 230, 0.3);
+            animation: rotate 20s linear infinite;
+            pointer-events: none;
+        }
+
+        #level-6-7 .triangle:nth-child(1) { animation-delay: 0s; }
+        #level-6-7 .triangle:nth-child(2) { animation-delay: -5s; transform: translate(-50%, -50%) rotate(60deg); }
+        #level-6-7 .triangle:nth-child(3) { animation-delay: -10s; transform: translate(-50%, -50%) rotate(120deg); }
+
+        #level-6-7 .sacred-geometry {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(200, 180, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        #level-6-7 .inner-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border: 1px solid rgba(200, 180, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(200, 180, 255, 0.4);
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Level 8-9: Consciousness Sphere */
+        #level-8-9 {
+            background: linear-gradient(135deg, #000510 0%, #0a1525 50%, #152540 100%);
+        }
+
+        #level-8-9 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-8-9 .consciousness-sphere {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            pointer-events: none;
+        }
+
+        #level-8-9 .sphere {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(20, 30, 60, 0.7), rgba(0, 5, 20, 0.9));
+            box-shadow: 0 0 30px rgba(50, 100, 200, 0.6);
+            overflow: hidden;
+            animation: pulse 5s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        #level-8-9 .constellation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #level-8-9 .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 0 4px 2px rgba(255, 255, 255, 0.7);
+            animation: twinkle 3s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Level 10: Eye */
+        #level-10 {
+            background: linear-gradient(135deg, #aac8ff 0%, #c5daff 50%, #e0edff 100%);
+        }
+
+        #level-10 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-10 .eye {
+            position: relative;
+            width: 180px;
+            height: 90px;
+            background: white;
+            border-radius: 90px / 45px;
+            border: 2px solid #4682b4;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(70, 130, 180, 0.6);
+            pointer-events: none;
+        }
+
+        #level-10 .iris {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #1e3a8a 30%, #0c1f4a 70%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 50, 0.6);
+            pointer-events: none;
+        }
+
+        #level-10 .pupil {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: black;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        #level-10 .light-reflection {
+            position: absolute;
+            top: 30%;
+            left: 65%;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        #level-10 .eyelid {
+            position: absolute;
+            width: 180px;
+            height: 90px;
+            border-radius: 90px / 45px;
+            background: #aac8ff;
+            transform-origin: center top;
+            animation: blink 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes blink {
+            0%, 95%, 98% { transform: scaleY(0); }
+            96%, 97% { transform: scaleY(1); }
+        }
+
+        /* Level 11: Triangle */
+        #level-11 {
+            background: linear-gradient(135deg, #ffda8a 0%, #ffecb3 50%, #fff6d6 100%);
+        }
+
+        #level-11 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-11 .divine-triangle {
+            position: relative;
+            width: 200px;
+            height: 173px; /* Height of equilateral triangle with width 200 */
+            pointer-events: none;
+        }
+
+        #level-11 .triangle-outer {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 173px solid rgba(184, 134, 11, 0.3);
+            pointer-events: none;
+        }
+
+        #level-11 .triangle-middle {
+            position: absolute;
+            width: 0;
+            height: 0;
+            top: 15px;
+            left: 15px;
+            border-left: 85px solid transparent;
+            border-right: 85px solid transparent;
+            border-bottom: 148px solid rgba(218, 165, 32, 0.5);
+            pointer-events: none;
+        }
+
+        #level-11 .triangle-inner {
+            position: absolute;
+            width: 0;
+            height: 0;
+            top: 30px;
+            left: 30px;
+            border-left: 70px solid transparent;
+            border-right: 70px solid transparent;
+            border-bottom: 121px solid rgba(255, 215, 0, 0.7);
+            pointer-events: none;
+        }
+
+        #level-11 .center-dot {
+            position: absolute;
+            top: 75px;
+            left: 100px;
+            width: 14px;
+            height: 14px;
+            background: rgba(255, 215, 0, 1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: pulse 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        /* Level 12: Apex */
+        #level-12 {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f5ff 50%, #ffffff 100%);
+        }
+
+        #level-12 .visual-element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #level-12 .light-source {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 60px 40px white, 0 0 100px 80px rgba(230, 230, 250, 0.7);
+            animation: pulseStrong 5s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        #level-12 .light-ray {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: center;
+            width: 2px;
+            height: 300px;
+            background: linear-gradient(to top, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.7));
+            pointer-events: none;
+        }
+
+        #level-12 .light-ray:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg); }
+        #level-12 .light-ray:nth-child(2) { transform: translate(-50%, -50%) rotate(45deg); }
+        #level-12 .light-ray:nth-child(3) { transform: translate(-50%, -50%) rotate(90deg); }
+        #level-12 .light-ray:nth-child(4) { transform: translate(-50%, -50%) rotate(135deg); }
+        #level-12 .light-ray:nth-child(5) { transform: translate(-50%, -50%) rotate(180deg); }
+        #level-12 .light-ray:nth-child(6) { transform: translate(-50%, -50%) rotate(225deg); }
+        #level-12 .light-ray:nth-child(7) { transform: translate(-50%, -50%) rotate(270deg); }
+        #level-12 .light-ray:nth-child(8) { transform: translate(-50%, -50%) rotate(315deg); }
+
+        @keyframes pulseStrong {
+            0% { transform: scale(0.9); box-shadow: 0 0 40px 20px white, 0 0 80px 60px rgba(230, 230, 250, 0.5); }
+            100% { transform: scale(1.1); box-shadow: 0 0 80px 60px white, 0 0 120px 100px rgba(230, 230, 250, 0.7); }
+        }
+
+        /* Simple Responsive Adjustments */
+        @media (max-width: 768px) {
+            #start-title {
+                font-size: 2rem;
+            }
+            #start-subtitle {
+                font-size: 1rem;
+            }
+            .level {
+                min-height: 100vh;
+                padding: 30px 15px;
+            }
+            .level h2 {
+                font-size: 1.6rem;
+            }
+            .level p {
+                font-size: 0.95rem;
+            }
+            .level .description {
+                font-size: 0.85rem;
+            }
+
+            /* Adjust progress bar for mobile */
+            #progress-bar-container {
+                right: 10px;
+            }
+            .progress-point {
+                margin: 6px 0;
+            }
+            .progress-line {
+                height: 15px;
+            }
+            
+            /* Adjust visual elements for mobile */
+            #level-2 .body-outline {
+                width: 80px;
+                height: 200px;
+            }
+            #level-3 .energy-field {
+                width: 240px;
+                height: 320px;
+            }
+            #level-4 .thought-sphere {
+                width: 160px;
+                height: 160px;
+            }
+            #level-5 .rainbow-lotus {
+                width: 240px;
+                height: 240px;
+            }
+            #level-6-7 .trikaya-structure {
+                width: 240px;
+                height: 240px;
+            }
+            #level-8-9 .consciousness-sphere {
+                width: 200px;
+                height: 200px;
+            }
+            #level-10 .eye {
+                width: 140px;
+                height: 70px;
+            }
+            #level-11 .divine-triangle {
+                width: 160px;
+                height: 140px;
+            }
+            #level-12 .light-source {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #start-title {
+                font-size: 1.7rem;
+            }
+            .level h2 {
+                font-size: 1.4rem;
+            }
+            .level-content {
+                padding: 15px;
+            }
+            
+            /* Further reduce visual elements */
+            #level-3 .energy-field {
+                width: 200px;
+                height: 280px;
+            }
+            #level-5 .rainbow-lotus {
+                width: 200px;
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="start-overlay">
+        <h1 id="start-title">Journey Through Dimensions of Consciousness</h1>
+        <p id="start-subtitle">Experience a meditative exploration of consciousness levels from the physical to the absolute. Enable sound for a full immersive experience.</p>
+        <button id="start-button">Begin Journey</button>
+    </div>
+
+    <div id="progress-bar-container">
+        <!-- Will be populated by JavaScript -->
+    </div>
+
+    <div id="audioviz-container">
+        <main id="visual-journey">
+            <section id="level-0-1" class="level" data-level="0-1">
+                <div class="visual-element">
+                    <div class="particles"></div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 0-1: The Base</h2>
+                    <p>Infraconsciousness, Unconsciousness, Subconsciousness</p>
+                    <div class="description">
+                        The foundation of all consciousness - where primal instincts, deep memories, and hidden potentials reside. A vast and mysterious realm beneath ordinary awareness.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-2" class="level" data-level="2">
+                <div class="visual-element">
+                    <div class="body-outline"></div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 2: Physical Body</h2>
+                    <p>The Material Form</p>
+                    <div class="description">
+                        The densest level of existence - the material body that interacts with the physical world. A vessel for consciousness, composed of atoms and molecules in constant flux.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-3" class="level" data-level="3">
+                <div class="visual-element">
+                    <div class="energy-field"></div>
+                    <div class="energy-lines"></div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 3: Vital Body</h2>
+                    <p>Life Energy, Etheric Double</p>
+                    <div class="description">
+                        The energetic template that animates the physical form - circulating life force, vitality, and prana. The bridge between matter and consciousness.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-4" class="level" data-level="4">
+                <div class="visual-element">
+                    <div class="thought-sphere">
+                        <div class="sphere-layer"></div>
+                        <div class="sphere-layer"></div>
+                        <div class="sphere-layer"></div>
+                        <div class="sphere-layer"></div>
+                        <div class="sphere-layer"></div>
+                        <div class="thought-particles"></div>
+                    </div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 4: Astral & Mental Bodies</h2>
+                    <p>Emotions, Desires, Thoughts</p>
+                    <div class="description">
+                        The realm of emotion, desire, and rational thought. Here consciousness forms attachments, processes experiences, and creates the personal narrative of self.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-5" class="level" data-level="5">
+                <div class="visual-element">
+                    <div class="rainbow-lotus">
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-petal"></div>
+                        <div class="lotus-center"></div>
+                    </div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 5: Buddhic Body</h2>
+                    <p>The Divine Soul, Intuition, Spiritual Love</p>
+                    <div class="description">
+                        The vehicle of spiritual intuition and compassion. The flowering of higher understanding beyond the intellect, where unity and interconnection are directly perceived.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-6-7" class="level" data-level="6-7">
+                <div class="visual-element">
+                    <div class="trikaya-structure">
+                        <div class="triangle"></div>
+                        <div class="triangle"></div>
+                        <div class="triangle"></div>
+                        <div class="sacred-geometry"></div>
+                        <div class="inner-circle"></div>
+                    </div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 6-7: Atmic Body & Trikaya</h2>
+                    <p>The Innermost Spirit, Emanation, Resource, Reality Bodies</p>
+                    <div class="description">
+                        The realm of pure spirit and spiritual will. Here, consciousness exists in its archetypal blueprint form - the divine template of being beyond time and space.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-8-9" class="level" data-level="8-9">
+                <div class="visual-element">
+                    <div class="consciousness-sphere">
+                        <div class="sphere"></div>
+                        <div class="constellation"></div>
+                    </div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 8-9: Higher Consciousness</h2>
+                    <p>Abstract Mind, Universal Awareness Patterns</p>
+                    <div class="description">
+                        The universal mind and cosmic awareness. A vast field of abstract intelligence where all knowledge exists as potentiality and patterns of ultimate order emerge.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-10" class="level" data-level="10">
+                <div class="visual-element">
+                    <div class="eye">
+                        <div class="iris"></div>
+                        <div class="pupil"></div>
+                        <div class="light-reflection"></div>
+                        <div class="eyelid"></div>
+                    </div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 10: Spiritual Vision</h2>
+                    <p>Divine Perception, The Witness</p>
+                    <div class="description">
+                        The pure awareness that witnesses all existence - the perceiver behind all perception. The impartial observer that exists beyond all qualities and attributes.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-11" class="level" data-level="11">
+                <div class="visual-element">
+                    <div class="divine-triangle">
+                        <div class="triangle-outer"></div>
+                        <div class="triangle-middle"></div>
+                        <div class="triangle-inner"></div>
+                        <div class="center-dot"></div>
+                    </div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 11: Divine Will / Trinity</h2>
+                    <p>Pure Intention, Archetypal Structure</p>
+                    <div class="description">
+                        The realm of divine will and purpose - the organizing principle behind all creation. Here, the trinity of power, wisdom, and love forms the essential structure of being.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+
+            <section id="level-12" class="level" data-level="12">
+                <div class="visual-element">
+                    <div class="light-source"></div>
+                    <div class="light-ray"></div>
+                    <div class="light-ray"></div>
+                    <div class="light-ray"></div>
+                    <div class="light-ray"></div>
+                    <div class="light-ray"></div>
+                    <div class="light-ray"></div>
+                    <div class="light-ray"></div>
+                    <div class="light-ray"></div>
+                </div>
+                <div class="level-content">
+                    <h2>Level 12: The Apex / Source</h2>
+                    <p>Unity, Pure Being, The Absolute</p>
+                    <div class="description">
+                        The ultimate source of all existence - absolute unity and infinite potential. Beyond all duality, beyond all form, the unconditioned reality from which everything emerges.
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button class="mute-button"><span class="icon">🔊</span></button>
+                    <input type="range" class="volume-control" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- DOM References ---
+        const startButton = document.getElementById('start-button');
+        const startOverlay = document.getElementById('start-overlay');
+        const progressBarContainer = document.getElementById('progress-bar-container');
+        const levels = document.querySelectorAll('.level');
+        const muteButtons = document.querySelectorAll('.mute-button');
+        const volumeControls = document.querySelectorAll('.volume-control');
+        const body = document.body;
+
+        // --- State Variables ---
+        let audioContext;
+        let masterGainNode;
+        let oscillators = {}; 
+        let gainNodes = {};
+        let filters = {};
+        let currentActiveLevel = null;
+        let isAudioInitialized = false;
+        let isMuted = false;
+        let activeSound = null;
+        let smoothScrolling = true;
+        let startX, startY;
+        let isScrolling = false;
+
+        // --- STRICT HORIZONTAL SWIPE PREVENTION ---
+        // Prevent all horizontal swiping with these aggressive measures
+        
+        // 1. Prevent horizontal scrolling at document level
+        document.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+            if (!startX || !startY) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                return;
+            }
+
+            const diffX = startX - e.touches[0].clientX;
+            const diffY = startY - e.touches[0].clientY;
+
+            // If horizontal movement is greater than vertical, prevent it
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // For significant horizontal movement, prevent it anyway
+            if (Math.abs(diffX) > 10) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, { passive: false });
+
+        // 2. Reset position on horizontal movement detection
+        function resetPosition() {
+            requestAnimationFrame(() => {
+                window.scrollTo(0, window.scrollY);
+            });
+        }
+
+        // Monitor scroll position changes
+        let lastScrollX = window.scrollX;
+        setInterval(() => {
+            if (window.scrollX !== lastScrollX) {
+                resetPosition();
+                lastScrollX = 0;
+            }
+        }, 100);
+
+        // Create particles for stars and effects
+        function createParticles() {
+            // Special case for level 8-9 constellation
+            const constellation = document.querySelector('#level-8-9 .constellation');
+            if (constellation) {
+                for (let i = 0; i < 50; i++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+                    star.style.left = `${Math.random() * 100}%`;
+                    star.style.top = `${Math.random() * 100}%`;
+                    star.style.animationDelay = `${Math.random() * 3}s`;
+                    constellation.appendChild(star);
+                }
+            }
+        }
+
+        // --- Create Progress Bar ---
+        function createProgressBar() {
+            const levelIds = Array.from(levels).map(level => {
+                return {
+                    id: level.dataset.level,
+                    title: level.querySelector('h2').textContent
+                };
+            });
+
+            levelIds.forEach((level, index) => {
+                // Create point
+                const point = document.createElement('div');
+                point.classList.add('progress-point');
+                point.dataset.target = level.id;
+                point.dataset.label = level.title.replace('Level ', '');
+                
+                // Add click/tap event
+                point.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetElement = document.getElementById(`level-${level.id}`);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ 
+                            behavior: smoothScrolling ? 'smooth' : 'auto', 
+                            block: 'center' 
+                        });
+                    }
+                });
+                
+                progressBarContainer.appendChild(point);
+                
+                // Add connecting line (except after last point)
+                if (index < levelIds.length - 1) {
+                    const line = document.createElement('div');
+                    line.classList.add('progress-line');
+                    progressBarContainer.appendChild(line);
+                }
+            });
+        }
+
+        // --- Update Progress Points ---
+        function updateProgressPoints() {
+            const progressPoints = document.querySelectorAll('.progress-point');
+            progressPoints.forEach(point => {
+                if (point.dataset.target === currentActiveLevel) {
+                    point.classList.add('active');
+                } else {
+                    point.classList.remove('active');
+                }
+            });
+        }
+
+        // --- Web Audio API Setup ---
+        function initAudio() {
+            if (isAudioInitialized) return;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                masterGainNode = audioContext.createGain();
+                masterGainNode.gain.value = 0.7;
+                masterGainNode.connect(audioContext.destination);
+                
+                isAudioInitialized = true;
+                console.log("Audio Context Initialized.");
+            } catch (e) {
+                console.error("Web Audio API is not supported in this browser", e);
+                alert("Sorry, your browser doesn't support the necessary audio features for this experience.");
+            }
+        }
+
+        // --- Sound Generation ---
+        function createLevelSound(levelId) {
+            if (!audioContext || isMuted) return;
+
+            // Basic sound implementation
+            stopSound(activeSound);
+            activeSound = levelId;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Setup basic gain node
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            
+            // Simple sound based on level
+            oscillator.type = 'sine';
+            
+            // Different frequency for each level
+            let frequency = 440; // default
+            switch(levelId) {
+                case '0-1': frequency = 60; break;
+                case '2': frequency = 80; break;
+                case '3': frequency = 150; break; 
+                case '4': frequency = 220; break;
+                case '5': frequency = 440; break;
+                case '6-7': frequency = 660; break;
+                case '8-9': frequency = 500; break;
+                case '10': frequency = 880; break;
+                case '11': frequency = 1000; break;
+                case '12': frequency = 1200; break;
+            }
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            
+            // Connect audio
+            oscillator.connect(gainNode);
+            gainNode.connect(masterGainNode);
+            
+            oscillator.start();
+            oscillators[levelId] = oscillator;
+            gainNodes[levelId] = gainNode;
+
+            // Fade in
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 1.5);
+        }
+
+        // Simple stop sound function
+        function stopSound(levelId) {
+            if (!levelId) return;
+            
+            if (gainNodes[levelId]) {
+                // Fade out
+                gainNodes[levelId].gain.cancelScheduledValues(audioContext.currentTime);
+                gainNodes[levelId].gain.setValueAtTime(gainNodes[levelId].gain.value, audioContext.currentTime);
+                gainNodes[levelId].gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.0);
+                
+                // Schedule cleanup
+                setTimeout(() => {
+                    if (oscillators[levelId]) {
+                        oscillators[levelId].stop();
+                        delete oscillators[levelId];
+                    }
+                    if (gainNodes[levelId]) {
+                        gainNodes[levelId].disconnect();
+                        delete gainNodes[levelId];
+                    }
+                }, 1100);
+            }
+        }
+
+        // --- Volume Control Handling ---
+        function setupVolumeControls() {
+            muteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const levelElement = this.closest('.level');
+                    const levelId = levelElement.dataset.level;
+                    
+                    // Toggle mute for individual sound
+                    const gainNode = gainNodes[levelId];
+                    
+                    if (gainNode) {
+                        const currentIcon = this.querySelector('.icon');
+                        
+                        if (currentIcon.textContent === '🔊') {
+                            // Mute
+                            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+                            currentIcon.textContent = '🔇';
+                        } else {
+                            // Unmute
+                            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.3);
+                            currentIcon.textContent = '🔊';
+                        }
+                    }
+                });
+            });
+            
+            volumeControls.forEach(control => {
+                control.addEventListener('input', function() {
+                    const levelElement = this.closest('.level');
+                    const levelId = levelElement.dataset.level;
+                    const gainNode = gainNodes[levelId];
+                    
+                    if (gainNode) {
+                        const volume = parseFloat(this.value);
+                        gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1);
+                    }
+                });
+            });
+        }
+
+        // --- Intersection Observer Setup ---
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.6
+        };
+
+        const observerCallback = (entries, observer) => {
+            entries.forEach(entry => {
+                const levelId = entry.target.dataset.level;
+                if (entry.isIntersecting) {
+                    if (currentActiveLevel !== levelId) {
+                        // Deactivate previous level
+                        if (currentActiveLevel) {
+                            const prevLevelElement = document.getElementById(`level-${currentActiveLevel}`);
+                            if (prevLevelElement) prevLevelElement.classList.remove('active');
+                            if (isAudioInitialized) stopSound(currentActiveLevel);
+                        }
+
+                        // Activate current level
+                        entry.target.classList.add('active');
+                        currentActiveLevel = levelId;
+                        if (isAudioInitialized && !isMuted) createLevelSound(levelId);
+                        updateProgressPoints();
+                    }
+                }
+            });
+        };
+
+        const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+        // --- Initialize Experience ---
+        function initExperience() {
+            initAudio();
+            // Resume context if needed
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            startOverlay.classList.add('hidden');
+            
+            // Show progress bar
+            setTimeout(() => {
+                progressBarContainer.classList.add('visible');
+            }, 1000);
+            
+            // Observe all level sections
+            levels.forEach(level => {
+                observer.observe(level);
+            });
+            
+            // Activate first level
+            setTimeout(() => {
+                const firstLevel = levels[0];
+                const levelId = firstLevel.dataset.level;
+                firstLevel.classList.add('active');
+                currentActiveLevel = levelId;
+                if (isAudioInitialized && !isMuted) createLevelSound(levelId);
+                updateProgressPoints();
+                
+                // Scroll to first level
+                firstLevel.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 300);
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            initExperience();
+        });
+
+        // Allow keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!currentActiveLevel) return;
+            
+            // Find current level index
+            const levelElements = Array.from(levels);
+            const currentIndex = levelElements.findIndex(level => level.dataset.level === currentActiveLevel);
+            
+            if (currentIndex === -1) return;
+            
+            // Navigate levels with arrow keys
+            if (e.key === 'ArrowDown') {
+                // Next level
+                if (currentIndex < levelElements.length - 1) {
+                    const nextLevel = levelElements[currentIndex + 1];
+                    nextLevel.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    e.preventDefault();
+                }
+            } else if (e.key === 'ArrowUp') {
+                // Previous level
+                if (currentIndex > 0) {
+                    const prevLevel = levelElements[currentIndex - 1];
+                    prevLevel.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    e.preventDefault();
+                }
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                // Prevent horizontal arrows
+                e.preventDefault();
+            }
+        });
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create progress bar
+            createProgressBar();
+            
+            // Create particles
+            createParticles();
+            
+            // Setup volume controls
+            setupVolumeControls();
+            
+            // Reset horizontal position (if somehow shifted)
+            resetPosition();
+            
+            // Observe all level sections
+            levels.forEach(level => {
+                observer.observe(level);
+            });
+        });
+    </script>
+</body>
+</html>
