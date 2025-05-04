@@ -1579,74 +1579,196 @@
             }
         }
 
-        // --- Sound Generation ---
+        // --- Sound Generation with Enhanced Base Level Support ---
         function createLevelSound(levelId) {
+            if (!audioContext) {
+                initAudio(); // Ensure audio is initialized
+            }
+            
             if (!audioContext || isMuted) return;
+            
+            // First, ensure the context is running (important for mobile)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
 
             // Basic sound implementation
             stopSound(activeSound);
             activeSound = levelId;
 
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            // Setup basic gain node
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            
-            // Simple sound based on level
-            oscillator.type = 'sine';
-            
-            // Different frequency for each level
-            let frequency = 440; // default
-            switch(levelId) {
-                case '0-1': frequency = 60; break;
-                case '2': frequency = 80; break;
-                case '3': frequency = 150; break; 
-                case '4': frequency = 220; break;
-                case '5': frequency = 440; break;
-                case '6-7': frequency = 660; break;
-                case '8-9': frequency = 500; break;
-                case '10': frequency = 880; break;
-                case '11': frequency = 1000; break;
-                case '12': frequency = 1200; break;
-            }
-            
-            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-            
-            // Connect audio
-            oscillator.connect(gainNode);
-            gainNode.connect(masterGainNode);
-            
-            oscillator.start();
-            oscillators[levelId] = oscillator;
-            gainNodes[levelId] = gainNode;
+            try {
+                // Create core oscillator for the base sound
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // Add a filter for enhanced sound quality
+                const filter = audioContext.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1000;
+                filter.Q.value = 1;
+                
+                // Setup basic gain node
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                
+                // Improved sound profiles based on level
+                let frequency, waveType;
+                
+                switch(levelId) {
+                    case '0-1': 
+                        // Enhanced sound for Level 0-1
+                        frequency = 100;  // Increased from 60 to be more audible
+                        waveType = 'sine';
+                        filter.type = 'lowpass';
+                        filter.frequency.value = 300;
+                        filter.Q.value = 2;
+                        break;
+                    case '2': 
+                        frequency = 80; 
+                        waveType = 'sine';
+                        break;
+                    case '3': 
+                        frequency = 150; 
+                        waveType = 'sine';
+                        break; 
+                    case '4': 
+                        frequency = 220; 
+                        waveType = 'sine';
+                        break;
+                    case '5': 
+                        frequency = 440; 
+                        waveType = 'sine';
+                        break;
+                    case '6-7': 
+                        frequency = 660; 
+                        waveType = 'sine';
+                        break;
+                    case '8-9': 
+                        frequency = 500; 
+                        waveType = 'sine';
+                        break;
+                    case '10': 
+                        frequency = 880; 
+                        waveType = 'sine';
+                        break;
+                    case '11': 
+                        frequency = 1000; 
+                        waveType = 'sine';
+                        break;
+                    case '12': 
+                        frequency = 1200; 
+                        waveType = 'sine';
+                        break;
+                    default:
+                        frequency = 440; 
+                        waveType = 'sine';
+                }
+                
+                oscillator.type = waveType;
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                
+                // Enhanced connection chain with filter
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(masterGainNode);
+                
+                // Add additional texture for level 0-1
+                if (levelId === '0-1') {
+                    // Add second oscillator for texture
+                    const textureOsc = audioContext.createOscillator();
+                    const textureGain = audioContext.createGain();
+                    
+                    textureOsc.type = 'triangle';
+                    textureOsc.frequency.setValueAtTime(frequency * 1.5, audioContext.currentTime);
+                    textureGain.gain.setValueAtTime(0, audioContext.currentTime);
+                    
+                    textureOsc.connect(textureGain);
+                    textureGain.connect(masterGainNode);
+                    
+                    textureOsc.start();
+                    textureGain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 1.5);
+                    
+                    oscillators[levelId + '-texture'] = textureOsc;
+                    gainNodes[levelId + '-texture'] = textureGain;
+                }
+                
+                // Start the oscillator
+                oscillator.start();
+                oscillators[levelId] = oscillator;
+                gainNodes[levelId] = gainNode;
+                filters[levelId] = filter;
 
-            // Fade in
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 1.5);
+                // Gradual fade in with enhanced control
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 1.5);
+                
+                console.log(`Sound created for level ${levelId}`);
+                return true;
+            } catch (e) {
+                console.error(`Error creating sound for level ${levelId}:`, e);
+                return false;
+            }
         }
 
-        // Simple stop sound function
+        // Enhanced stop sound function with graceful cleanup
         function stopSound(levelId) {
             if (!levelId) return;
             
+            // Handle main oscillator
             if (gainNodes[levelId]) {
-                // Fade out
-                gainNodes[levelId].gain.cancelScheduledValues(audioContext.currentTime);
-                gainNodes[levelId].gain.setValueAtTime(gainNodes[levelId].gain.value, audioContext.currentTime);
-                gainNodes[levelId].gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.0);
-                
-                // Schedule cleanup
-                setTimeout(() => {
-                    if (oscillators[levelId]) {
-                        oscillators[levelId].stop();
-                        delete oscillators[levelId];
-                    }
-                    if (gainNodes[levelId]) {
-                        gainNodes[levelId].disconnect();
-                        delete gainNodes[levelId];
-                    }
-                }, 1100);
+                try {
+                    // Fade out
+                    gainNodes[levelId].gain.cancelScheduledValues(audioContext.currentTime);
+                    gainNodes[levelId].gain.setValueAtTime(gainNodes[levelId].gain.value, audioContext.currentTime);
+                    gainNodes[levelId].gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.0);
+                    
+                    // Schedule cleanup
+                    setTimeout(() => {
+                        try {
+                            if (oscillators[levelId]) {
+                                oscillators[levelId].stop();
+                                delete oscillators[levelId];
+                            }
+                            if (gainNodes[levelId]) {
+                                gainNodes[levelId].disconnect();
+                                delete gainNodes[levelId];
+                            }
+                            if (filters[levelId]) {
+                                filters[levelId].disconnect();
+                                delete filters[levelId];
+                            }
+                        } catch (e) {
+                            console.error("Error during cleanup:", e);
+                        }
+                    }, 1100);
+                } catch (e) {
+                    console.error("Error stopping sound:", e);
+                }
+            }
+            
+            // Also handle texture oscillator if it exists
+            if (gainNodes[levelId + '-texture']) {
+                try {
+                    gainNodes[levelId + '-texture'].gain.cancelScheduledValues(audioContext.currentTime);
+                    gainNodes[levelId + '-texture'].gain.setValueAtTime(gainNodes[levelId + '-texture'].gain.value, audioContext.currentTime);
+                    gainNodes[levelId + '-texture'].gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.0);
+                    
+                    setTimeout(() => {
+                        try {
+                            if (oscillators[levelId + '-texture']) {
+                                oscillators[levelId + '-texture'].stop();
+                                delete oscillators[levelId + '-texture'];
+                            }
+                            if (gainNodes[levelId + '-texture']) {
+                                gainNodes[levelId + '-texture'].disconnect();
+                                delete gainNodes[levelId + '-texture'];
+                            }
+                        } catch (e) {
+                            console.error("Error during texture cleanup:", e);
+                        }
+                    }, 1100);
+                } catch (e) {
+                    console.error("Error stopping texture sound:", e);
+                }
             }
         }
 
@@ -1708,13 +1830,13 @@
                         if (currentActiveLevel) {
                             const prevLevelElement = document.getElementById(`level-${currentActiveLevel}`);
                             if (prevLevelElement) prevLevelElement.classList.remove('active');
-                            if (isAudioInitialized) stopSound(currentActiveLevel);
+                            stopSound(currentActiveLevel);
                         }
 
                         // Activate current level
                         entry.target.classList.add('active');
                         currentActiveLevel = levelId;
-                        if (isAudioInitialized && !isMuted) createLevelSound(levelId);
+                        if (!isMuted) createLevelSound(levelId);
                         updateProgressPoints();
                     }
                 }
@@ -1728,7 +1850,11 @@
             initAudio();
             // Resume context if needed
             if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume();
+                audioContext.resume().then(() => {
+                    console.log("Audio context resumed successfully");
+                }).catch(err => {
+                    console.error("Failed to resume audio context:", err);
+                });
             }
             
             startOverlay.classList.add('hidden');
@@ -1753,10 +1879,22 @@
         startButton.addEventListener('click', (e) => {
             e.preventDefault();
             initExperience();
+            
+            // Force a user interaction which helps with audio on mobile
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log("Audio context resumed by user interaction");
+                });
+            }
         });
 
         // Allow keyboard navigation
         document.addEventListener('keydown', (e) => {
+            // Resume audio context on any key press
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
             // Cancel auto-navigation if keyboard is used
             if (autoNavigationActive && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
                 autoNavigationActive = false;
@@ -1799,6 +1937,13 @@
                 e.preventDefault();
             }
         });
+
+        // Ensure audio works even on iOS/Safari
+        document.addEventListener('touchstart', () => {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, {passive: true});
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
