@@ -81,32 +81,35 @@ document.body.appendChild(renderer.domElement);
 
 /* ───── SCENE & CAMERA ───── */
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
-camera.position.set(0, 25, 60);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 4000);
+camera.position.set(0, 30, 70);
 
 /* ───── CONTROLS ───── */
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.minDistance = 15;
-controls.maxDistance = 300;
+controls.maxDistance = 400;
 controls.autoRotate = false;
 controls.autoRotateSpeed = 0.2;
 
 /* ───── STARFIELD ───── */
 function createStars() {
-  const starCount = Math.floor(15000 * (window.innerWidth * window.innerHeight / 2_000_000));
+  const starCount = Math.floor(20000 * (window.innerWidth * window.innerHeight / 2_000_000));
   const positions = new Float32Array(starCount * 3);
   const colors = new Float32Array(starCount * 3);
   const tempColor = new THREE.Color();
   
   for (let i = 0; i < starCount; i++) {
     const i3 = i * 3;
-    positions[i3] = (Math.random() - 0.5) * 2500;
-    positions[i3 + 1] = (Math.random() - 0.5) * 2500;
-    positions[i3 + 2] = (Math.random() - 0.5) * 2500;
+    // Use a spherical distribution for a more natural look
+    const r = Math.random() * 1500 + 500;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(Math.random() * 2 - 1);
+    positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+    positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i3 + 2] = r * Math.cos(phi);
     
-    // Temperature gradient (blue-white-yellow-orange-red)
     const randomTemp = Math.random();
     tempColor.setHSL(0.6 - randomTemp * 0.55, 1.0, 0.5 + Math.random() * 0.2);
     colors[i3] = tempColor.r;
@@ -119,10 +122,7 @@ function createStars() {
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   
   const material = new THREE.PointsMaterial({
-    size: 0.8,
-    vertexColors: true,
-    sizeAttenuation: true,
-    fog: false
+    size: 1.0, vertexColors: true, sizeAttenuation: true, fog: false
   });
   
   return new THREE.Points(geometry, material);
@@ -130,25 +130,26 @@ function createStars() {
 const stars = createStars();
 scene.add(stars);
 
+/* ───── BLACK HOLE SYSTEM GROUP (NEW) ───── */
+// This group holds all rotating parts of the black hole system.
+const blackHoleSystem = new THREE.Group();
+scene.add(blackHoleSystem);
+
 /* ───── BLACK HOLE CORE (EVENT HORIZON) ───── */
 const BH_RADIUS = 5;
 const eventHorizonMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
 const eventHorizon = new THREE.Mesh(new THREE.SphereGeometry(BH_RADIUS, 64, 32), eventHorizonMaterial);
-scene.add(eventHorizon);
+scene.add(eventHorizon); // Added to scene directly, as it's a non-rotating sphere at the center.
 
 /* ───── PHOTON SPHERE ───── */
 const PHOTON_RADIUS = BH_RADIUS + 0.1;
 const photonRingGeo = new THREE.RingGeometry(PHOTON_RADIUS, PHOTON_RADIUS + 0.4, 128);
 const photonRingMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    transparent: true,
-    opacity: 0.6
+    color: 0xffffff, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.6
 });
 const photonRing = new THREE.Mesh(photonRingGeo, photonRingMat);
 photonRing.rotation.x = Math.PI / 2;
-scene.add(photonRing);
+blackHoleSystem.add(photonRing); // Added to the tiltable group
 
 /* ───── ACCRETION DISK ───── */
 const DISK_IN = BH_RADIUS + 1.5;
@@ -157,58 +158,37 @@ const diskGeo = new THREE.RingGeometry(DISK_IN, DISK_OUT, 128).rotateX(-Math.PI 
 
 const diskMat = new THREE.ShaderMaterial({
   uniforms: {
-    time: { value: 0 },
-    innerRadius: { value: DISK_IN },
-    outerRadius: { value: DISK_OUT },
-    hotColor: { value: new THREE.Color(0xffffff) },
-    coolColor: { value: new THREE.Color(0xff9900) },
-    blueshiftColor: { value: new THREE.Color(0xaaaaff) },
-    redshiftColor: { value: new THREE.Color(0xffaaaa) },
-    dopplerIntensity: { value: 1.5 },
-    turbulence: { value: 0.6 }
+    time: { value: 0 }, innerRadius: { value: DISK_IN }, outerRadius: { value: DISK_OUT },
+    hotColor: { value: new THREE.Color(0xffffff) }, coolColor: { value: new THREE.Color(0xff9900) },
+    blueshiftColor: { value: new THREE.Color(0xaaaaff) }, redshiftColor: { value: new THREE.Color(0xffaaaa) },
+    dopplerIntensity: { value: 1.5 }, turbulence: { value: 0.6 }
   },
   vertexShader: `
-    varying vec2 vUv;
-    varying vec3 vPos;
+    varying vec2 vUv; varying vec3 vPos;
     void main() { vUv = uv; vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
   `,
   fragmentShader: `
     uniform float time, innerRadius, outerRadius, dopplerIntensity, turbulence;
     uniform vec3 hotColor, coolColor, blueshiftColor, redshiftColor;
-    varying vec2 vUv;
-    varying vec3 vPos;
-
-    // 2D Simplex Noise function (reused for jets)
+    varying vec2 vUv; varying vec3 vPos;
     vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
     vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
     vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
     float snoise(vec2 v) {
         const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-        vec2 i  = floor(v + dot(v, C.yy) );
-        vec2 x0 = v -   i + dot(i, C.xx);
+        vec2 i  = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx);
         vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-        vec4 x12 = x0.xyxy + C.xxzz;
-        x12.xy -= i1;
-        i = mod289(i);
+        vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i);
         vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
         vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-        m = m*m; m = m*m;
-        vec3 x = 2.0 * fract(p * C.www) - 1.0;
-        vec3 h = abs(x) - 0.5;
-        vec3 ox = floor(x + 0.5);
-        vec3 a0 = x - ox;
-        m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-        vec3 g;
-        g.x  = a0.x  * x0.x  + h.x  * x0.y;
-        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+        vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw;
         return 130.0 * dot(m, g);
     }
-
     void main() {
-      float radius = length(vPos);
-      float normalizedRadius = (radius - innerRadius) / (outerRadius - innerRadius);
-      float speed = 0.4 / pow(normalizedRadius + 0.1, 0.8);
-      float angle = atan(vPos.z, vPos.x);
+      float radius = length(vPos); float normalizedRadius = (radius - innerRadius) / (outerRadius - innerRadius);
+      float speed = 0.4 / pow(normalizedRadius + 0.1, 0.8); float angle = atan(vPos.z, vPos.x);
       float noise = snoise(vec2(angle * 4.0, normalizedRadius * 3.0 - time * 0.1));
       float turbulencePattern = mix(0.5, 1.0, pow(noise, 2.0) * turbulence);
       vec3 tempColor = mix(hotColor, coolColor, normalizedRadius);
@@ -224,85 +204,55 @@ const diskMat = new THREE.ShaderMaterial({
   side: THREE.DoubleSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
 });
 const disk = new THREE.Mesh(diskGeo, diskMat);
-scene.add(disk);
+blackHoleSystem.add(disk); // Added to the tiltable group
 
-/* ───── RELATIVISTIC JETS (NEW) ───── */
-const JET_LENGTH = 400;
-const jetGeo = new THREE.CylinderGeometry(0.3, 2, JET_LENGTH, 32, 20, true);
-jetGeo.translate(0, JET_LENGTH / 2, 0); // Position pivot at the base
+/* ───── RELATIVISTIC JETS ───── */
+const JET_LENGTH = 500;
+const jetGeo = new THREE.CylinderGeometry(0.3, 2.5, JET_LENGTH, 32, 40, true);
+jetGeo.translate(0, JET_LENGTH / 2, 0);
 
 const jetMat = new THREE.ShaderMaterial({
     uniforms: {
-        time: { value: 0 },
-        jetColor: { value: new THREE.Color(0x88ddff) },
-        intensity: { value: 1.0 }
+        time: { value: 0 }, jetColor: { value: new THREE.Color(0x88ddff) }, intensity: { value: 1.0 }
     },
     vertexShader: `
         varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
+        void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
     `,
     fragmentShader: `
-        uniform float time;
-        uniform vec3 jetColor;
-        uniform float intensity;
-        varying vec2 vUv;
-
-        // Re-declaring noise function for use in this shader
+        uniform float time; uniform vec3 jetColor; uniform float intensity; varying vec2 vUv;
         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
         float snoise(vec2 v) {
             const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-            vec2 i  = floor(v + dot(v, C.yy) );
-            vec2 x0 = v -   i + dot(i, C.xx);
+            vec2 i  = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx);
             vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-            vec4 x12 = x0.xyxy + C.xxzz;
-            x12.xy -= i1;
-            i = mod289(i);
+            vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i);
             vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
             vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-            m = m*m; m = m*m;
-            vec3 x = 2.0 * fract(p * C.www) - 1.0;
-            vec3 h = abs(x) - 0.5;
-            vec3 ox = floor(x + 0.5);
-            vec3 a0 = x - ox;
+            m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5;
+            vec3 ox = floor(x + 0.5); vec3 a0 = x - ox;
             m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-            vec3 g;
-            g.x  = a0.x  * x0.x  + h.x  * x0.y;
-            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+            vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw;
             return 130.0 * dot(m, g);
         }
-
         void main() {
-            // Flowing plasma effect using noise
             float noise = snoise(vec2(vUv.x * 2.0, vUv.y * 0.5 - time * 0.8));
             noise = pow(noise, 3.0);
-
-            // Fade out along the length of the jet
             float lengthFade = pow(1.0 - vUv.y, 2.0);
-
-            // Fade out at the edges of the jet's circumference
-            float edgeFade = smoothstep(0.0, 0.5, vUv.x) * (1.0 - smoothstep(0.5, 1.0, vUv.x));
-            edgeFade = pow(edgeFade, 0.3);
-            
+            float edgeFade = pow(smoothstep(0.0, 0.5, vUv.x) * (1.0 - smoothstep(0.5, 1.0, vUv.x)), 0.3);
             float alpha = noise * lengthFade * edgeFade * intensity;
-            
             gl_FragColor = vec4(jetColor, alpha);
         }
     `,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
 });
 
 const jetTop = new THREE.Mesh(jetGeo, jetMat);
 const jetBottom = new THREE.Mesh(jetGeo, jetMat);
-jetBottom.rotation.z = Math.PI; // Flip the bottom jet
-scene.add(jetTop, jetBottom);
+jetBottom.rotation.z = Math.PI;
+blackHoleSystem.add(jetTop, jetBottom); // Added to the tiltable group
 
 
 /* ───── POST-PROCESSING ───── */
@@ -311,22 +261,15 @@ composer.addPass(new RenderPass(scene, camera));
 
 const lensShader = {
   uniforms: {
-    tDiffuse: { value: null },
-    resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    BHPosition: { value: new THREE.Vector2(0.5, 0.5) },
-    mass: { value: BH_RADIUS * 2.5 },
+    tDiffuse: { value: null }, resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    BHPosition: { value: new THREE.Vector2(0.5, 0.5) }, mass: { value: BH_RADIUS * 2.5 },
     aspect: { value: window.innerWidth / window.innerHeight }
   },
   vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse;
-    uniform vec2 resolution, BHPosition;
-    uniform float mass, aspect;
-    varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform vec2 resolution, BHPosition; uniform float mass, aspect; varying vec2 vUv;
     void main() {
-      vec2 uv = vUv;
-      vec2 pos = uv - BHPosition;
-      pos.x *= aspect;
+      vec2 uv = vUv; vec2 pos = uv - BHPosition; pos.x *= aspect;
       float dist = length(pos);
       if (dist > 0.0) {
           vec2 deflection = normalize(pos) * mass / dist * 0.005;
@@ -346,6 +289,8 @@ composer.addPass(bloomPass);
 /* ───── GUI ───── */
 const gui = new GUI({ title: 'Controls' });
 const params = {
+  tiltX: 15.0,
+  tiltZ: 10.0,
   showJets: true,
   jetIntensity: 1.0,
   bloomStrength: 1.2,
@@ -355,18 +300,24 @@ const params = {
   autoOrbit: true,
   orbitSpeed: 0.2
 };
+
+// Apply initial tilt
+blackHoleSystem.rotation.x = THREE.MathUtils.degToRad(params.tiltX);
+blackHoleSystem.rotation.z = THREE.MathUtils.degToRad(params.tiltZ);
+
+const systemFolder = gui.addFolder('System Orientation').close();
+systemFolder.add(params, 'tiltX', -90, 90).name('Tilt X').onChange(v => blackHoleSystem.rotation.x = THREE.MathUtils.degToRad(v));
+systemFolder.add(params, 'tiltZ', -90, 90).name('Tilt Z').onChange(v => blackHoleSystem.rotation.z = THREE.MathUtils.degToRad(v));
+
 const jetFolder = gui.addFolder('Relativistic Jets');
-jetFolder.add(params, 'showJets').name('Show Jets').onChange(v => {
-    jetTop.visible = v;
-    jetBottom.visible = v;
-});
+jetFolder.add(params, 'showJets').name('Show Jets').onChange(v => { jetTop.visible = v; jetBottom.visible = v; });
 jetFolder.add(params, 'jetIntensity', 0, 3).name('Intensity').onChange(v => jetMat.uniforms.intensity.value = v);
 
 const diskFolder = gui.addFolder('Accretion Disk');
 diskFolder.add(params, 'diskTurbulence', 0, 2).name('Turbulence').onChange(v => diskMat.uniforms.turbulence.value = v);
 diskFolder.add(params, 'dopplerEffect', 0, 5).name('Doppler Effect').onChange(v => diskMat.uniforms.dopplerIntensity.value = v);
 
-const sceneFolder = gui.addFolder('Scene');
+const sceneFolder = gui.addFolder('Scene Controls');
 sceneFolder.add(params, 'bloomStrength', 0, 3).name('Bloom').onChange(v => bloomPass.strength = v);
 sceneFolder.add(params, 'lensingMass', 0, 100).name('Lensing Mass').onChange(v => lensShader.uniforms.mass.value = v);
 sceneFolder.add(params, 'autoOrbit').name('Auto Orbit');
@@ -386,7 +337,7 @@ renderer.setAnimationLoop(() => {
   const elapsedTime = clock.getElapsedTime();
   
   diskMat.uniforms.time.value += deltaTime;
-  jetMat.uniforms.time.value = elapsedTime; // Use elapsed time for a consistent jet flow speed
+  jetMat.uniforms.time.value = elapsedTime;
 
   idleTimer += deltaTime;
   controls.autoRotate = params.autoOrbit && idleTimer > 5;
@@ -432,9 +383,7 @@ if (window.DeviceOrientationEvent && 'ontouchstart' in window) {
     const targetX = THREE.MathUtils.degToRad(beta - 90);
     const targetY = THREE.MathUtils.degToRad(gamma);
     
-    orientationVector.set(targetX, targetY, 0);
     const targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(targetX, targetY, 0, 'YXZ'));
-    
     camera.quaternion.slerp(targetQuaternion, 0.07);
   }, true);
 }
