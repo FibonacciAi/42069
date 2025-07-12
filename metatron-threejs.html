@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Metatron's Cube - Three.js Enhanced</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      font-family: Arial, sans-serif;
+      touch-action: none;
+    }
+    #info {
+      position: absolute;
+      color: white;
+      top: 10px;
+      left: 10px;
+      padding: 10px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">Loading...</div>
+  <div id="controls" style="position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; color: white; z-index: 100;">
+      <button id="resetView">Reset View</button>
+      <button id="toggleRotation">Toggle Auto-Rotation</button>
+      <button id="randomizeColors">Randomize Colors</button>
+      <div style="margin-top: 5px;">
+        <label for="rotationSpeed">Rotation Speed</label>
+        <input type="range" id="rotationSpeed" min="0" max="1" step="0.01" value="0.2">
+      </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script>
+    // Scene, Camera, Renderer
+    const scene = new THREE.Scene();
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load('https://i.imgur.com/v9F6t2x.jpg', function(texture) {
+        scene.background = texture;
+    });
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Controls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    // Add a starfield background
+    const starGeometry = new THREE.BufferGeometry();
+    const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 });
+    const starVertices = [];
+    for (let i = 0; i < 10000; i++) {
+        const x = (Math.random() - 0.5) * 200;
+        const y = (Math.random() - 0.5) * 200;
+        const z = (Math.random() - 0.5) * 200;
+        starVertices.push(x, y, z);
+    }
+    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+    const stars = new THREE.Points(starGeometry, starMaterial);
+    scene.add(stars);
+
+    // Particle System
+    const particleGeometry = new THREE.BufferGeometry();
+    const particleMaterial = new THREE.PointsMaterial({ color: 0x00ffff, size: 0.1, transparent: true, opacity: 0.5 });
+    const particleVertices = [];
+    for (let i = 0; i < 100; i++) {
+        particleVertices.push(0, 0, 0);
+    }
+    particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particleVertices, 3));
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particles);
+
+    // Mouse responsive highlight
+    const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 });
+    const highlightGeometry = new THREE.PlaneGeometry(1, 1);
+    const highlight = new THREE.Mesh(highlightGeometry, highlightMaterial);
+    highlight.scale.set(0, 0, 0);
+    scene.add(highlight);
+
+    // Fibonacci Sequence (last digit)
+    function generateFibonacciSequence(n) {
+      let sequence = [0, 1];
+      for (let i = 2; i < n; i++) {
+        sequence[i] = (sequence[i - 1] + sequence[i - 2]) % 10;
+      }
+      return sequence;
+    }
+    const fibSequence = generateFibonacciSequence(216);
+
+    // Create Circles for Seed of Life
+    const radius = 5;
+    const circleGroup = new THREE.Group();
+    scene.add(circleGroup);
+
+    const createCircle = (r, color, center = {x: 0, y: 0, z: 0}) => {
+      const geometry = new THREE.RingGeometry(r - 0.05, r + 0.05, 128);
+      const material = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
+      const circle = new THREE.Mesh(geometry, material);
+      circle.position.set(center.x, center.y, center.z);
+      return circle;
+    };
+
+    // Outer circle
+    circleGroup.add(createCircle(radius, '#FF00FF'));
+
+    // 6 inner circles for the Seed of Life
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI * 2) / 6;
+      const centerX = Math.cos(angle) * radius * 0.5;
+      const centerY = Math.sin(angle) * radius * 0.5;
+      circleGroup.add(createCircle(radius * 0.5, '#00FFFF', { x: centerX, y: centerY, z: 0 }));
+    }
+
+    // Center circle
+    circleGroup.add(createCircle(radius * 0.5, '#00FF00'));
+
+    // Create Fibonacci Numbers
+    const numberGroup = new THREE.Group();
+    scene.add(numberGroup);
+
+    function createTextSprite(text, position, color) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        const fontSize = 32;
+        context.font = `${fontSize}px Arial`;
+        const textWidth = context.measureText(text).width;
+        canvas.width = textWidth;
+        canvas.height = fontSize;
+        context.font = `${fontSize}px Arial`;
+        context.fillStyle = color;
+        context.fillText(text, 0, fontSize - 4);
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(material);
+        sprite.position.set(position.x, position.y, position.z);
+        sprite.scale.set(0.1 * textWidth, 0.1 * fontSize, 1);
+        return sprite;
+    }
+
+    for (let i = 0; i < 216; i++) {
+      const angle = (i * 2 * Math.PI) / 108;
+      const r = i < 108 ? radius : radius * 0.75;
+      const x = Math.cos(angle) * r;
+      const y = Math.sin(angle) * r;
+      const z = 0;
+      const color = i < 108 ? '#FFFF00' : '#FF00FF';
+      const sprite = createTextSprite(fibSequence[i].toString(), {x, y, z}, color);
+      numberGroup.add(sprite);
+    }
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(0, 0, 10);
+    scene.add(pointLight);
+
+    // Camera Position
+    camera.position.z = 15;
+
+    // Post-processing
+    const renderScene = new THREE.RenderPass(scene, camera);
+    const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    bloomPass.threshold = 0;
+    bloomPass.strength = 1.5;
+    bloomPass.radius = 0;
+    const composer = new THREE.EffectComposer(renderer);
+    composer.addPass(renderScene);
+    composer.addPass(bloomPass);
+
+    // Animation Loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      // Animate Particles
+      if(autoRotate) {
+        scene.rotation.y += autoRotationSpeed * 0.01;
+      }
+      const positions = particles.geometry.attributes.position.array;
+      for (let i = 0; i < positions.length; i += 3) {
+        if (positions[i] === 0 && positions[i+1] === 0 && positions[i+2] === 0) {
+            positions[i] = (Math.random() - 0.5) * 0.1;
+            positions[i+1] = (Math.random() - 0.5) * 0.1;
+            positions[i+2] = (Math.random() - 0.5) * 0.1;
+        }
+        positions[i] += (Math.random() - 0.5) * 0.01;
+        positions[i+1] += (Math.random() - 0.5) * 0.01;
+        positions[i+2] += (Math.random() - 0.5) * 0.01;
+        const distance = Math.sqrt(positions[i]**2 + positions[i+1]**2 + positions[i+2]**2);
+        if (distance > 5) {
+            positions[i] = 0;
+            positions[i+1] = 0;
+            positions[i+2] = 0;
+        }
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      stars.rotation.x += 0.0001;
+      stars.rotation.y += 0.0001;
+
+      composer.render();
+    }
+
+    // Mouse move listener
+    const mouse = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+    let selectedNumber = null;
+    const connectionLines = new THREE.Group();
+    scene.add(connectionLines);
+
+    function onMouseClick(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(numberGroup.children);
+
+        if (intersects.length > 0) {
+            if (selectedNumber) {
+                selectedNumber.material.color.set(selectedNumber.userData.originalColor);
+            }
+            selectedNumber = intersects[0].object;
+            selectedNumber.userData.originalColor = selectedNumber.material.color.getHexString();
+            selectedNumber.material.color.set(0xff0000);
+
+            // Clear previous lines
+            while(connectionLines.children.length > 0){
+                connectionLines.remove(connectionLines.children[0]);
+            }
+
+            const selectedIndex = numberGroup.children.indexOf(selectedNumber);
+            const selectedValue = fibSequence[selectedIndex];
+
+            for (let i = 0; i < numberGroup.children.length; i++) {
+                if (fibSequence[i] === selectedValue && i !== selectedIndex) {
+                    const otherNumber = numberGroup.children[i];
+                    const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+                    const points = [];
+                    points.push(selectedNumber.position);
+                    points.push(otherNumber.position);
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, material);
+                    connectionLines.add(line);
+                }
+            }
+
+            const infoDiv = document.getElementById('info');
+            infoDiv.innerHTML = `
+                <h3>Number ${selectedValue}</h3>
+                <p>Position: ${selectedIndex + 1}/216</p>
+                <p>Sequence Position: ${(selectedIndex % 60) + 1}/60</p>
+            `;
+
+        } else {
+            if (selectedNumber) {
+                selectedNumber.material.color.set(selectedNumber.userData.originalColor);
+                selectedNumber = null;
+                 while(connectionLines.children.length > 0){
+                    connectionLines.remove(connectionLines.children[0]);
+                }
+                document.getElementById('info').textContent = "Metatron's Cube - Three.js Enhanced";
+            }
+        }
+    }
+
+    window.addEventListener('click', onMouseClick, false);
+
+    window.addEventListener('mousemove', (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+        vector.unproject(camera);
+        const dir = vector.sub(camera.position).normalize();
+        const distance = - camera.position.z / dir.z;
+        const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+        highlight.position.copy(pos);
+        highlight.scale.set(1,1,1);
+    });
+
+    // Handle Window Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    let autoRotate = false;
+    let autoRotationSpeed = 0.2;
+
+    document.getElementById('toggleRotation').addEventListener('click', () => {
+      autoRotate = !autoRotate;
+    });
+
+    document.getElementById('resetView').addEventListener('click', () => {
+        controls.reset();
+        camera.position.z = 15;
+    });
+
+    document.getElementById('randomizeColors').addEventListener('click', () => {
+        const randColor = () => Math.random() * 0xffffff;
+        circleGroup.children.forEach(c => c.material.color.set(randColor()));
+        numberGroup.children.forEach(n => n.material.color.set(randColor()));
+    });
+
+    document.getElementById('rotationSpeed').addEventListener('input', (e) => {
+        autoRotationSpeed = parseFloat(e.target.value);
+    });
+
+    document.getElementById('info').textContent = "Metatron's Cube - Three.js Enhanced";
+    animate();
+  </script>
+</body>
+</html>
