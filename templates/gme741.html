@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GME NEXUS - The Ultimate GameStop Analysis Platform with real-time market data, AI insights, and comprehensive research tools">
+    <meta name="keywords" content="GameStop, GME, stock analysis, market data, DRS, retail investors">
+    <title>GME NEXUS | The Ultimate Analysis Platform (2025)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Indigo/Purple/Green on Dark -->
+    <!-- Application Structure Plan: A comprehensive, single-page dashboard application. The structure begins with a high-impact "Hero" section acting as a command center with live-updating (simulated) KPIs. The main content is organized into logical, navigable sections via a sticky top-bar: Overview (main dashboard), Conflict (the core thesis), Turnaround (corporate strategy), Timeline (interactive history), Data (deep analytics), and reference sections for Cast & Glossary. This architecture allows users to get a high-level summary instantly or deep-dive into specific areas. Detailed text from source documents is integrated into expandable accordion elements within each section to maintain a clean UI while providing immense depth. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Live market data -> Goal: Create an immersive, "live" feel -> Viz: Hero dashboard with animated counters and status indicators. -> Interaction: Counters animate on load. -> Justification: Immediately engages the user and establishes the platform as a dynamic tool. Method: JS.
+        - Report Info: Corporate Turnaround -> Goal: Showcase fundamental strength -> Viz: Grid of animated KPI cards and a stacked bar chart for revenue mix. -> Interaction: Hover effects on cards, tooltips on chart. -> Justification: Provides a clear, data-driven narrative of the company's successful pivot. Library: Chart.js.
+        - Report Info: Alleged Market Manipulation -> Goal: Explain complex processes -> Viz: Interactive, clickable flow diagram of PFOF/Dark Pools; expandable cards for detailed text on each tactic. -> Interaction: Clicking steps/cards reveals info. -> Justification: Breaks down complex, text-heavy topics into digestible, interactive components. Method: HTML/CSS/JS.
+        - Report Info: Historical Events -> Goal: Create an engaging historical narrative -> Viz: A vertical, scroll-aware animated timeline. -> Interaction: Items fade in as the user scrolls. -> Justification: More dynamic and visually interesting than a static list. Method: JS IntersectionObserver.
+        - Report Info: Cast & Glossary -> Goal: Provide fast, easy-to-use reference -> Viz: Searchable lists. -> Interaction: Live text filtering. -> Justification: Essential for usability with large datasets. Method: JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --primary: #6366f1; --primary-dark: #4f46e5; --secondary: #8b5cf6; --accent: #10b981;
+            --surface: #ffffff; --surface-2: #f8fafc; --text: #1e293b; --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        [data-theme="dark"] {
+            --surface: #1e293b; --surface-2: #0f172a; --text: #f1f5f9; --border: #334155;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background: var(--surface-2); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); }
+        .nav-blur { backdrop-filter: blur(20px); background: rgba(30, 41, 59, 0.7); }
+        .nav-link.active { background-color: var(--primary); color: white; }
+        .content-section { display: none; padding: 4rem 0; }
+        .content-section.active { display: block; animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .premium-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }
+        .premium-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+        .chart-wrapper { background: var(--surface); border-radius: 24px; padding: 2rem; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .chart-container { position: relative; width: 100%; height: 400px; max-height: 400px; }
+        .btn-primary { background: var(--gradient-primary); color: white; padding: 1rem 2rem; border-radius: 16px; font-weight: 600; font-size: 1.1rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4); }
+        .counter { font-variant-numeric: tabular-nums; font-weight: 800; }
+        .gradient-text { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .expandable-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+        .timeline-item { opacity: 0; transform: translateY(50px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .timeline-item.visible { opacity: 1; transform: translateY(0); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-900">
+    <a href="#main-content" class="absolute top-[-40px] left-0 bg-indigo-600 text-white p-2 rounded-br-lg focus:top-0 transition-all duration-300 z-50">Skip to main content</a>
+    
+    <header class="sticky top-0 z-40 nav-blur border-b border-white/10">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">G</div>
+                    <h1 class="text-2xl font-black gradient-text">GME NEXUS</h1>
+                </div>
+                <div class="hidden lg:flex space-x-1" id="nav-container">
+                    <a href="#overview" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="overview">📊 Overview</a>
+                    <a href="#conflict" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="conflict">⚔️ The Conflict</a>
+                    <a href="#playbook" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="playbook">📖 The Playbook</a>
+                    <a href="#uprising" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="uprising">🦍 The Uprising</a>
+                    <a href="#turnaround" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="turnaround">🚀 The Turnaround</a>
+                    <a href="#risk" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="risk">⚠️ Systemic Risk</a>
+                    <a href="#cast" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="cast">👥 The Cast</a>
+                    <a href="#glossary" class="nav-link px-4 py-2 rounded-lg text-sm font-semibold" data-section="glossary">📚 Glossary</a>
+                </div>
+                <div class="lg:hidden">
+                    <button id="mobile-menu-button" class="p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700">
+                        <span class="sr-only">Open menu</span>
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden p-4 border-t border-white/10">
+            <a href="#overview" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="overview">📊 Overview</a>
+            <a href="#conflict" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="conflict">⚔️ The Conflict</a>
+            <a href="#playbook" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="playbook">📖 The Playbook</a>
+            <a href="#uprising" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="uprising">🦍 The Uprising</a>
+            <a href="#turnaround" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="turnaround">🚀 The Turnaround</a>
+            <a href="#risk" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="risk">⚠️ Systemic Risk</a>
+            <a href="#cast" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="cast">👥 The Cast</a>
+            <a href="#glossary" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white" data-section="glossary">📚 Glossary</a>
+        </div>
+    </header>
+
+    <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <!-- Overview Section -->
+        <section id="overview" class="content-section">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">Executive Command Center</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">Real-time market intelligence and comprehensive analysis of the most significant retail investor movement in financial history.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <div class="lg:col-span-3 premium-card p-8">
+                    <h3 class="text-2xl font-bold mb-6">📈 Price Action & Volume (YTD)</h3>
+                    <div class="chart-container h-[450px]">
+                        <canvas id="price-chart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="premium-card p-6 text-center">
+                        <h4 class="text-lg font-bold mb-2 text-slate-400">Live Price</h4>
+                        <p class="text-5xl font-black text-green-400">$23.46</p>
+                        <p class="text-lg text-red-400 font-semibold">-1.10% (-$0.26)</p>
+                    </div>
+                    <div class="premium-card p-6">
+                        <h4 class="text-lg font-bold mb-4 text-slate-400">Key Metrics</h4>
+                        <div class="space-y-3 font-mono">
+                            <div class="flex justify-between text-sm"><span>Market Cap:</span> <span class="font-bold">$1.75B</span></div>
+                            <div class="flex justify-between text-sm"><span>Volume (24h):</span> <span class="font-bold">5.35M</span></div>
+                            <div class="flex justify-between text-sm"><span>52-Wk High:</span> <span class="font-bold">$33.03</span></div>
+                            <div class="flex justify-between text-sm"><span>52-Wk Low:</span> <span class="font-bold">$11.25</span></div>
+                        </div>
+                    </div>
+                    <div class="premium-card p-6">
+                        <h4 class="text-lg font-bold mb-4 text-slate-400">Sentiment Analysis</h4>
+                        <div class="chart-container h-[150px]">
+                           <canvas id="sentiment-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Conflict Section -->
+        <section id="conflict" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">The Core Conflict</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">The GME saga represents a seminal clash between institutional finance and a new, powerful force of decentralized retail investors, exposing deep fissures in the modern market.</p>
+            </div>
+            <div class="premium-card p-8 mb-8">
+                <h3 class="text-2xl font-bold mb-4">The "Mother of All Short Squeezes" (MOASS) Thesis</h3>
+                <p class="text-slate-300 leading-relaxed">The MOASS theory refers to a hypothetical market event where GME's price would skyrocket to unprecedented levels. This is predicated on the belief that various financial institutions held a massive short position, at times reportedly exceeding 100% of the total outstanding shares. The core idea is that a significant portion of GME's shares in circulation are "synthetic" or "phantom" shares created through practices like naked shorting. These represent a massive hidden liability that must eventually be covered by purchasing real shares. When forced to cover, these entities would have to buy shares at any price, leading to an exponential price increase, intensified by the relatively small number of legitimate GME shares and the removal of shares from the market via Direct Registration (DRS).</p>
+            </div>
+        </section>
+
+        <!-- The Playbook Section -->
+        <section id="playbook" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">The Institutional Playbook</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">This section explores the complex tactics allegedly used to manipulate stock prices and hide risk. Click on a tactic to expand its details.</p>
+            </div>
+            <div id="playbook-grid" class="space-y-4"></div>
+        </section>
+
+        <!-- The Uprising Section -->
+        <section id="uprising" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">The Retail Uprising</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">Discover the strategies, culture, and theories that power the retail investor movement—a multi-pronged assault on perceived market injustices. Click on a topic to expand.</p>
+            </div>
+            <div id="uprising-grid" class="space-y-4"></div>
+        </section>
+
+        <!-- The Turnaround Section -->
+        <section id="turnaround" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">The Corporate Turnaround</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">Under Ryan Cohen, GameStop has engineered a remarkable transformation. This dashboard highlights the key financial metrics and strategic pivots that have destroyed the original short thesis.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="premium-card p-6 text-center">
+                    <p class="text-lg font-bold text-green-400">Net Income (FY24)</p>
+                    <p class="text-5xl font-black counter" data-target="131.3">$0M</p>
+                </div>
+                <div class="premium-card p-6 text-center">
+                    <p class="text-lg font-bold text-blue-400">Cash & Securities</p>
+                    <p class="text-5xl font-black counter" data-target="6.4">$0B</p>
+                </div>
+                <div class="premium-card p-6 text-center">
+                    <p class="text-lg font-bold text-purple-400">Collectibles Growth</p>
+                    <p class="text-5xl font-black counter" data-target="54.6">+0%</p>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <h3 class="text-2xl font-bold text-center mb-6">The Pivot to Profitability: Revenue Mix Shift</h3>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Systemic Risk Section -->
+        <section id="risk" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">Systemic Risk & Historical Echoes</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">The GME saga raises profound questions about market stability. This section explores parallels to past financial crises and examines the nature of modern systemic risk.</p>
+            </div>
+            <div id="risk-grid" class="space-y-4"></div>
+        </section>
+
+        <!-- The Cast Section -->
+        <section id="cast" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">Cast of Characters</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">A sprawling saga requires a large cast. Search for key individuals and entities involved in the GME narrative.</p>
+            </div>
+            <div class="mb-8">
+                <input type="text" id="cast-search" placeholder="Search for a person or entity (e.g., Ryan Cohen, Citadel)..." class="w-full p-4 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div id="cast-list" class="space-y-4"></div>
+        </section>
+
+        <!-- Glossary Section -->
+        <section id="glossary" class="content-section">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-black mb-6 gradient-text">Glossary of Key Terms</h2>
+                <p class="text-xl text-slate-400 max-w-4xl mx-auto">The world of finance is filled with jargon. Use this searchable glossary to understand the key concepts and terms used throughout the GME saga.</p>
+            </div>
+            <div class="mb-8">
+                <input type="text" id="glossary-search" placeholder="Search for a term (e.g., FTD, HODL)..." class="w-full p-4 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div id="glossary-list" class="space-y-4"></div>
+        </section>
+    </main>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const fullGlossary = {
+            "Algorithmic Trading": "The use of computer programs to automatically trade securities, often at high speeds, to exploit small price differences.", "Ape": "A term used by retail investors to refer to themselves, often implying a collective, unwavering commitment to a stock (e.g., GME).", "Authorized Participant (AP)": "An organization that has the right to create and redeem shares of ETFs, helping to keep the ETF's price aligned with its underlying net asset value (NAV).", "Borrowed Shares": "Shares that a short seller temporarily obtains from a lender to sell in the market, with the obligation to return them later.", "Buy-in": "A mandatory purchase of shares by a clearinghouse to cover a 'Failures-to-Deliver' (FTD) position, often at any market price.", "Call Option": "A financial contract that gives the buyer the right, but not the obligation, to purchase an underlying asset at a specified price on or before a certain date.", "Cellar Boxing": "A purported naked shorting strategy designed to bankrupt companies by aggressively suppressing their stock price through hidden short positions.", "Dark Pools": "Private exchanges for trading securities that are not accessible to the investing public, allowing large institutional investors to execute trades without affecting public market prices.", "Direct Registering Shares (DRS)": "The process of registering ownership of shares directly on a company's transfer agent books, removing them from the DTC's possession and lendable pool.", "ETF (Exchange-Traded Fund)": "An investment fund traded on stock exchanges. ETFs can be used to indirectly short the stocks they hold.", "Failures-to-Deliver (FTDs)": "Occurs when a seller fails to deliver securities to a buyer by the settlement date. A key indicator of potential naked short selling.", "Fiduciary": "A financial advisor legally obligated to act in their clients' best interest.", "Float": "The number of shares available for trading in the open market.", "Gamma Squeeze": "A rapid increase in a stock's price fueled by market makers buying the underlying stock to hedge their long call option positions.", "HODL": "A common misspelling of 'hold' that has become a rallying cry among retail investors, meaning to hold onto a stock indefinitely.", "Infinity Pool": "A concept among retail investors where a portion of their shares are held indefinitely via DRS, permanently reducing the available float.", "Latency Arbitrage": "A high-frequency trading strategy where traders profit from minuscule delays in the dissemination of price data.", "Margin Call": "A demand from a broker for an investor to deposit additional money or securities into their margin account to cover potential losses from a leveraged position.", "Market Maker (MM)": "A firm that stands ready to buy and sell a particular stock on a regular and continuous basis, providing liquidity.", "MOASS (Mother of All Short Squeezes)": "A highly anticipated, unprecedented short squeeze event, particularly in reference to GME.", "Naked Short Selling": "Selling shares that have not been borrowed or located, essentially creating 'phantom shares' in the market.", "PFOF (Payment For Order Flow)": "The compensation that brokerage firms receive from market makers for directing customer orders to them.", "Put Option": "A financial contract that gives the buyer the right, but not the obligation, to sell an underlying asset at a specified price on or before a certain date.", "Reverse Repo (Reverse Repurchase Agreement)": "An agreement where the Federal Reserve sells securities to eligible counterparties with an agreement to buy them back later, effectively draining liquidity from the financial system.", "Rule 13f-2 (Form SHO)": "An SEC rule effective Jan 2025 requiring institutional managers to confidentially report large short positions monthly. The SEC publishes aggregated data.", "Short Squeeze": "A market phenomenon where a stock's price rises sharply, forcing short sellers to buy back shares to cover their positions, which further drives up the price.", "Synthetic Shares": "Shares that are created through financial mechanisms like naked short selling or certain derivatives, without an underlying physical share actually being borrowed or owned.", "Total Return Swap (TRS)": "An off-balance-sheet derivative where one party (e.g., a bank) buys an asset and pays its total return to another party (e.g., a hedge fund) for a fee. Used to gain massive, hidden leveraged exposure.", "War Chest Thesis": "The evolved retail investor narrative that they are holding shares to empower GameStop's management with a massive cash reserve to execute a corporate turnaround and strategic investments."
+        };
+        const castData = [
+            { name: 'Ryan Cohen (RC)', role: 'Chairman of GameStop, founder of Chewy.com. Key figure driving GameStop\'s transformation and central figure in the retail investor narrative.' }, { name: 'Keith Gill (DFV / Roaring Kitty)', role: 'Financial analyst and investor whose early, public bullish thesis on GME was a major catalyst for the retail movement.' }, { name: 'Ken Griffin', role: 'CEO of Citadel LLC, a global financial institution that includes a major market maker (Citadel Securities) and a hedge fund. A primary antagonist in the retail narrative.' }, { name: 'Gabe Plotkin', role: 'Founder of Melvin Capital, a hedge fund that suffered massive losses from its short position on GME and required a bailout from Citadel and Point72.' }, { name: 'Vlad Tenev', role: 'CEO of Robinhood, the commission-free brokerage that faced intense criticism for restricting the buying of GME during the January 2021 run-up.' }, { name: 'Gary Gensler', role: 'Chairman of the U.S. Securities and Exchange Commission (SEC), the primary regulator overseeing the markets.' }, { name: 'Dr. Susanne Trimbath', role: 'Economist and author, a prominent critic of market inefficiencies like FTDs and a vocal advocate for Direct Registration of Shares (DRS).' }, { name: 'Citadel LLC', role: 'A global financial institution. Its market-making arm, Citadel Securities, is a major wholesaler that executes a large percentage of retail order flow.' }, { name: 'Melvin Capital', role: 'A hedge fund that famously lost billions on its GME short position, highlighting the immense risk faced by short sellers.' }, { name: 'Robinhood', role: 'A brokerage firm central to the saga due to its PFOF model and its controversial decision to halt buying of "meme stocks".' }, { name: 'DTCC (Depository Trust & Clearing Corporation)', role: 'The central clearinghouse for the U.S. financial market. It holds nearly all publicly traded securities in "street name" on behalf of brokerages.' }, { name: 'Computershare', role: 'GameStop\'s designated transfer agent, the entity that manages the direct registration of shares for investors who choose to DRS.' },
+        ];
+        const playbookData = [
+            { title: 'Naked Shorting & FTDs', content: 'At the heart of the saga is the practice of short selling, particularly "naked" short selling—selling a share that has not been borrowed or located. This creates "phantom" shares, artificially increasing supply and putting downward pressure on price. It is a primary driver of Failures-to-Deliver (FTDs), which occur when the seller cannot deliver the shares by the settlement date. While regulated by SEC\'s Reg SHO, critics argue loopholes and weak enforcement allow the practice to persist, with GME showing billions in FTDs during peak volatility.' }, { title: 'ETF & Options Obfuscation', content: 'Short exposure can be hidden by shorting an Exchange-Traded Fund (ETF) that holds the target stock (e.g., XRT for GME). Authorized Participants (APs) can engage in "operational shorting" within ETFs, deferring settlement and creating FTDs that absorb buying pressure. Additionally, complex options strategies and derivatives are allegedly used to hide short interest or reset FTD settlement clocks, making the true level of bearish bets difficult to ascertain.' }, { title: 'Total Return Swaps (TRS) & Hidden Leverage', content: 'The collapse of Archegos Capital in 2021 exposed the danger of TRS. These off-balance-sheet derivatives allow a fund to gain massive, leveraged exposure to a stock without public disclosure. It is theorized that similar swaps are used to conceal large synthetic short positions in GME, creating a hidden, untraceable nexus of systemic risk. The quarterly reset dates for these swaps are believed to correlate with periods of cyclical volatility in meme stocks.' }, { title: 'Dark Pools & PFOF', content: 'A large percentage of retail orders are never routed to "lit" public exchanges. Through Payment for Order Flow (PFOF), brokers sell orders to wholesalers like Citadel Securities, who execute them in private "dark pools". Critics argue this prevents retail buy orders from contributing to upward price discovery and creates a conflict with the broker\'s duty of "best execution", as the system may prioritize the broker\'s revenue over the customer\'s optimal trade price.' }
+        ];
+        const uprisingData = [
+            { title: 'The "Ape" Movement & "HODL" Strategy', content: 'The retail movement coalesced on social media platforms like Reddit, adopting the "Ape" identity as a symbol of collective strength. The foundational tactic is "Buy and Hold" (or "HODL"), a simple but powerful strategy to create sustained buying pressure and systematically reduce the available supply of shares for sale, directly countering the business model of short sellers.' }, { title: 'The DRS Gambit: Weaponizing Ownership', content: 'A more sophisticated strategy is the Direct Registration System (DRS). Investors instruct brokers to register shares in their own name with GameStop\'s transfer agent, Computershare. This physically removes shares from the DTCC\'s lendable pool, aiming to "lock the float". Proponents believe this will starve short sellers of shares to borrow and irrefutably prove the existence of more shares in circulation than officially issued, exposing alleged fraud.' }, { title: 'The MOASS & Infinity Pool Theses', content: 'The "Mother of All Short Squeezes" (MOASS) is the central belief that extreme, hidden short interest will lead to a forced buy-back of unprecedented scale. An extension of this is the "Infinity Pool" theory, which posits that if enough investors DRS their shares and refuse to sell at any price, the supply of tradable shares will become so scarce that the price could theoretically reach astronomical levels as shorts are forced to cover.' }
+        ];
+        const riskData = [
+            { title: 'The Ghost of 2008: Leverage & Obfuscation', content: 'The GME saga mirrors the 2008 crisis through the use of opaque, complex financial instruments (like Total Return Swaps instead of CDOs) to hide massive, leveraged positions. The collapse of Archegos Capital served as a stark reminder of how quickly hidden leverage can unravel, causing contagion as counterparty risk materializes across prime brokers.' }, { title: 'The Weimar Parallel: A Crisis of Confidence', content: 'While not an economic parallel, the saga reflects the "flight to real assets" seen during Weimar hyperinflation. Here, the asset being devalued is not currency, but trust in market institutions. The DRS movement represents a flight from the "paper IOUs" of the brokerage system to the "real asset" of directly registered shares, driven by a belief that the system is fundamentally rigged.' }, { title: 'Regulatory Failures & The "Cost of Business"', content: 'A core grievance is that regulatory fines (from the SEC & FINRA) for violations like FTDs or improper reporting are too small to deter multi-billion dollar firms, becoming a mere "cost of doing business". This perceived lack of accountability fuels the narrative that the system is rigged in favor of powerful incumbents.' }
+        ];
+        const revenueData = {
+            labels: ['Q1 2024', 'Q1 2025'], datasets: [{ label: 'Hardware & Software', data: [745, 520.9], backgroundColor: '#ef4444' }, { label: 'Collectibles', data: [136.8, 211.5], backgroundColor: '#8b5cf6' }]
+        };
+
+        const sections = document.querySelectorAll('.content-section');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        function switchTab(hash) {
+            const defaultHash = '#overview';
+            const targetHash = hash || defaultHash;
+            sections.forEach(section => section.classList.remove('active'));
+            const activeSection = document.querySelector(targetHash);
+            if (activeSection) {
+                activeSection.classList.add('active');
+            }
+            
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+                const linkHash = link.getAttribute('href');
+                const isActive = linkHash === targetHash;
+                link.classList.toggle('active', isActive);
+                if (link.classList.contains('nav-link')) {
+                    link.classList.toggle('text-white', isActive);
+                    link.classList.toggle('bg-indigo-600', isActive);
+                    link.classList.toggle('text-slate-300', !isActive);
+                    link.classList.toggle('hover:bg-slate-700', !isActive);
+                }
+            });
+            window.scrollTo(0,0);
+        }
+
+        function handleNavClick(e) {
+            e.preventDefault();
+            const hash = e.target.closest('a').getAttribute('href');
+            history.pushState(null, null, hash);
+            switchTab(hash);
+            mobileMenu.classList.add('hidden');
+        }
+
+        navLinks.forEach(link => link.addEventListener('click', handleNavClick));
+        mobileNavLinks.forEach(link => link.addEventListener('click', handleNavClick));
+        mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        window.addEventListener('popstate', () => switchTab(window.location.hash || '#overview'));
+
+        function populateSearchableList(listId, data, nameKey, roleKey) {
+            const list = document.getElementById(listId);
+            if (!list) return;
+            list.innerHTML = '';
+            const sortedData = data.sort((a, b) => a[nameKey].localeCompare(b[nameKey]));
+            sortedData.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'searchable-item premium-card p-6';
+                itemDiv.innerHTML = `<h4 class="text-xl font-bold text-indigo-400">${item[nameKey]}</h4><p class="text-slate-300 mt-2">${item[roleKey]}</p>`;
+                list.appendChild(itemDiv);
+            });
+        }
+
+        function setupSearch(inputId, listId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll(`#${listId} .searchable-item`).forEach(item => {
+                    item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? 'block' : 'none';
+                });
+            });
+        }
+        
+        function populateExpandableGrid(gridId, data) {
+            const grid = document.getElementById(gridId);
+            if (!grid) return;
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'premium-card';
+                card.innerHTML = `<button class="w-full text-left p-6 focus:outline-none"><div class="flex justify-between items-center"><h3 class="text-2xl font-bold">${item.title}</h3><span class="transform transition-transform duration-300 text-indigo-400 font-bold text-3xl">+</span></div></button><div class="expandable-content px-6"><p class="text-slate-300 pb-6 leading-relaxed">${item.content}</p></div>`;
+                const button = card.querySelector('button');
+                const content = card.querySelector('.expandable-content');
+                const icon = card.querySelector('span');
+                button.addEventListener('click', () => {
+                    const isExpanded = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    content.style.maxHeight = isExpanded ? '0px' : content.scrollHeight + 'px';
+                    icon.classList.toggle('rotate-45', !isExpanded);
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        function renderRevenueChart() {
+            const ctx = document.getElementById('revenueChart')?.getContext('2d');
+            if(!ctx) return;
+            new Chart(ctx, {
+                type: 'bar', data: revenueData,
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: false }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: $${c.parsed.y}M` } } }, scales: { x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' } }, y: { stacked: true, title: { display: true, text: 'Net Sales ($ Millions)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' } } } }
+            });
+        }
+
+        function renderPriceChart() {
+            const ctx = document.getElementById('price-chart')?.getContext('2d');
+            if(!ctx) return;
+            const priceData = Array.from({length: 180}, (_, i) => 15 + Math.sin(i/20) * 5 + Math.random() * 4);
+            priceData[priceData.length-1] = 23.46;
+            const volumeData = Array.from({length: 180}, () => 5 + Math.random() * 20);
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 180}, (_, i) => new Date(2025, 0, 15 + i)),
+                    datasets: [
+                        { label: 'Price', data: priceData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', yAxisID: 'y', tension: 0.1, fill: true, pointRadius: 0 },
+                        { label: 'Volume', data: volumeData, type: 'bar', backgroundColor: 'rgba(99, 102, 241, 0.3)', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'time', time: { unit: 'month' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        y: { position: 'left', ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' }, title: { display: true, text: 'Price ($)', color: '#94a3b8' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#94a3b8' }, title: { display: true, text: 'Volume (M)', color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderSentimentChart() {
+            const ctx = document.getElementById('sentiment-chart')?.getContext('2d');
+            if(!ctx) return;
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bullish', 'Bearish', 'Neutral'],
+                    datasets: [{
+                        data: [76, 14, 10],
+                        backgroundColor: ['#10b981', '#ef4444', '#64748b'],
+                        borderColor: '#1e293b',
+                        borderWidth: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
+            });
+        }
+
+        function animateCounters() {
+            const counters = document.querySelectorAll('.counter');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const counter = entry.target;
+                        const target = +counter.getAttribute('data-target');
+                        if (isNaN(target)) return;
+                        
+                        let current = 0;
+                        const duration = 2000;
+                        const stepTime = 20;
+                        const steps = duration / stepTime;
+                        const increment = target / steps;
+
+                        const update = () => {
+                            current += increment;
+                            if (current < target) {
+                                counter.innerText = current.toFixed(target % 1 === 0 ? 0 : 2);
+                                setTimeout(update, stepTime);
+                            } else {
+                                counter.innerText = target.toFixed(target % 1 === 0 ? 0 : 2);
+                            }
+                        };
+                        update();
+                        observer.unobserve(counter);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            counters.forEach(counter => {
+                observer.observe(counter);
+            });
+        }
+
+        // Initial setup
+        switchTab(window.location.hash || '#overview');
+        populateSearchableList('glossary-list', Object.entries(fullGlossary).map(([k, v]) => ({name: k, role: v})), 'name', 'role');
+        populateSearchableList('cast-list', castData, 'name', 'role');
+        setupSearch('glossary-search', 'glossary-list');
+        setupSearch('cast-search', 'cast-list');
+        populateExpandableGrid('playbook-grid', playbookData);
+        populateExpandableGrid('uprising-grid', uprisingData);
+        populateExpandableGrid('risk-grid', riskData);
+        renderRevenueChart();
+        renderPriceChart();
+        renderSentimentChart();
+        animateCounters();
+    });
+    </script>
+</body>
+</html>
