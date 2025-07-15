@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Black Hole Merger - Polished Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: white;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        canvas { 
+            display: block;
+            touch-action: none;
+        }
+        
+        .lil-gui {
+            --font-size: 13px;
+            --width: 320px;
+            --widget-height: 26px;
+            font-family: 'Inter', sans-serif !important;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            pointer-events: none;
+            min-width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: opacity 0.3s ease;
+        }
+        
+        #info div {
+            margin: 10px 0;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        #info .label {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+        }
+        
+        #info .value {
+            color: #00ddff;
+            font-weight: 600;
+            font-feature-settings: "tnum";
+        }
+        
+        #timeline {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 720px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        #waveformCanvas {
+            width: 100%;
+            height: 64px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        #phase {
+            font-size: 12px;
+            color: #00ff88;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 12px;
+            transition: color 0.3s ease;
+        }
+        
+        #phase.warning {
+            color: #ff6666;
+            animation: pulse-warning 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-warning {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        #timeline-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        
+        #play-pause-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        #play-pause-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        #timeline-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        #timeline-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ddff);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+        
+        #start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            transition: opacity 0.6s ease;
+        }
+        
+        #start-overlay h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+            background: linear-gradient(135deg, #fff, #00ddff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #start-overlay p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0 20px;
+        }
+        
+        #start-button {
+            font-size: 1.125rem;
+            font-weight: 600;
+            padding: 16px 32px;
+            margin-top: 32px;
+            border: 2px solid #00ff88;
+            background: transparent;
+            color: #00ff88;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        #start-button:hover {
+            background: #00ff88;
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        #controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+        
+        .control-button {
+            width: 44px;
+            height: 44px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .control-button:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .control-button.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+        }
+        
+        #stats {
+            position: absolute;
+            bottom: 120px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+        }
+        
+        #stats div {
+            margin: 4px 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        #keyboard-hints {
+            position: absolute;
+            bottom: 24px;
+            left: 20px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            display: none;
+        }
+        
+        #keyboard-hints.show {
+            display: block;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            #info {
+                top: 12px;
+                left: 12px;
+                padding: 12px 16px;
+                min-width: auto;
+                font-size: 12px;
+            }
+            
+            #info div {
+                margin: 8px 0;
+            }
+            
+            #controls-panel {
+                top: 12px;
+                right: 12px;
+            }
+            
+            .control-button {
+                width: 40px;
+                height: 40px;
+            }
+            
+            #timeline {
+                bottom: 16px;
+                padding: 16px;
+                width: 95%;
+            }
+            
+            .lil-gui {
+                --width: 280px;
+                --font-size: 12px;
+                --widget-height: 24px;
+            }
+        }
+        
+        /* Loading animation */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.1/examples/jsm/",
+            "tone": "https://cdn.jsdelivr.net/npm/tone@15.0.4/+esm"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="start-overlay">
+        <h1>Binary Black Hole Merger</h1>
+        <p>Experience the cosmic dance of two black holes spiraling toward their inevitable collision, releasing ripples in spacetime itself.</p>
+        <button id="start-button">Begin Simulation</button>
+    </div>
+
+    <div id="info">
+        <div><span class="label">Separation</span><span class="value" id="separation">--</span></div>
+        <div><span class="label">Orbital Period</span><span class="value" id="period">--</span></div>
+        <div><span class="label">Total Mass</span><span class="value" id="total-mass">--</span></div>
+        <div><span class="label">GW Frequency</span><span class="value" id="gwfreq">--</span></div>
+        <div><span class="label">Time to Merger</span><span class="value" id="time-to-merger">--</span></div>
+    </div>
+
+    <div id="controls-panel">
+        <button class="control-button" id="audio-button" title="Toggle Audio">
+            <svg id="icon-muted" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+            <svg id="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        </button>
+        <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+        </button>
+        <button class="control-button" id="help-button" title="Keyboard Shortcuts">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+    </div>
+
+    <div id="timeline">
+        <canvas id="waveformCanvas"></canvas>
+        <div id="phase">INSPIRAL PHASE</div>
+        <div id="timeline-controls">
+            <button id="play-pause-btn">
+                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none" style="display: none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            </button>
+            <div id="timeline-bar">
+                <div id="timeline-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stats">
+        <div><span>FPS</span><span id="fps">60</span></div>
+        <div><span>Particles</span><span id="particles">0</span></div>
+        <div><span>Draw Calls</span><span id="draw-calls">0</span></div>
+    </div>
+
+    <div id="keyboard-hints">
+        <div>SPACE - Play/Pause</div>
+        <div>R - Restart</div>
+        <div>1/2/3 - Camera Focus</div>
+        <div>G - Toggle Grid</div>
+        <div>H - Hide Hints</div>
+    </div>
+
+    <div class="loading" id="loading"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import * as Tone from 'tone';
+
+        // --- Performance Settings ---
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 2 : 3);
+        const maxParticles = isMobile ? 500 : 1000;
+        
+        // --- Core Scene Setup ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000011, 0.001);
+        
+        const camera = new THREE.PerspectiveCamera(
+            75, 
+            window.innerWidth / window.innerHeight, 
+            0.1, 
+            2000
+        );
+        
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: !isMobile,
+            powerPreference: "high-performance",
+            stencil: false,
+            depth: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(pixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        document.body.appendChild(renderer.domElement);
+
+        // --- Camera Controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 20;
+        controls.maxDistance = 400;
+        controls.maxPolarAngle = Math.PI * 0.85;
+        camera.position.set(0, 50, 100);
+        controls.update();
+
+        // --- Optimized Audio Engine ---
+        class AudioEngine {
+            constructor() {
+                this.isInitialized = false;
+                this.isMuted = true;
+                this.context = null;
+                this.sounds = {};
+            }
+
+            async init() {
+                if (this.isInitialized) return;
+                
+                try {
+                    await Tone.start();
+                    this.context = Tone.context;
+                    this.isInitialized = true;
+                    this.isMuted = false;
+                    
+                    // Create audio nodes
+                    const masterGain = new Tone.Gain(0.5).toDestination();
+                    const reverb = new Tone.Reverb({ decay: 3, wet: 0.3 }).connect(masterGain);
+                    
+                    // Inspiral sound
+                    this.sounds.inspiral = new Tone.Oscillator({
+                        type: "sine",
+                        frequency: 60
+                    }).connect(reverb);
+                    
+                    // Chirp synth for merger
+                    this.sounds.chirp = new Tone.Synth({
+                        oscillator: { type: "sine" },
+                        envelope: { 
+                            attack: 0.01, 
+                            decay: 0.5, 
+                            sustain: 0.8, 
+                            release: 2 
+                        }
+                    }).connect(masterGain);
+                    
+                    // Ringdown
+                    this.sounds.ringdown = new Tone.MetalSynth({
+                        frequency: 200,
+                        envelope: { attack: 0.001, decay: 4, release: 2 },
+                        harmonicity: 5.1,
+                        resonance: 2000,
+                        octaves: 1.5
+                    }).connect(reverb);
+                    
+                    this.updateMuteState();
+                    console.log("Audio initialized successfully");
+                    
+                } catch (error) {
+                    console.warn("Audio initialization failed:", error);
+                    this.isInitialized = false;
+                }
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                this.updateMuteState();
+            }
+
+            updateMuteState() {
+                if (!this.isInitialized) return;
+                
+                Tone.getDestination().mute = this.isMuted;
+                document.getElementById('icon-muted').style.display = this.isMuted ? 'block' : 'none';
+                document.getElementById('icon-unmuted').style.display = this.isMuted ? 'none' : 'block';
+                document.getElementById('audio-button').classList.toggle('active', !this.isMuted);
+            }
+
+            updateInspiralSound(frequency) {
+                if (!this.isInitialized || this.isMuted || !this.sounds.inspiral) return;
+                
+                const targetFreq = Math.max(20, Math.min(frequency * 100, 2000));
+                
+                try {
+                    if (this.sounds.inspiral.state === "stopped") {
+                        this.sounds.inspiral.start();
+                    }
+                    this.sounds.inspiral.frequency.rampTo(targetFreq, 0.1);
+                } catch (error) {
+                    console.warn("Error updating inspiral sound:", error);
+                }
+            }
+
+            triggerMergerChirp() {
+                if (!this.isInitialized || this.isMuted || !this.sounds.chirp) return;
+                
+                try {
+                    this.sounds.chirp.triggerAttack("C2");
+                    this.sounds.chirp.frequency.exponentialRampTo("C6", 1.5);
+                    setTimeout(() => this.sounds.chirp.triggerRelease(), 2000);
+                } catch (error) {
+                    console.warn("Error triggering chirp:", error);
+                }
+            }
+
+            triggerRingdown() {
+                if (!this.isInitialized || this.isMuted || !this.sounds.ringdown) return;
+                
+                try {
+                    this.sounds.ringdown.triggerAttackRelease("C3", "4s");
+                } catch (error) {
+                    console.warn("Error triggering ringdown:", error);
+                }
+            }
+
+            stopAll() {
+                if (!this.isInitialized) return;
+                
+                try {
+                    if (this.sounds.inspiral?.state === "started") {
+                        this.sounds.inspiral.stop();
+                    }
+                } catch (error) {
+                    console.warn("Error stopping sounds:", error);
+                }
+            }
+
+            dispose() {
+                this.stopAll();
+                Object.values(this.sounds).forEach(sound => {
+                    if (sound && sound.dispose) sound.dispose();
+                });
+                this.sounds = {};
+            }
+        }
+        const audioEngine = new AudioEngine();
+
+        // --- Optimized Waveform Display ---
+        class WaveformDisplay {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d', { alpha: true });
+                this.resize();
+                this.animationFrame = null;
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width * pixelRatio;
+                this.canvas.height = rect.height * pixelRatio;
+                this.ctx.scale(pixelRatio, pixelRatio);
+            }
+
+            draw(progress, amplitude) {
+                if (this.animationFrame) return;
+                
+                this.animationFrame = requestAnimationFrame(() => {
+                    const width = this.canvas.width / pixelRatio;
+                    const height = this.canvas.height / pixelRatio;
+                    
+                    this.ctx.clearRect(0, 0, width, height);
+                    
+                    // Draw grid lines
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    for (let i = 0; i <= 4; i++) {
+                        const y = (height / 4) * i;
+                        this.ctx.moveTo(0, y);
+                        this.ctx.lineTo(width, y);
+                    }
+                    this.ctx.stroke();
+                    
+                    // Draw waveform
+                    const midY = height / 2;
+                    const maxAmp = height * 0.35;
+                    const currentAmp = maxAmp * amplitude;
+                    
+                    this.ctx.strokeStyle = `rgba(0, 255, 136, ${0.6 + progress * 0.4})`;
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, midY);
+                    
+                    const samples = isMobile ? 100 : 200;
+                    const cycles = 2 + progress * 15;
+                    
+                    for (let i = 0; i <= samples; i++) {
+                        const x = (i / samples) * width;
+                        const phase = (i / samples) * Math.PI * 2 * cycles;
+                        const envelope = Math.sin((i / samples) * Math.PI) * (1 + progress);
+                        const y = midY + Math.sin(phase) * currentAmp * envelope;
+                        this.ctx.lineTo(x, y);
+                    }
+                    
+                    this.ctx.stroke();
+                    this.animationFrame = null;
+                });
+            }
+        }
+        const waveformDisplay = new WaveformDisplay('waveformCanvas');
+
+        // --- Optimized Particle System ---
+        class ParticleSystem {
+            constructor(maxCount = maxParticles) {
+                this.maxParticles = maxCount;
+                this.activeCount = 0;
+                
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(maxCount * 3);
+                const colors = new Float32Array(maxCount * 3);
+                const sizes = new Float32Array(maxCount);
+                const lifetimes = new Float32Array(maxCount);
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('lifetime', new THREE.BufferAttribute(lifetimes, 1));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2,
+                    vertexColors: true,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true,
+                    opacity: 0.8,
+                    sizeAttenuation: true
+                });
+                
+                this.points = new THREE.Points(geometry, material);
+                this.points.frustumCulled = false;
+                scene.add(this.points);
+                
+                this.geometry = geometry;
+                this.positions = positions;
+                this.colors = colors;
+                this.sizes = sizes;
+                this.lifetimes = lifetimes;
+                this.velocities = new Float32Array(maxCount * 3);
+                
+                // Initialize all particles as inactive
+                for (let i = 0; i < maxCount; i++) {
+                    this.lifetimes[i] = -1;
+                }
+            }
+            
+            emit(blackHole, count = 5) {
+                const emitted = Math.min(count, this.maxParticles - this.activeCount);
+                
+                for (let i = 0; i < emitted; i++) {
+                    const index = this.findInactiveParticle();
+                    if (index === -1) break;
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = blackHole.radius * (2 + Math.random() * 2);
+                    const height = (Math.random() - 0.5) * blackHole.radius * 0.5;
+                    
+                    const idx3 = index * 3;
+                    this.positions[idx3] = blackHole.position.x + Math.cos(angle) * radius;
+                    this.positions[idx3 + 1] = blackHole.position.y + height;
+                    this.positions[idx3 + 2] = blackHole.position.z + Math.sin(angle) * radius;
+                    
+                    const speed = 0.3 + Math.random() * 0.7;
+                    const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
+                    this.velocities[idx3] = tangent.x * speed;
+                    this.velocities[idx3 + 1] = Math.random() * 0.1;
+                    this.velocities[idx3 + 2] = tangent.z * speed;
+                    
+                    const color = blackHole.isPrimary ? 
+                        { r: 1, g: 0.6 + Math.random() * 0.4, b: Math.random() * 0.3 } :
+                        { r: Math.random() * 0.3, g: 0.6 + Math.random() * 0.4, b: 1 };
+                    
+                    this.colors[idx3] = color.r;
+                    this.colors[idx3 + 1] = color.g;
+                    this.colors[idx3 + 2] = color.b;
+                    
+                    this.sizes[index] = 0.5 + Math.random();
+                    this.lifetimes[index] = 1.0;
+                    this.activeCount++;
+                }
+                
+                this.geometry.attributes.position.needsUpdate = true;
+                this.geometry.attributes.color.needsUpdate = true;
+                this.geometry.attributes.size.needsUpdate = true;
+                this.geometry.attributes.lifetime.needsUpdate = true;
+            }
+            
+            findInactiveParticle() {
+                for (let i = 0; i < this.maxParticles; i++) {
+                    if (this.lifetimes[i] <= 0) return i;
+                }
+                return -1;
+            }
+            
+            update(deltaTime, blackHoles) {
+                let needsUpdate = false;
+                
+                for (let i = 0; i < this.maxParticles; i++) {
+                    if (this.lifetimes[i] <= 0) continue;
+                    
+                    this.lifetimes[i] -= deltaTime * 0.5;
+                    
+                    if (this.lifetimes[i] <= 0) {
+                        this.activeCount--;
+                        needsUpdate = true;
+                        continue;
+                    }
+                    
+                    const idx3 = i * 3;
+                    
+                    // Update position
+                    this.positions[idx3] += this.velocities[idx3] * deltaTime;
+                    this.positions[idx3 + 1] += this.velocities[idx3 + 1] * deltaTime;
+                    this.positions[idx3 + 2] += this.velocities[idx3 + 2] * deltaTime;
+                    
+                    // Apply gravity from black holes
+                    blackHoles.forEach(bh => {
+                        const dx = bh.position.x - this.positions[idx3];
+                        const dy = bh.position.y - this.positions[idx3 + 1];
+                        const dz = bh.position.z - this.positions[idx3 + 2];
+                        const distSq = dx * dx + dy * dy + dz * dz;
+                        
+                        if (distSq < bh.radius * bh.radius) {
+                            this.lifetimes[i] = 0;
+                            this.activeCount--;
+                            return;
+                        }
+                        
+                        const dist = Math.sqrt(distSq);
+                        const force = (bh.mass * 0.05) / distSq;
+                        const fx = (dx / dist) * force * deltaTime;
+                        const fy = (dy / dist) * force * deltaTime;
+                        const fz = (dz / dist) * force * deltaTime;
+                        
+                        this.velocities[idx3] += fx;
+                        this.velocities[idx3 + 1] += fy;
+                        this.velocities[idx3 + 2] += fz;
+                    });
+                    
+                    // Fade out
+                    this.sizes[i] = (0.5 + Math.random() * 0.5) * this.lifetimes[i];
+                    
+                    needsUpdate = true;
+                }
+                
+                if (needsUpdate) {
+                    this.geometry.attributes.position.needsUpdate = true;
+                    this.geometry.attributes.size.needsUpdate = true;
+                    this.geometry.attributes.lifetime.needsUpdate = true;
+                }
+            }
+            
+            dispose() {
+                scene.remove(this.points);
+                this.geometry.dispose();
+                this.points.material.dispose();
+            }
+        }
+
+        // --- Optimized Background ---
+        const starfieldMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0.0 },
+                nebulaDensity: { value: isMobile ? 1.0 : 2.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }`,
+            fragmentShader: `
+                uniform float time;
+                uniform float nebulaDensity;
+                varying vec2 vUv;
+                
+                float hash(vec2 p) { 
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); 
+                }
+                
+                void main() {
+                    vec3 color = vec3(0.0);
+                    
+                    // Stars
+                    float stars1 = smoothstep(0.998, 1.0, hash(vUv * 1000.0));
+                    float stars2 = smoothstep(0.995, 1.0, hash(vUv * 500.0)) * 0.5;
+                    color += vec3(stars1 + stars2);
+                    
+                    // Simple nebula
+                    float nebula = hash(vUv * 5.0 + time * 0.001) * nebulaDensity * 0.1;
+                    color += vec3(0.05, 0.0, 0.1) * nebula;
+                    
+                    gl_FragColor = vec4(color, 1.0);
+                }`,
+            side: THREE.BackSide
+        });
+        const starfield = new THREE.Mesh(
+            new THREE.SphereGeometry(1000, 32, 32), 
+            starfieldMaterial
+        );
+        scene.add(starfield);
+
+        // --- Spacetime Grid ---
+        class SpacetimeGrid {
+            constructor() {
+                const size = 180;
+                const divisions = isMobile ? 30 : 40;
+                
+                this.material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        bhPos1: { value: new THREE.Vector3() },
+                        bhPos2: { value: new THREE.Vector3() },
+                        bhMass1: { value: 0 },
+                        bhMass2: { value: 0 },
+                        opacity: { value: 0.25 }
+                    },
+                    vertexShader: `
+                        uniform vec3 bhPos1, bhPos2;
+                        uniform float bhMass1, bhMass2;
+                        varying float vDistortion;
+                        
+                        void main() {
+                            vec3 pos = position;
+                            float distortion = 0.0;
+                            
+                            // Black hole 1
+                            if (bhMass1 > 0.0) {
+                                vec3 delta = pos - bhPos1;
+                                delta.y = 0.0;
+                                float dist = length(delta);
+                                float warp = bhMass1 / (dist * dist + 25.0) * 15.0;
+                                pos.y -= warp;
+                                distortion += warp;
+                            }
+                            
+                            // Black hole 2
+                            if (bhMass2 > 0.0) {
+                                vec3 delta = pos - bhPos2;
+                                delta.y = 0.0;
+                                float dist = length(delta);
+                                float warp = bhMass2 / (dist * dist + 25.0) * 15.0;
+                                pos.y -= warp;
+                                distortion += warp;
+                            }
+                            
+                            vDistortion = distortion;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                        }`,
+                    fragmentShader: `
+                        uniform float opacity;
+                        varying float vDistortion;
+                        
+                        void main() {
+                            vec3 color = mix(
+                                vec3(0.0, 0.5, 1.0), 
+                                vec3(1.0, 0.0, 0.5), 
+                                clamp(vDistortion * 0.05, 0.0, 1.0)
+                            );
+                            float alpha = opacity * (0.5 + vDistortion * 0.02);
+                            gl_FragColor = vec4(color, alpha);
+                        }`,
+                    transparent: true,
+                    wireframe: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                
+                const geometry = new THREE.PlaneGeometry(size, size, divisions, divisions);
+                geometry.rotateX(-Math.PI / 2);
+                this.mesh = new THREE.Mesh(geometry, this.material);
+                this.mesh.position.y = -10;
+                this.mesh.visible = false;
+                scene.add(this.mesh);
+            }
+            
+            update(blackHoles) {
+                if (blackHoles.length > 0) {
+                    this.material.uniforms.bhPos1.value = blackHoles[0].position;
+                    this.material.uniforms.bhMass1.value = blackHoles[0].mass;
+                }
+                if (blackHoles.length > 1) {
+                    this.material.uniforms.bhPos2.value = blackHoles[1].position;
+                    this.material.uniforms.bhMass2.value = blackHoles[1].mass;
+                }
+            }
+            
+            dispose() {
+                scene.remove(this.mesh);
+                this.mesh.geometry.dispose();
+                this.material.dispose();
+            }
+        }
+
+        // --- Black Hole Class ---
+        class BlackHole {
+            constructor(mass, position, velocity, isPrimary = false) {
+                this.mass = mass;
+                this.position = position;
+                this.velocity = velocity;
+                this.isPrimary = isPrimary;
+                this.radius = Math.pow(mass, 1/3);
+                this.group = new THREE.Group();
+                
+                // Event horizon
+                const eventHorizonGeo = new THREE.SphereGeometry(this.radius, 32, 16);
+                const eventHorizonMat = new THREE.MeshBasicMaterial({ 
+                    color: 0x000000,
+                    side: THREE.BackSide
+                });
+                this.eventHorizon = new THREE.Mesh(eventHorizonGeo, eventHorizonMat);
+                this.group.add(this.eventHorizon);
+                
+                // Photon sphere
+                const photonGeo = new THREE.TorusGeometry(this.radius * 1.5, 0.08, 8, 64);
+                const photonMat = new THREE.MeshBasicMaterial({
+                    color: isPrimary ? 0xffaa88 : 0x88aaff,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                this.photonSphere = new THREE.Mesh(photonGeo, photonMat);
+                this.photonSphere.rotation.x = Math.PI / 2;
+                this.group.add(this.photonSphere);
+                
+                // Accretion disk
+                const diskInner = this.radius * 1.8;
+                const diskOuter = this.radius * 3.5;
+                
+                this.diskMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: { value: 0 },
+                        innerRadius: { value: diskInner },
+                        outerRadius: { value: diskOuter },
+                        intensity: { value: 3.0 },
+                        baseColor: { value: isPrimary ? new THREE.Color(0xff6600) : new THREE.Color(0x0066ff) }
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        varying vec3 vPos;
+                        void main() {
+                            vUv = uv;
+                            vPos = position;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }`,
+                    fragmentShader: `
+                        uniform float time;
+                        uniform float innerRadius;
+                        uniform float outerRadius;
+                        uniform float intensity;
+                        uniform vec3 baseColor;
+                        varying vec2 vUv;
+                        varying vec3 vPos;
+                        
+                        void main() {
+                            float dist = length(vPos.xz);
+                            float radialFade = smoothstep(innerRadius, innerRadius + 1.0, dist) *
+                                             (1.0 - smoothstep(outerRadius - 1.0, outerRadius, dist));
+                            
+                            if (radialFade < 0.01) discard;
+                            
+                            float angle = atan(vPos.z, vPos.x);
+                            float spiral = sin(angle * 3.0 - time * 2.0 + dist * 0.5) * 0.5 + 0.5;
+                            
+                            vec3 color = baseColor * (1.0 + spiral);
+                            float alpha = radialFade * 0.8 * intensity;
+                            
+                            gl_FragColor = vec4(color * alpha, alpha);
+                        }`,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                });
+                
+                const diskGeo = new THREE.RingGeometry(diskInner, diskOuter, 64, 8);
+                diskGeo.rotateX(-Math.PI / 2);
+                this.accretionDisk = new THREE.Mesh(diskGeo, this.diskMaterial);
+                this.group.add(this.accretionDisk);
+                
+                scene.add(this.group);
+            }
+            
+            update(deltaTime) {
+                this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
+                this.group.position.copy(this.position);
+                this.diskMaterial.uniforms.time.value += deltaTime;
+            }
+            
+            dispose() {
+                scene.remove(this.group);
+                this.eventHorizon.geometry.dispose();
+                this.eventHorizon.material.dispose();
+                this.photonSphere.geometry.dispose();
+                this.photonSphere.material.dispose();
+                this.accretionDisk.geometry.dispose();
+                this.diskMaterial.dispose();
+            }
+        }
+
+        // --- Physics Engine ---
+        const G = 0.1;
+        let blackHoles = [];
+        let simulationActive = false;
+        let isPaused = false;
+        let spacetimeGrid = new SpacetimeGrid();
+        let particleSystem = new ParticleSystem();
+        let initialDistance = 70;
+        let simulationProgress = 0;
+
+        const params = {
+            mass1: 36,
+            mass2: 29,
+            distance: 70,
+            timeScale: 1.0,
+            orbitalDecay: 0.005,
+            showGrid: false,
+            showInfo: true,
+            particleEmission: true,
+            bloomIntensity: 1.5,
+            restart: () => initSimulation()
+        };
+
+        function updatePhysics(deltaTime) {
+            if (!simulationActive || isPaused || blackHoles.length < 2) return;
+            
+            const bh1 = blackHoles[0];
+            const bh2 = blackHoles[1];
+            
+            const delta = new THREE.Vector3().subVectors(bh2.position, bh1.position);
+            const distance = delta.length();
+            
+            // Update progress
+            simulationProgress = Math.max(0, 1.0 - (distance / initialDistance));
+            updateTimelineProgress(simulationProgress);
+            
+            // Update info display
+            updateInfoDisplay(distance);
+            
+            // Update waveform
+            const amplitude = Math.pow(simulationProgress, 2);
+            waveformDisplay.draw(simulationProgress, amplitude);
+            
+            // Update phase
+            if (distance < bh1.radius + bh2.radius) {
+                mergeBlackHoles();
+                return;
+            } else if (distance < 30) {
+                updatePhase('MERGER PHASE', true);
+            } else if (distance < 50) {
+                updatePhase('LATE INSPIRAL', false);
+            } else {
+                updatePhase('INSPIRAL PHASE', false);
+            }
+            
+            // Calculate forces
+            const forceMag = G * (bh1.mass * bh2.mass) / (distance * distance);
+            const force = delta.normalize().multiplyScalar(forceMag);
+            
+            // Update velocities
+            bh1.velocity.add(force.clone().multiplyScalar(deltaTime / bh1.mass));
+            bh2.velocity.sub(force.clone().multiplyScalar(deltaTime / bh2.mass));
+            
+            // Orbital decay
+            const decay = params.orbitalDecay * deltaTime / distance;
+            bh1.velocity.add(delta.clone().normalize().multiplyScalar(-decay));
+            bh2.velocity.add(delta.clone().normalize().multiplyScalar(decay));
+            
+            // Update positions
+            blackHoles.forEach(bh => bh.update(deltaTime));
+            
+            // Update other systems
+            spacetimeGrid.update(blackHoles);
+            
+            // Emit particles
+            if (params.particleEmission && Math.random() < 0.3) {
+                blackHoles.forEach(bh => {
+                    particleSystem.emit(bh, 2);
+                });
+            }
+            
+            particleSystem.update(deltaTime, blackHoles);
+            
+            // Update audio
+            const gwFreq = 2 * Math.sqrt(G * (bh1.mass + bh2.mass) / Math.pow(distance, 3));
+            audioEngine.updateInspiralSound(gwFreq);
+        }
+
+        function updateInfoDisplay(distance) {
+            if (!params.showInfo) return;
+            
+            const totalMass = blackHoles[0].mass + blackHoles[1].mass;
+            const orbitalPeriod = 2 * Math.PI * Math.sqrt(Math.pow(distance, 3) / (G * totalMass));
+            const gwFreq = 2 / orbitalPeriod;
+            const timeToMerger = distance > 20 ? (distance - 20) / (params.orbitalDecay * 10) : 0;
+            
+            document.getElementById('separation').textContent = `${distance.toFixed(1)} Rs`;
+            document.getElementById('period').textContent = `${orbitalPeriod.toFixed(2)} s`;
+            document.getElementById('total-mass').textContent = `${totalMass.toFixed(0)} M☉`;
+            document.getElementById('gwfreq').textContent = `${gwFreq.toFixed(3)} Hz`;
+            document.getElementById('time-to-merger').textContent = timeToMerger > 0 ? `${timeToMerger.toFixed(1)} s` : 'IMMINENT';
+        }
+
+        function updatePhase(text, warning = false) {
+            const phaseEl = document.getElementById('phase');
+            phaseEl.textContent = text;
+            phaseEl.classList.toggle('warning', warning);
+        }
+
+        function updateTimelineProgress(progress) {
+            document.getElementById('timeline-progress').style.width = `${progress * 100}%`;
+        }
+
+        function mergeBlackHoles() {
+            simulationActive = false;
+            audioEngine.stopAll();
+            audioEngine.triggerMergerChirp();
+            
+            const bh1 = blackHoles[0];
+            const bh2 = blackHoles[1];
+            
+            // Calculate merger properties
+            const totalMass = bh1.mass + bh2.mass;
+            const mergerPos = new THREE.Vector3()
+                .addVectors(
+                    bh1.position.clone().multiplyScalar(bh1.mass),
+                    bh2.position.clone().multiplyScalar(bh2.mass)
+                )
+                .divideScalar(totalMass);
+            
+            // Visual effects
+            triggerMergerEffects(mergerPos);
+            
+            // Clean up old black holes
+            bh1.dispose();
+            bh2.dispose();
+            
+            // Create merged black hole
+            const mergedBH = new BlackHole(totalMass, mergerPos, new THREE.Vector3(), true);
+            blackHoles = [mergedBH];
+            
+            updatePhase('RINGDOWN PHASE', false);
+            updateTimelineProgress(1);
+            
+            // Trigger ringdown
+            setTimeout(() => {
+                audioEngine.triggerRingdown();
+            }, 500);
+        }
+
+        function triggerMergerEffects(position) {
+            // Camera shake
+            const originalPos = camera.position.clone();
+            let shakeTime = 0;
+            const shakeInterval = setInterval(() => {
+                shakeTime += 0.016;
+                const intensity = Math.exp(-shakeTime * 3) * 2;
+                camera.position.x = originalPos.x + (Math.random() - 0.5) * intensity;
+                camera.position.y = originalPos.y + (Math.random() - 0.5) * intensity;
+                camera.position.z = originalPos.z + (Math.random() - 0.5) * intensity;
+                
+                if (shakeTime > 1) {
+                    clearInterval(shakeInterval);
+                    camera.position.copy(originalPos);
+                }
+            }, 16);
+            
+            // Bloom flash
+            const originalBloom = bloomPass.strength;
+            bloomPass.strength = 8;
+            let bloomFade = setInterval(() => {
+                bloomPass.strength *= 0.9;
+                if (bloomPass.strength < originalBloom + 0.1) {
+                    bloomPass.strength = originalBloom;
+                    clearInterval(bloomFade);
+                }
+            }, 16);
+            
+            // Particle burst
+            for (let i = 0; i < 50; i++) {
+                particleSystem.emit({ position, radius: 5 }, 1);
+            }
+        }
+
+        // --- Post Processing ---
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            params.bloomIntensity,
+            0.4,
+            0.0
+        );
+        composer.addPass(bloomPass);
+
+        // --- GUI Setup ---
+        const gui = new GUI();
+        const setupFolder = gui.addFolder('Black Hole Parameters');
+        setupFolder.add(params, 'mass1', 10, 100).name('Mass 1 (M☉)').listen();
+        setupFolder.add(params, 'mass2', 10, 100).name('Mass 2 (M☉)').listen();
+        setupFolder.add(params, 'distance', 50, 150).name('Initial Separation').listen();
+        setupFolder.add(params, 'restart').name('Restart Simulation');
+        
+        const visualFolder = gui.addFolder('Visual Settings');
+        visualFolder.add(params, 'showGrid').name('Show Spacetime Grid').onChange(v => {
+            spacetimeGrid.mesh.visible = v;
+        });
+        visualFolder.add(params, 'particleEmission').name('Particle Effects');
+        visualFolder.add(params, 'bloomIntensity', 0, 3).name('Bloom Intensity').onChange(v => {
+            bloomPass.strength = v;
+        });
+        visualFolder.add(starfieldMaterial.uniforms.nebulaDensity, 'value', 0, 5).name('Nebula Density');
+        
+        const simulationFolder = gui.addFolder('Simulation');
+        simulationFolder.add(params, 'timeScale', 0.1, 5).name('Time Scale');
+        simulationFolder.add(params, 'orbitalDecay', 0, 0.02).name('Orbital Decay');
+        
+        // --- Initialize Simulation ---
+        function initSimulation() {
+            // Clean up existing objects
+            blackHoles.forEach(bh => bh.dispose());
+            blackHoles = [];
+            
+            // Reset state
+            simulationProgress = 0;
+            simulationActive = true;
+            isPaused = false;
+            updateTimelineProgress(0);
+            updatePhase('INSPIRAL PHASE', false);
+            
+            // Set up black holes
+            const m1 = params.mass1;
+            const m2 = params.mass2;
+            const dist = params.distance;
+            initialDistance = dist;
+            
+            const r1 = dist * m2 / (m1 + m2);
+            const r2 = dist * m1 / (m1 + m2);
+            const v1 = Math.sqrt(G * m2 * m2 / ((m1 + m2) * dist));
+            const v2 = Math.sqrt(G * m1 * m1 / ((m1 + m2) * dist));
+            
+            const bh1 = new BlackHole(
+                m1,
+                new THREE.Vector3(-r1, 0, 0),
+                new THREE.Vector3(0, 0, -v1),
+                true
+            );
+            
+            const bh2 = new BlackHole(
+                m2,
+                new THREE.Vector3(r2, 0, 0),
+                new THREE.Vector3(0, 0, v2),
+                false
+            );
+            
+            blackHoles.push(bh1, bh2);
+            
+            // Reset camera
+            camera.position.set(0, 50, 100);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            
+            // Reset audio
+            audioEngine.stopAll();
+            
+            // Update UI
+            updatePlayPauseButton(false);
+        }
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+        let stats = {
+            fps: 0,
+            frameTime: 0,
+            frames: 0,
+            lastTime: performance.now()
+        };
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const deltaTime = clock.getDelta() * params.timeScale;
+            const currentTime = performance.now();
+            
+            // Update stats
+            stats.frames++;
+            if (currentTime - stats.lastTime > 1000) {
+                stats.fps = Math.round(stats.frames * 1000 / (currentTime - stats.lastTime));
+                stats.frames = 0;
+                stats.lastTime = currentTime;
+                
+                if (params.showStats) {
+                    document.getElementById('fps').textContent = stats.fps;
+                    document.getElementById('particles').textContent = particleSystem.activeCount;
+                    document.getElementById('draw-calls').textContent = renderer.info.render.calls;
+                }
+            }
+            
+            // Update simulation
+            updatePhysics(deltaTime);
+            
+            // Update background
+            starfieldMaterial.uniforms.time.value += deltaTime;
+            
+            // Update controls
+            controls.update();
+            
+            // Render
+            composer.render();
+        }
+
+        // --- UI Event Handlers ---
+        function updatePlayPauseButton(paused) {
+            document.getElementById('play-icon').style.display = paused ? 'block' : 'none';
+            document.getElementById('pause-icon').style.display = paused ? 'none' : 'block';
+        }
+
+        document.getElementById('play-pause-btn').addEventListener('click', () => {
+            isPaused = !isPaused;
+            updatePlayPauseButton(isPaused);
+        });
+
+        document.getElementById('timeline-bar').addEventListener('click', (e) => {
+            // Timeline scrubbing would require state snapshots
+            // For now, just show visual feedback
+            const rect = e.currentTarget.getBoundingClientRect();
+            const progress = (e.clientX - rect.left) / rect.width;
+            updateTimelineProgress(progress);
+        });
+
+        document.getElementById('audio-button').addEventListener('click', async () => {
+            if (!audioEngine.isInitialized) {
+                await audioEngine.init();
+            } else {
+                audioEngine.toggleMute();
+            }
+        });
+
+        document.getElementById('fullscreen-button').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.getElementById('help-button').addEventListener('click', () => {
+            const hints = document.getElementById('keyboard-hints');
+            hints.classList.toggle('show');
+        });
+
+        // --- Keyboard Controls ---
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case ' ':
+                    e.preventDefault();
+                    isPaused = !isPaused;
+                    updatePlayPauseButton(isPaused);
+                    break;
+                case 'r':
+                    initSimulation();
+                    break;
+                case '1':
+                    if (blackHoles[0]) {
+                        controls.target.copy(blackHoles[0].position);
+                    }
+                    break;
+                case '2':
+                    if (blackHoles[1]) {
+                        controls.target.copy(blackHoles[1].position);
+                    }
+                    break;
+                case '3':
+                    controls.target.set(0, 0, 0);
+                    break;
+                case 'g':
+                    params.showGrid = !params.showGrid;
+                    spacetimeGrid.mesh.visible = params.showGrid;
+                    break;
+                case 'h':
+                    document.getElementById('keyboard-hints').classList.toggle('show');
+                    break;
+                case 's':
+                    params.showStats = !params.showStats;
+                    document.getElementById('stats').style.display = params.showStats ? 'block' : 'none';
+                    break;
+            }
+        });
+
+        // --- Window Resize Handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            waveformDisplay.resize();
+        });
+
+        // --- Start Button Handler ---
+        document.getElementById('start-button').addEventListener('click', async () => {
+            document.getElementById('start-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('start-overlay').style.display = 'none';
+            }, 600);
+            
+            // Initialize audio
+            await audioEngine.init();
+            
+            // Start simulation
+            initSimulation();
+            animate();
+        }, { once: true });
+
+        // --- Performance Optimizations ---
+        // Limit GUI updates
+        let guiUpdateTimer = 0;
+        function updateGUI(deltaTime) {
+            guiUpdateTimer += deltaTime;
+            if (guiUpdateTimer > 0.1) {
+                gui.updateDisplay();
+                guiUpdateTimer = 0;
+            }
+        }
+
+        // --- Error Handling ---
+        window.addEventListener('error', (e) => {
+            console.error('Runtime error:', e.error);
+        });
+
+        // --- Cleanup on page unload ---
+        window.addEventListener('beforeunload', () => {
+            audioEngine.dispose();
+            particleSystem.dispose();
+            spacetimeGrid.dispose();
+            blackHoles.forEach(bh => bh.dispose());
+            renderer.dispose();
+        });
+
+    </script>
+</body>
+</html>
