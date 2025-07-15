@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Black Hole Merger - Director's Cut</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Inter', 'Arial', sans-serif;
+            color: white;
+        }
+        canvas { display: block; }
+        .lil-gui {
+            --font-size: 14px;
+            --width: 340px;
+            --widget-height: 28px;
+        }
+        #info {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.75);
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-family: monospace;
+            pointer-events: none;
+            min-width: 250px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        #info div {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .value {
+            color: #00ddff;
+            font-weight: bold;
+            float: right;
+            padding-left: 20px;
+        }
+        #timeline {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            background: rgba(0,0,0,0.75);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        #waveformCanvas {
+            width: 100%;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        #phase {
+            font-size: 14px;
+            color: #00ff88;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+        #start-overlay h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #fff;
+        }
+        #start-overlay p {
+            font-size: 1.2em;
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.5;
+            color: #ccc;
+        }
+        #start-button {
+            font-size: 1.5em;
+            padding: 15px 30px;
+            margin-top: 30px;
+            border: 2px solid #00ff88;
+            background: transparent;
+            color: #00ff88;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background 0.3s, color 0.3s;
+        }
+        #start-button:hover {
+            background: #00ff88;
+            color: #000;
+        }
+        #audio-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 50;
+        }
+        #audio-button {
+            width: 48px;
+            height: 48px;
+            background: rgba(0,0,0,0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.1/examples/jsm/",
+            "tone": "https://cdn.jsdelivr.net/npm/tone@15.0.4/+esm"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="start-overlay">
+        <h1>Binary Black Hole Merger</h1>
+        <p>An immersive WebGL simulation of one of the most cataclysmic events in the universe. Witness two black holes spiral, merge, and release powerful gravitational waves.</p>
+        <button id="start-button">Begin Simulation</button>
+    </div>
+
+    <div id="info">
+        <div>Separation<span class="value" id="separation">--</span></div>
+        <div>Orbital Period<span class="value" id="period">--</span></div>
+        <div>Total Energy<span class="value" id="energy">--</span></div>
+        <div>GW Frequency<span class="value" id="gwfreq">--</span></div>
+    </div>
+
+    <div id="audio-controls">
+        <button id="audio-button">
+            <svg id="icon-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+            <svg id="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        </button>
+    </div>
+
+    <div id="timeline">
+        <canvas id="waveformCanvas"></canvas>
+        <div id="phase">INSPIRAL PHASE</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import * as Tone from 'tone';
+
+        // --- Core Scene Setup ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000011, 0.0008);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.8;
+        document.body.appendChild(renderer.domElement);
+
+        // --- Camera Controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 20;
+        controls.maxDistance = 500;
+        camera.position.set(0, 40, 90);
+
+        // --- Audio Engine ---
+        class AudioEngine {
+            constructor() {
+                this.isInitialized = false;
+                this.isMuted = true;
+                this.inspiralSynth = null;
+                this.jetSynth = null;
+            }
+
+            async init() {
+                if (this.isInitialized) return;
+                await Tone.start();
+                this.isInitialized = true;
+                this.isMuted = false;
+                console.log("Audio context started.");
+
+                const reverb = new Tone.Reverb(5).toDestination();
+                const limiter = new Tone.Limiter(-6).connect(reverb);
+
+                this.inspiralSynth = new Tone.AMSynth({
+                    harmonicity: 1.2,
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 },
+                    modulationEnvelope: { attack: 0.1, decay: 0.2, sustain: 0.3, release: 0.1 }
+                }).connect(limiter);
+
+                this.jetSynth = new Tone.NoiseSynth({
+                    noise: { type: 'brown' },
+                    envelope: { attack: 2, decay: 4, sustain: 0.1, release: 5 }
+                }).connect(limiter);
+
+                this.updateMuteState();
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                this.updateMuteState();
+            }
+
+            updateMuteState() {
+                if (!this.isInitialized) return;
+                Tone.getDestination().mute = this.isMuted;
+                document.getElementById('icon-muted').style.display = this.isMuted ? 'block' : 'none';
+                document.getElementById('icon-unmuted').style.display = this.isMuted ? 'none' : 'block';
+            }
+
+            updateInspiralSound(freq) {
+                if (!this.inspiralSynth || this.isMuted) return;
+                if (this.inspiralSynth.frequency.value !== freq) {
+                    this.inspiralSynth.frequency.rampTo(freq, 0.1);
+                }
+                if (Tone.now() > this.inspiralSynth.envelope.release) {
+                    this.inspiralSynth.triggerAttack(freq);
+                }
+            }
+
+            triggerMergerChirp() {
+                if (this.isMuted) return;
+                const chirpSynth = new Tone.Synth().toDestination();
+                chirpSynth.triggerAttackRelease("C2", "2s");
+                chirpSynth.frequency.exponentialRampTo("C5", 1.5, Tone.now() + 0.1);
+            }
+
+            triggerJetNoise() {
+                if (!this.jetSynth || this.isMuted) return;
+                this.jetSynth.triggerAttack();
+            }
+
+            stopAll() {
+                if (!this.isInitialized) return;
+                this.inspiralSynth.triggerRelease();
+                this.jetSynth.triggerRelease();
+            }
+        }
+        const audioEngine = new AudioEngine();
+
+        // --- Waveform Display ---
+        class WaveformDisplay {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+            }
+
+            draw(progress, amplitude) {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const midY = h / 2;
+
+                const maxAmp = h / 2 * 0.9;
+                const currentAmp = maxAmp * amplitude;
+
+                this.ctx.strokeStyle = `rgba(0, 255, 136, ${0.5 + progress * 0.5})`;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, midY);
+
+                const cycles = 2 + progress * 20;
+                for (let x = 0; x < w; x++) {
+                    const angle = (x / w) * Math.PI * 2 * cycles;
+                    const y = midY + Math.sin(angle) * currentAmp * (x / w);
+                    this.ctx.lineTo(x, y);
+                }
+                this.ctx.stroke();
+            }
+        }
+        const waveformDisplay = new WaveformDisplay('waveformCanvas');
+
+
+        // --- Enhanced Galaxy Background ---
+        const starfieldMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0.0 },
+                nebulaDensity: { value: 2.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4( position, 1.0 );
+                }`,
+            fragmentShader: `
+                uniform float time;
+                uniform float nebulaDensity;
+                varying vec2 vUv;
+
+                float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }
+
+                float noise(vec2 p) {
+                    vec2 i = floor(p); vec2 f = fract(p);
+                    float a = hash(i); float b = hash(i + vec2(1.0, 0.0));
+                    float c = hash(i + vec2(0.0, 1.0)); float d = hash(i + vec2(1.0, 1.0));
+                    vec2 u = f * f * (3.0 - 2.0 * f);
+                    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+                }
+
+                void main() {
+                    vec3 color = vec3(0.0);
+                    float stars1 = smoothstep(0.998, 1.0, hash(vUv * 1500.0));
+                    float stars2 = smoothstep(0.99, 1.0, hash(vUv * 800.0)) * 0.6;
+                    float stars3 = smoothstep(0.98, 1.0, hash(vUv * 300.0)) * 0.3;
+                    color += vec3(stars1 + stars2 + stars3);
+
+                    vec2 uv = vUv;
+                    float n1 = noise(uv * 3.0 + time * 0.01);
+                    float n2 = noise(uv * 8.0 - time * 0.02);
+                    float nebula = n1 * 0.6 + n2 * 0.4;
+                    nebula = pow(nebula, 2.0) * nebulaDensity;
+
+                    vec3 nebulaColor = mix(vec3(0.1, 0.0, 0.3), vec3(0.0, 0.05, 0.2), noise(uv * 2.0));
+                    color += nebulaColor * nebula * 0.4;
+
+                    gl_FragColor = vec4(color, 1.0);
+                }`,
+            side: THREE.BackSide
+        });
+        const starfieldSphere = new THREE.Mesh(new THREE.SphereGeometry(1500, 64, 64), starfieldMaterial);
+        scene.add(starfieldSphere);
+
+        // --- Spacetime Grid ---
+        class SpacetimeGrid {
+            constructor() {
+                this.gridSize = 200; this.gridDivisions = 40;
+                this.material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        bhPositions: { value: [new THREE.Vector3(), new THREE.Vector3()] },
+                        bhMasses: { value: [0, 0] },
+                        opacity: { value: 0.3 }
+                    },
+                    vertexShader: `
+                        uniform vec3 bhPositions[2];
+                        uniform float bhMasses[2];
+                        varying float vDistortion;
+                        void main() {
+                            vec3 pos = position;
+                            float totalDistortion = 0.0;
+                            for(int i = 0; i < 2; i++) {
+                                if(bhMasses[i] > 0.0) {
+                                    vec3 delta = pos - bhPositions[i];
+                                    delta.y = 0.0;
+                                    float dist = length(delta);
+                                    float warp = bhMasses[i] / (dist*dist + 25.0) * 20.0;
+                                    pos.y -= warp;
+                                    totalDistortion += warp;
+                                }
+                            }
+                            vDistortion = totalDistortion;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                        }`,
+                    fragmentShader: `
+                        uniform float opacity;
+                        varying float vDistortion;
+                        void main() {
+                            float intensity = 0.5 + vDistortion * 0.1;
+                            vec3 color = mix(vec3(0.0, 0.5, 1.0), vec3(1.0, 0.0, 0.5), vDistortion * 0.05);
+                            gl_FragColor = vec4(color, opacity * intensity);
+                        }`,
+                    transparent: true, wireframe: true, blending: THREE.AdditiveBlending
+                });
+                const geometry = new THREE.PlaneGeometry(this.gridSize, this.gridSize, this.gridDivisions, this.gridDivisions);
+                geometry.rotateX(-Math.PI / 2);
+                this.mesh = new THREE.Mesh(geometry, this.material);
+                this.mesh.position.y = -10;
+                scene.add(this.mesh);
+                this.mesh.visible = false;
+            }
+            update(blackHoles) {
+                for (let i = 0; i < 2; i++) {
+                    if (i < blackHoles.length) {
+                        this.material.uniforms.bhPositions.value[i] = blackHoles[i].position;
+                        this.material.uniforms.bhMasses.value[i] = blackHoles[i].mass;
+                    } else {
+                        this.material.uniforms.bhMasses.value[i] = 0;
+                    }
+                }
+            }
+            dispose() {
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+                scene.remove(this.mesh);
+            }
+        }
+
+        // --- Physics & Simulation State ---
+        const G = 0.1;
+        let blackHoles = [];
+        let jets = [];
+        let simulationActive = true;
+        let spacetimeGrid = null;
+        let initialDistance = 70;
+
+        const params = {
+            mass1: 40, mass2: 25, distance: 70, timeScale: 1.0, orbitalDecay: 0.005,
+            diskEmissivity: 3.0, bloomIntensity: 2.0, finalSpin: 1.0,
+            cameraShake: true, cinematicCamera: false,
+            showGrid: false, showInfo: true,
+            focusBH1: () => setCameraFocus(0),
+            focusBH2: () => setCameraFocus(1),
+            focusCenter: () => setCameraFocus(-1),
+            restart: initSimulation,
+            preset1: () => applyPreset(40, 25, 70),
+            preset2: () => applyPreset(30, 30, 80),
+            preset3: () => applyPreset(50, 10, 100)
+        };
+        let cameraTarget = new THREE.Object3D();
+        scene.add(cameraTarget);
+
+        // --- Enhanced BlackHole Class ---
+        class BlackHole {
+            constructor(mass, position, velocity, isPrimary = false) {
+                this.mass = mass; this.position = position; this.velocity = velocity;
+                this.isPrimary = isPrimary; this.isMerged = false;
+                this.radius = Math.pow(mass, 1/3);
+                this.group = new THREE.Group();
+
+                // Event horizon
+                this.eventHorizon = new THREE.Mesh(
+                    new THREE.SphereGeometry(this.radius, 64, 32),
+                    new THREE.MeshBasicMaterial({ color: 0x000000 })
+                );
+                this.group.add(this.eventHorizon);
+
+                // Photon Sphere
+                const photonSphereGeo = new THREE.TorusGeometry(this.radius * 1.5, 0.05, 16, 100);
+                const photonSphereMat = new THREE.MeshBasicMaterial({
+                    color: isPrimary ? 0xffccaa : 0xaaccff,
+                    blending: THREE.AdditiveBlending,
+                    side: THREE.DoubleSide
+                });
+                this.photonSphere = new THREE.Mesh(photonSphereGeo, photonSphereMat);
+                this.photonSphere.rotation.x = Math.PI / 2;
+                this.group.add(this.photonSphere);
+
+                // Enhanced accretion disk with Doppler Beaming
+                const diskInner = this.radius * 1.6; const diskOuter = this.radius * 4.0;
+                this.diskMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: { value: 0 },
+                        innerRadius: { value: diskInner },
+                        outerRadius: { value: diskOuter },
+                        emissiveIntensity: { value: params.diskEmissivity },
+                        primaryColor: { value: isPrimary ? new THREE.Color(0xff8800) : new THREE.Color(0x0088ff) },
+                        viewVector: { value: new THREE.Vector3() }
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        varying vec3 vPos;
+                        void main() {
+                            vUv = uv;
+                            vPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }`,
+                    fragmentShader: `
+                        uniform float time, innerRadius, outerRadius, emissiveIntensity;
+                        uniform vec3 primaryColor, viewVector;
+                        varying vec2 vUv;
+                        varying vec3 vPos;
+
+                        void main() {
+                            float dist = length(vPos);
+                            float angle = atan(vPos.z, vPos.x);
+
+                            // Doppler beaming effect
+                            vec3 tangent = vec3(-sin(angle), 0.0, cos(angle));
+                            float doppler = dot(normalize(tangent), normalize(viewVector));
+                            float dopplerFactor = pow(1.0 + doppler, 3.0);
+
+                            float radialFade = smoothstep(innerRadius, innerRadius + 2.0, dist) *
+                                               (1.0 - smoothstep(outerRadius - 2.0, outerRadius, dist));
+                            if (radialFade < 0.01) discard;
+
+                            vec3 hotColor = primaryColor * 2.0;
+                            vec3 coolColor = primaryColor * 0.5;
+                            vec3 color = mix(hotColor, coolColor, (dist - innerRadius) / (outerRadius - innerRadius));
+
+                            float spiral = sin(angle * 3.0 - time * 2.0 + dist * 0.5) * 0.5 + 0.5;
+                            float intensity = radialFade * (0.7 + spiral * 0.3) * emissiveIntensity * dopplerFactor;
+                            color *= intensity;
+
+                            gl_FragColor = vec4(color, radialFade);
+                        }`,
+                    transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+                });
+                const diskGeometry = new THREE.RingGeometry(diskInner, diskOuter, 128, 8);
+                diskGeometry.rotateX(-Math.PI / 2);
+                this.accretionDisk = new THREE.Mesh(diskGeometry, this.diskMaterial);
+                this.group.add(this.accretionDisk);
+                scene.add(this.group);
+            }
+
+            update(deltaTime) {
+                this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
+                this.group.position.copy(this.position);
+                this.diskMaterial.uniforms.time.value += deltaTime;
+                this.diskMaterial.uniforms.viewVector.value.subVectors(camera.position, this.group.position).normalize();
+
+                if (this.isMerged) {
+                    this.diskMaterial.uniforms.emissiveIntensity.value = THREE.MathUtils.lerp(
+                        this.diskMaterial.uniforms.emissiveIntensity.value, params.diskEmissivity, deltaTime * 0.5
+                    );
+                }
+            }
+
+            dispose() {
+                scene.remove(this.group);
+                this.accretionDisk.geometry.dispose();
+                this.accretionDisk.material.dispose();
+                this.eventHorizon.geometry.dispose();
+                this.eventHorizon.material.dispose();
+                this.photonSphere.geometry.dispose();
+                this.photonSphere.material.dispose();
+            }
+        }
+
+        // --- Physics & Merger Logic ---
+        function updatePhysics(deltaTime) {
+            if (!simulationActive || blackHoles.length < 2) return;
+            const bh1 = blackHoles[0], bh2 = blackHoles[1];
+            const distanceVec = new THREE.Vector3().subVectors(bh2.position, bh1.position);
+            const distance = distanceVec.length();
+
+            updateInfoDisplay(distance);
+            const progress = Math.max(0, 1.0 - (distance / initialDistance));
+            const gwAmp = Math.pow(progress, 2);
+            waveformDisplay.draw(progress, gwAmp);
+
+            if (distance < 30) document.getElementById('phase').textContent = 'MERGER PHASE';
+            else if (distance < 50) document.getElementById('phase').textContent = 'FINAL INSPIRAL';
+
+            if (distance < bh1.radius + bh2.radius) {
+                mergeBlackHoles(); return;
+            }
+
+            const forceMag = G * (bh1.mass * bh2.mass) / (distance * distance);
+            const forceVec = distanceVec.normalize().multiplyScalar(forceMag);
+            bh1.velocity.add(forceVec.clone().divideScalar(bh1.mass).multiplyScalar(deltaTime));
+            bh2.velocity.add(forceVec.clone().multiplyScalar(-1).divideScalar(bh2.mass).multiplyScalar(deltaTime));
+
+            const gwLuminosity = Math.pow(G, 4) * Math.pow(bh1.mass * bh2.mass, 2) * (bh1.mass + bh2.mass) / Math.pow(distance, 5);
+            const energyLoss = gwLuminosity * deltaTime * 0.00001;
+            const decay = energyLoss + params.orbitalDecay * deltaTime / distance;
+            bh1.velocity.add(distanceVec.clone().normalize().multiplyScalar(-decay));
+            bh2.velocity.add(distanceVec.clone().normalize().multiplyScalar(decay));
+
+            blackHoles.forEach(bh => bh.update(deltaTime));
+            if (spacetimeGrid) spacetimeGrid.update(blackHoles);
+        }
+
+        function updateInfoDisplay(distance) {
+            if (!params.showInfo || blackHoles.length < 2) return;
+            const totalMass = blackHoles[0].mass + blackHoles[1].mass;
+            const orbitalPeriod = 2 * Math.PI * Math.sqrt(Math.pow(distance, 3) / (G * totalMass));
+            const kineticEnergy = 0.5 * blackHoles[0].mass * blackHoles[0].velocity.lengthSq() + 0.5 * blackHoles[1].mass * blackHoles[1].velocity.lengthSq();
+            const potentialEnergy = -G * blackHoles[0].mass * blackHoles[1].mass / distance;
+            const totalEnergy = kineticEnergy + potentialEnergy;
+            const gwFrequency = 2 / orbitalPeriod;
+
+            document.getElementById('separation').textContent = `${distance.toFixed(1)} Rs`;
+            document.getElementById('period').textContent = `${orbitalPeriod.toFixed(2)} s`;
+            document.getElementById('energy').textContent = `${totalEnergy.toFixed(0)} E`;
+            document.getElementById('gwfreq').textContent = `${gwFrequency.toFixed(3)} Hz`;
+
+            audioEngine.updateInspiralSound(gwFrequency * 200); // Scale for audible range
+        }
+
+        function mergeBlackHoles() {
+            simulationActive = false;
+            audioEngine.stopAll();
+            audioEngine.triggerMergerChirp();
+
+            const bh1 = blackHoles[0], bh2 = blackHoles[1];
+            const newMass = bh1.mass + bh2.mass;
+            const newPosition = new THREE.Vector3().addVectors(bh1.position.clone().multiplyScalar(bh1.mass), bh2.position.clone().multiplyScalar(bh2.mass)).divideScalar(newMass);
+            const newVelocity = new THREE.Vector3().addVectors(bh1.velocity.clone().multiplyScalar(bh1.mass), bh2.velocity.clone().multiplyScalar(bh2.mass)).divideScalar(newMass);
+
+            triggerGravitationalWave(newPosition);
+            triggerBloomFlash();
+            if (params.cameraShake) triggerCameraShake(0.5, newMass / 100);
+
+            bh1.dispose(); bh2.dispose();
+            const mergedBH = new BlackHole(newMass, newPosition, newVelocity, true);
+            mergedBH.isMerged = true;
+            mergedBH.diskMaterial.uniforms.emissiveIntensity.value = 10.0;
+            blackHoles = [mergedBH];
+
+            createJets(mergedBH);
+            document.getElementById('phase').textContent = 'RINGDOWN PHASE';
+            waveformDisplay.draw(1.0, 1.0);
+            
+            // FIX: Reset camera focus to the new merged black hole
+            setCameraFocus(-1);
+        }
+
+        function createJets(parentBH) {
+            audioEngine.triggerJetNoise();
+            const jetLength = 500, jetRadius = parentBH.radius * 0.2;
+            const jetMaterial = new THREE.ShaderMaterial({
+                uniforms: { time: { value: 0 }, opacity: { value: 0.8 } },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `
+                    uniform float time, opacity; varying vec2 vUv;
+                    void main() {
+                        float pulse = sin(vUv.y * 20.0 - time * 10.0) * 0.5 + 0.5;
+                        vec3 color = mix(vec3(0.8, 0.8, 1.0), vec3(1.0, 0.8, 0.8), pulse);
+                        float alpha = opacity * (1.0 - vUv.y) * (0.5 + pulse * 0.5);
+                        gl_FragColor = vec4(color, alpha);
+                    }`,
+                transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+            });
+            const jetGeometry = new THREE.CylinderGeometry(jetRadius, 0.1, jetLength, 32, 1, true);
+            const jetTop = new THREE.Mesh(jetGeometry, jetMaterial.clone());
+            jetTop.position.y = jetLength / 2;
+            const jetBottom = new THREE.Mesh(jetGeometry, jetMaterial.clone());
+            jetBottom.position.y = -jetLength / 2;
+            jetBottom.rotation.x = Math.PI;
+            parentBH.group.add(jetTop, jetBottom);
+            jets = [jetTop, jetBottom];
+        }
+
+        // --- Post-Processing & Effects ---
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const lensingPass = new ShaderPass({
+            uniforms: {
+                tDiffuse: { value: null }, aspect: { value: 1.0 },
+                bhPositions: { value: Array(10).fill(0).map(() => new THREE.Vector2()) },
+                bhMasses: { value: new Float32Array(10) }, bhCount: { value: 0 }, strength: { value: 1.0 }
+            },
+            vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }`,
+            fragmentShader: `
+                uniform sampler2D tDiffuse; uniform float aspect;
+                uniform vec2 bhPositions[10]; uniform float bhMasses[10];
+                uniform int bhCount; uniform float strength; varying vec2 vUv;
+                void main() {
+                    vec2 finalOffset = vec2(0.0);
+                    for (int i = 0; i < 10; i++) {
+                        if (i >= bhCount) break;
+                        vec2 pos = vUv - bhPositions[i]; pos.x *= aspect;
+                        float dist = length(pos);
+                        float deflection = bhMasses[i] / (dist * dist + 0.001) * 0.001 * strength;
+                        finalOffset += normalize(pos) * deflection;
+                    }
+                    finalOffset.x /= aspect;
+                    vec3 color;
+                    color.r = texture2D(tDiffuse, vUv - finalOffset * 1.0).r;
+                    color.g = texture2D(tDiffuse, vUv - finalOffset * 1.01).g;
+                    color.b = texture2D(tDiffuse, vUv - finalOffset * 1.02).b;
+                    gl_FragColor = vec4(color, 1.0);
+                }`
+        });
+        composer.addPass(lensingPass);
+
+        const wavePass = new ShaderPass({
+            uniforms: {
+                tDiffuse: { value: null }, time: { value: -1.0 }, origin: { value: new THREE.Vector2() },
+                amplitude: { value: 0.0 }, frequency: { value: 50.0 }
+            },
+            vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }`,
+            fragmentShader: `
+                uniform sampler2D tDiffuse; uniform float time, amplitude, frequency;
+                uniform vec2 origin; varying vec2 vUv;
+                void main() {
+                    float dist = distance(vUv, origin);
+                    float wave = sin(dist * frequency - time * 10.0) * amplitude *
+                                 smoothstep(0.0, 0.1, time) * (1.0 - smoothstep(0.5, 1.0, time));
+                    vec2 offset = normalize(vUv - origin) * wave;
+                    vec4 color = texture2D(tDiffuse, vUv + offset);
+                    color.rgb += vec3(0.1, 0.05, 0.2) * wave * 10.0;
+                    gl_FragColor = color;
+                }`
+        });
+        composer.addPass(wavePass);
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), params.bloomIntensity, 0.4, 0.0);
+        composer.addPass(bloomPass);
+
+        // --- GUI Configuration ---
+        const gui = new GUI();
+        const setupFolder = gui.addFolder('System Setup');
+        setupFolder.add(params, 'mass1', 10, 100).name('Mass 1 (M☉)');
+        setupFolder.add(params, 'mass2', 10, 100).name('Mass 2 (M☉)');
+        setupFolder.add(params, 'distance', 50, 150).name('Initial Distance');
+        setupFolder.add(params, 'restart').name('🚀 Relaunch Simulation');
+
+        const presetsFolder = gui.addFolder('Presets');
+        presetsFolder.add(params, 'preset1').name('Asymmetric Merger');
+        presetsFolder.add(params, 'preset2').name('Equal Mass');
+        presetsFolder.add(params, 'preset3').name('Extreme Mass Ratio');
+
+        const directorFolder = gui.addFolder('Director Controls');
+        directorFolder.add(params, 'timeScale', 0.1, 5.0).name('Time Scale');
+        directorFolder.add(params, 'cinematicCamera').name('Cinematic Camera');
+        directorFolder.add(params, 'focusBH1').name('Focus on Black Hole 1');
+        directorFolder.add(params, 'focusBH2').name('Focus on Black Hole 2');
+        directorFolder.add(params, 'focusCenter').name('Focus on Center');
+
+        const visualFolder = gui.addFolder('Visual Controls');
+        visualFolder.add(params, 'diskEmissivity', 0, 10).name('Disk Brightness').onChange(v => { blackHoles.forEach(bh => bh.diskMaterial.uniforms.emissiveIntensity.value = v); });
+        visualFolder.add(params, 'bloomIntensity', 0, 5).name('Bloom Intensity').onChange(v => bloomPass.strength = v);
+        visualFolder.add(params, 'showGrid').name('Show Spacetime Grid').onChange(v => { if(spacetimeGrid) spacetimeGrid.mesh.visible = v; });
+        visualFolder.add(params, 'showInfo').name('Show Info Display').onChange(v => { document.getElementById('info').style.display = v ? 'block' : 'none'; });
+        visualFolder.add(starfieldMaterial.uniforms.nebulaDensity, 'value', 0, 5).name('Nebula Density');
+
+        const advancedFolder = gui.addFolder('Advanced Physics');
+        advancedFolder.add(params, 'orbitalDecay', 0, 0.02).name('Orbital Decay Rate');
+        advancedFolder.add(params, 'finalSpin', 0, 5).name('Final BH Spin');
+        advancedFolder.add(params, 'cameraShake').name('Camera Shake');
+        advancedFolder.add(lensingPass.uniforms.strength, 'value', 0, 2).name('Lensing Strength');
+
+        // --- Init & Control Functions ---
+        function initSimulation() {
+            // Clean up previous simulation assets
+            blackHoles.forEach(bh => bh.dispose());
+            if (spacetimeGrid) spacetimeGrid.dispose();
+            
+            // Reset state variables
+            jets = []; 
+            blackHoles = [];
+            document.getElementById('phase').textContent = 'INSPIRAL PHASE';
+            waveformDisplay.draw(0, 0);
+
+            // Create new simulation assets
+            spacetimeGrid = new SpacetimeGrid();
+            spacetimeGrid.mesh.visible = params.showGrid;
+
+            const m1 = params.mass1, m2 = params.mass2, dist = params.distance;
+            initialDistance = dist;
+            const v1 = Math.sqrt(G * m2 * m2 / ((m1 + m2) * dist));
+            const v2 = Math.sqrt(G * m1 * m1 / ((m1 + m2) * dist));
+            const bh1 = new BlackHole(m1, new THREE.Vector3(-dist * m2 / (m1+m2), 0, 0), new THREE.Vector3(0, 0, -v1), true);
+            const bh2 = new BlackHole(m2, new THREE.Vector3(dist * m1 / (m1+m2), 0, 0), new THREE.Vector3(0, 0, v2), false);
+            blackHoles.push(bh1, bh2);
+
+            simulationActive = true;
+            wavePass.uniforms.time.value = -1.0;
+            setCameraFocus(-1);
+            audioEngine.stopAll();
+        }
+
+        function applyPreset(m1, m2, d) {
+            params.mass1 = m1;
+            params.mass2 = m2;
+            params.distance = d;
+            // Iterate over the controllers in the setup folder and update their display
+            for (const controller of setupFolder.controllers) {
+                controller.updateDisplay();
+            }
+            initSimulation();
+        }
+
+        // --- Camera and Effects Management ---
+        let shakeDuration = 0, shakeIntensity = 0;
+        function triggerCameraShake(duration = 0.5, intensity = 0.5) { shakeDuration = duration; shakeIntensity = intensity; }
+        function updateCameraShake(deltaTime) {
+            if (shakeDuration > 0) {
+                shakeDuration -= deltaTime;
+                camera.position.x += (Math.random() - 0.5) * shakeIntensity;
+                camera.position.y += (Math.random() - 0.5) * shakeIntensity;
+            }
+        }
+        function triggerGravitationalWave(origin) {
+            const screenPos = origin.clone().project(camera);
+            wavePass.uniforms.origin.value.set((screenPos.x + 1) / 2, (screenPos.y + 1) / 2);
+            wavePass.uniforms.time.value = 0.0;
+            wavePass.uniforms.amplitude.value = 0.03;
+        }
+        function triggerBloomFlash() {
+            let flashStrength = 10.0;
+            const flashInterval = setInterval(() => {
+                bloomPass.strength = flashStrength;
+                flashStrength -= 0.5;
+                if (flashStrength <= params.bloomIntensity) {
+                    bloomPass.strength = params.bloomIntensity;
+                    clearInterval(flashInterval);
+                }
+            }, 20);
+        }
+
+        let focusIndex = -1;
+        function setCameraFocus(index) { 
+            focusIndex = index; 
+            params.cinematicCamera = false; 
+            // Ensure the cinematic camera checkbox in the GUI reflects this change
+            for(const controller of directorFolder.controllers) {
+                if (controller.property === 'cinematicCamera') {
+                    controller.updateDisplay();
+                }
+            }
+        }
+        function updateCamera(time) {
+            if (params.cinematicCamera) {
+                const angle = time * 0.1;
+                const distance = 110 + Math.sin(time * 0.05) * 30;
+                camera.position.x = Math.sin(angle) * distance;
+                camera.position.z = Math.cos(angle) * distance;
+                camera.position.y = 40 + Math.sin(angle * 0.5) * 20;
+                controls.target.set(0,0,0);
+            } else {
+                if (focusIndex === -1) { // Center of mass
+                     if (blackHoles.length > 1) {
+                        cameraTarget.position.lerp(new THREE.Vector3().addVectors(blackHoles[0].position, blackHoles[1].position).multiplyScalar(0.5), 0.1);
+                     } else if (blackHoles.length === 1) {
+                        cameraTarget.position.lerp(blackHoles[0].position, 0.1);
+                     }
+                } else if (blackHoles[focusIndex]) { // Specific black hole
+                    cameraTarget.position.lerp(blackHoles[focusIndex].position, 0.1);
+                }
+                controls.target.copy(cameraTarget.position);
+            }
+        }
+
+        // --- Animation Loop ---
+        let animationFrameId = null;
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+            const deltaTime = clock.getDelta() * params.timeScale;
+            const elapsedTime = clock.getElapsedTime();
+
+            if (simulationActive) {
+                updatePhysics(deltaTime);
+            }
+            if (!params.cinematicCamera) controls.update();
+            updateCamera(elapsedTime);
+            updateCameraShake(deltaTime);
+
+            starfieldMaterial.uniforms.time.value = elapsedTime;
+
+            if (jets.length > 0 && blackHoles.length === 1) {
+                const bh = blackHoles[0];
+                bh.group.rotation.y += deltaTime * params.finalSpin * 0.2;
+                jets.forEach(jet => {
+                    if (jet.material.uniforms) jet.material.uniforms.time.value = elapsedTime;
+                });
+            }
+
+            // Update lensing positions
+            const screenPositions = blackHoles.map(bh => bh.group.position.clone().project(camera));
+            lensingPass.uniforms.bhCount.value = blackHoles.length;
+            for (let i = 0; i < lensingPass.uniforms.bhPositions.value.length; i++) {
+                if (i < blackHoles.length) {
+                    lensingPass.uniforms.bhPositions.value[i].set((screenPositions[i].x + 1) / 2, (screenPositions[i].y + 1) / 2);
+                    lensingPass.uniforms.bhMasses.value[i] = blackHoles[i].mass;
+                } else {
+                    lensingPass.uniforms.bhPositions.value[i].set(-10, -10); // Move off-screen
+                    lensingPass.uniforms.bhMasses.value[i] = 0;
+                }
+            }
+
+            if (wavePass.uniforms.time.value >= 0) {
+                wavePass.uniforms.time.value += deltaTime;
+                if (wavePass.uniforms.time.value > 1.0) wavePass.uniforms.time.value = -1.0;
+            }
+
+            composer.render();
+        }
+
+        // --- Event Listeners ---
+        const clock = new THREE.Clock();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            lensingPass.uniforms.aspect.value = window.innerWidth / window.innerHeight;
+            waveformDisplay.resize();
+        });
+
+        document.getElementById('start-button').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.opacity = '0';
+            document.getElementById('start-overlay').style.pointerEvents = 'none';
+            audioEngine.init();
+            initSimulation();
+            if (animationFrameId === null) { // Prevent multiple animation loops
+                animate();
+            }
+        }, { once: true });
+
+        document.getElementById('audio-button').addEventListener('click', () => {
+            if (!audioEngine.isInitialized) {
+                audioEngine.init();
+            } else {
+                audioEngine.toggleMute();
+            }
+        });
+
+    </script>
+</body>
+</html>
