@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="GME Cycle Resonator -- Squeeze Mechanics & Temporal Harmonics" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#0b0b0b" />
+  <title>GME Cycle Resonator (Max Enhanced)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ───────────────────────────────────────
+       VARIABLES + MODERN RESET
+    ─────────────────────────────────────── */
+    :root {
+      --bg-color: #0b0b0b;
+      --text-color: #e0e0e0;
+      --panel-bg: rgba(17, 17, 17, 0.85);
+      --highlight: #00ffcc;
+      --secondary-highlight: #ff3399;
+      --third-highlight: #ffaa00;
+      --control-bg: rgba(26, 26, 26, 0.8);
+      --control-border: rgba(255, 255, 255, 0.1);
+      --control-hover: rgba(255, 255, 255, 0.2);
+      --code-bg: #1d1f21;
+      --code-text: #00ffcc;
+      --active-indicator: rgba(0, 255, 204, 0.3);
+      --shadow-highlight: rgba(0, 255, 204, 0.3);
+      --shadow-dark: rgba(0, 0, 0, 0.5);
+      --modal-bg: rgba(11, 11, 11, 0.95);
+      --resonance-color: rgba(0, 255, 204, 0.7);
+      --resonance-glow: 0 0 20px rgba(0, 255, 204, 0.6);
+    }
+
+    html.light-theme {
+      --bg-color: #f0f2f5;
+      --text-color: #1c1c1c;
+      --panel-bg: rgba(255, 255, 255, 0.85);
+      --control-border: rgba(0, 0, 0, 0.1);
+      --control-bg: rgba(0, 0, 0, 0.05);
+      --control-hover: rgba(0, 0, 0, 0.1);
+      --modal-bg: rgba(255, 255, 255, 0.95);
+      --shadow-dark: rgba(0, 0, 0, 0.1);
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.3s, color 0.3s;
+      overflow: hidden; /* Prevent scrollbars from appearing */
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button {
+      font-family: inherit;
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    /* ───────────────────────────────────────
+       FLOATING CONTROLS & HELP
+    ─────────────────────────────────────── */
+    .control-button {
+      position: fixed;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--control-border);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 22px;
+      z-index: 100;
+      box-shadow: 0 4px 15px var(--shadow-dark);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .control-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--shadow-dark);
+      border-color: var(--highlight);
+    }
+    
+    .control-button:active {
+      transform: scale(0.95);
+    }
+
+    .theme-toggle { top: 15px; right: 15px; }
+    .help-button { top: 15px; left: 15px; }
+    .toggle-legend { bottom: 15px; right: 15px; }
+
+    .keyboard-shortcuts {
+      position: fixed;
+      left: 15px;
+      top: 75px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 8px;
+      padding: 10px;
+      z-index: 100;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 15px var(--shadow-dark);
+      border: 1px solid var(--control-border);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+      width: calc(100% - 30px);
+      max-width: 260px;
+    }
+
+    .keyboard-shortcuts.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .keyboard-shortcuts table { width: 100%; border-collapse: collapse; }
+    .keyboard-shortcuts td { padding: 4px 8px; }
+    .keyboard-shortcuts td:first-child { text-align: right; white-space: nowrap; }
+    .keyboard-shortcuts .key {
+      background: rgba(0,0,0,.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      border: 1px solid var(--control-border);
+      margin-right: 4px;
+      display: inline-block;
+    }
+    html.light-theme .keyboard-shortcuts .key { background: rgba(0,0,0,0.1); }
+
+    /* ───────────────────────────────────────
+       CANVAS & LOADING
+    ─────────────────────────────────────── */
+    #cycleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      touch-action: none;
+      display: block;
+    }
+
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-color);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .5s ease-out;
+    }
+
+    .loading.done {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-spinner { width: 60px; height: 60px; position: relative; margin-bottom: 30px; }
+    .loading-spinner::before, .loading-spinner::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      background: linear-gradient(45deg, var(--highlight), var(--secondary-highlight));
+      animation: pulse-ring 2s linear infinite;
+    }
+    .loading-spinner::after { animation-delay: -1s; }
+    @keyframes pulse-ring { 0%{transform:scale(0.5);opacity:1} 100%{transform:scale(1.5);opacity:0} }
+
+    .loading-text { font-size: 1.3rem; font-weight: 600; text-shadow: 0 2px 10px var(--shadow-dark); margin-bottom: 5px; }
+    .loading-subtext { font-size: 0.9rem; opacity: 0.7; max-width: 85%; text-align: center; padding: 0 15px; }
+    .loading-progress { width: 80%; max-width: 250px; height: 4px; background: var(--control-border); border-radius: 2px; margin-top: 20px; overflow: hidden; }
+    .loading-progress-bar { height: 100%; width: 0%; background: var(--highlight); border-radius: 2px; transition: width 0.3s; }
+
+    /* ───────────────────────────────────────
+       CONTROLS BAR
+    ─────────────────────────────────────── */
+    .controls-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: var(--panel-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 10px;
+      z-index: 10;
+      box-shadow: 0 -2px 10px var(--shadow-dark);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid var(--control-border);
+    }
+
+    .control-group { display: flex; align-items: center; gap: 12px; }
+    .button-control {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--control-bg);
+      border: 1px solid var(--control-border);
+      color: var(--text-color);
+      border-radius: 50%;
+      font-size: 18px;
+      transition: all 0.2s;
+    }
+    .button-control:hover { background: var(--control-hover); }
+    .button-control:active { transform: scale(0.95); background: var(--control-hover); }
+
+    .date-display {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 5px 10px;
+      background: rgba(0,0,0,.3);
+      border-radius: 6px;
+      min-width: 120px;
+    }
+    html.light-theme .date-display { background: rgba(0,0,0,0.1); }
+    
+    .time-speed {
+      background: var(--highlight);
+      color: #000;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      min-width: 60px;
+    }
+
+.stock-price {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 5px 10px;
+      background: rgba(0,0,0,.3);
+      border-radius: 6px;
+      min-width: 120px;
+    }
+    html.light-theme .stock-price { background: rgba(0,0,0,0.1); }
+
+    /* ───────────────────────────────────────
+       SETTINGS PANEL
+    ─────────────────────────────────────── */
+    .settings-panel {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%) translateY(110%);
+      width: 90%;
+      max-width: 350px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+      box-shadow: 0 5px 20px var(--shadow-dark);
+      border: 1px solid var(--control-border);
+      z-index: 50;
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .settings-panel.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--control-border);
+    }
+
+    .settings-title { font-weight: 600; font-size: 1.1rem; color: var(--highlight); }
+    .settings-close { font-size: 22px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
+    .settings-content { padding: 15px; }
+    .slider-control { margin-bottom: 15px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .slider-label { font-weight: 500; font-size: 0.95rem; }
+    .slider-value { font-size: 0.9rem; color: var(--highlight); font-weight: 500; min-width: 40px; text-align: right; }
+
+    /* Toggle switch */
+    .toggle-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+    .toggle-switch { position: relative; display: inline-block; width: 52px; height: 26px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,.4); transition: .4s; border-radius: 34px; border: 1px solid var(--control-border); }
+    .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .toggle-slider { background-color: var(--highlight); }
+    input:checked + .toggle-slider:before { transform: translateX(26px); }
+    html.light-theme .toggle-slider { background-color: rgba(0,0,0,0.1); }
+
+    /* Range slider */
+    input[type="range"]::-webkit-slider-runnable-track { height: 8px; background: rgba(0,0,0,.4); border-radius: 5px; }
+    input[type="range"]::-moz-range-track { height: 8px; background: rgba(0,0,0,.4); border-radius: 5px; }
+    html.light-theme input[type="range"]::-webkit-slider-runnable-track,
+    html.light-theme input[type="range"]::-moz-range-track { background: rgba(0,0,0,0.1); }
+    
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -7px; width: 22px; height: 22px; border-radius: 50%; background: var(--highlight); border: 2px solid #fff; }
+    input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--highlight); border: 2px solid #fff; }
+
+    /* ───────────────────────────────────────
+       LOGO / EMOJI / TOOLTIP / NOTIFICATION
+    ─────────────────────────────────────── */
+    .logo-container {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 5;
+      pointer-events: none;
+      width: 70px; height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo-container img {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 0 20px var(--shadow-dark);
+      transition: all .5s;
+    }
+
+    .logo-container.resonating img {
+      animation: pulse-logo 2s infinite ease-in-out;
+      box-shadow: 0 0 30px var(--resonance-color);
+    }
+    @keyframes pulse-logo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    
+    .notification {
+      position: fixed;
+      bottom: 75px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--panel-bg);
+      backdrop-filter: blur(5px);
+      color: var(--text-color);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px var(--shadow-dark);
+      z-index: 100;
+      max-width: 90%;
+      width: 300px;
+      text-align: center;
+      opacity: 0;
+      transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity .4s;
+      pointer-events: none;
+      border-left: 4px solid var(--highlight);
+      font-weight: 500;
+    }
+
+    .notification.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .notification.resonance {
+      border-color: var(--highlight);
+      box-shadow: var(--resonance-glow);
+      background: rgba(0,255,204,0.15);
+    }
+
+    /* ───────────────────────────────────────
+       SCRUBBING INDICATOR
+    ─────────────────────────────────────── */
+    .scrub-indicator {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,255,204,0.15);
+      border: 2px solid var(--highlight);
+      border-radius: 50%;
+      width: 80px; height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 50;
+      box-shadow: var(--resonance-glow);
+    }
+    .scrub-indicator.active { opacity: 1; }
+    .scrub-direction { font-size: 40px; font-weight: bold; color: var(--highlight); text-shadow: 0 0 8px rgba(0,255,204,0.8); }
+
+    /* ───────────────────────────────────────
+       LEGEND
+    ─────────────────────────────────────── */
+    .legend {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 60px;
+      padding: 10px;
+      background: var(--panel-bg);
+      border-radius: 15px 15px 0 0;
+      z-index: 9;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      border-top: 1px solid var(--control-border);
+      box-shadow: 0 -2px 15px var(--shadow-dark);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .legend.open { transform: translateY(0); }
+    .legend-header { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; color: var(--highlight); text-align: center; height: 40px; width: 100%; position: relative; cursor: pointer; }
+    .legend-content { margin-top: 5px; }
+    .legend-indicator { font-size: .95rem; color: var(--highlight); min-height: 1.2em; padding: 8px 12px; background: rgba(0,0,0,.2); border-radius: 6px; width: 100%; text-align: center; transition: all .3s; font-weight: 500; margin-bottom: 10px; }
+    html.light-theme .legend-indicator { background: rgba(0,0,0,0.05); }
+    .legend-indicator.active { color: #fff; background: var(--active-indicator); transform: scale(1.02); box-shadow: 0 2px 8px var(--shadow-highlight); animation: pulse-indicator 2s infinite; }
+    @keyframes pulse-indicator { 0%, 100% { background: var(--active-indicator); } 50% { background: rgba(0,255,204,0.5); } }
+
+    .cycle-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; padding-bottom: 5px; }
+    .cycle-item { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; background: rgba(0,0,0,.2); transition: all .2s; cursor: pointer; font-weight: 500; font-size: 0.85rem; }
+    html.light-theme .cycle-item { background: rgba(0,0,0,0.05); }
+    .cycle-item:hover { background: rgba(255,255,255,.1); }
+    html.light-theme .cycle-item:hover { background: rgba(0,0,0,0.1); }
+    .cycle-item:active { transform: scale(0.98); }
+    .cycle-item.resonating { background: rgba(0,255,204,0.15); box-shadow: 0 0 10px rgba(0,255,204,0.4); }
+    .cycle-dot { min-width: 12px; min-height: 12px; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,.3); transition: transform .3s; flex-shrink: 0; }
+    .cycle-item:active .cycle-dot { transform: scale(1.5); }
+
+    /* ───────────────────────────────────────
+       MODAL PANEL
+    ─────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      opacity: 0;
+      transition: opacity .3s ease;
+      z-index: 900;
+      pointer-events: none;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .modal-panel {
+      position: fixed;
+      bottom: 0; left: 0;
+      width: 100%;
+      height: 85%;
+      max-height: 85vh;
+      transform: translateY(100%);
+      background: var(--modal-bg);
+      border-radius: 20px 20px 0 0;
+      border-top: 1px solid var(--control-border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 -4px 30px var(--shadow-dark);
+      z-index: 950;
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      transition: transform .4s cubic-bezier(0.165, 0.84, 0.44, 1), opacity .3s;
+    }
+
+    .modal-panel.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--control-border); background: rgba(0,0,0,.2); flex-shrink: 0; }
+    html.light-theme .modal-header { background: rgba(255,255,255,0.5); }
+    .modal-title { font-size: 1.25rem; font-weight: 600; color: var(--highlight); text-shadow: 0 2px 8px var(--shadow-highlight); }
+    .modal-close { background: rgba(0,0,0,.3); border: 1px solid var(--control-border); border-radius: 50%; font-size: 24px; opacity: .9; transition: all .2s; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-left: 10px; }
+    .modal-close:hover { background: var(--control-hover); }
+    .modal-close:active { transform: scale(0.95); }
+
+    .modal-tabs { display: flex; border-bottom: 1px solid var(--control-border); background: rgba(0,0,0,.15); flex-shrink: 0; }
+    html.light-theme .modal-tabs { background: rgba(0,0,0,0.05); }
+    .modal-tab { padding: 14px 0; border-bottom: 3px solid transparent; transition: all .3s; color: #aaa; font-size: .9rem; font-weight: 500; flex: 1; text-align: center; }
+    .modal-tab:hover { color: var(--text-color); background: rgba(255,255,255,.05); }
+    html.light-theme .modal-tab:hover { background: rgba(0,0,0,0.05); }
+    .modal-tab.active { color: var(--highlight); border-bottom-color: var(--highlight); }
+
+    .modal-content-wrapper { overflow-y: auto; flex-grow: 1; }
+    .modal-content { padding: 20px; }
+    .tab-content { display: none; animation: fadeIn .5s; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .modal-section { margin-bottom: 25px; }
+    .modal-section-title { font-weight: 600; font-size: 1.05rem; color: var(--highlight); margin-bottom: 12px; padding-bottom: 4px; border-bottom: 1px solid var(--control-border); }
+    .modal-section p, .modal-section ul { margin-bottom: 16px; line-height: 1.6; }
+    .modal-section ul { margin-left: 20px; }
+    .modal-section li { margin-bottom: 8px; }
+    .modal-section li strong { color: var(--highlight); }
+
+    /* Options strategy styles */
+    .cycle-strategy-card { background: rgba(0,0,0,.2); border-radius: 10px; padding: 15px; margin-bottom: 20px; border-left: 3px solid var(--highlight); transition: all .3s; box-shadow: 0 2px 10px rgba(0,0,0,.2); }
+    html.light-theme .cycle-strategy-card { background: rgba(0,0,0,0.05); }
+    .cycle-title { font-weight: 700; font-size: 1.1rem; color: var(--highlight); margin-bottom: 12px; }
+    .strategy-section { margin-bottom: 12px; }
+    .section-title { font-weight: 600; font-size: 1rem; margin-bottom: 8px; display: flex; align-items: center; }
+    .section-title::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--third-highlight); border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+    .strategy-list { list-style-type: none; padding-left: 8px; }
+    .strategy-list li { position: relative; padding-left: 18px; margin-bottom: 8px; font-size: .9rem; line-height: 1.5; }
+    .strategy-list li::before { content: "▸"; position: absolute; left: 0; color: var(--secondary-highlight); font-weight: bold; }
+
+    /* Code block styling */
+    .code-block { background: var(--code-bg); padding: 15px; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-size: .8rem; color: var(--code-text); overflow-x: auto; line-height: 1.5; white-space: pre; box-shadow: inset 0 0 10px rgba(0,0,0,.4); border: 1px solid var(--control-border); margin: 10px 0; }
+    .script-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: center; }
+    .script-btn { font-size: .85rem; padding: 12px 16px; background: var(--control-bg); border: 1px solid var(--control-border); border-radius: 8px; color: var(--text-color); transition: all .3s; display: flex; align-items: center; justify-content: center; font-weight: 500; width: 100%; }
+    .script-btn:hover { background: var(--control-hover); }
+    .script-btn::before { content: '📋'; margin-right: 6px; }
+    .script-btn:active { transform: scale(0.98); }
+
+  </style>
+</head>
+
+<body>
+  <!-- FLOATING CONTROL BUTTONS -->
+  <button class="control-button theme-toggle" id="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle Theme">🌓</button>
+  <button class="control-button help-button" id="help-button" title="Keyboard Shortcuts" aria-label="Show Keyboard Shortcuts">?</button>
+  <button class="control-button toggle-legend" id="toggle-legend" title="Toggle legend" aria-label="Toggle Legend">🔍</button>
+  
+  <div class="keyboard-shortcuts" id="keyboard-shortcuts">
+    <table>
+      <tbody>
+        <tr><td><span class="key">Space</span></td><td>Pause/Play</td></tr>
+        <tr><td><span class="key">R</span></td><td>Reset</td></tr>
+        <tr><td><span class="key">←</span>/<span class="key">→</span></td><td>Scrub time</td></tr>
+        <tr><td><span class="key">↑</span></td><td>Speed up</td></tr>
+        <tr><td><span class="key">↓</span></td><td>Slow down</td></tr>
+        <tr><td><span class="key">L</span></td><td>Toggle Legend</td></tr>
+        <tr><td><span class="key">T</span></td><td>Toggle theme</td></tr>
+        <tr><td><span class="key">Esc</span></td><td>Close panels</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- SCRUBBING INDICATORS -->
+  <div class="scrub-indicator" id="scrub-indicator">
+    <div class="scrub-direction" id="scrub-direction"></div>
+  </div>
+  
+  <!-- MAIN CONTAINER -->
+  <main id="container">
+    <!-- LOADING -->
+    <div class="loading" id="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Initializing GME Cycle Resonator</div>
+      <div class="loading-subtext">Loading visualization system...</div>
+      <div class="loading-progress">
+        <div class="loading-progress-bar" id="loading-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- CANVAS -->
+    <canvas id="cycleCanvas"></canvas>
+    
+    <!-- CONTROLS BAR -->
+    <div class="controls-bar" id="controls-bar">
+      <div class="control-group">
+        <button class="button-control" id="pause-btn" title="Pause/resume (Space)" aria-label="Pause or Resume">⏯️</button>
+        <button class="button-control" id="reset-btn" title="Reset (R)" aria-label="Reset Simulation">🔄</button>
+      </div>
+      
+      <div class="date-display" id="date-display">...</div>
+      
+      <div class="stock-price" id="stock-price">GME: Loading...</div>
+      
+      <div class="control-group">
+        <button class="button-control" id="speed-down-btn" title="Slower (↓)" aria-label="Decrease Speed">⏪</button>
+        <div class="time-speed" id="time-speed">0.05x</div>
+        <button class="button-control" id="speed-up-btn" title="Faster (↑)" aria-label="Increase Speed">⏩</button>
+      </div>
+      
+      <div class="control-group">
+        <button class="button-control" id="settings-btn" title="Settings" aria-label="Open Settings">⚙️</button>
+        <button class="button-control" id="info-btn" title="Info" aria-label="Open Information Panel">ℹ️</button>
+      </div>
+    </div>
+    
+    <!-- SETTINGS POPUP -->
+    <div class="settings-panel" id="settings-panel">
+      <div class="settings-header">
+        <div class="settings-title">Settings</div>
+        <button class="settings-close" id="settings-close" aria-label="Close Settings">×</button>
+      </div>
+      
+      <div class="settings-content">
+        <div class="toggle-wrapper">
+          <span class="slider-label">Mute Sound</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="mute-sound">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="slider-control">
+          <div class="slider-header">
+            <label for="harmonic-slider" class="slider-label">Harmonic</label>
+            <span class="slider-value" id="harmonic-value">1.00</span>
+          </div>
+          <input type="range" id="harmonic-slider" min="0.5" max="2" step="0.01" value="1">
+        </div>
+        
+        <div class="slider-control">
+          <div class="slider-header">
+            <label for="sensitivity-slider" class="slider-label">Resonance Sensitivity</label>
+            <span class="slider-value" id="sensitivity-value">1.00</span>
+          </div>
+          <input type="range" id="sensitivity-slider" min="0.5" max="2" step="0.01" value="1">
+        </div>
+        
+        <div class="slider-control">
+          <div class="slider-header">
+            <label for="time-scrub" class="slider-label">Timeline</label>
+          </div>
+          <input type="range" id="time-scrub" min="0" max="5000" step="1" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGO -->
+    <div class="logo-container" id="logo-container">
+      <img id="custom-logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjkwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNiIgLz48cGF0aCBkPSJNNTAgMTAwaDEwME0xMDAgNTB2MTAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjI1IiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMGZmY2MiIHN0cm9rZS13aWR0aD0iNCIgLz48cGF0aCBkPSJNNjAgMTQwbDgwLTgwTTE0MCA2MEw2MCAxNDAiIHN0cm9rZT0iI2ZmMzM5OSIgc3Ryb2tlLXdpZHRoPSIzIiAvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iNzAiIHN0cm9rZT0iI2ZmMzM5OSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtZGFzaGFycmF5PSI1IDUiIC8+PC9zdmc+" alt="GME Logo" class="glow">
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div class="notification" id="notification"></div>
+
+    <!-- LEGEND -->
+    <div class="legend" id="legend">
+      <div class="legend-header" id="legend-header">🧿 GameStop Resonance Cycles</div>
+      <div class="legend-content">
+        <div class="legend-indicator" id="resonance-indicator">Resonance: Off</div>
+        <div class="cycle-grid">
+          <div class="cycle-item" data-cycle-id="1461"><span class="cycle-dot" style="background:hsl(0,100%,50%)"></span>1461: Accumulation</div>
+          <div class="cycle-item" data-cycle-id="741"><span class="cycle-dot" style="background:hsl(60,100%,50%)"></span>741: Short Squeeze</div>
+          <div class="cycle-item" data-cycle-id="55"><span class="cycle-dot" style="background:hsl(30,100%,50%)"></span>55: FOMO Swing</div>
+          <div class="cycle-item" data-cycle-id="35"><span class="cycle-dot" style="background:hsl(0,100%,50%)"></span>35: Momentum</div>
+          <div class="cycle-item" data-cycle-id="21"><span class="cycle-dot" style="background:hsl(60,100%,50%)"></span>21: Intraday</div>
+          <div class="cycle-item" data-cycle-id="999"><span class="cycle-dot" style="background:hsl(330,100%,50%)"></span>999: Tesla Loop</div>
+          <div class="cycle-item" data-cycle-id="90"><span class="cycle-dot" style="background:hsl(120,100%,50%)"></span>90: Quarterly</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL PANEL -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-panel" id="main-modal">
+      <header class="modal-header">
+        <h2 class="modal-title" id="modal-title">GME Cycle Information</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close panel">×</button>
+      </header>
+      <nav class="modal-tabs">
+        <button class="modal-tab active" data-tab="info-tab">Info</button>
+        <button class="modal-tab" data-tab="options-tab">Options</button>
+        <button class="modal-tab" data-tab="api-tab">API</button>
+        <button class="modal-tab" data-tab="predictions-tab">Predictions</button>
+      </nav>
+      <div class="modal-content-wrapper">
+        <div class="modal-content">
+          <!-- Info Tab -->
+          <div class="tab-content active" id="info-tab">
+            <p>The GME Cycle Resonator visualizes key temporal mechanics that may influence GameStop's market behavior. This tool renders multiple overlapping cycles to identify potential resonances and squeeze mechanics.</p>
+            <section class="modal-section">
+              <h3 class="modal-section-title">Key Cycle Mechanics:</h3>
+              <ul>
+                <li><strong>1461: Institutional Accumulation</strong> - Matches U.S. presidential cycle. Mirrors long-game ETF rebalancing.</li>
+                <li><strong>741: Short Squeeze Trigger</strong> - Institutional unwind window (741/999 = 0.741741… echoing infinity).</li>
+                <li><strong>35: Momentum Surge</strong> - Heart of the FTD force-buy engine (T+35 settlement mechanics).</li>
+                <li><strong>999: The Tesla Loop</strong> - 999 days from GameStonk tweet → Feb 18, 2025. Vortex math alignment.</li>
+                <li><strong>90: Quarterly</strong> - Quarterly reporting and adjustment cycles (T+90).</li>
+              </ul>
+            </section>
+            <section class="modal-section">
+              <h3 class="modal-section-title">Controls:</h3>
+              <ul>
+                <li><strong>Pause/Play & Scrub:</strong> Use the bottom controls, spacebar, arrow keys, or swipe across the screen.</li>
+                <li><strong>Settings:</strong> Adjust sound, harmonics, and sensitivity via the ⚙️ icon.</li>
+                <li><strong>Legend:</strong> Toggle the cycle legend with the 🔍 icon or by pressing 'L'.</li>
+              </ul>
+            </section>
+            <p>Watch for alignments between key cycles. The most powerful signals may occur when multiple resonances stack at once!</p>
+          </div>
+
+          <!-- Options Strategy Tab -->
+          <div class="tab-content" id="options-tab">
+            <div class="cycle-strategy-card">
+              <h3 class="cycle-title">55: FOMO Swing (Retail Lightning Loop)</h3>
+              <div class="strategy-section">
+                <h4 class="section-title">Ideal Trades:</h4>
+                <ul class="strategy-list">
+                  <li>Short-dated OTM calls (2-4 weeks to expiry)</li>
+                  <li>Gamma ramp scalps</li>
+                  <li>0DTE meme catalysts with IV pops</li>
+                </ul>
+              </div>
+            </div>
+            <div class="cycle-strategy-card">
+              <h3 class="cycle-title">35: Momentum Surge (T+35 Settlement Pulse)</h3>
+              <div class="strategy-section">
+                <h4 class="section-title">Ideal Trades:</h4>
+                <ul class="strategy-list">
+                  <li>Calendar spreads targeting T+35 expiry</li>
+                  <li>Deep ITM calls to force-deliver shares</li>
+                  <li>Roll-up strategies anticipating FTD covers</li>
+                </ul>
+              </div>
+            </div>
+            <div class="cycle-strategy-card">
+              <h3 class="cycle-title">741: Short Squeeze Trigger (The Infinity Echo)</h3>
+              <div class="strategy-section">
+                <h4 class="section-title">Ideal Trades:</h4>
+                <ul class="strategy-list">
+                  <li>Long-dated synthetic LEAPs</li>
+                  <li>Straddle into volatility triggers</li>
+                  <li>Swoop-in post-puke accumulation</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- API Tab -->
+          <div class="tab-content" id="api-tab">
+            <section class="modal-section">
+              <h3 class="modal-section-title">TradingView PineScript Overlay</h3>
+              <p>Copy this code to add GME cycle indicators to your TradingView chart:</p>
+              <div class="code-block" id="pinescript-code">//@version=5
+indicator("🧿 GME Cycle", overlay=true)
+
+startDate = input.time(timestamp("2020-08-01"), "Start Point")
+
+cycleLengths = array.from_int(55, 35, 741, 999, 1461)
+cycleNames = array.from_string("FOMO", "Surge", "Echo", "Tesla", "Accumulation")
+cycleColors = array.from_color(color.new(color.orange, 70), color.new(color.red, 70), color.new(color.green, 70), color.new(color.purple, 70), color.new(color.blue, 70))
+
+if barstate.islast
+    for i = 0 to array.size(cycleLengths) - 1
+        cl = array.get(cycleLengths, i)
+        cycDate = startDate + cl * 86400000 * 24
+        line.new(x1=cycDate, y1=low, x2=cycDate, y2=high, color=array.get(cycleColors, i), width=2, style=line.style_dashed)
+        label.new(x=cycDate, y=high, text=array.get(cycleNames, i), style=label.style_label_down, color=array.get(cycleColors, i), textcolor=color.white, size=size.small)
+</div>
+              <div class="script-actions">
+                <button class="script-btn" id="copy-pinescript">Copy PineScript</button>
+              </div>
+            </section>
+          </div>
+
+          <!-- Predictions Tab -->
+          <div class="tab-content" id="predictions-tab">
+            <section class="modal-section">
+              <h3 class="modal-section-title">Upcoming Cycle Completions</h3>
+              <ul id="next-completions"></ul>
+            </section>
+            <section class="modal-section">
+              <h3 class="modal-section-title">Upcoming Resonances</h3>
+              <ul id="upcoming-resonances"></ul>
+            </section>
+            <p>Note: Analyst forecast for GME end of 2025: ~$32.94 (source: Gov Capital)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /**
+     * GME Cycle Resonator - Max Enhanced Version
+     *
+     * Enhanced with real-time stock price, dynamic predictions, additional cycle, and more particles on resonance.
+     */
+    ((window, document) => {
+      'use strict';
+
+      // --- MODULE: STATE MANAGEMENT ---
+      const state = {
+        isPaused: false,
+        time: 0,
+        speedMultiplier: 0.05,
+        lastFrameTime: 0,
+        isModalOpen: false,
+        isSettingsOpen: false,
+        isHelpOpen: false,
+        activeResonances: [],
+        lastResonanceTime: 0,
+        wasPlayingBeforeScrub: false,
+        settings: {
+          lightTheme: false,
+          harmonicFactor: 1.0,
+          resonanceSensitivity: 1.0,
+          muteSound: false,
+          legendOpen: false
+        },
+        dom: {}, // To store frequently accessed DOM elements
+      };
+
+      // --- MODULE: CONSTANTS ---
+      const constants = {
+        CYCLES: [
+          { name: "1461: Accumulation", length: 1461, hue: 0, importance: 10 },
+          { name: "741: Short Squeeze", length: 741, hue: 60, importance: 8 },
+          { name: "999: The Tesla Loop", length: 999, hue: 330, importance: 10 },
+          { name: "55: FOMO Swing", length: 55, hue: 30, importance: 6 },
+          { name: "35: Momentum", length: 35, hue: 0, importance: 5 },
+          { name: "21: Intraday", length: 21, hue: 60, importance: 4 },
+          { name: "90: Quarterly", length: 90, hue: 120, importance: 7 },
+        ],
+        START_DATE: new Date(2021, 0, 28), // Jan 28, 2021
+        MAX_PARTICLES: 300, // Increased for max enhancement
+        MAX_STARS: 500, // Increased
+      };
+
+      // --- MODULE: VISUALIZATION (CANVAS) ---
+      const viz = {
+        ctx: null,
+        width: 0,
+        height: 0,
+        dpr: 1,
+        particles: [],
+        stars: [],
+
+        setup() {
+          try {
+            this.ctx = state.dom.cycleCanvas.getContext('2d');
+            this.dpr = window.devicePixelRatio || 1;
+            this.resize();
+            this.createStarfield();
+            window.addEventListener('resize', this.resize.bind(this), false);
+            return true;
+          } catch (e) {
+            console.error("Canvas setup failed:", e);
+            ui.showNotification("Visualization failed to load.", "error");
+            return false;
+          }
+        },
+
+        resize() {
+          this.width = window.innerWidth;
+          this.height = window.innerHeight;
+          state.dom.cycleCanvas.width = this.width * this.dpr;
+          state.dom.cycleCanvas.height = this.height * this.dpr;
+          state.dom.cycleCanvas.style.width = `${this.width}px`;
+          state.dom.cycleCanvas.style.height = `${this.height}px`;
+          this.ctx.scale(this.dpr, this.dpr);
+          if (this.stars.length === 0) this.createStarfield();
+        },
+
+        createStarfield() {
+            this.stars = [];
+            for (let i = 0; i < constants.MAX_STARS; i++) {
+                this.stars.push({
+                    x: Math.random() * this.width,
+                    y: Math.random() * this.height,
+                    radius: Math.random() * 1.5,
+                    alpha: Math.random() * 0.5 + 0.2,
+                });
+            }
+        },
+
+        drawStarfield() {
+            this.ctx.save();
+            this.stars.forEach(star => {
+                this.ctx.beginPath();
+                this.ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+                this.ctx.fill();
+            });
+            this.ctx.restore();
+        },
+        
+        spawnParticle(x, y, hue, sizeMultiplier = 1) {
+            const size = (Math.random() * 2 + 1.5) * sizeMultiplier;
+            this.particles.push({
+                x, y,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                size, hue, life: 1,
+            });
+            if (this.particles.length > constants.MAX_PARTICLES) {
+                this.particles.splice(0, this.particles.length - constants.MAX_PARTICLES);
+            }
+        },
+
+        updateAndDrawParticles() {
+          this.ctx.save();
+          for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.02;
+            if (p.life <= 0) {
+              this.particles.splice(i, 1);
+            } else {
+              this.ctx.beginPath();
+              this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+              this.ctx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${p.life})`;
+              this.ctx.fill();
+            }
+          }
+          this.ctx.restore();
+        },
+
+        drawCycles() {
+          const cx = this.width / 2;
+          const cy = this.height / 2;
+          const spacing = Math.min(this.width, this.height) / (2 * constants.CYCLES.length + 2);
+
+          constants.CYCLES.forEach((cycle, i) => {
+            const progress = (state.time % cycle.length) / cycle.length;
+            const radius = spacing * (constants.CYCLES.length - i + 1);
+            const angle = progress * Math.PI * 2 - Math.PI / 2; // Start from top
+            const color = `hsl(${cycle.hue}, 100%, 50%)`;
+
+            // Ring
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = `hsla(${cycle.hue}, 100%, 50%, 0.2)`;
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+
+            // Progress arc
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, -Math.PI / 2, angle);
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 3;
+            this.ctx.stroke();
+
+            // Marker
+            const mx = cx + Math.cos(angle) * radius;
+            const my = cy + Math.sin(angle) * radius;
+            this.ctx.beginPath();
+            this.ctx.arc(mx, my, 5, 0, Math.PI * 2);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.shadowColor = color;
+            this.ctx.shadowBlur = 10;
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+          });
+        },
+
+        drawResonanceConnections() {
+            if (state.activeResonances.length === 0) return;
+
+            const cx = this.width / 2;
+            const cy = this.height / 2;
+            const spacing = Math.min(this.width, this.height) / (2 * constants.CYCLES.length + 2);
+
+            this.ctx.save();
+            this.ctx.lineWidth = 2;
+            this.ctx.shadowColor = 'var(--highlight)';
+            this.ctx.shadowBlur = 15;
+
+            state.activeResonances.forEach(([i, j]) => {
+                const cycle1 = constants.CYCLES[i];
+                const cycle2 = constants.CYCLES[j];
+                const prog1 = (state.time % cycle1.length) / cycle1.length;
+                const prog2 = (state.time % cycle2.length) / cycle2.length;
+                const radius1 = spacing * (constants.CYCLES.length - i + 1);
+                const radius2 = spacing * (constants.CYCLES.length - j + 1);
+                const angle1 = prog1 * 2 * Math.PI - Math.PI / 2;
+                const angle2 = prog2 * 2 * Math.PI - Math.PI / 2;
+                const x1 = cx + Math.cos(angle1) * radius1;
+                const y1 = cy + Math.sin(angle1) * radius1;
+                const x2 = cx + Math.cos(angle2) * radius2;
+                const y2 = cy + Math.sin(angle2) * radius2;
+
+                const gradient = this.ctx.createLinearGradient(x1, y1, x2, y2);
+                gradient.addColorStop(0, `hsla(${cycle1.hue}, 100%, 70%, 0.8)`);
+                gradient.addColorStop(1, `hsla(${cycle2.hue}, 100%, 70%, 0.8)`);
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.strokeStyle = gradient;
+                this.ctx.stroke();
+
+                if (Math.random() < 0.3) { // Increased probability
+                    this.spawnParticle((x1 + x2) / 2, (y1 + y2) / 2, Math.random() * 360, 1.5); // Larger size
+                }
+            });
+            this.ctx.restore();
+        },
+
+        render() {
+          this.ctx.clearRect(0, 0, this.width, this.height);
+          this.drawStarfield();
+          this.drawCycles();
+          this.drawResonanceConnections();
+          this.updateAndDrawParticles();
+        }
+      };
+
+      // --- MODULE: SOUND ENGINE ---
+      const sound = {
+        context: null,
+        isUnlocked: false,
+
+        init() {
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.context = new AudioContext();
+          } catch (e) {
+            console.warn("Web Audio API not supported.", e);
+          }
+        },
+
+        unlock() {
+          if (this.isUnlocked || !this.context) return;
+          this.context.resume().then(() => {
+            this.isUnlocked = true;
+            console.log("Audio context unlocked.");
+          });
+        },
+
+        playTone(freq, duration = 0.2, type = 'sine', vol = 0.3) {
+          if (state.settings.muteSound || !this.context || !this.isUnlocked) return;
+          const osc = this.context.createOscillator();
+          const gain = this.context.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.context.currentTime);
+          gain.gain.setValueAtTime(vol, this.context.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.context.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.context.destination);
+          osc.start();
+          osc.stop(this.context.currentTime + duration);
+        },
+
+        playResonance() {
+            this.playTone(261.63, 0.4, 'sine', 0.15); // C4
+            setTimeout(() => this.playTone(329.63, 0.4, 'sine', 0.15), 150); // E4
+            setTimeout(() => this.playTone(392.00, 0.4, 'sine', 0.15), 300); // G4
+        }
+      };
+
+      // --- MODULE: UI & DOM MANIPULATION ---
+      const ui = {
+        cacheDOM() {
+            const ids = [
+                'loading', 'loading-progress-bar', 'theme-toggle', 'help-button', 'toggle-legend', 'keyboard-shortcuts',
+                'scrub-indicator', 'scrub-direction', 'controls-bar', 'pause-btn', 'reset-btn', 'date-display',
+                'speed-down-btn', 'time-speed', 'speed-up-btn', 'settings-btn', 'info-btn', 'settings-panel',
+                'settings-close', 'mute-sound', 'harmonic-slider', 'harmonic-value', 'sensitivity-slider',
+                'sensitivity-value', 'time-scrub', 'logo-container', 'notification', 'legend', 'legend-header',
+                'resonance-indicator', 'modal-overlay', 'main-modal', 'modal-title', 'modal-close', 'copy-pinescript',
+                'cycleCanvas', 'stock-price'
+            ];
+            ids.forEach(id => {
+                const camelCaseId = id.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                state.dom[camelCaseId] = document.getElementById(id);
+            });
+            state.dom.cycleItems = document.querySelectorAll('.cycle-item');
+            state.dom.modalTabs = document.querySelectorAll('.modal-tab');
+            state.dom.tabContents = document.querySelectorAll('.tab-content');
+        },
+        
+        showNotification(msg, type = "info", duration = 2500) {
+          const notification = state.dom.notification;
+          if (notification.timer) clearTimeout(notification.timer);
+          notification.textContent = msg;
+          notification.className = 'notification show';
+          if (type === 'resonance') notification.classList.add('resonance');
+          notification.style.borderLeftColor = type === 'error' ? '#ff3333' : 'var(--highlight)';
+          notification.timer = setTimeout(() => notification.classList.remove('show'), duration);
+        },
+
+        applyTheme() {
+          document.documentElement.classList.toggle('light-theme', state.settings.lightTheme);
+          state.dom.themeToggle.textContent = state.settings.lightTheme ? '🌙' : '☀️';
+        },
+
+        updateDateDisplay() {
+            const currentDate = new Date(constants.START_DATE.getTime() + state.time * 86400000);
+            const formatted = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            state.dom.dateDisplay.textContent = formatted;
+        },
+
+        updateLegendResonance() {
+            const resonatingCycles = new Set();
+            state.activeResonances.forEach(([i, j]) => {
+                resonatingCycles.add(constants.CYCLES[i].length);
+                resonatingCycles.add(constants.CYCLES[j].length);
+            });
+
+            state.dom.cycleItems.forEach(item => {
+                const cycleId = parseInt(item.dataset.cycleId, 10);
+                item.classList.toggle('resonating', resonatingCycles.has(cycleId));
+            });
+        },
+
+        updateUIFromState() {
+            this.applyTheme();
+            this.updateDateDisplay();
+            state.dom.timeSpeed.textContent = `${state.speedMultiplier.toFixed(2)}x`;
+            state.dom.pauseBtn.textContent = state.isPaused ? "▶️" : "⏸️";
+            state.dom.legend.classList.toggle('open', state.settings.legendOpen);
+            state.dom.muteSound.checked = state.settings.muteSound;
+            state.dom.harmonicSlider.value = state.settings.harmonicFactor;
+            state.dom.harmonicValue.textContent = parseFloat(state.settings.harmonicFactor).toFixed(2);
+            state.dom.sensitivitySlider.value = state.settings.resonanceSensitivity;
+            state.dom.sensitivityValue.textContent = parseFloat(state.settings.resonanceSensitivity).toFixed(2);
+        },
+
+        copyToClipboard(elementId) {
+            const textToCopy = document.getElementById(elementId).textContent;
+            const textArea = document.createElement("textarea");
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = 0;
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.showNotification("PineScript copied!", "success");
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                this.showNotification("Copy failed. Please copy manually.", "error");
+            }
+            document.body.removeChild(textArea);
+        }
+      };
+
+      // --- MODULE: EVENT HANDLERS & CONTROLS ---
+      const controls = {
+        init() {
+            // Main controls
+            state.dom.pauseBtn.addEventListener('click', () => this.togglePause());
+            state.dom.resetBtn.addEventListener('click', () => this.reset());
+            state.dom.speedUpBtn.addEventListener('click', () => this.changeSpeed(1.5));
+            state.dom.speedDownBtn.addEventListener('click', () => this.changeSpeed(1 / 1.5));
+            state.dom.settingsBtn.addEventListener('click', () => this.togglePanel('settings'));
+            state.dom.infoBtn.addEventListener('click', () => this.togglePanel('modal', 'info-tab'));
+
+            // Floating controls
+            state.dom.themeToggle.addEventListener('click', () => this.toggleTheme());
+            state.dom.helpButton.addEventListener('click', () => this.togglePanel('help'));
+            state.dom.toggleLegend.addEventListener('click', () => this.toggleLegend());
+            state.dom.legendHeader.addEventListener('click', () => this.toggleLegend());
+
+            // Panels & Modals
+            state.dom.settingsClose.addEventListener('click', () => this.togglePanel('settings'));
+            state.dom.modalClose.addEventListener('click', () => this.togglePanel('modal'));
+            state.dom.modalOverlay.addEventListener('click', () => this.togglePanel('modal'));
+            
+            // Settings inputs
+            state.dom.muteSound.addEventListener('change', e => { state.settings.muteSound = e.target.checked; this.saveSettings(); });
+            state.dom.harmonicSlider.addEventListener('input', e => { state.settings.harmonicFactor = e.target.value; ui.updateUIFromState(); });
+            state.dom.harmonicSlider.addEventListener('change', () => this.saveSettings());
+            state.dom.sensitivitySlider.addEventListener('input', e => { state.settings.resonanceSensitivity = e.target.value; ui.updateUIFromState(); });
+            state.dom.sensitivitySlider.addEventListener('change', () => this.saveSettings());
+            state.dom.timeScrub.addEventListener('input', e => { state.time = parseInt(e.target.value, 10); ui.updateDateDisplay(); });
+            
+            // Modal tabs
+            state.dom.modalTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => this.switchModalTab(e.currentTarget.dataset.tab));
+            });
+
+            // Legend items
+            state.dom.cycleItems.forEach(item => {
+                item.addEventListener('click', e => this.highlightCycle(parseInt(e.currentTarget.dataset.cycleId, 10)));
+            });
+
+            // API button
+            state.dom.copyPinescript.addEventListener('click', () => ui.copyToClipboard('pinescript-code'));
+
+            // Global listeners
+            document.addEventListener('keydown', this.handleKeyboard.bind(this));
+            document.addEventListener('click', () => sound.unlock(), { once: true });
+            scrubber.init();
+        },
+
+        togglePause() {
+            state.isPaused = !state.isPaused;
+            ui.showNotification(state.isPaused ? "Paused" : "Running", "info");
+            ui.updateUIFromState();
+            sound.playTone(state.isPaused ? 330 : 440, 0.1);
+        },
+
+        reset() {
+            state.time = 0;
+            state.isPaused = false;
+            viz.particles = [];
+            state.activeResonances = [];
+            ui.showNotification("Timeline Reset", "success");
+            sound.playTone(587.33, 0.2);
+            ui.updateUIFromState();
+        },
+
+        changeSpeed(factor) {
+            state.speedMultiplier = Math.max(0.01, Math.min(10, state.speedMultiplier * factor));
+            sound.playTone(factor > 1 ? 880 : 220, 0.1);
+            ui.updateUIFromState();
+        },
+
+        toggleTheme() {
+            state.settings.lightTheme = !state.settings.lightTheme;
+            ui.showNotification(state.settings.lightTheme ? "Light Theme" : "Dark Theme", "info");
+            sound.playTone(state.settings.lightTheme ? 587.33 : 349.23, 0.2);
+            this.saveSettings();
+            ui.applyTheme();
+        },
+
+        toggleLegend() {
+            state.settings.legendOpen = !state.settings.legendOpen;
+            this.saveSettings();
+            ui.updateUIFromState();
+            sound.playTone(392, 0.1);
+        },
+
+        togglePanel(panel, tabId = null) {
+            const closeAll = () => {
+                state.isModalOpen = state.isSettingsOpen = state.isHelpOpen = false;
+                state.dom.mainModal.classList.remove('show');
+                state.dom.modalOverlay.classList.remove('show');
+                state.dom.settingsPanel.classList.remove('show');
+                state.dom.keyboardShortcuts.classList.remove('show');
+            };
+
+            let wasOpen = false;
+            if (panel === 'modal') wasOpen = state.isModalOpen;
+            if (panel === 'settings') wasOpen = state.isSettingsOpen;
+            if (panel === 'help') wasOpen = state.isHelpOpen;
+
+            closeAll();
+
+            if (!wasOpen) {
+                sound.playTone(523.25, 0.15);
+                if (panel === 'modal') {
+                    state.isModalOpen = true;
+                    state.dom.mainModal.classList.add('show');
+                    state.dom.modalOverlay.classList.add('show');
+                    if (tabId) this.switchModalTab(tabId);
+                } else if (panel === 'settings') {
+                    state.isSettingsOpen = true;
+                    state.dom.settingsPanel.classList.add('show');
+                } else if (panel === 'help') {
+                    state.isHelpOpen = true;
+                    state.dom.keyboardShortcuts.classList.add('show');
+                }
+            }
+        },
+
+        switchModalTab(tabId) {
+            state.dom.modalTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+            state.dom.tabContents.forEach(c => c.classList.toggle('active', c.id === tabId));
+            const titles = { 'info-tab': 'GME Cycle Information', 'options-tab': 'GME Options Strategy', 'api-tab': 'Trading API & Overlays', 'predictions-tab': 'Stock Predictions' };
+            state.dom.modalTitle.textContent = titles[tabId];
+            if (tabId === 'predictions-tab') {
+              predictions.calculate();
+            }
+        },
+        
+        highlightCycle(cycleId) {
+            const cycle = constants.CYCLES.find(c => c.length === cycleId);
+            if (!cycle) return;
+            ui.showNotification(`Highlight: ${cycle.name}`, "info");
+            sound.playTone(300 + Math.random() * 200, 0.3);
+            
+            const cx = viz.width / 2;
+            const cy = viz.height / 2;
+            const spacing = Math.min(viz.width, viz.height) / (2 * constants.CYCLES.length + 2);
+            const cycleIndex = constants.CYCLES.findIndex(c => c.length === cycle.length);
+            const radius = spacing * (constants.CYCLES.length - cycleIndex + 1);
+            
+            for (let i = 0; i < 24; i++) {
+                const angle = (i / 24) * Math.PI * 2;
+                viz.spawnParticle(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, cycle.hue, 1.5);
+            }
+        },
+
+        handleKeyboard(e) {
+            if (e.target.tagName === 'INPUT') return;
+            switch (e.key) {
+                case ' ': e.preventDefault(); this.togglePause(); break;
+                case 'r': case 'R': this.reset(); break;
+                case 't': case 'T': this.toggleTheme(); break;
+                case 'l': case 'L': this.toggleLegend(); break;
+                case 'ArrowUp': e.preventDefault(); this.changeSpeed(1.5); break;
+                case 'ArrowDown': e.preventDefault(); this.changeSpeed(1 / 1.5); break;
+                case 'ArrowLeft': e.preventDefault(); scrubber.scrubWithKey(-1); break;
+                case 'ArrowRight': e.preventDefault(); scrubber.scrubWithKey(1); break;
+                case 'Escape':
+                    if (state.isModalOpen) this.togglePanel('modal');
+                    else if (state.isSettingsOpen) this.togglePanel('settings');
+                    else if (state.isHelpOpen) this.togglePanel('help');
+                    break;
+            }
+        },
+
+        loadSettings() {
+            try {
+                const saved = localStorage.getItem("gmeResonatorSettings_v2");
+                if (saved) {
+                    Object.assign(state.settings, JSON.parse(saved));
+                }
+            } catch (e) {
+                console.warn("Could not load settings.", e);
+            }
+        },
+
+        saveSettings() {
+            try {
+                localStorage.setItem("gmeResonatorSettings_v2", JSON.stringify(state.settings));
+            } catch (e) {
+                console.warn("Could not save settings.", e);
+            }
+        }
+      };
+      
+      // --- MODULE: TIMELINE SCRUBBER ---
+      const scrubber = {
+        isDragging: false,
+        startX: 0,
+        sensitivity: 0.5,
+
+        init() {
+            const canvas = state.dom.cycleCanvas;
+            canvas.addEventListener('mousedown', this.onStart.bind(this));
+            document.addEventListener('mousemove', this.onMove.bind(this));
+            document.addEventListener('mouseup', this.onEnd.bind(this));
+            canvas.addEventListener('touchstart', this.onStart.bind(this), { passive: true });
+            document.addEventListener('touchmove', this.onMove.bind(this), { passive: true });
+            document.addEventListener('touchend', this.onEnd.bind(this));
+        },
+
+        onStart(e) {
+            this.isDragging = true;
+            this.startX = (e.touches ? e.touches[0].clientX : e.clientX);
+            if (!state.isPaused) {
+                state.wasPlayingBeforeScrub = true;
+                controls.togglePause();
+            } else {
+                state.wasPlayingBeforeScrub = false;
+            }
+            state.dom.scrubIndicator.classList.add('active');
+        },
+
+        onMove(e) {
+            if (!this.isDragging) return;
+            const currentX = (e.touches ? e.touches[0].clientX : e.clientX);
+            const deltaX = currentX - this.startX;
+            const scrubAmount = deltaX * this.sensitivity;
+
+            state.time = Math.max(0, state.time + scrubAmount);
+            state.dom.timeScrub.value = state.time;
+            ui.updateDateDisplay();
+            
+            state.dom.scrubDirection.textContent = deltaX > 0 ? '→' : '←';
+            this.startX = currentX; // Reset start for continuous scrubbing
+        },
+
+        onEnd() {
+            if (!this.isDragging) return;
+            this.isDragging = false;
+            if (state.wasPlayingBeforeScrub) {
+                controls.togglePause();
+            }
+            state.dom.scrubIndicator.classList.remove('active');
+        },
+
+        scrubWithKey(direction) {
+            const amount = 20 * direction;
+            state.time = Math.max(0, state.time + amount);
+            state.dom.timeScrub.value = state.time;
+            ui.updateDateDisplay();
+            sound.playTone(direction > 0 ? 800 : 400, 0.05, 'sine', 0.1);
+        }
+      };
+
+      // --- MODULE: PREDICTIONS ---
+      const predictions = {
+        calculate() {
+          const today = new Date();
+          const start = constants.START_DATE;
+          const daysSince = Math.floor((today - start) / 86400000);
+          const cycles = constants.CYCLES.map(c => c.length);
+
+          // Next completions
+          const nexts = {};
+          cycles.forEach(c => {
+            const mod = daysSince % c;
+            nexts[c] = mod === 0 ? c : c - mod;
+          });
+
+          const completionsUl = document.getElementById('next-completions');
+          completionsUl.innerHTML = '';
+          for (let c in nexts) {
+            const li = document.createElement('li');
+            const nextDay = new Date(today.getTime() + nexts[c] * 86400000);
+            li.textContent = `${c} cycle: ${nexts[c]} days (${nextDay.toLocaleDateString()})`;
+            completionsUl.appendChild(li);
+          }
+
+          // Resonances
+          const res = this.findResonances(daysSince, 180, 0.03, cycles);
+          const resUl = document.getElementById('upcoming-resonances');
+          resUl.innerHTML = '';
+          res.forEach(r => {
+            const li = document.createElement('li');
+            li.textContent = `${r.date}: ${r.count} alignments`;
+            resUl.appendChild(li);
+          });
+        },
+
+        findResonances(start_day, max_days, threshold, cycles) {
+          const resonances = [];
+          const today = new Date();
+          for (let t = 1; t <= max_days; t++) {
+            const progresses = cycles.map(c => ((start_day + t) % c) / c);
+            let aligned_count = 0;
+            for (let i = 0; i < progresses.length; i++) {
+              for (let j = i + 1; j < progresses.length; j++) {
+                const diff = Math.abs(progresses[i] - progresses[j]);
+                if (Math.min(diff, 1 - diff) < threshold) {
+                  aligned_count++;
+                }
+              }
+            }
+            if (aligned_count >= 1) {
+              const date = new Date(today.getTime() + t * 86400000).toLocaleDateString();
+              resonances.push({ date, count: aligned_count });
+            }
+          }
+          return resonances;
+        }
+      };
+
+      // --- MAIN APPLICATION LOGIC ---
+      const app = {
+        fetchStockPrice() {
+          fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=GME&apikey=demo')
+            .then(response => response.json())
+            .then(data => {
+              if (data['Global Quote'] && data['Global Quote']['05. price']) {
+                const price = data['Global Quote']['05. price'];
+                state.dom.stockPrice.textContent = `GME: $${parseFloat(price).toFixed(2)}`;
+              } else {
+                state.dom.stockPrice.textContent = 'GME: Data unavailable';
+              }
+            })
+            .catch(err => {
+              console.error('Failed to fetch stock price:', err);
+              state.dom.stockPrice.textContent = 'GME: Error';
+            });
+        },
+
+        checkResonance() {
+            const progresses = constants.CYCLES.map(c => (state.time % c.length) / c.length);
+            state.activeResonances = [];
+            const threshold = 0.03 / state.settings.resonanceSensitivity;
+
+            for (let i = 0; i < progresses.length; i++) {
+                for (let j = i + 1; j < progresses.length; j++) {
+                    const diff = Math.abs(progresses[i] - progresses[j]);
+                    if (diff < threshold || Math.abs(1 - diff) < threshold) {
+                        state.activeResonances.push([i, j]);
+                    }
+                }
+            }
+        },
+
+        handleResonanceState() {
+            const isResonating = state.activeResonances.length > 0;
+            state.dom.logoContainer.classList.toggle('resonating', isResonating);
+            state.dom.resonanceIndicator.classList.toggle('active', isResonating);
+
+            if (isResonating) {
+                const cycleNames = state.activeResonances.map(([i, j]) => `${constants.CYCLES[i].length} & ${constants.CYCLES[j].length}`).join(', ');
+                state.dom.resonanceIndicator.textContent = `Resonance: ${cycleNames}`;
+                const now = performance.now();
+                if (now - state.lastResonanceTime > 5000) {
+                    state.lastResonanceTime = now;
+                    ui.showNotification(`Cycle Resonance Detected: ${cycleNames}`, "resonance");
+                    sound.playResonance();
+                    // Enhanced: spawn more particles on resonance
+                    for (let k = 0; k < 20; k++) {
+                      viz.spawnParticle(Math.random() * viz.width, Math.random() * viz.height, Math.random() * 360, 2);
+                    }
+                }
+            } else {
+                state.dom.resonanceIndicator.textContent = "Resonance: Off";
+            }
+            ui.updateLegendResonance();
+        },
+
+        mainLoop(timestamp) {
+            if (!state.isPaused) {
+                const deltaTime = timestamp - state.lastFrameTime;
+                // Adjust for consistent speed regardless of frame rate, capping at 100ms to prevent jumps
+                const timeFactor = Math.min(deltaTime, 100) / 16.67; 
+                state.time += state.speedMultiplier * timeFactor;
+                state.dom.timeScrub.value = state.time;
+                if (Math.random() < 0.1) ui.updateDateDisplay();
+            }
+            state.lastFrameTime = timestamp;
+
+            this.checkResonance();
+            this.handleResonanceState();
+            viz.render();
+            
+            window.requestAnimationFrame(this.mainLoop.bind(this));
+        },
+
+        init() {
+            // Cache DOM elements FIRST to prevent race conditions.
+            ui.cacheDOM();
+
+            // Set initial time to current days since start
+            const startDate = constants.START_DATE;
+            const now = new Date();
+            const daysSince = Math.floor((now - startDate) / 86400000);
+            state.time = daysSince;
+            state.dom.timeScrub.max = daysSince + 2000; // Extend max
+
+            // Start loading animation
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress = Math.min(100, progress + 10);
+                if (state.dom.loadingProgressBar) {
+                    state.dom.loadingProgressBar.style.width = `${progress}%`;
+                }
+                if (progress === 100) clearInterval(interval);
+            }, 50);
+
+            // Defer main setup to allow loading screen to render
+            setTimeout(() => {
+                controls.loadSettings();
+                ui.updateUIFromState();
+                sound.init();
+                
+                // Setup visualization, which creates the context
+                if (viz.setup()) {
+                    // Setup controls, which adds event listeners (including scrubber)
+                    controls.init(); 
+                    
+                    // Start the main loop
+                    state.lastFrameTime = performance.now();
+                    window.requestAnimationFrame(this.mainLoop.bind(this));
+                } else {
+                    // If viz fails, still init controls so the UI doesn't completely break
+                    controls.init();
+                }
+                
+                // Fetch stock price
+                this.fetchStockPrice();
+
+                // Hide loading screen
+                state.dom.loading.classList.add('done');
+            }, 500);
+        }
+      };
+
+      // --- START THE APP ---
+      document.addEventListener('DOMContentLoaded', () => app.init());
+
+    })(window, document);
+  </script>
+</body>
+</html>
