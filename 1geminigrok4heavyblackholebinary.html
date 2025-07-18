@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Black Hole Merger - Enhanced Edition v4</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for a cleaner look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tone.js for audio synthesis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        /* Basic body styles */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Inter', sans-serif;
+            color: #e5e7eb;
+        }
+        canvas { display: block; }
+
+        /* Custom styles for lil-gui */
+        .lil-gui {
+            --font-size: 14px;
+            --width: 320px;
+            --background-color: rgba(0, 0, 0, 0.6);
+            --widget-color: #a78bfa; /* violet-400 */
+            --hover-color: #c4b5fd; /* violet-300 */
+            --text-color: #e5e7eb; /* gray-200 */
+            --font-family: 'Roboto Mono', monospace;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+        }
+        .lil-gui.root > .title {
+            color: #fff;
+            background-color: rgba(255,255,255,0.05);
+        }
+        .lil-gui .name {
+            font-weight: 500;
+        }
+        .lil-gui .controller.boolean .label {
+            border-left-color: rgba(255,255,255,0.2);
+        }
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.5rem;
+            font-family: 'Roboto Mono', monospace;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        /* Event Log Styling */
+        #event-log {
+            max-height: 150px;
+            overflow-y: auto;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        #event-log::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        #event-log p {
+            margin: 0 0 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.2);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <!-- Using a recent, stable version of Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body class="bg-black">
+    <!-- Loading overlay -->
+    <div id="loader">Initializing Simulation...</div>
+
+    <!-- Enhanced UI Container -->
+    <div id="ui-container" class="fixed inset-0 p-4 sm:p-6 lg:p-8 pointer-events-none text-gray-200 font-mono text-sm">
+        <!-- Top-left Info Panel -->
+        <div id="info-panel" class="absolute top-4 left-4 sm:top-6 sm:left-6 lg:top-8 lg:left-8 bg-black/60 backdrop-blur-md p-4 rounded-lg border border-white/10 shadow-lg pointer-events-auto transition-all duration-300 opacity-100">
+            <!-- Info content will be populated by JS -->
+        </div>
+
+        <!-- Top-right Event Log -->
+        <div class="absolute top-4 right-4 sm:top-6 sm:right-6 lg:top-8 lg:right-8 w-64">
+             <div id="event-log-container" class="bg-black/60 backdrop-blur-md p-3 rounded-lg border border-white/10 shadow-lg pointer-events-auto transition-all duration-300 opacity-100">
+                <h4 class="text-sm font-bold text-white mb-2 font-sans border-b border-white/10 pb-1">Event Log</h4>
+                <div id="event-log" class="text-xs"></div>
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-lg px-4">
+            <!-- Timeline -->
+            <div id="timeline-container" class="bg-black/60 backdrop-blur-md p-3 rounded-lg border border-white/10 shadow-lg mb-4 pointer-events-auto">
+                <div id="phase" class="text-center text-xs font-bold tracking-widest uppercase mb-2 text-cyan-300 transition-colors duration-500">INSPIRAL</div>
+                <div id="progress" class="w-full h-2 bg-white/10 rounded-full overflow-hidden shadow-inner">
+                    <div id="progressBar" class="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-500 ease-out" style="width: 0%;"></div>
+                </div>
+            </div>
+            <!-- Control Buttons -->
+            <div id="controls" class="flex justify-center items-center gap-2 bg-black/60 backdrop-blur-md p-2 rounded-lg border border-white/10 shadow-lg pointer-events-auto">
+                <!-- Buttons are populated by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        // --- Constants ---
+        const CONSTANTS = {
+            G: 0.1, // Gravitational constant
+            C: 30, // Speed of light (for simulation purposes)
+            JET_LENGTH: 800,
+            MAX_PARTICLES: 2000,
+            MAX_BH: 2, // Max black holes for shader arrays
+        };
+
+        // --- Global State ---
+        let scene, camera, renderer, controls, composer;
+        let starfieldMaterial, spacetimeGrid;
+        let blackHoles = [], massStream = null, jets = [], particleSystems = [];
+        let simulationActive = true, initialDistance = 70, simulationTime = 0, mergerTime = -1;
+        let cameraTarget;
+        let logger, soundManager;
+        let smaaPass, lensingPass, wavePass, godRayPass, bloomPass, colorCorrectionPass;
+        let gui;
+
+        const params = {
+            mass1: 40, mass2: 25, distance: 70, timeScale: 1.0, isPaused: false,
+            orbitalDecay: 0.005, diskEmissivity: 3.0, bloomIntensity: 1.5, finalSpin: 0.9, 
+            cameraShake: true, cinematicCamera: false, showGrid: false, showInfo: true, 
+            quality: 'ultra', particleDensity: 1.5, lensingStrength: 1.0, enableSound: true,
+            focusBH1: () => setCameraFocus(0), focusBH2: () => setCameraFocus(1),
+            focusCenter: () => setCameraFocus(-1),
+            resetCamera: () => { setCameraFocus(-1); if(controls) { controls.reset(); camera.position.set(0, 40, 90); } },
+            start: () => { if(soundManager) soundManager.initialize(); initSimulation(); },
+            preset1: () => applyPreset(40, 25, 70), preset2: () => applyPreset(30, 30, 80),
+            preset3: () => applyPreset(50, 10, 100), preset4: () => applyPreset(140, 100, 120)
+        };
+
+        // --- UI Management ---
+        class EventLogger {
+            constructor(elementId) {
+                this.logElement = document.getElementById(elementId);
+                this.logHistory = [];
+            }
+            log(message) {
+                if (!this.logElement) return;
+                const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const newLog = `<p><span class="text-gray-400">${timestamp}</span> &gt; ${message}</p>`;
+                this.logElement.innerHTML = newLog + this.logElement.innerHTML;
+                this.logHistory.unshift(newLog);
+                if (this.logHistory.length > 10) {
+                    this.logHistory.pop();
+                    if(this.logElement.lastElementChild) this.logElement.lastElementChild.remove();
+                }
+            }
+            clear() {
+                if(this.logElement) this.logElement.innerHTML = "";
+                this.logHistory = [];
+            }
+        }
+
+        // --- Audio Management ---
+        class SoundManager {
+            constructor() {
+                this.isInitialized = false;
+                this.inspiralSynth = null;
+                this.ringdownSynth = null;
+                this.mergerNoise = null;
+            }
+            async initialize() {
+                if (this.isInitialized) return;
+                await Tone.start();
+                this.inspiralSynth = new Tone.MonoSynth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1 },
+                    filterEnvelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1, baseFrequency: 200, octaves: 4 }
+                }).toDestination();
+                this.ringdownSynth = new Tone.PolySynth(Tone.Synth, {
+                    envelope: { attack: 0.01, decay: 4, sustain: 0, release: 1 },
+                }).toDestination();
+                this.mergerNoise = new Tone.NoiseSynth({
+                    noise: { type: 'white' },
+                    envelope: { attack: 0.005, decay: 0.3, sustain: 0 }
+                }).toDestination();
+                this.isInitialized = true;
+                logger.log("Audio engine initialized.");
+            }
+            updateInspiral(frequency) {
+                if (!this.isInitialized || !params.enableSound) return;
+                this.inspiralSynth.setNote(frequency, Tone.now());
+            }
+            triggerMerger() {
+                if (!this.isInitialized || !params.enableSound) return;
+                this.inspiralSynth.triggerRelease(Tone.now());
+                this.mergerNoise.triggerAttackRelease("8n", Tone.now());
+                this.ringdownSynth.triggerAttackRelease(["C4", "E4", "G4"], "4n", Tone.now());
+            }
+            stopAll() {
+                if (!this.isInitialized) return;
+                this.inspiralSynth.triggerRelease(Tone.now());
+            }
+        }
+        
+        // --- High Quality Spacetime Grid ---
+        class SpacetimeGrid {
+            constructor() {
+                this.group = new THREE.Group();
+                this.material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        bhPositions: { value: Array(CONSTANTS.MAX_BH).fill(0).map(()=>new THREE.Vector3()) },
+                        bhMasses: { value: new Float32Array(CONSTANTS.MAX_BH) },
+                        time: { value: 0 },
+                        waveAmplitude: { value: 0.0 },
+                        waveOrigin: { value: new THREE.Vector3() },
+                        waveTime: { value: 0.0 }
+                    },
+                    vertexShader: `
+                        uniform vec3 bhPositions[${CONSTANTS.MAX_BH}]; uniform float bhMasses[${CONSTANTS.MAX_BH}]; uniform float time; uniform float waveAmplitude; uniform vec3 waveOrigin; uniform float waveTime;
+                        varying float vDistortion; varying vec3 vColor;
+                        void main() {
+                            vec3 pos = position; float totalDistortion = 0.0;
+                            for(int i = 0; i < ${CONSTANTS.MAX_BH}; i++) {
+                                if(bhMasses[i] > 0.0) {
+                                    vec3 delta = pos - bhPositions[i]; delta.y = 0.0; float dist = length(delta);
+                                    float warp = bhMasses[i] / (dist*dist + 25.0) * 20.0;
+                                    pos.y -= warp; totalDistortion += warp / 20.0;
+                                    // Lense-Thirring (Frame-Dragging) Effect
+                                    float frameDrag = bhMasses[i] / (dist*dist*dist + 100.0) * 100.0;
+                                    float angle = frameDrag * 0.1;
+                                    float c = cos(angle); float s = sin(angle);
+                                    mat2 rot = mat2(c, -s, s, c);
+                                    pos.xz = rot * pos.xz;
+                                }
+                            }
+                            float waveDist = length(pos.xz - waveOrigin.xz); float wave = sin(waveDist*0.3-waveTime*15.0)*waveAmplitude; wave *= exp(-waveDist*0.01)*exp(-waveTime*2.0); pos.y += wave*5.0;
+                            vDistortion = totalDistortion; vColor = mix(vec3(0.0,0.5,1.0),vec3(1.0,0.0,0.5),totalDistortion*0.2);
+                            gl_Position = projectionMatrix*modelViewMatrix*vec4(pos,1.0);
+                        }`,
+                    fragmentShader: `
+                        uniform float time; varying float vDistortion; varying vec3 vColor;
+                        void main() {
+                            float intensity = 0.3 + vDistortion * 0.7;
+                            vec3 color = vColor; float pulse = sin(time*3.0+vDistortion*10.0)*0.1+0.9; intensity *= pulse;
+                            gl_FragColor = vec4(color, 0.3 * intensity);
+                        }`,
+                    transparent: true, wireframe: true, blending: THREE.AdditiveBlending, depthWrite: false
+                });
+                const geometry = new THREE.PlaneGeometry(300, 300, 60, 60);
+                geometry.rotateX(-Math.PI / 2);
+                const mesh = new THREE.Mesh(geometry, this.material);
+                mesh.position.y = -10;
+                this.group.add(mesh);
+                scene.add(this.group);
+                this.group.visible = false;
+            }
+            update(blackHoles, deltaTime) {
+                for(let i = 0; i < CONSTANTS.MAX_BH; i++) {
+                    if (i < blackHoles.length) {
+                        this.material.uniforms.bhPositions.value[i].copy(blackHoles[i].position);
+                        this.material.uniforms.bhMasses.value[i] = blackHoles[i].mass;
+                    } else {
+                        this.material.uniforms.bhMasses.value[i] = 0.0;
+                    }
+                }
+                this.material.uniforms.time.value += deltaTime;
+                this.material.uniforms.waveTime.value += deltaTime;
+            }
+            triggerWave(origin, amplitude) {
+                this.material.uniforms.waveOrigin.value.copy(origin);
+                this.material.uniforms.waveAmplitude.value = amplitude;
+                this.material.uniforms.waveTime.value = 0;
+            }
+        }
+
+        // --- BlackHole Class ---
+        class BlackHole {
+            constructor(mass, position, velocity, isPrimary = false) {
+                this.mass = mass; this.position = position; this.velocity = velocity;
+                this.isPrimary = isPrimary; this.isMerged = false; 
+                this.radius = Math.pow(mass, 1/3);
+                this.spinMagnitude = 0; this.precessionAxis = new THREE.Vector3(0, 1, 0);
+                this.group = new THREE.Group();
+                
+                const eventHorizonGeometry = new THREE.SphereGeometry(this.radius, 128, 64);
+                this.eventHorizon = new THREE.Mesh(eventHorizonGeometry, new THREE.MeshBasicMaterial({ color: 0x000000 }));
+                this.group.add(this.eventHorizon);
+                
+                this.light = new THREE.PointLight(isPrimary ? 0xffaa66 : 0x6699ff, 2, 300, 2);
+                this.group.add(this.light);
+
+                this.createAccretionDisk();
+                scene.add(this.group);
+                this.createParticleSystem();
+            }
+            createAccretionDisk() {
+                const diskInner = this.radius * 1.5; const diskOuter = this.radius * 4;
+                this.diskMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: { value: 0 }, innerRadius: { value: diskInner }, outerRadius: { value: diskOuter },
+                        emissiveIntensity: { value: params.diskEmissivity },
+                        primaryColor: { value: this.isPrimary ? new THREE.Color(0xff8800) : new THREE.Color(0x0088ff) },
+                        ringdown: { value: 0.0 }, tidalForce: { value: new THREE.Vector3() },
+                        cameraPos: { value: new THREE.Vector3() }, bhRadius: { value: this.radius }
+                    },
+                    vertexShader: `
+                        uniform float time; uniform float ringdown; uniform vec3 tidalForce;
+                        varying vec2 vUv; varying vec3 vPos; varying vec3 vWorldPosition;
+                        void main() {
+                            vUv = uv; vPos = position; vec3 pos = position;
+                            
+                            // --- ENHANCEMENT: Tidal Deformation ---
+                            float tidalMag = length(tidalForce);
+                            if (tidalMag > 0.00001) {
+                                vec3 dirToForce = normalize(tidalForce);
+                                // Alignment of the point on the disk with the direction of the force
+                                float alignment = dot(normalize(pos.xyz), dirToForce);
+                                // pow(alignment, 2.0) creates bulges on both sides (at alignment=1 and alignment=-1)
+                                float bulge = pow(alignment, 2.0);
+                                // Deform position outwards along its radial direction
+                                pos += normalize(pos) * bulge * tidalMag * 20000.0; // Magic number for visual scale
+                            }
+
+                            if (ringdown > 0.0) {
+                                float r = length(pos.xz); float angle = atan(pos.z, pos.x);
+                                pos.y += sin(r*0.5-time*10.0)*sin(angle*4.0) * ringdown*r*0.1;
+                            }
+                            vWorldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                        }`,
+                    fragmentShader: `
+                        uniform float time; uniform float innerRadius; uniform float outerRadius; uniform float emissiveIntensity;
+                        uniform vec3 primaryColor; uniform vec3 cameraPos; uniform float bhRadius;
+                        varying vec2 vUv; varying vec3 vPos; varying vec3 vWorldPosition;
+                        float noise(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+                        float fbm(vec2 p){float v=0.0;float a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.0;a*=0.5;}return v;}
+                        vec3 blackbody(float t){vec3 c;t*=5000.0;if(t<6600.0){c.r=1.0;c.g=0.39*log(t/100.0)-0.63;c.b=0.54*log(t/100.0-10.0)-1.19;}else{c.r=1.29*pow(t/100.0-60.0,-0.13);c.g=1.29*pow(t/100.0-60.0,-0.07);c.b=1.0;}return clamp(c,0.0,1.0);}
+                        void main() {
+                            float dist = length(vPos); float angle = atan(vPos.z, vPos.x);
+                            float radialFade = smoothstep(innerRadius-1.0,innerRadius+1.0,dist) * (1.0-smoothstep(outerRadius-5.0,outerRadius,dist));
+                            float temp = pow(1.0-(dist-innerRadius)/(outerRadius-innerRadius),2.0);
+                            // Relativistic Effects
+                            vec3 tangent=normalize(vec3(-vPos.z,0.0,vPos.x)); vec3 velocity=tangent*0.4;
+                            vec3 viewDir=normalize(cameraPos-vWorldPosition); float doppler=dot(velocity,viewDir);
+                            float brightnessBoost=pow(1.0+doppler,4.0); temp*=(1.0+doppler*0.5);
+                            float redshift = (bhRadius*1.5)/dist; temp *= (1.0-redshift);
+                            // Visuals
+                            float turb=fbm(vec2(angle*5.0,dist*0.1)+time*0.1);
+                            float spiral=0.5+0.5*sin(angle*2.0-time+dist*0.3);
+                            float pattern=mix(spiral,turb,0.4);
+                            vec3 color=blackbody(temp)*primaryColor;
+                            float intensity=radialFade*(0.6+pattern*0.4)*emissiveIntensity*brightnessBoost;
+                            color*=intensity;
+                            gl_FragColor = vec4(color, radialFade*0.9);
+                        }`,
+                    transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false
+                });
+                const diskGeometry = new THREE.RingGeometry(diskInner, diskOuter, 128, 16);
+                diskGeometry.rotateX(-Math.PI / 2);
+                this.accretionDisk = new THREE.Mesh(diskGeometry, this.diskMaterial);
+                this.group.add(this.accretionDisk);
+            }
+            createParticleSystem() {
+                const particleCount = CONSTANTS.MAX_PARTICLES;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const velocities = new Float32Array(particleCount * 3);
+                const lifetimes = new Float32Array(particleCount);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    lifetimes[i] = 0; // Initialize for immediate respawn
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+                geometry.setAttribute('lifetime', new THREE.BufferAttribute(lifetimes, 1));
+                
+                const material = new THREE.PointsMaterial({
+                    color: this.isPrimary ? 0xffaa66 : 0x6699ff,
+                    size: 0.5,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true,
+                    depthWrite: false,
+                    opacity: params.particleDensity
+                });
+
+                this.particles = new THREE.Points(geometry, material);
+                this.particles.userData.type = 'accretion';
+                this.particles.userData.parentBH = this;
+                this.group.add(this.particles);
+                particleSystems.push(this.particles);
+            }
+            update(deltaTime) {
+                this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
+                this.group.position.copy(this.position);
+                this.diskMaterial.uniforms.time.value += deltaTime;
+                this.diskMaterial.uniforms.cameraPos.value.copy(camera.position);
+            }
+            dispose() {
+                particleSystems = particleSystems.filter(p => p.userData.parentBH !== this);
+                this.group.traverse(child => {
+                    if (child.isMesh || child.isPoints) {
+                        child.geometry.dispose();
+                        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                        else child.material.dispose();
+                    }
+                });
+                scene.remove(this.group);
+            }
+        }
+        
+        // --- MassStream Class ---
+        class MassStream {
+            constructor() {
+                this.particleCount = 1000;
+                this.geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(this.particleCount * 3);
+                this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                this.material = new THREE.LineBasicMaterial({
+                    color: 0xffa500,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                this.mesh = new THREE.Line(this.geometry, this.material);
+                scene.add(this.mesh);
+            }
+            update(p1, p2, v1, distance, deltaTime) {
+                const positions = this.mesh.geometry.attributes.position.array;
+                for (let i = 0; i < this.particleCount; i++) {
+                    const t = i / (this.particleCount - 1);
+                    const midPoint = new THREE.Vector3().lerpVectors(p1, p2, 0.5);
+                    const offset = new THREE.Vector3().crossVectors(new THREE.Vector3().subVectors(p2, p1).normalize(), new THREE.Vector3(0, 1, 0)).multiplyScalar(distance * 0.1 * Math.sin(t * Math.PI));
+                    midPoint.add(offset);
+                    const t2 = 1 - t;
+                    const point = new THREE.Vector3().addScaledVector(p1, t2 * t2).addScaledVector(midPoint, 2 * t2 * t).addScaledVector(p2, t * t);
+                    positions[i * 3] = point.x;
+                    positions[i * 3 + 1] = point.y;
+                    positions[i * 3 + 2] = point.z;
+                }
+                this.mesh.geometry.attributes.position.needsUpdate = true;
+                this.material.opacity = 0.5 * (1.0 - THREE.MathUtils.smoothstep(distance, 40, 100));
+            }
+            hide() { this.material.opacity = 0; }
+            dispose() {
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+                scene.remove(this.mesh);
+            }
+        }
+
+        // --- Physics & Merger Logic ---
+        function updatePhysics(deltaTime) {
+            if (mergerTime < 0 && blackHoles.length > 1) {
+                simulationTime += deltaTime;
+                const bh1 = blackHoles[0], bh2 = blackHoles[1];
+                const distanceVec = new THREE.Vector3().subVectors(bh2.position, bh1.position);
+                const distance = distanceVec.length();
+                updateInfoDisplay(distance);
+                const progress = 1.0 - (distance / initialDistance);
+                document.getElementById('progressBar').style.width = `${progress * 100}%`;
+                if (distance < bh1.radius + bh2.radius) { mergeBlackHoles(); return; }
+                const forceMag = CONSTANTS.G * (bh1.mass * bh2.mass) / (distance * distance);
+                const forceVec = distanceVec.clone().normalize().multiplyScalar(forceMag);
+                bh1.velocity.add(forceVec.clone().divideScalar(bh1.mass).multiplyScalar(deltaTime));
+                bh2.velocity.add(forceVec.clone().multiplyScalar(-1).divideScalar(bh2.mass).multiplyScalar(deltaTime));
+                
+                // --- ENHANCEMENT: Tidal Force Calculation ---
+                const distSq = distance * distance;
+                const tidalForceVec1 = new THREE.Vector3().subVectors(bh2.position, bh1.position).normalize().multiplyScalar(CONSTANTS.G * bh2.mass / distSq);
+                bh1.diskMaterial.uniforms.tidalForce.value.copy(tidalForceVec1);
+                const tidalForceVec2 = new THREE.Vector3().subVectors(bh1.position, bh2.position).normalize().multiplyScalar(CONSTANTS.G * bh1.mass / distSq);
+                bh2.diskMaterial.uniforms.tidalForce.value.copy(tidalForceVec2);
+
+                const decayVec = distanceVec.clone().normalize().multiplyScalar(-params.orbitalDecay * deltaTime);
+                bh1.position.add(decayVec.clone().multiplyScalar(bh2.mass / (bh1.mass+bh2.mass)));
+                bh2.position.add(decayVec.clone().multiplyScalar(-bh1.mass / (bh1.mass+bh2.mass)));
+                if(massStream) massStream.update(bh1.position, bh2.position, bh1.velocity, distance, deltaTime);
+                const gwFreq = 1 / (2 * Math.PI * Math.sqrt(Math.pow(distance, 3) / (CONSTANTS.G * (bh1.mass+bh2.mass))));
+                soundManager.updateInspiral(gwFreq * 1000 + 50);
+            }
+            blackHoles.forEach(bh => bh.update(deltaTime));
+            if(spacetimeGrid) spacetimeGrid.update(blackHoles, deltaTime);
+        }
+        
+        function updateInfoDisplay(distance) {
+            if (!params.showInfo) return;
+            const infoPanel = document.getElementById('info-panel');
+            if (!infoPanel) return;
+
+            if (blackHoles.length > 1) {
+                const totalMass = blackHoles[0].mass + blackHoles[1].mass;
+                const orbitalPeriod = 2 * Math.PI * Math.sqrt(Math.pow(distance, 3) / (CONSTANTS.G * totalMass));
+                const kineticEnergy = 0.5 * blackHoles[0].mass * blackHoles[0].velocity.lengthSq() + 0.5 * blackHoles[1].mass * blackHoles[1].velocity.lengthSq();
+                const potentialEnergy = -CONSTANTS.G * blackHoles[0].mass * blackHoles[1].mass / distance;
+                const totalEnergy = kineticEnergy + potentialEnergy;
+                const gwFrequency = 2 / orbitalPeriod;
+                
+                infoPanel.innerHTML = `
+                    <h3 class="text-lg font-bold text-white mb-2 font-sans">System State</h3>
+                    <div class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-xs">
+                        <span class="text-gray-400">Separation:</span> <span class="text-cyan-300 font-bold text-right">${distance.toFixed(1)} Rs</span>
+                        <span class="text-gray-400">Period:</span> <span class="text-cyan-300 font-bold text-right">${orbitalPeriod.toFixed(2)} s</span>
+                        <span class="text-gray-400">Total Energy:</span> <span class="text-cyan-300 font-bold text-right">${totalEnergy.toFixed(0)} E</span>
+                        <span class="text-gray-400">GW Freq:</span> <span class="text-cyan-300 font-bold text-right">${gwFrequency.toFixed(3)} Hz</span>
+                        <span class="text-gray-400">Time:</span> <span class="text-cyan-300 font-bold text-right">${simulationTime.toFixed(1)} s</span>
+                    </div>`;
+            } else if (blackHoles.length === 1) {
+                const bh = blackHoles[0];
+                infoPanel.innerHTML = `
+                    <h3 class="text-lg font-bold text-white mb-2 font-sans">Remnant Black Hole</h3>
+                    <div class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-xs">
+                        <span class="text-gray-400">Status:</span> <span class="text-green-400 font-bold text-right">Ringdown</span>
+                        <span class="text-gray-400">Mass:</span> <span class="text-cyan-300 font-bold text-right">${bh.mass.toFixed(1)} M☉</span>
+                        <span class="text-gray-400">Spin:</span> <span class="text-cyan-300 font-bold text-right">${bh.spinMagnitude.toFixed(2)} a/M</span>
+                        <span class="text-gray-400">Kick Vel:</span> <span class="text-cyan-300 font-bold text-right">${bh.velocity.length().toFixed(1)} km/s</span>
+                    </div>`;
+            }
+        }
+        
+        function mergeBlackHoles() {
+            logger.log("Collision detected! Merger initiated.");
+            soundManager.triggerMerger();
+            simulationActive = false; if(massStream) massStream.hide(); mergerTime = simulationTime;
+            const bh1 = blackHoles[0], bh2 = blackHoles[1];
+            const newMass = (bh1.mass + bh2.mass) * 0.95;
+            const newPosition = new THREE.Vector3().addVectors(bh1.position.clone().multiplyScalar(bh1.mass), bh2.position.clone().multiplyScalar(bh2.mass)).divideScalar(bh1.mass + bh2.mass);
+            
+            // --- ENHANCEMENT: Asymmetric Kick Velocity ---
+            const massRatio = Math.min(bh1.mass, bh2.mass) / Math.max(bh1.mass, bh2.mass);
+            const asymmetry = 1.0 - massRatio;
+            const kickMagnitude = asymmetry * 20; // km/s, simplified model
+            const kickVelocity = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(kickMagnitude);
+
+            triggerGravitationalWave(newPosition); triggerBloomFlash(30.0); triggerGodRayFlash(newPosition);
+            if (params.cameraShake) triggerCameraShake(1.0, newMass / 50);
+            createParticleBurst(newPosition); spacetimeGrid.triggerWave(newPosition, 0.5);
+            bh1.dispose(); bh2.dispose();
+            const mergedBH = new BlackHole(newMass, newPosition, kickVelocity, true);
+            mergedBH.isMerged = true; mergedBH.spinMagnitude = params.finalSpin;
+            mergedBH.precessionAxis = new THREE.Vector3(Math.random()-0.5, 1, Math.random()-0.5).normalize();
+            mergedBH.diskMaterial.uniforms.ringdown.value = 1.0;
+            blackHoles = [mergedBH];
+            createJets(mergedBH);
+            
+            // --- ENHANCEMENT: Update UI for Merger/Ringdown ---
+            const phaseEl = document.getElementById('phase');
+            const progressBar = document.getElementById('progressBar');
+            phaseEl.textContent = 'MERGER';
+            phaseEl.classList.remove('text-cyan-300');
+            phaseEl.classList.add('text-red-400');
+            
+            progressBar.classList.remove('from-cyan-400', 'to-purple-500');
+            progressBar.classList.add('from-red-500', 'to-orange-400');
+
+            setTimeout(() => {
+                phaseEl.textContent = 'RINGDOWN';
+                phaseEl.classList.remove('text-red-400');
+                phaseEl.classList.add('text-green-400');
+                progressBar.classList.remove('from-red-500', 'to-orange-400');
+                progressBar.classList.add('from-green-400', 'to-teal-400');
+            }, 2000);
+        }
+        
+        function createParticleBurst(position) {
+            const burstCount = 1000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(burstCount * 3);
+            const velocities = new Float32Array(burstCount * 3);
+            
+            for(let i = 0; i < burstCount; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(Math.random() * 2 - 1);
+                const speed = 20 + Math.random() * 30;
+                
+                positions[i * 3] = position.x;
+                positions[i * 3 + 1] = position.y;
+                positions[i * 3 + 2] = position.z;
+                
+                velocities[i * 3] = Math.sin(phi) * Math.cos(theta) * speed;
+                velocities[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * speed;
+                velocities[i * 3 + 2] = Math.cos(phi) * speed;
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+            
+            const material = new THREE.PointsMaterial({
+                color: 0xffffff, size: 0.2, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
+            });
+            
+            const burst = new THREE.Points(geometry, material);
+            burst.userData.type = 'burst';
+            scene.add(burst);
+            particleSystems.push(burst);
+        }
+
+        // --- Jet Creation ---
+        function createJets(parentBH) {
+            logger.log("Relativistic jets launched from remnant.");
+            const jetMaterial = new THREE.ShaderMaterial({
+                uniforms: { time: { value: 0 }, opacity: { value: 1.0 } },
+                vertexShader: `varying vec2 vUv; varying float vY; void main() { vUv = uv; vY = position.y; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+                fragmentShader: `
+                    uniform float time; uniform float opacity; varying vec2 vUv; varying float vY;
+                    float noise(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,45.543)))*43758.5453);}
+                    void main() {
+                        float height=abs(vY)/${CONSTANTS.JET_LENGTH.toFixed(1)};
+                        float radialFade=1.0-smoothstep(0.0,1.0,vUv.x);
+                        float heightFade=1.0-smoothstep(0.3,1.0,height);
+                        float pulse=0.5+0.5*sin(vY*0.05-time*5.0);
+                        // Add shock diamonds (knots)
+                        float knots = pow(noise(vec3(vY*0.1, time*0.5, 0.0)), 12.0);
+                        vec3 color=mix(vec3(0.2,0.2,1.0),vec3(1.0,0.2,1.0),pulse);
+                        color += vec3(1.0, 1.0, 0.8) * knots * 2.0;
+                        float alpha=opacity*radialFade*heightFade*(0.5+pulse*0.5);
+                        gl_FragColor=vec4(color,alpha);
+                    }`,
+                transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false
+            });
+            const jetGeometry = new THREE.CylinderGeometry(parentBH.radius*0.15, parentBH.radius*0.01, CONSTANTS.JET_LENGTH, 32, 32, true);
+            const jetTop = new THREE.Mesh(jetGeometry, jetMaterial.clone()); jetTop.position.y = CONSTANTS.JET_LENGTH/2;
+            const jetBottom = new THREE.Mesh(jetGeometry, jetMaterial); jetBottom.position.y = -CONSTANTS.JET_LENGTH/2; jetBottom.rotation.x = Math.PI;
+            parentBH.group.add(jetTop, jetBottom); jets = [jetTop, jetBottom];
+        }
+
+        // --- Post-Processing ---
+        function setupPostProcessing() {
+            composer = new EffectComposer(renderer);
+            composer.addPass(new RenderPass(scene, camera));
+            
+            lensingPass = new ShaderPass({
+                uniforms: { 
+                    tDiffuse: { value: null }, 
+                    strength: { value: 1.0 },
+                    bhPositions: { value: Array(CONSTANTS.MAX_BH).fill(0).map(()=>new THREE.Vector2()) },
+                    bhMasses: { value: new Float32Array(CONSTANTS.MAX_BH) }, 
+                    bhCount: { value: 0 },
+                    aspect: { value: window.innerWidth / window.innerHeight }
+                },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+                fragmentShader: `
+                    uniform sampler2D tDiffuse; uniform float strength; varying vec2 vUv;
+                    uniform vec2 bhPositions[${CONSTANTS.MAX_BH}]; uniform float bhMasses[${CONSTANTS.MAX_BH}]; uniform int bhCount; uniform float aspect;
+                    void main() {
+                        vec2 offset = vec2(0.0);
+                        for (int i = 0; i < ${CONSTANTS.MAX_BH}; i++) {
+                            if (i >= bhCount) break;
+                            vec2 pos = vUv - bhPositions[i]; pos.x *= aspect;
+                            float dist = length(pos);
+                            float einsteinRadius = sqrt(bhMasses[i] * 0.0005 * strength);
+                            float deflection = einsteinRadius * einsteinRadius / (dist + 0.0001);
+                            offset += normalize(pos) * deflection;
+                        }
+                        offset.x /= aspect;
+                        gl_FragColor = texture2D(tDiffuse, vUv - offset);
+                    }`
+            });
+            composer.addPass(lensingPass);
+            
+            wavePass = new ShaderPass({
+                uniforms: { tDiffuse: { value: null }, time: { value: -1.0 }, origin: { value: new THREE.Vector2() }, amplitude: { value: 0.0 } },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+                fragmentShader: `
+                    uniform sampler2D tDiffuse; uniform float time; uniform vec2 origin; uniform float amplitude; varying vec2 vUv;
+                    void main() {
+                        float dist = distance(vUv, origin);
+                        float strain = sin(dist * 50.0 - time * 15.0) * amplitude * exp(-time * 2.0);
+                        gl_FragColor = texture2D(tDiffuse, vUv + vec2(strain));
+                    }`
+            });
+            composer.addPass(wavePass);
+
+            godRayPass = new ShaderPass({
+                uniforms: { tDiffuse: { value: null }, lightPosition: { value: new THREE.Vector2(0.5, 0.5) }, exposure: { value: 1.0 }, decay: { value: 0.95 }, density: { value: 0.5 }, weight: { value: 0.4 }, samples: { value: 60 } },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+                fragmentShader: `
+                    uniform sampler2D tDiffuse; uniform vec2 lightPosition; uniform float exposure, decay, density, weight; uniform int samples; varying vec2 vUv;
+                    void main() {
+                        vec2 delta = vUv - lightPosition; delta *= 1.0 / float(samples) * density; float illuminationDecay = 1.0; vec4 color = texture2D(tDiffuse, vUv);
+                        for (int i = 0; i < 100; i++) { if(i>=samples) break; vUv -= delta; vec4 sampleColor = texture2D(tDiffuse, vUv); sampleColor *= illuminationDecay * weight; color += sampleColor; illuminationDecay *= decay; }
+                        gl_FragColor = color * exposure;
+                    }`
+            });
+            godRayPass.enabled = false;
+            composer.addPass(godRayPass);
+
+            bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), params.bloomIntensity, 0.4, 0.1);
+            composer.addPass(bloomPass);
+            smaaPass = new SMAAPass(window.innerWidth, window.innerHeight);
+            composer.addPass(smaaPass);
+            colorCorrectionPass = new ShaderPass({
+                uniforms: { tDiffuse: { value: null }, exposure: { value: 1.0 }, contrast: { value: 1.1 }, saturation: { value: 1.2 } },
+                 vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+                 fragmentShader: `
+                    uniform sampler2D tDiffuse; uniform float exposure, contrast, saturation; varying vec2 vUv;
+                    vec3 adjustSaturation(vec3 color, float sat) { float gray = dot(color, vec3(0.299, 0.587, 0.114)); return mix(vec3(gray), color, sat); }
+                    void main() {
+                        vec4 color = texture2D(tDiffuse, vUv);
+                        color.rgb *= exposure;
+                        color.rgb = (color.rgb - 0.5) * contrast + 0.5;
+                        color.rgb = adjustSaturation(color.rgb, saturation);
+                        float vignette = smoothstep(1.0, 0.4, length(vUv - 0.5)); color.rgb *= vignette;
+                        gl_FragColor = color;
+                    }`
+            });
+            composer.addPass(colorCorrectionPass);
+        }
+
+        // --- GUI Configuration ---
+        function setupGUI() {
+            if(gui) gui.destroy();
+            gui = new GUI({ title: 'Simulation Controls' });
+            const setupFolder = gui.addFolder('System Setup');
+            setupFolder.add(params, 'mass1', 10, 150).name('Mass 1 (M☉)');
+            setupFolder.add(params, 'mass2', 10, 150).name('Mass 2 (M☉)');
+            setupFolder.add(params, 'distance', 50, 200).name('Initial Distance');
+            setupFolder.add(params, 'start').name('🚀 Launch Simulation');
+            
+            const directorFolder = gui.addFolder('Director Controls');
+            directorFolder.add(params, 'timeScale', 0.1, 5.0).name('Time Scale');
+            directorFolder.add(params, 'cinematicCamera').name('Cinematic Camera');
+            directorFolder.add(params, 'focusBH1').name('Focus on Black Hole 1');
+            directorFolder.add(params, 'focusBH2').name('Focus on Black Hole 2');
+            directorFolder.add(params, 'focusCenter').name('Focus on Center');
+            directorFolder.add(params, 'resetCamera').name('Reset Camera');
+
+            const visualFolder = gui.addFolder('Visual Controls');
+            visualFolder.add(params, 'quality', ['low', 'medium', 'high', 'ultra']).name('Quality').onChange(updateQuality);
+            visualFolder.add(params, 'enableSound').name('Enable Sound').onChange(v => { if(!v && soundManager) soundManager.stopAll(); });
+            visualFolder.add(params, 'diskEmissivity', 0, 10).name('Disk Brightness');
+            visualFolder.add(params, 'bloomIntensity', 0, 5).name('Bloom Intensity').onChange(v => {if(bloomPass) bloomPass.strength = v;});
+            visualFolder.add(params, 'showGrid').name('Show Spacetime Grid').onChange(v => {if(spacetimeGrid) spacetimeGrid.group.visible = v;});
+            visualFolder.add(params, 'showInfo').name('Show Info Display').onChange(v => document.getElementById('info-panel').style.opacity = v ? '1' : '0');
+        
+            const advancedFolder = gui.addFolder('Advanced Physics');
+            advancedFolder.add(params, 'orbitalDecay', 0, 0.02).name('Orbital Decay Rate');
+            advancedFolder.add(params, 'finalSpin', 0, 0.98, 0.01).name('Final BH Spin (a/M)');
+            advancedFolder.add(params, 'cameraShake').name('Camera Shake');
+            advancedFolder.add(params, 'lensingStrength', 0, 2).name('Lensing Strength').onChange(v => {if(lensingPass) lensingPass.uniforms.strength.value = v;});
+        }
+
+        // --- ENHANCEMENT: Create UI Control Buttons ---
+        function createControls() {
+            const controlsContainer = document.getElementById('controls');
+            if (!controlsContainer) return;
+
+            controlsContainer.innerHTML = ''; // Clear any placeholders
+
+            const buttonClasses = "flex items-center justify-center h-10 w-10 bg-black/20 hover:bg-white/20 rounded-md transition-colors duration-200 backdrop-blur-sm text-gray-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-400";
+
+            // Play/Pause Button
+            const pauseButton = document.createElement('button');
+            pauseButton.id = 'pause-button';
+            pauseButton.className = buttonClasses;
+            pauseButton.title = "Play/Pause (Spacebar)";
+            pauseButton.innerHTML = `<svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="hidden" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`;
+            pauseButton.onclick = togglePause;
+            controlsContainer.appendChild(pauseButton);
+
+            // Restart Button
+            const restartButton = document.createElement('button');
+            restartButton.className = buttonClasses;
+            restartButton.title = "Restart Simulation (R)";
+            restartButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>`;
+            restartButton.onclick = () => initSimulation();
+            controlsContainer.appendChild(restartButton);
+        }
+
+        function togglePause() {
+            params.isPaused = !params.isPaused;
+            document.getElementById('pause-icon').classList.toggle('hidden', params.isPaused);
+            document.getElementById('play-icon').classList.toggle('hidden', !params.isPaused);
+        }
+
+
+        // --- Main Simulation Functions ---
+        function initSimulation() {
+            logger.clear();
+            logger.log("Initializing new simulation...");
+            blackHoles.forEach(bh => bh.dispose());
+            if (massStream) massStream.dispose();
+            particleSystems.forEach(ps => { scene.remove(ps); ps.geometry.dispose(); ps.material.dispose(); });
+            particleSystems = []; jets = []; blackHoles = [];
+            
+            simulationTime = 0; mergerTime = -1; simulationActive = true;
+
+            // Reset UI states
+            const phaseEl = document.getElementById('phase');
+            phaseEl.textContent = 'INSPIRAL';
+            phaseEl.className = 'text-center text-xs font-bold tracking-widest uppercase mb-2 text-cyan-300 transition-colors duration-500';
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = '0%';
+            progressBar.className = 'h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-500 ease-out';
+            if (params.isPaused) { togglePause(); } // Ensure play icon is showing if paused
+            
+            const m1 = params.mass1, m2 = params.mass2, dist = params.distance;
+            initialDistance = dist;
+            const totalMass = m1 + m2;
+            const v = Math.sqrt(CONSTANTS.G * totalMass / dist);
+            const v1 = v * m2 / totalMass, v2 = v * m1 / totalMass;
+            const r1 = dist * m2 / totalMass, r2 = dist * m1 / totalMass;
+            
+            const bh1 = new BlackHole(m1, new THREE.Vector3(-r1, 0, 0), new THREE.Vector3(0, 0, -v1), true);
+            const bh2 = new BlackHole(m2, new THREE.Vector3(r2, 0, 0), new THREE.Vector3(0, 0, v2), false);
+            
+            blackHoles.push(bh1, bh2);
+            massStream = new MassStream();
+            if(wavePass) wavePass.uniforms.time.value = -1.0;
+            if(godRayPass) godRayPass.enabled = false;
+            setCameraFocus(-1);
+            logger.log(`BH1: ${m1} M☉, BH2: ${m2} M☉.`);
+        }
+
+        function applyPreset(m1, m2, d) {
+            params.mass1 = m1; params.mass2 = m2; params.distance = d;
+            setupGUI(); // Recreate GUI to update controllers
+            initSimulation();
+        }
+
+        function updateQuality(quality) {
+            let pixelRatio = 1; let samples = 30;
+            switch(quality) {
+                case 'low': pixelRatio = 1; samples = 30; break;
+                case 'medium': pixelRatio = Math.min(window.devicePixelRatio, 1.5); samples = 60; break;
+                case 'high': case 'ultra': pixelRatio = Math.min(window.devicePixelRatio, 2); samples = 80; break;
+            }
+            renderer.setPixelRatio(pixelRatio); composer.setPixelRatio(pixelRatio);
+            if(godRayPass) godRayPass.uniforms.samples.value = samples;
+            logger.log(`Quality set to ${quality}.`);
+        }
+
+        let shakeDuration = 0, shakeIntensity = 0;
+        function triggerCameraShake(duration = 0.5, intensity = 0.5) { shakeDuration = duration; shakeIntensity = intensity; }
+        function updateCameraShake(deltaTime) { 
+            if (shakeDuration > 0) { 
+                shakeDuration -= deltaTime;
+                const shake = shakeIntensity * (shakeDuration / 0.5);
+                camera.position.x += (Math.random() - 0.5) * shake; 
+                camera.position.y += (Math.random() - 0.5) * shake;
+            } 
+        }
+        
+        function triggerGravitationalWave(origin) { 
+            const screenPos = origin.clone().project(camera); 
+            wavePass.uniforms.origin.value.set((screenPos.x + 1) / 2, (screenPos.y + 1) / 2); 
+            wavePass.uniforms.time.value = 0.0; 
+            wavePass.uniforms.amplitude.value = 0.04; 
+        }
+        
+        function triggerBloomFlash(strength) { 
+            let flashStrength = strength; 
+            const flashInterval = setInterval(() => { 
+                bloomPass.strength = flashStrength; 
+                flashStrength *= 0.9;
+                if (flashStrength <= params.bloomIntensity) { 
+                    bloomPass.strength = params.bloomIntensity; 
+                    clearInterval(flashInterval); 
+                } 
+            }, 16); 
+        }
+
+        function triggerGodRayFlash(origin) {
+            const screenPos = origin.clone().project(camera);
+            godRayPass.enabled = true;
+            godRayPass.uniforms.lightPosition.value.set((screenPos.x + 1) / 2, (screenPos.y + 1) / 2);
+            godRayPass.uniforms.exposure.value = 1.0;
+        }
+        
+        let focusIndex = -1;
+        function setCameraFocus(index) { focusIndex = index; params.cinematicCamera = false; }
+
+        function updateCamera(time, deltaTime) {
+            let targetPos = new THREE.Vector3();
+            if (focusIndex === -1 && blackHoles.length > 1) {
+                const totalMass = blackHoles[0].mass + blackHoles[1].mass;
+                targetPos.addScaledVector(blackHoles[0].position, blackHoles[0].mass / totalMass);
+                targetPos.addScaledVector(blackHoles[1].position, blackHoles[1].mass / totalMass);
+            } else if (focusIndex >= 0 && blackHoles[focusIndex]) {
+                targetPos.copy(blackHoles[focusIndex].position);
+            } else if (blackHoles.length === 1) {
+                targetPos.copy(blackHoles[0].position);
+            }
+            cameraTarget.position.lerp(targetPos, 0.1);
+            controls.target.lerp(cameraTarget.position, 0.1);
+
+            // --- ENHANCEMENT: Cinematic Camera Movement ---
+            if (params.cinematicCamera && focusIndex === -1) {
+                camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), deltaTime * 0.1);
+                camera.lookAt(cameraTarget.position);
+            }
+        }
+        
+        function updateAllParticleSystems(deltaTime) {
+             for (let i = particleSystems.length - 1; i >= 0; i--) {
+                const system = particleSystems[i];
+                const type = system.userData.type;
+
+                if (type === 'accretion') {
+                    const bh = system.userData.parentBH;
+                    if (!bh) continue;
+
+                    const positions = system.geometry.attributes.position.array;
+                    const velocities = system.geometry.attributes.velocity.array;
+                    const lifetimes = system.geometry.attributes.lifetime.array;
+                    
+                    for (let j = 0; j < lifetimes.length; j++) {
+                        lifetimes[j] -= deltaTime * 0.1;
+                        
+                        if (lifetimes[j] <= 0) {
+                            // Respawn
+                            const angle = Math.random() * Math.PI * 2;
+                            const radius = bh.radius * 1.5 + Math.random() * bh.radius * 2.5;
+                            
+                            positions[j * 3] = Math.cos(angle) * radius;
+                            positions[j * 3 + 1] = (Math.random() - 0.5) * 2;
+                            positions[j * 3 + 2] = Math.sin(angle) * radius;
+
+                            const speed = Math.sqrt(CONSTANTS.G * bh.mass / radius) * (0.8 + Math.random() * 0.4);
+                            velocities[j * 3] = -Math.sin(angle) * speed;
+                            velocities[j * 3 + 1] = (Math.random() - 0.5) * 0.1;
+                            velocities[j * 3 + 2] = Math.cos(angle) * speed;
+                            
+                            lifetimes[j] = 1.0 + Math.random();
+                        } else {
+                            // Update position with gravity
+                            const x = positions[j * 3];
+                            const z = positions[j * 3 + 2];
+                            const r = Math.sqrt(x * x + z * z);
+                            
+                            if (r > 0.1) { // Avoid division by zero
+                                const accel = -CONSTANTS.G * bh.mass / (r * r);
+                                velocities[j * 3] += (x / r) * accel * deltaTime;
+                                velocities[j * 3 + 2] += (z / r) * accel * deltaTime;
+                            }
+                            
+                            positions[j * 3] += velocities[j * 3] * deltaTime;
+                            positions[j * 3 + 1] += velocities[j * 3 + 1] * deltaTime;
+                            positions[j * 3 + 2] += velocities[j * 3 + 2] * deltaTime;
+                        }
+                    }
+                    system.geometry.attributes.position.needsUpdate = true;
+                    system.geometry.attributes.lifetime.needsUpdate = true;
+                    system.material.opacity = params.particleDensity;
+                } else if (type === 'burst') {
+                    const positions = system.geometry.attributes.position.array;
+                    const velocities = system.geometry.attributes.velocity.array;
+                    for(let j = 0; j < positions.length / 3; j++) {
+                        positions[j * 3] += velocities[j * 3] * deltaTime;
+                        positions[j * 3 + 1] += velocities[j * 3 + 1] * deltaTime;
+                        positions[j * 3 + 2] += velocities[j * 3 + 2] * deltaTime;
+                        velocities[j * 3] *= 0.99;
+                        velocities[j * 3 + 1] *= 0.99;
+                        velocities[j * 3 + 2] *= 0.99;
+                    }
+                    system.geometry.attributes.position.needsUpdate = true;
+                    system.material.opacity -= deltaTime * 0.5;
+                    if (system.material.opacity <= 0) {
+                        scene.remove(system);
+                        system.geometry.dispose();
+                        system.material.dispose();
+                        particleSystems.splice(i, 1);
+                    }
+                }
+            }
+        }
+
+        // --- Main Animation Loop ---
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const effectiveDeltaTime = clock.getDelta();
+            const timeScale = params.isPaused ? 0 : params.timeScale;
+            const deltaTime = effectiveDeltaTime * timeScale;
+            const elapsedTime = clock.getElapsedTime();
+            if(simulationActive) updatePhysics(deltaTime);
+            controls.update();
+            updateCamera(elapsedTime, deltaTime);
+            updateCameraShake(deltaTime);
+
+            // Update post-processing uniforms that need per-frame updates
+            if (lensingPass) {
+                lensingPass.uniforms.bhCount.value = blackHoles.length;
+                for(let i = 0; i < CONSTANTS.MAX_BH; i++) {
+                    if (i < blackHoles.length) {
+                        const bh = blackHoles[i];
+                        const screenPos = bh.position.clone().project(camera);
+                        lensingPass.uniforms.bhPositions.value[i].set((screenPos.x + 1) / 2, (screenPos.y + 1) / 2);
+                        lensingPass.uniforms.bhMasses.value[i] = bh.mass;
+                    } else {
+                        lensingPass.uniforms.bhMasses.value[i] = 0.0; // Zero out unused slots
+                    }
+                }
+            }
+            if (wavePass && wavePass.uniforms.time.value >= 0) {
+                wavePass.uniforms.time.value += effectiveDeltaTime;
+            }
+
+            updateAllParticleSystems(deltaTime);
+            if(starfieldMaterial) starfieldMaterial.uniforms.time.value = elapsedTime;
+            if (mergerTime > 0 && blackHoles.length === 1) {
+                const bh = blackHoles[0];
+                const precession = new THREE.Quaternion().setFromAxisAngle(bh.precessionAxis, deltaTime*bh.spinMagnitude*0.1);
+                bh.group.quaternion.premultiply(precession);
+                jets.forEach(jet => { if(jet.material.uniforms.opacity.value>0) jet.material.uniforms.opacity.value*=0.995; if(jet.material.uniforms.time)jet.material.uniforms.time.value=elapsedTime; });
+                if (bh.diskMaterial.uniforms.ringdown.value>0.001) bh.diskMaterial.uniforms.ringdown.value*=(1.0-0.8*effectiveDeltaTime);
+                else bh.diskMaterial.uniforms.ringdown.value=0.0;
+            }
+            composer.render();
+        }
+        
+        // --- Initial Setup ---
+        function main() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000011, 0.0003);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+            camera.position.set(0, 40, 90);
+
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance", alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            document.body.appendChild(renderer.domElement);
+            
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            logger = new EventLogger('event-log');
+            soundManager = new SoundManager();
+
+            starfieldMaterial = new THREE.ShaderMaterial({
+                uniforms: { time: { value: 0.0 }, nebulaDensity: { value: 2.0 }, starDensity: { value: 3.0 } },
+                vertexShader: `varying vec2 vUv; varying vec3 vPosition; void main() { vUv = uv; vPosition = position; gl_Position = vec4( position, 1.0 ); }`,
+                fragmentShader: `
+                    uniform float time; uniform float nebulaDensity; uniform float starDensity; varying vec2 vUv; varying vec3 vPosition;
+                    float hash(vec3 p) { p = fract(p * vec3(443.8975, 397.2973, 491.1871)); p += dot(p, p.yxz + 19.19); return fract((p.x + p.y) * p.z); }
+                    float noise(vec3 p) { vec3 i=floor(p); vec3 f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(mix(hash(i+vec3(0,0,0)),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
+                    float fbm(vec3 p) { float v=0.0; float a=0.5; float f=1.0; for(int i=0; i<6; i++) { v+=a*noise(p*f); a*=0.5; f*=2.0; } return v; }
+                    void main() {
+                        vec3 color = vec3(0.0); vec2 uv = vUv; vec3 pos = vPosition;
+                        for(int i=0; i<5; i++) { float scale=100.0+float(i)*200.0; vec2 starUv=uv*scale; float star=hash(vec3(floor(starUv),float(i))); if(star > 0.98-float(i)*0.01) { vec2 starPos=fract(starUv)-0.5; float dist=length(starPos); float brightness=1.0-smoothstep(0.0,0.02,dist); brightness*=(0.5+0.5*sin(time*(1.0+star*5.0))); vec3 starColor=vec3(1.0); float colorType=hash(vec3(floor(starUv),float(i)+100.0)); if(colorType<0.3)starColor=vec3(1.0,0.8,0.6); else if(colorType<0.6)starColor=vec3(0.8,0.8,1.0); else if(colorType<0.8)starColor=vec3(1.0,0.6,0.4); color+=starColor*brightness*starDensity/float(i+1); } }
+                        vec3 nebulaPos=pos*0.001; float n1=fbm(nebulaPos+vec3(time*0.01,0.0,0.0)); float n2=fbm(nebulaPos*2.0-vec3(0.0,time*0.02,0.0)); float n3=fbm(nebulaPos*4.0+vec3(0.0,0.0,time*0.03)); float nebulaMask=pow(n1*0.5+n2*0.3+n3*0.2,2.0)*nebulaDensity; vec3 nc1=vec3(0.1,0.0,0.4)*n1; vec3 nc2=vec3(0.0,0.1,0.3)*n2; vec3 nc3=vec3(0.2,0.0,0.2)*n3; color+=(nc1+nc2+nc3)*0.5*nebulaMask;
+                        gl_FragColor = vec4(pow(color, vec3(0.85)), 1.0);
+                    }`,
+                side: THREE.BackSide
+            });
+            scene.add(new THREE.Mesh(new THREE.IcosahedronGeometry(2000, 4), starfieldMaterial));
+            scene.add(new THREE.AmbientLight(0x0a0a0a, 0.5));
+            
+            spacetimeGrid = new SpacetimeGrid();
+            cameraTarget = new THREE.Object3D();
+            scene.add(cameraTarget);
+
+            setupPostProcessing();
+            setupGUI();
+            createControls();
+            
+            const loader = document.getElementById('loader');
+            initSimulation();
+            animate();
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', onKeyDown);
+        }
+
+        function onWindowResize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            composer.setSize(width, height);
+            if(lensingPass) lensingPass.uniforms.aspect.value = width / height;
+            updateQuality(params.quality);
+        }
+
+        function onKeyDown(e) {
+            if (e.target.tagName === 'INPUT') return;
+            switch(e.key.toLowerCase()) {
+                case ' ': e.preventDefault(); togglePause(); break;
+                case 'c': params.cinematicCamera = !params.cinematicCamera; break;
+                case 'g': params.showGrid = !params.showGrid; spacetimeGrid.group.visible = params.showGrid; break;
+                case 'i': params.showInfo = !params.showInfo; document.getElementById('info-panel').style.opacity = params.showInfo ? '1' : '0'; break;
+                case 'r': initSimulation(); break;
+            }
+            if(gui) gui.controllers.forEach(c => c.updateDisplay());
+        }
+
+        main();
+
+    </script>
+</body>
+</html>
