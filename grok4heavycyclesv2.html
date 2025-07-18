@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Harmonic Market Resonance Analyzer – An enhanced scientific dashboard integrating key market cycles with historical price data." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harmonic Market Resonance Analyzer v2.0</title>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+    <!-- Favicon -->
+    <link rel="icon" href="https://fibonacciai.github.io/42069/power-512.png" type="image/png" />
+    <style>
+        /* Base & Theme Variables (Dark mode as default) */
+        :root {
+            --bg-color: #020010;
+            --text-color: #e0e0ff;
+            --panel-bg: rgba(10, 15, 40, 0.85);
+            --accent: #00ffff;
+            --accent-glow: rgba(0, 255, 255, 0.7);
+            --grid-color: rgba(0, 255, 255, 0.1);
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Orbitron', sans-serif;
+        }
+
+        html.light-theme {
+            --bg-color: #e8e8f8;
+            --text-color: #050518;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --accent: #0055ff;
+            --accent-glow: rgba(0, 85, 255, 0.7);
+            --grid-color: rgba(0, 85, 255, 0.2);
+        }
+
+        /* Reset & Base Styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        /* Container & Canvases */
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+        }
+
+        #gridCanvas, #cycleCanvas {
+            display: block;
+            position: absolute;
+            top: 0; left: 0;
+        }
+        #gridCanvas { z-index: 0; }
+        #cycleCanvas { z-index: 1; }
+        
+        /* Scanline Overlay for retro-futuristic effect */
+        .scanline-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* Controls Panel */
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 1100px;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--accent-glow);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+            font-family: var(--font-display);
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .controls button {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--text-color);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 5px var(--accent-glow);
+        }
+
+        .controls button:hover {
+            background: var(--accent);
+            color: var(--bg-color);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+        
+        .controls button:active {
+            transform: translateY(0);
+        }
+
+        .controls label { cursor: pointer; user-select: none; }
+        
+        .date-display {
+            font-size: 1rem;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: center;
+            flex-grow: 1;
+            color: var(--accent);
+            text-shadow: 0 0 8px var(--accent-glow);
+        }
+        
+        .time-scrub-container {
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            padding: 0 1rem;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid var(--bg-color);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid var(--bg-color);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Legend Panel */
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: var(--panel-bg);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            z-index: 10;
+            border: 1px solid var(--accent-glow);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+        .legend h3 {
+            font-family: var(--font-display);
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--accent);
+            text-shadow: 0 0 5px var(--accent-glow);
+        }
+        .legend ul { list-style: none; }
+        .legend li { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+        /* Prediction/Status Display */
+        .prediction-display {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            font-family: var(--font-display);
+            color: var(--accent);
+            background: var(--panel-bg);
+            padding: 12px 18px;
+            border-radius: 6px;
+            border: 1px solid var(--accent-glow);
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 0 0 10px var(--accent-glow);
+            transition: all 0.3s ease;
+        }
+
+        /* About Modal */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center;
+            z-index: 50; backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 2rem; border-radius: 8px; max-width: 600px;
+            width: 90%; text-align: center;
+            box-shadow: 0 0 30px var(--accent-glow);
+            border: 1px solid var(--accent);
+            color: var(--text-color);
+        }
+        .modal-content h2 { font-family: var(--font-display); color: var(--accent); margin-bottom: 1rem;}
+        .modal-content p { margin-bottom: 1rem; line-height: 1.6; }
+        .modal-close {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 2rem; cursor: pointer; color: var(--accent);
+            transition: transform 0.2s;
+        }
+        .modal-close:hover { transform: scale(1.2); }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="gridCanvas"></canvas>
+        <canvas id="cycleCanvas"></canvas>
+        <div class="scanline-overlay"></div>
+
+        <!-- Controls Panel -->
+        <div class="controls" id="controls" role="region" aria-label="Dashboard Controls">
+            <div class="control-group">
+                <button id="pause-btn" aria-label="Pause/Play">Pause</button>
+                <button id="reset-btn" aria-label="Reset">Reset</button>
+                <button id="speed-down-btn" aria-label="Slow Down">-</button>
+                <button id="speed-up-btn" aria-label="Speed Up">+</button>
+                <button id="download-btn" aria-label="Download Image">DL</button>
+                <button id="about-btn" aria-label="About">?</button>
+                <button id="theme-toggle" aria-label="Toggle Theme">Theme</button>
+            </div>
+            <div class="date-display" id="date-display">Loading Data...</div>
+            <div class="control-group">
+                <label><input type="checkbox" id="muteMusic" /> Music</label>
+                <label><input type="checkbox" id="muteThumps" /> SFX</label>
+                <label>Vol: <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="0.5" style="width: 80px;"/></label>
+            </div>
+            <div class="time-scrub-container">
+                <input type="range" id="time-scrub" min="0" step="1" value="0">
+            </div>
+        </div>
+
+        <!-- Legend Panel -->
+        <div class="legend" id="legend">
+            <h3>Market Cycles</h3>
+            <ul id="legendList"></ul>
+        </div>
+
+        <!-- Prediction/Status Display -->
+        <div id="predictionDisplay" class="prediction-display">Status: Standby</div>
+
+        <!-- About Modal -->
+        <div id="aboutModal" class="modal">
+            <div class="modal-content">
+                <span id="modalClose" class="modal-close">&times;</span>
+                <h2>About Market Resonance Analyzer</h2>
+                <p>This dashboard integrates key harmonic market cycles with historical price data (split‑adjusted) starting December 31, 2020. As time advances, the tool “plays” the historical prices and simulates forward using a compound growth model modulated by our cycles. When cycles resonate, visual and audio cues hint at potential market turning points.</p>
+                <p>Use the controls above to pause, reset, adjust playback speed, or scrub through time. This enhanced version features a dynamic visual engine for a more immersive analysis experience.</p>
+            </div>
+        </div>
+
+        <!-- Background Music -->
+        <audio id="bgMusic" src="https://fibonacciai.github.io/42069/Fury.mp3" autoplay loop></audio>
+    </div>
+
+    <script type="module">
+        "use strict";
+        (function(){
+            // --- SETTINGS & LOCAL STORAGE ---
+            function loadSettings() {
+                const defaultSettings = { muteMusic: false, muteThumps: false, lightTheme: false, musicVolume: 0.5 };
+                try {
+                    return { ...defaultSettings, ...JSON.parse(localStorage.getItem("analyzerSettingsV2") || '{}') };
+                } catch (e) {
+                    return defaultSettings;
+                }
+            }
+            function saveSettings() {
+                localStorage.setItem("analyzerSettingsV2", JSON.stringify(settings));
+            }
+            let settings = loadSettings();
+            if (settings.lightTheme) document.documentElement.classList.add("light-theme");
+
+            // --- DATE & PRICE LOGIC ---
+            const parseDateString = (dateStr) => new Date(dateStr.split("/")[2], dateStr.split("/")[0] - 1, dateStr.split("/")[1]);
+            const splitEvent = { date: new Date("2022-08-31"), factor: 0.25 };
+            const adjustPriceForSplit = (date, price) => date < splitEvent.date ? price * splitEvent.factor : price;
+
+            // --- CYCLE & RESONANCE DEFINITIONS ---
+            const cycles = [
+                { label: "1471: Market Momentum", period: 1471, color: "#00FFCC" },
+                { label: "741: Bullish Support",   period: 741,  color: "#FF00FF" },
+                { label: "147: Correction Cycle",  period: 147,  color: "#8A2BE2" },
+                { label: "55: Quick Bounce",       period: 55,   color: "#FFFF00" },
+                { label: "35: Consolidation",      period: 35,   color: "#FF4500" },
+                { label: "21: Liquidity Shift",    period: 21,   color: "#39FF14" }
+            ];
+            const RESONANCE_THRESHOLD = 0.05;
+            const RESONANCE_TIMER_MAX = 60; // Increased for longer visual effect
+            let resonanceTimers = {};
+            cycles.forEach(cycle => resonanceTimers[cycle.label] = 0);
+
+            // --- PERRIN PSEUDOPRIMES ---
+            const PERRIN_PSEUDOPRIMES_SET = new Set([271441, 904631, 16532714, 24658561, 27422714, 27664033, 46672291, 102690901, 130944133, 196075949, 214985629, 517697641, 545670533, 801123451, 855034171, 903136901, 970355431, 1091327579, 1133813669, 1143382163, 1281820527, 1332634441, 1485333533, 1502988133, 1529703421, 1653852673, 1802534549, 1893353449, 1948528349]);
+            const isPerrinPseudoprime = (n) => PERRIN_PSEUDOPRIMES_SET.has(n);
+            
+            // --- DATA & SIMULATION MODEL ---
+            const EXTRA_DAYS = 500;
+            let historicalData = [];
+            const parseCSV = (text) => {
+                const lines = text.trim().split("\n");
+                const headers = lines[0].split(",").map(h => h.trim());
+                return lines.slice(1).map(line => {
+                    const cols = line.split(",");
+                    if (cols.length < headers.length) return null;
+                    const record = {};
+                    headers.forEach((h, idx) => record[h] = cols[idx].trim());
+                    return record;
+                }).filter(Boolean);
+            };
+            const getHistoricalPriceForDate = (simDate) => {
+                for (let i = historicalData.length - 1; i >= 0; i--) {
+                    let recDate = parseDateString(historicalData[i].Date);
+                    if (recDate <= simDate) {
+                        let rawPrice = parseFloat(historicalData[i]["Close/Last"].replace(/[^0-9.]/g, ""));
+                        return adjustPriceForSplit(recDate, rawPrice);
+                    }
+                }
+                let first = historicalData[0];
+                return adjustPriceForSplit(parseDateString(first.Date), parseFloat(first["Close/Last"].replace(/[^0-9.]/g, "")));
+            };
+            const getSimulatedPrice = (simDate) => {
+                let lastRecord = historicalData[historicalData.length - 1];
+                let lastHistoricalDate = parseDateString(lastRecord.Date);
+                let lastPrice = adjustPriceForSplit(lastHistoricalDate, parseFloat(lastRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+                
+                const lookback = Math.min(20, historicalData.length);
+                let startRecord = historicalData[historicalData.length - lookback];
+                let startDate = parseDateString(startRecord.Date);
+                let startPrice = adjustPriceForSplit(startDate, parseFloat(startRecord["Close/Last"].replace(/[^0-9.]/g, "")));
+                let daysBetween = (lastHistoricalDate - startDate) / 86400000;
+                let compoundRate = daysBetween > 0 ? Math.pow(lastPrice / startPrice, 1 / daysBetween) - 1 : 0;
+                compoundRate = Math.max(compoundRate, -0.001); // Clamp steep drops
+                
+                let daysSinceLast = (simDate - lastHistoricalDate) / 86400000;
+                let simulatedPrice = lastPrice * Math.pow(1 + compoundRate, daysSinceLast);
+                
+                const composite = computeCompositeIndicator();
+                simulatedPrice *= (1 + composite * 0.02);
+                return simulatedPrice;
+            };
+            const getCurrentPrice = () => {
+                let simDate = getCurrentDate(timeVar);
+                let lastHistoricalDate = parseDateString(historicalData[historicalData.length - 1].Date);
+                return (simDate <= lastHistoricalDate) ? getHistoricalPriceForDate(simDate) : getSimulatedPrice(simDate);
+            };
+            const computeCompositeIndicator = () => cycles.reduce((indicator, cycle, idx) => indicator + (1 / (idx + 1)) * Math.sin(2 * Math.PI * ((timeVar % cycle.period) / cycle.period)), 0);
+
+            // --- AUDIO ENGINE ---
+            let audioCtx, droneOsc, droneGain;
+            const initAudioContext = () => {
+                if(audioCtx) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            };
+            const resumeAndPlayMusic = () => {
+                if (audioCtx.state === "suspended") {
+                    audioCtx.resume().then(() => {
+                        const bgMusic = document.getElementById("bgMusic");
+                        bgMusic.muted = settings.muteMusic;
+                        bgMusic.volume = settings.musicVolume;
+                        bgMusic.play().catch(err => console.error("bgMusic play error:", err));
+                    });
+                }
+            };
+            const playCueTone = (freq = 330, duration = 0.5, vol = 0.2) => {
+                if (settings.muteThumps || !audioCtx) return;
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(freq, now);
+                osc.type = "triangle";
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                gain.gain.setValueAtTime(vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                osc.stop(now + duration);
+            };
+            const startDrone = () => {
+                if (!audioCtx || droneOsc) return;
+                droneOsc = audioCtx.createOscillator();
+                droneGain = audioCtx.createGain();
+                droneOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
+                droneGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                droneOsc.connect(droneGain);
+                droneGain.connect(audioCtx.destination);
+                droneOsc.start();
+            };
+            const updateDroneSound = (activeResCount) => {
+                if (!droneOsc || !droneGain || !audioCtx) return;
+                let composite = computeCompositeIndicator();
+                let newFreq = 60 * (1 + activeResCount * 0.1 + 0.05 * composite);
+                droneOsc.frequency.linearRampToValueAtTime(newFreq, audioCtx.currentTime + 0.1);
+                let newGain = 0.05 + (activeResCount / 10);
+                droneGain.gain.linearRampToValueAtTime(newGain, audioCtx.currentTime + 0.1);
+            };
+            
+            // --- VISUALS & RENDERING ---
+            let cycleCanvas, cycleCtx, gridCanvas, gridCtx;
+            let canvasWidth, canvasHeight;
+            let timeVar = 0, isPaused = false, speedMultiplier = 0.05;
+            let triggeredResonances = new Set();
+            let particles = [], shockwaves = [], cycleTrails = cycles.map(() => []);
+
+            class Particle {
+                constructor(x, y, color, type = 'burst') {
+                    this.x = x; this.y = y; this.color = color;
+                    this.size = Math.random() * 4 + 2;
+                    this.life = type === 'trail' ? 60 : 120;
+                    this.alpha = type === 'trail' ? 0.7 : 1;
+                    const angle = Math.random() * 2 * Math.PI;
+                    const speed = type === 'trail' ? Math.random() * 1 : Math.random() * 3 + 1;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                }
+                update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.015; this.life--; }
+                draw(ctx) {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowColor = this.color;
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            class Shockwave {
+                constructor(x, y, color, maxRadius = 300) {
+                    this.x = x; this.y = y; this.color = color;
+                    this.radius = 20; this.maxRadius = maxRadius;
+                    this.life = 60; this.alpha = 0.8;
+                }
+                update() {
+                    this.radius += (this.maxRadius - this.radius) * 0.08;
+                    this.alpha -= 0.015;
+                    this.life--;
+                }
+                draw(ctx) {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = this.color;
+                    ctx.shadowBlur = 20;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            const drawGrid = () => {
+                if (!gridCtx) return;
+                gridCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                gridCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--grid-color");
+                gridCtx.lineWidth = 0.5;
+                const gridSize = 50;
+                for (let x = 0; x <= canvasWidth; x += gridSize) {
+                    gridCtx.beginPath(); gridCtx.moveTo(x, 0); gridCtx.lineTo(x, canvasHeight); gridCtx.stroke();
+                }
+                for (let y = 0; y <= canvasHeight; y += gridSize) {
+                    gridCtx.beginPath(); gridCtx.moveTo(0, y); gridCtx.lineTo(canvasWidth, y); gridCtx.stroke();
+                }
+            };
+            
+            const drawBackground = (composite) => {
+                const centerX = canvasWidth / 2, centerY = canvasHeight / 2;
+                let compNorm = (composite + 1) / 2;
+                const gradient = cycleCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, canvasWidth * 0.8);
+                const bgColor = getComputedStyle(document.documentElement).getPropertyValue("--bg-color");
+                gradient.addColorStop(0, `rgba(0, 255, 255, ${0.05 * compNorm})`);
+                gradient.addColorStop(1, bgColor);
+                cycleCtx.fillStyle = gradient;
+                cycleCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            };
+
+            const drawCyclesOrbital = (composite) => {
+                const centerX = canvasWidth / 2, centerY = canvasHeight / 2;
+                const maxRadius = Math.min(canvasWidth, canvasHeight) / 3.5;
+                let compNorm = (composite + 1) / 2;
+
+                // Central Core
+                const coreRadius = 20 + compNorm * 10;
+                const coreGlow = cycleCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius * 3);
+                coreGlow.addColorStop(0, `rgba(255, 255, 255, 0.9)`);
+                coreGlow.addColorStop(0.3, `rgba(0, 255, 255, 0.5)`);
+                coreGlow.addColorStop(1, `rgba(0, 255, 255, 0)`);
+                cycleCtx.fillStyle = coreGlow;
+                cycleCtx.fillRect(centerX - coreRadius * 3, centerY - coreRadius * 3, coreRadius * 6, coreRadius * 6);
+
+                cycles.forEach((cycle, idx) => {
+                    let orbitRadius = maxRadius * ((idx + 1.5) / (cycles.length + 1.5));
+                    let phase = (timeVar % cycle.period) / cycle.period;
+                    let angle = phase * 2 * Math.PI - Math.PI / 2;
+                    let markerX = centerX + orbitRadius * Math.cos(angle);
+                    let markerY = centerY + orbitRadius * Math.sin(angle);
+
+                    // Orbit path
+                    cycleCtx.beginPath();
+                    cycleCtx.arc(centerX, centerY, orbitRadius, 0, 2 * Math.PI);
+                    cycleCtx.strokeStyle = `rgba(0, 255, 255, ${0.1 + compNorm * 0.1})`;
+                    cycleCtx.lineWidth = 1;
+                    cycleCtx.stroke();
+
+                    // Trail
+                    cycleTrails[idx].push({x: markerX, y: markerY});
+                    if (cycleTrails[idx].length > 20) cycleTrails[idx].shift();
+                    cycleCtx.beginPath();
+                    cycleTrails[idx].forEach((pos, k) => {
+                        if (k === 0) cycleCtx.moveTo(pos.x, pos.y);
+                        else cycleCtx.lineTo(pos.x, pos.y);
+                    });
+                    cycleCtx.strokeStyle = cycle.color;
+                    cycleCtx.lineWidth = 3;
+                    cycleCtx.globalAlpha = 0.5;
+                    cycleCtx.stroke();
+                    cycleCtx.globalAlpha = 1;
+
+                    // Marker
+                    cycleCtx.save();
+                    cycleCtx.shadowColor = cycle.color;
+                    cycleCtx.shadowBlur = 20;
+                    cycleCtx.beginPath();
+                    cycleCtx.arc(markerX, markerY, 8, 0, 2 * Math.PI);
+                    cycleCtx.fillStyle = cycle.color;
+                    cycleCtx.fill();
+                    cycleCtx.restore();
+
+                    // Resonance effect
+                    if (resonanceTimers[cycle.label] > 0) {
+                        let intensity = resonanceTimers[cycle.label] / RESONANCE_TIMER_MAX;
+                        cycleCtx.save();
+                        cycleCtx.beginPath();
+                        cycleCtx.arc(markerX, markerY, 12 + intensity * 20, 0, 2 * Math.PI);
+                        cycleCtx.fillStyle = `rgba(255, 255, 255, ${0.5 * intensity})`;
+                        cycleCtx.shadowColor = cycle.color;
+                        cycleCtx.shadowBlur = 30 * intensity;
+                        cycleCtx.fill();
+                        cycleCtx.restore();
+                        if (Math.random() < 0.5) particles.push(new Particle(markerX, markerY, cycle.color, 'trail'));
+                    }
+                });
+            };
+
+            const drawPriceChart = () => {
+                const chartHeight = Math.min(canvasHeight * 0.2, 150);
+                const chartY = canvasHeight - chartHeight;
+                cycleCtx.save();
+                
+                // Background
+                const chartGradient = cycleCtx.createLinearGradient(0, chartY, 0, canvasHeight);
+                chartGradient.addColorStop(0, "rgba(10, 15, 40, 0.0)");
+                chartGradient.addColorStop(0.1, "rgba(10, 15, 40, 0.7)");
+                chartGradient.addColorStop(1, "rgba(10, 15, 40, 0.9)");
+                cycleCtx.fillStyle = chartGradient;
+                cycleCtx.fillRect(0, chartY, canvasWidth, chartHeight);
+                cycleCtx.strokeStyle = "rgba(0, 255, 255, 0.3)";
+                cycleCtx.beginPath(); cycleCtx.moveTo(0, chartY); cycleCtx.lineTo(canvasWidth, chartY); cycleCtx.stroke();
+
+                let currentDay = Math.floor(timeVar);
+                let windowSize = Math.floor(canvasWidth / 2); // Show more data
+                let startDay = Math.max(0, currentDay - windowSize + 1);
+                let prices = [];
+                for (let d = startDay; d <= currentDay; d++) {
+                    let simDate = getCurrentDate(d);
+                    let price = d < historicalData.length ? getHistoricalPriceForDate(simDate) : getSimulatedPrice(simDate);
+                    prices.push(price);
+                }
+                if (prices.length < 2) { cycleCtx.restore(); return; }
+
+                const minPrice = Math.min(...prices);
+                const maxPrice = Math.max(...prices);
+                const priceRange = maxPrice - minPrice > 0 ? maxPrice - minPrice : 1;
+                
+                // Price line
+                const accentColor = getComputedStyle(document.documentElement).getPropertyValue("--accent");
+                cycleCtx.strokeStyle = accentColor;
+                cycleCtx.lineWidth = 2;
+                cycleCtx.shadowColor = accentColor;
+                cycleCtx.shadowBlur = 10;
+                
+                cycleCtx.beginPath();
+                for (let i = 0; i < prices.length; i++) {
+                    let x = (i / (windowSize - 1)) * canvasWidth;
+                    let y = chartY + chartHeight - ((prices[i] - minPrice) / priceRange) * (chartHeight - 10);
+                    if (i === 0) cycleCtx.moveTo(x, y);
+                    else cycleCtx.lineTo(x, y);
+                }
+                cycleCtx.stroke();
+                cycleCtx.shadowBlur = 0;
+
+                // Price line fill
+                const fillGradient = cycleCtx.createLinearGradient(0, chartY, 0, canvasHeight);
+                fillGradient.addColorStop(0, `${accentColor}40`);
+                fillGradient.addColorStop(1, `${accentColor}00`);
+                cycleCtx.fillStyle = fillGradient;
+                cycleCtx.lineTo((prices.length-1) / (windowSize - 1) * canvasWidth, canvasHeight);
+                cycleCtx.lineTo(0, canvasHeight);
+                cycleCtx.closePath();
+                cycleCtx.fill();
+
+                cycleCtx.restore();
+            };
+
+            const checkResonances = () => {
+                let events = [];
+                for (let i = 0; i < cycles.length; i++) {
+                    let phaseI = (timeVar % cycles[i].period) / cycles[i].period;
+                    for (let j = i + 1; j < cycles.length; j++) {
+                        let phaseJ = (timeVar % cycles[j].period) / cycles[j].period;
+                        if (Math.abs(phaseI - phaseJ) < RESONANCE_THRESHOLD) {
+                            events.push({ cycles: [cycles[i], cycles[j]]});
+                        }
+                    }
+                }
+                return events;
+            };
+
+            const updateResonanceTimers = (events) => {
+                events.forEach(ev => {
+                    ev.cycles.forEach(cycle => {
+                        if (resonanceTimers[cycle.label] === 0) { // Trigger only on first frame of resonance
+                           const centerX = canvasWidth / 2, centerY = canvasHeight / 2;
+                           shockwaves.push(new Shockwave(centerX, centerY, cycle.color, Math.min(canvasWidth, canvasHeight) / 2));
+                           for(let i=0; i<30; i++) particles.push(new Particle(centerX, centerY, cycle.color));
+                           playCueTone(220, 1, 0.3);
+                        }
+                        resonanceTimers[cycle.label] = RESONANCE_TIMER_MAX;
+                    });
+                });
+            };
+            const decayResonanceTimers = () => Object.keys(resonanceTimers).forEach(key => { if (resonanceTimers[key] > 0) resonanceTimers[key]--; });
+
+            // --- SIZING & INITIALIZATION ---
+            function resizeCanvas() {
+                canvasWidth = window.innerWidth;
+                canvasHeight = window.innerHeight;
+                const dpr = window.devicePixelRatio || 1;
+                [cycleCanvas, gridCanvas].forEach(canvas => {
+                    canvas.style.width = canvasWidth + "px";
+                    canvas.style.height = canvasHeight + "px";
+                    canvas.width = canvasWidth * dpr;
+                    canvas.height = canvasHeight * dpr;
+                });
+                cycleCtx = cycleCanvas.getContext("2d");
+                gridCtx = gridCanvas.getContext("2d");
+                cycleCtx.scale(dpr, dpr);
+                gridCtx.scale(dpr, dpr);
+                drawGrid();
+            }
+
+            function populateLegend() {
+                const legendList = document.getElementById("legendList");
+                legendList.innerHTML = "";
+                cycles.forEach(cycle => {
+                    const li = document.createElement("li");
+                    const dot = document.createElement("span");
+                    dot.className = "legend-dot";
+                    dot.style.background = cycle.color;
+                    dot.style.boxShadow = `0 0 8px ${cycle.color}`;
+                    li.appendChild(dot);
+                    li.appendChild(document.createTextNode(cycle.label));
+                    legendList.appendChild(li);
+                });
+            }
+
+            function setupControls() {
+                document.getElementById("muteMusic").checked = settings.muteMusic;
+                document.getElementById("muteThumps").checked = settings.muteThumps;
+                document.getElementById("musicVolume").value = settings.musicVolume;
+
+                document.getElementById("muteMusic").addEventListener("change", (e) => {
+                    settings.muteMusic = e.target.checked;
+                    document.getElementById("bgMusic").muted = settings.muteMusic;
+                    saveSettings();
+                });
+                document.getElementById("muteThumps").addEventListener("change", (e) => { settings.muteThumps = e.target.checked; saveSettings(); });
+                document.getElementById("musicVolume").addEventListener("input", (e) => {
+                    settings.musicVolume = parseFloat(e.target.value);
+                    document.getElementById("bgMusic").volume = settings.musicVolume;
+                    saveSettings();
+                });
+                document.getElementById("pause-btn").addEventListener("click", () => {
+                    isPaused = !isPaused;
+                    document.getElementById("pause-btn").textContent = isPaused ? "Play" : "Pause";
+                });
+                document.getElementById("reset-btn").addEventListener("click", () => { timeVar = 0; });
+                document.getElementById("speed-down-btn").addEventListener("click", () => { speedMultiplier = Math.max(speedMultiplier / 1.5, 0.01); });
+                document.getElementById("speed-up-btn").addEventListener("click", () => { speedMultiplier = Math.min(speedMultiplier * 1.5, 16); });
+                document.getElementById("download-btn").addEventListener("click", () => {
+                    const link = document.createElement("a");
+                    link.download = "market_resonance_v2.png";
+                    link.href = cycleCanvas.toDataURL("image/png");
+                    link.click();
+                });
+                document.getElementById("time-scrub").addEventListener("input", (e) => { timeVar = parseFloat(e.target.value); });
+                document.getElementById("theme-toggle").addEventListener("click", () => {
+                    document.documentElement.classList.toggle("light-theme");
+                    settings.lightTheme = document.documentElement.classList.contains("light-theme");
+                    drawGrid();
+                    saveSettings();
+                });
+                window.addEventListener("resize", resizeCanvas);
+            }
+
+            function setupModal() {
+                const aboutBtn = document.getElementById("about-btn"), aboutModal = document.getElementById("aboutModal"), modalClose = document.getElementById("modalClose");
+                aboutBtn.addEventListener("click", () => { aboutModal.style.display = "flex"; });
+                modalClose.addEventListener("click", () => { aboutModal.style.display = "none"; });
+                window.addEventListener("click", (e) => { if (e.target === aboutModal) aboutModal.style.display = "none"; });
+            }
+            
+            const getCurrentDate = (simTime) => new Date(new Date(2020, 11, 31).getTime() + simTime * 86400000);
+            function updateDateDisplay() {
+                let simDate = getCurrentDate(timeVar);
+                let curPrice = getCurrentPrice();
+                document.getElementById("date-display").textContent = `${simDate.toLocaleDateString("en-CA")} | Price: $${curPrice.toFixed(2)}`;
+            }
+            
+            function checkPerrinEvent() {
+                let day = Math.floor(timeVar);
+                if (day > 1 && isPerrinPseudoprime(day) && !triggeredResonances.has(`perrin-${day}`)) {
+                    document.getElementById("predictionDisplay").textContent = "Perrin Event: Day " + day;
+                    shockwaves.push(new Shockwave(canvasWidth/2, canvasHeight/2, "#FF00FF", canvasWidth));
+                    playCueTone(110, 2, 0.4);
+                    triggeredResonances.add(`perrin-${day}`);
+                    setTimeout(() => { document.getElementById("predictionDisplay").textContent = "Status: Standby"; }, 4000);
+                }
+            }
+
+            // --- ANIMATION LOOP ---
+            function animate() {
+                requestAnimationFrame(animate);
+                if (historicalData.length === 0) return;
+
+                cycleCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                const composite = computeCompositeIndicator();
+                
+                drawBackground(composite);
+
+                // Update and draw effects
+                [...particles, ...shockwaves].forEach(effect => {
+                    effect.update();
+                    effect.draw(cycleCtx);
+                });
+                particles = particles.filter(p => p.life > 0 && p.alpha > 0);
+                shockwaves = shockwaves.filter(s => s.life > 0 && s.alpha > 0);
+
+                const resEvents = checkResonances();
+                updateResonanceTimers(resEvents);
+                decayResonanceTimers();
+                
+                drawCyclesOrbital(composite);
+                drawPriceChart();
+
+                checkPerrinEvent();
+                updateDateDisplay();
+                updateDroneSound(resEvents.length);
+
+                if (!isPaused) { 
+                    timeVar += speedMultiplier; 
+                    if (timeVar > parseInt(document.getElementById("time-scrub").max, 10)) timeVar = 0; // Loop
+                }
+                document.getElementById("time-scrub").value = timeVar;
+            }
+
+            // --- LAUNCH SEQUENCE ---
+            async function loadHistoricalData() {
+                try {
+                    const response = await fetch("https://fibonacciai.github.io/42069/HistoricalData_1738905398428.csv");
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const text = await response.text();
+                    let data = parseCSV(text);
+                    data.sort((a, b) => parseDateString(a.Date) - parseDateString(b.Date));
+                    console.log("Loaded historical data records:", data.length);
+                    return data;
+                } catch (err) {
+                    console.error("Error loading historical CSV data:", err);
+                    document.getElementById("date-display").textContent = "Error: Could not load market data.";
+                    return [];
+                }
+            }
+
+            window.addEventListener("load", async () => {
+                cycleCanvas = document.getElementById("cycleCanvas");
+                gridCanvas = document.getElementById("gridCanvas");
+                
+                resizeCanvas();
+                populateLegend();
+                setupControls();
+                setupModal();
+                
+                document.body.addEventListener("click", () => {
+                    initAudioContext();
+                    resumeAndPlayMusic();
+                    startDrone();
+                }, { once: true });
+                
+                historicalData = await loadHistoricalData();
+                if (historicalData.length > 0) {
+                    document.getElementById("time-scrub").max = historicalData.length + EXTRA_DAYS;
+                    animate();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
